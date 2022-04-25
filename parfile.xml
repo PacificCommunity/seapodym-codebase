@@ -1,0 +1,703 @@
+<?xml version="2.0"?>
+<!-- check http://www.w3.org/TR/2004/REC-xml-20040204 for current xml specifications -->
+<par version="1.0">
+
+<!--==================== -->
+<!--SIMULATION PARAMETERS-->
+<!--==================== -->
+<latitudeMin value="-54.875"/> 
+<latitudeMax value="65.125"/>
+<longitudeMin value="88.375"/>
+<longitudeMax value="290.375"/>
+<space_reso value="2"/>
+<nb_layer value="3"/>
+<deltaX value="120"/>
+<deltaY value="120"/>
+<deltaT value="30"/>
+<iterationNumber value="30"/>
+<tuna_spinup value="0"/>
+<save_first_date year="2008" month="2"/>
+<save_last_date year="2013" month="9"/>
+<nb_yr_forecast value="0"/>
+<nb_step_to_skip value="0"/>
+<!--==================== -->
+<!--LIKELIHOOD PARAMETERS--> 
+<!--==================== -->
+
+<total_likelihood value="53825.09435175294"/>
+
+<!--type of data in the likelihood: 0 - cpue, 1 - catch -->
+<like_c_cpue value="1"/>
+<!--likelihood types: 1 - concentrated, 2 - log-normal, 3 - poisson, 4 - negative binomial, 5 - zero-inflated negbin, 6 - truncated poisson -->
+<!--can be different for each fishery (see below the fishery codes) -->
+<likelihood_types>
+	        <bet>3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3</bet>
+</likelihood_types>
+
+<nb_fishery value="1"/>
+<list_fishery_name>L1 L2 L3 L4 L5 L6 L7 L8 S9 S10 S11 S12 S13 S14 P15 O16</list_fishery_name> 
+
+<!--1 - C in metric tones; 0 - C in numbers -->
+<fishery_catch_units>1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</fishery_catch_units> 
+
+<degrade_fishery_reso_deg value="5"/>
+
+<!--Mask for fishery data usage: 0 - do not take into account-->
+<mask_fishery_sp>
+	<!-- <bet>1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1</bet>-->
+             <bet>0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0</bet>
+</mask_fishery_sp>
+
+<mask_fishery_no_effort>
+                <bet>0 0 0 0 0 1 1 1 0 0 1 1 1 0 1 1</bet>
+</mask_fishery_no_effort>
+
+<mask_fishery_likelihood>
+	        <bet>1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 0</bet>
+</mask_fishery_likelihood>
+
+<!--<likelihood_type value="1"/>-->
+
+<!--length frequencies likelihood: 0 - do not take into account, 1 - account--> 
+<frq_likelihood bet="0"/>
+
+<frq_likelihood_weight bet="0.01"/>
+
+<!--TAG likelihood: 0 - do not take into account, 1 - account-->
+<tag_likelihood bet="1"/>
+<tag_likelihood_only value="1"/>
+<tag_gauss_kernel_on value="0"/>
+
+<!--STOCK likelihood: 0 - do not take into account, 1 - account-->
+<stock_likelihood bet="0"/>
+<!-- The values entered for mean_stock_obs will be used in stock likelihood
+     These can be the total abundance estimated by stock assessment models 
+     within the rectangular region specified -->
+<mean_stock_obs>
+     <!-- 4850 is MFCL_estimate for 2011 in WCPO -->
+    <bet value="2000" lgmin="120" lgmax="290" ltmin="-20" ltmax="45"/>
+</mean_stock_obs>
+
+
+<!--================= -->
+<!--MODEL INPUT-OUTPUT-->
+<!--================= -->
+<!-- DataFiles -->
+
+<!-- Working Directory -->
+<strdir value="/home/isenina/Seapodym/data/run-free-glorys-2x30d-po/"/>
+
+<str_file_mask value="mask_po_freeglorys2v4_pp_2deg_corrected_noIO_minimal.txt"/>
+<str_file_topo value="topo_noteff.txt"/>
+
+<strdir_forage value="forage/"/>
+<strdir_init value="init/bet/"/>
+
+
+<strdir_fisheries value="/home/isenina/Seapodym/data/fisheries/"/>
+<!--=============-->
+<!--FISHERY DATA -->
+<!--=============-->
+
+<file_catch_data>
+        <nb_files bet="1"/>
+                <bet file1="bet_catch_16f_L3move.txt"/>
+</file_catch_data>
+
+<flex_regstruc value="1"/>
+<file_frq_data>
+        <nb_files bet="1"/>
+                <bet file1="bet_LF_2f_PS_EPO_normalized.txt"/>
+</file_frq_data>
+
+<!--TAGGING DATA -->
+<strdir_tags value="/home/isenina/Seapodym/data/tags/"/>
+
+<tags_grid>
+        <reso dx="6" dy="4"/>
+        <longitude east="110.375" west="290.375"/>
+        <latitude south="-30.875" north="29.125"/>
+</tags_grid>
+
+
+<file_tag_data>
+   <nb_files bet="56"/>
+   <bet file1="bet-pop-tags_20080715.txt" file2="bet-pop-tags_20080915.txt" file3="bet-pop-tags_20081015.txt" file4="bet-pop-tags_20081115.txt" file5="bet-pop-tags_20081215.txt" file6="bet-pop-tags_20090615.txt" file7="bet-pop-tags_20090715.txt" file8="bet-pop-tags_20090815.txt" file9="bet-pop-tags_20090915.txt" file10="bet-pop-tags_20091015.txt" file11="bet-pop-tags_20091115.txt" file12="bet-pop-tags_20091215.txt" file13="bet-pop-tags_20100115.txt" file14="bet-pop-tags_20100215.txt" file15="bet-pop-tags_20100315.txt" file16="bet-pop-tags_20100415.txt" file17="bet-pop-tags_20100515.txt" file18="bet-pop-tags_20100615.txt" file19="bet-pop-tags_20100715.txt" file20="bet-pop-tags_20100815.txt" file21="bet-pop-tags_20100915.txt" file22="bet-pop-tags_20101015.txt" file23="bet-pop-tags_20101115.txt" file24="bet-pop-tags_20101215.txt" file25="bet-pop-tags_20110115.txt" file26="bet-pop-tags_20110215.txt" file27="bet-pop-tags_20110315.txt" file28="bet-pop-tags_20110415.txt" file29="bet-pop-tags_20110515.txt" file30="bet-pop-tags_20110615.txt" file31="bet-pop-tags_20110715.txt" file32="bet-pop-tags_20110815.txt" file33="bet-pop-tags_20110915.txt" file34="bet-pop-tags_20111015.txt" file35="bet-pop-tags_20111115.txt" file36="bet-pop-tags_20111215.txt" file37="bet-pop-tags_20120115.txt" file38="bet-pop-tags_20120215.txt" file39="bet-pop-tags_20120315.txt" file40="bet-pop-tags_20120415.txt" file41="bet-pop-tags_20120515.txt" file42="bet-pop-tags_20120615.txt" file43="bet-pop-tags_20120715.txt" file44="bet-pop-tags_20120815.txt" file45="bet-pop-tags_20120915.txt" file46="bet-pop-tags_20121115.txt" file47="bet-pop-tags_20121215.txt" file48="bet-pop-tags_20130115.txt" file49="bet-pop-tags_20130215.txt" file50="bet-pop-tags_20130315.txt" file51="bet-pop-tags_20130415.txt" file52="bet-pop-tags_20130515.txt" file53="bet-pop-tags_20130615.txt" file54="bet-pop-tags_20130715.txt" file55="bet-pop-tags_20130815.txt" file56="bet-pop-tags_20130915.txt"/>       
+</file_tag_data>
+
+
+
+<!--type of oxygen data: 0 for time series, 1 - for monthly, 2 for seasonal-->
+<type_oxy value="1"/>
+
+<strfile_pp value="po_freeglorys2v4_vgpmR2014_2x30d_pp_2006_2015.dym"/>
+<strfile_sst value="po_freeglorys2v4_vgpmR2014_2x30d_sst_2006_2015.dym"/>
+<strfile_vld value="po_freeglorys2v4_vgpmR2014_2x30d_zeu_2006_2015.dym"/>
+<strfile_u layer0="po_freeglorys2v4_vgpmR2014_2x30d_U_L1_2006_2015.dym" layer1="po_freeglorys2v4_vgpmR2014_2x30d_U_L2_2006_2015.dym" layer2="po_freeglorys2v4_vgpmR2014_2x30d_U_L3_2006_2015.dym"/>
+<strfile_v layer0="po_freeglorys2v4_vgpmR2014_2x30d_V_L1_2006_2015.dym" layer1="po_freeglorys2v4_vgpmR2014_2x30d_V_L2_2006_2015.dym" layer2="po_freeglorys2v4_vgpmR2014_2x30d_V_L3_2006_2015.dym"/>
+<strfile_t layer0="po_freeglorys2v4_vgpmR2014_2x30d_temperature_L1_2006_2015.dym" layer1="po_freeglorys2v4_vgpmR2014_2x30d_temperature_L2_2006_2015.dym" layer2="po_freeglorys2v4_vgpmR2014_2x30d_temperature_L3_2006_2015.dym"/>
+<strfile_oxy layer0="po_levitus_WOA2013_2x30d_O2_L1_CLM.dym" layer1="po_levitus_WOA2013_2x30d_O2_L2_CLM.dym" layer2="po_levitus_WOA2013_2x30d_O2_L3_CLM.dym"/>
+
+<strfile_pp_clm value="po_freeglorys2v4_vgpmR2014_2x30d_PP_1980.dym"/>
+<strfile_u_clm layer0="po_freeglorys2v4_vgpmR2014_2x30d_U_L1_1980.dym" layer1="po_freeglorys2v4_vgpmR2014_2x30d_U_L2_1980.dym" layer2="po_freeglorys2v4_vgpmR2014_2x30d_U_L3_1980.dym"/>
+<strfile_v_clm layer0="po_freeglorys2v4_vgpmR2014_2x30d_V_L1_1980.dym" layer1="po_freeglorys2v4_vgpmR2014_2x30d_V_L2_1980.dym" layer2="po_freeglorys2v4_vgpmR2014_2x30d_V_L3_1980.dym"/>
+<strfile_t_clm layer0="po_freeglorys2v4_vgpmR2014_2x30d_temperature_L1_1980.dym" layer1="po_freeglorys2v4_vgpmR2014_2x30d_temperature_L2_1980.dym" layer2="po_freeglorys2v4_vgpmR2014_2x30d_temperature_L3_1980.dym"/>
+<strfile_oxy_clm layer0="po_freeglorys2v4_vgpmR2014_2x30d_O2_L1_1980.dym" layer1="po_freeglorys2v4_vgpmR2014_2x30d_O2_L2_1980.dym" layer2="po_freeglorys2v4_vgpmR2014_2x30d_O2_L3_1980.dym"/>
+
+
+<!-- Output Directory -->
+<strdir_output value="output/"/>
+<write_all_cohorts_dym value="0"/>
+<write_all_fisheries_dym value="0"/>
+
+<!--====================== -->
+<!--FORAGE MODEL PARAMETERS-->
+<!--====================== -->
+<Tr_max value="527"/>
+<Tr_exp value="-0.125"/>
+<inv_lambda_max value="2109"/>
+<inv_lambda_curv value="-0.125"/>
+<E value="0.0036972"/>
+<c_pp value="0.0948"/>
+<nb_forage value="6"/>
+
+<frg_name>epi meso mmeso bathy mbathy hmbathy</frg_name>
+
+<source_frg epi="0.08" meso="0.17" mmeso="0.08" bathy="0.56" mbathy="0.07" hmbathy="0.04"/>
+<day_layer epi="0" meso="1" mmeso="1" bathy="2" mbathy="2" hmbathy="2"/>
+<night_layer epi="0" meso="1" mmeso="0" bathy="2" mbathy="1" hmbathy="0"/>
+
+<tstep_forage value="30"/>
+<sigma_fcte value="10"/>
+<max_NPP value="200"/>
+<b_F_habitat value="20000"/>
+
+<!--=========================== -->
+<!--PREDATOR MODEL AGE STRUCTURE-->
+<!--=========================== -->
+<nb_species value="1"/>
+
+<sp_name>bet</sp_name>
+
+<nb_life_stages bet="3"/>
+<life_stage>
+        <bet>larvae juvenile adult</bet>
+</life_stage>
+
+<nb_cohort_life_stage>
+        <bet>1 2 82</bet>
+</nb_cohort_life_stage>
+
+<age_recruit bet="3"/>
+<age_mature bet="36"/>
+
+<sp_unit_cohort>
+	<bet>30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30 2520
+        </bet>
+</sp_unit_cohort> 
+<age_compute_habitat>
+	<bet>0  1  2  3  4  5  5  6  6  7  7  8  8  9  9 10 10 11 11 12 12 13 13 14 14
+	    15 15 16 16 17 17 18 18 19 19 19 20 20 20 21 21 21 22 22 22 23 23 23 24 24
+	    24 24 25 25 25 25 26 26 26 26 27 27 27 27 27 28 28 28 28 28 29 29 29 29 29
+	    29 30 30 30 30 30 30 30 31 32
+  	</bet>
+</age_compute_habitat>
+
+<length>
+	<bet>9.12  13.55  17.88  22.10  26.21  30.22  34.14  37.95  41.68  45.31
+	     48.85  52.30  55.67  58.95  62.16  65.28  68.33  71.30  74.20  77.03
+	     79.79  82.48  85.10  87.66  90.16  92.59  94.96  97.28  99.54 101.74
+	    103.89 105.98 108.02 110.02 111.96 113.85 115.70 117.51 119.26 120.98
+	    122.65 124.28 125.88 127.43 128.94 130.42 131.86 133.26 134.63 135.97
+	    137.27 138.54 139.78 140.99 142.17 143.31 144.44 145.53 146.60 147.64
+	    148.65 149.64 150.61 151.55 152.46 153.36 154.23 155.08 155.92 156.73
+	    157.52 158.29 159.04 159.77 160.49 161.18 161.86 162.53 163.17 163.80
+	    164.42 165.02 165.61 166.18 180.93
+ 	</bet>
+</length>
+<weight>
+	<bet>0.02   0.05   0.12   0.23   0.39   0.59   0.86   1.18   1.57   2.02
+	     2.53   3.11   3.76   4.47   5.25   6.09   6.99   7.95   8.97  10.04
+	    11.17  12.34  13.57  14.84  16.16  17.51  18.91  20.34  21.80  23.29
+	    24.81  26.35  27.92  29.51  31.11  32.73  34.36  36.01  37.66  39.33
+	    40.99  42.67  44.34  46.01  47.69  49.36  51.02  52.69  54.34  55.99
+	    57.63  59.25  60.87  62.48  64.07  65.65  67.22  68.77  70.30  71.82
+	    73.33  74.81  76.28  77.73  79.17  80.58  81.98  83.35  84.71  86.05
+	    87.37  88.67  89.95  91.21  92.45  93.67  94.87  96.05  97.21  98.35
+	    99.47 100.57 101.66 102.72 132.87
+ 	</bet>
+</weight>
+
+
+
+<!--======================== -->
+<!--PREDATOR MODEL PARAMETERS-->
+<!--======================== -->
+
+<!--=== 1. Available OPTIONS =====-->
+
+<seasonal_migrations bet="0"/>
+
+<vertical_movement bet="1"/>
+<!-- if optimal sst for larvae is assumed 
+     different from b_sst_spawning -->
+<uncouple_sst_larvae bet="1"/>
+
+<gaussian_thermal_function bet="1"/>
+
+<cannibalism_juv bet="0"/>
+
+<food_requirement_in_mortality bet="0"/>
+
+<!--= end of Available OPTIONS ==-->
+
+<!--===  2. Spawning habitat parameters  =======-->
+<a_sst_larvae bet="1.9"> 
+        <variable min="26.5" max="29.0" use="false"/>
+</a_sst_larvae>
+
+<b_sst_larvae bet="26.7747378759812"> 
+        <variable min="26.5" max="29.0" use="false"/>
+</b_sst_larvae>
+
+<a_sst_spawning bet="2.847619046999999">
+	<variable min="1" max="3.0" use="true"/>
+</a_sst_spawning>
+
+<b_sst_spawning bet="23.057142857">
+	<variable min="21.0" max="27.0" use="true"/>
+</b_sst_spawning>
+
+<alpha_hsp_prey bet="0.1000012495352509">
+        <variable min="0.1" max="2.0" use="false"/>
+</alpha_hsp_prey>
+
+<alpha_hsp_predator bet="0.1021354978285754">
+        <variable min="0.1" max="2.0" use="false"/>
+</alpha_hsp_predator>
+
+<beta_hsp_predator bet="1.306487501111975">
+	<variable min="0.0" max="5.0" use="false"/>
+</beta_hsp_predator>
+<!--=== end of Spawning habitat parameters =====-->
+
+<!--===  3. Recruitment function   =============-->
+<nb_recruitment bet="0.002024934666609683">
+        <variable min="0.0005" max="0.5" use="false"/>
+        </nb_recruitment>
+
+<a_adults_spawning bet="11.05248008091955">
+	<variable min="0" max="20" use="false"/>
+</a_adults_spawning>
+<!--=== end of Recruitment function  ===========-->
+
+<!--=== 4. Juvenile habitat parameters =========-->
+<hp_cannibalism bet="5.0">
+	<variable min="0" max="20" use="false"/>
+</hp_cannibalism>
+<!--=== end of Juvenile habitat parameters =====-->
+
+<!--=== 5. Adult seasonal migrations ===========-->
+<spawning_season_peak bet="9.86071670988996">
+        <variable min="0" max="100" use="false"/>
+</spawning_season_peak>
+
+<spawning_season_start bet="1.00477324755014">
+        <variable min="0.95" max="1.2" use="false"/>
+</spawning_season_start>
+<!--=== end of Adult seasonal migrations =======-->
+
+<!--=== 6. Adult feeding habitat ===============-->
+<a_sst_habitat bet="2.485714285">
+	<variable min="1.0" max="4.0" use="true"/>
+</a_sst_habitat>
+
+<b_sst_habitat bet="14">
+	<variable min="10.0" max="15.0" use="true"/>
+</b_sst_habitat>
+
+<T_age_size_slope bet="1.019047619">
+        <variable min="1.0" max="3.0" use="true"/>
+</T_age_size_slope>
+
+<thermal_func>
+    <delta1 bet="0.04">
+        <variable min="0.0" max="0.05" use="false"/>
+    </delta1>
+
+    <delta2 bet="0.015">
+        <variable min="0.0" max="0.25" use="false"/>
+    </delta2>
+
+    <delta3 bet="0.25">
+        <variable min="0.0" max="10.0" use="false"/>
+    </delta3>
+</thermal_func>
+
+<a_oxy_habitat bet="0.001">
+	<variable min="0.0001" max="0.002" use="false"/>
+</a_oxy_habitat>
+
+<b_oxy_habitat bet="1.357142857">
+	<variable min="1.0" max="2.5" use="true"/>
+</b_oxy_habitat>
+
+<eF_habitat>
+    <epi bet="1.476190476">
+        <variable min="1.0" max="3.0" use="true"/>
+    </epi>
+
+    <meso bet="2.142857142">
+        <variable min="1.0" max="3.0" use="true"/>
+    </meso>
+
+    <mmeso bet="1.409523809">
+        <variable min="0.0" max="2.0" use="true"/>
+    </mmeso>
+
+    <bathy bet="1.647619047">
+        <variable min="1.0" max="2.0" use="true"/>
+    </bathy>
+
+    <mbathy bet="0.03809523800000025">
+        <variable min="0.0" max="2.0" use="true"/>
+    </mbathy>
+
+    <hmbathy bet="0.3523809520000001">
+        <variable min="0.0" max="1.0" use="true"/>
+    </hmbathy>
+</eF_habitat>
+<!--=== end of Adult feeding habitat ===========-->
+
+<!--=== 7. Movement parameters    ==============-->
+<sigma_species bet="0.04761904700000005">
+	<variable min="0" max="0.5" use="true"/>
+</sigma_species>
+
+<c_diff_fish bet="0.93">
+	<variable min="0.5" max="1.0" use="false"/>
+</c_diff_fish>
+
+<MSS_species bet="0.2000000000000003">
+	<variable min="0" max="3.0" use="true"/>
+</MSS_species>
+
+<MSS_size_slope bet="0.73">
+        <variable min="0.5" max="1.0" use="false"/>
+        </MSS_size_slope>
+<!--=== end of Movement parameters    ==========-->
+
+<!--=== 8. Mortality parameters   ==============-->
+<Mp_mean_max bet="0.05">
+        <variable min="0.0" max="0.15" use="false"/>
+        </Mp_mean_max>
+
+<Mp_mean_exp bet="0.2474658984667805">
+        <variable min="0.02" max="0.3" use="false"/>
+        </Mp_mean_exp>
+
+<Ms_mean_max bet="0.0003757181994482623">
+        <variable min="0.0" max="0.01" use="false"/>
+        </Ms_mean_max>
+
+<Ms_mean_slope bet="1.134981133091297">
+        <variable min="0.5" max="1.15" use="false"/>
+        </Ms_mean_slope>
+
+<M_mean_range bet="0.1645441348636102">
+        <variable min="0.05" max="2.5" use="false"/>
+        </M_mean_range>
+<!--=== end of Mortality parameters   ===========-->
+
+<!--=== 9. Food requirement index  ==============-->
+<!-- residual competition is the proportion of total F biomass 
+available for a given species in the presence of other species -->
+<residual_competition bet="0.025"/> 
+
+<!-- daily food ration -->
+<forage_ration bet="0.06"/>
+<!--=== end of Food requirement index  ==========-->
+
+
+<!--========================== -->
+<!--FISHERY DATA AND PARAMETERS-->
+<!--========================== -->
+
+<q_sp_fishery>
+	<variables use="false"/>
+
+	<L1 bet="2.479436057143902e-05">
+                <variable min="0.0" max="0.01" use="true" dyn="0.0"/>
+        </L1>
+
+        <L2 bet="1.583198470876513e-05">
+                <variable min="0.0" max="0.005" use="true" dyn="0.001"/>
+        </L2>
+        
+	<L3 bet="1.48769455151665e-05">
+                <variable min="0.0" max="0.01" use="true" dyn="0.001"/>
+        </L3>
+
+        <L4 bet="2.269118410349158e-05">
+                <variable min="0.0" max="0.01" use="true" dyn="0.0"/>
+        </L4>
+
+        <L5 bet="1.109741551304e-05">
+                <variable min="0.0" max="0.01" use="true" dyn="0.0"/>
+        </L5>
+
+        <L6 bet="1.0e-04">
+                <variable min="0.0" max="0.01" use="false" dyn="0.0"/>
+        </L6>
+
+        <L7 bet="2.209774833434303e-05">
+                <variable min="0.0" max="0.001" use="false" dyn="-0.002"/>
+        </L7>
+
+	<L8 bet="5.282240092938095e-06">
+                <variable min="0.0" max="0.01" use="false" dyn="-0.0005"/>
+        </L8>
+
+        <S9 bet="0.001832364341414">
+                <variable min="0.0" max="0.1" use="true" dyn="0.0"/>
+        </S9>
+
+        <S10 bet="0.008130616165442278">
+                <variable min="0.0" max="0.5" use="true" dyn="0.0"/>
+        </S10>
+
+        <S11 bet="0.023">
+                <variable min="0.0" max="0.05" use="false" dyn="-0.0025"/>
+        </S11>
+
+        <S12 bet="0.0009449144187257592">
+                <variable min="0.0" max="0.05" use="false" dyn="0.0"/>
+	</S12>
+
+	<S13 bet="0.005997591705540123">
+                <variable min="0.0" max="0.1" use="false" dyn="0.0"/>
+        </S13>
+
+        <S14 bet="0.02274360410596692">
+                <variable min="0.0" max="0.2" use="true" dyn="0.002"/>
+        </S14>
+
+	<P15 bet="0.0007017625251746874">
+                <variable min="0.0" max="0.2" use="false" dyn="0.0"/>
+        </P15>
+
+	<O16 bet="0.015">
+                <variable min="0.0" max="0.2" use="false" dyn="0.0"/>
+        </O16>
+</q_sp_fishery>
+
+<!--selectivities as functions of length--> 
+<!--1 - logistic, 1 parameter: main parameter is used as a slope coefficient--> 
+<!--2 - sigmoid, 2 parameters: main parameter as slope coefficient + length_threshold--> 
+<!--3 - asymmetric Gaussian, 3 parameters: length_threshold as optimal value, main as sigma, right_asymptote as the function min on the right --> 
+<s_sp_fishery>
+	<variables use="false"/>
+
+        <L1 bet="36.65953271714752">
+                <variable min="1.05" max="50" use="true"/>
+                <function_type value="3"/>
+                <length_threshold bet="131.5987526919355" use="true"/>
+                <right_asymptote bet="0.99999999999999976" min="0" max="1" use="false"/>
+        </L1>                                                                                                                                                            
+        <L2 bet="0.07764665488890972">
+                <variable min="0.05" max="0.6" use="true"/>
+                <function_type value="2"/>
+                <length_threshold bet="92.38816043396724" use="true"/>
+                <right_asymptote bet="0.4" min="0" max="1" use="false"/>
+        </L2>                                                                                                                                                            
+        <L3 bet="0.134741555708395">
+                <variable min="0.05" max="0.6" use="true"/>
+                <function_type value="2"/>
+                <length_threshold bet="114.3884163092011" use="true"/>
+                <right_asymptote bet="0.4" min="0" max="1" use="true"/>
+        </L3>                                                                                                                                                            
+        <L4 bet="21.32332293767428">
+                <variable min="5" max="36" use="true"/>
+                <function_type value="3"/>
+                <length_threshold bet="129.0002422682694" use="true"/>
+                <right_asymptote bet="0.212998980171111" min="0" max="1" use="true"/>
+        </L4>
+        <L5 bet="0.07751572068293125">
+                <variable min="0.05" max="0.6" use="true"/>
+                <function_type value="2"/>
+                <length_threshold bet="86.11017011088715" use="true"/>
+                <right_asymptote bet="0.7" min="0" max="1" use="false"/>
+        </L5>
+        <L6 bet="28.0">
+                <variable min="1.05" max="30" use="false"/>
+                <function_type value="3"/>
+                <length_threshold bet="135.0" use="false"/>
+                <right_asymptote bet="0.15" min="0" max="1" use="false"/>
+        </L6>
+        <L7 bet="27.0">
+                <variable min="1.05" max="40" use="false"/>
+                <function_type value="3"/>
+                <length_threshold bet="117.0" use="false"/>
+                <right_asymptote bet="0.27" min="0" max="1" use="false"/>
+        </L7>   
+
+        <L8 bet="25.0">
+                <variable min="1.05" max="30" use="false"/>
+                <function_type value="3"/>
+                <length_threshold bet="110.0" use="false"/>
+                <right_asymptote bet="0.9" min="0" max="1" use="false"/>
+        </L8>                                                                                                                                                            
+
+	<S9 bet="12.5">
+                <variable min="1.05" max="20" use="false"/>
+                <function_type value="3"/>
+                <length_threshold bet="57.0" use="false"/>
+                <right_asymptote bet="0.075" min="0" max="1" use="false"/>
+	</S9>
+
+        <S10 bet="12.00000229169623">
+                <variable min="3" max="26" use="true"/>
+                <function_type value="3"/>
+                <length_threshold bet="52.09261107777731" use="true"/>
+                <right_asymptote bet="0.15" min="0" max="1" use="false"/>
+        </S10>   
+
+        <S11 bet="14.0">
+                <variable min="2.5" max="16" use="false"/>
+                <function_type value="3"/>
+                <length_threshold bet="61.0" use="false"/>
+                <right_asymptote bet="0.05" min="0" max="1" use="false"/>
+        </S11>
+
+        <S12 bet="9.5">
+                <variable min="5" max="26" use="false"/>
+                <function_type value="3"/>
+                <length_threshold bet="52.0" use="false"/>
+                <right_asymptote bet="0.3" min="0" max="1" use="false"/>
+	</S12>
+
+        <S13 bet="14.0">
+                <variable min="3.4" max="30" use="false"/>
+                <function_type value="3"/>
+                <length_threshold bet="51.0" use="false"/>
+                <right_asymptote bet="0.25" min="0" max="1" use="false"/>
+	</S13>
+
+        <S14 bet="12.48712923880027">
+                <variable min="0.05" max="20" use="true"/>
+                <function_type value="3"/>
+                <length_threshold bet="49.68395854059933" use="true"/>
+                <right_asymptote bet="0.323262844862349" min="0" max="1" use="true"/>
+        </S14>
+
+	<P15 bet="14.0">
+                <variable min="0.05" max="20" use="false"/>
+                <function_type value="3"/>
+                <length_threshold bet="55.0" use="false"/>
+                <right_asymptote bet="0.15" min="0" max="1" use="false"/>
+        </P15>
+
+	<O16 bet="20">
+                <variable min="0.05" max="25.0" use="false"/>
+		<function_type value="3"/>
+		<length_threshold bet="35.0" use="false"/>
+                <right_asymptote bet="0.25" min="0" max="1" use="false"/>
+        </O16>
+</s_sp_fishery>
+
+<!--================ -->
+<!--AGGREGATION ZONES-->
+<!--================ -->
+<nb_region value="10"/>
+<use_mask_catch value="0"/>
+<!--Starting 2014 9 regions in WCPO with two given by composition of several rectangles, 
+     which is not implemented, so will declare simple, but modify MFCL file to provide
+     R3 = R3+R8 and R5 = R5+ R9-->
+<area0 area_id="1" lgmin="120" lgmax="170" ltmin="20" ltmax="50"/>
+<area1 area_id="2" lgmin="170" lgmax="210" ltmin="20" ltmax="50"/>
+<area2 area_id="3" lgmin="140" lgmax="170" ltmin="-10" ltmax="20"/>
+<area3 area_id="4" lgmin="170" lgmax="210" ltmin="-10" ltmax="20"/>
+<area4 area_id="5" lgmin="140" lgmax="170" ltmin="-40" ltmax="-10"/>
+<area5 area_id="6" lgmin="170" lgmax="210" ltmin="-40" ltmax="-10"/>
+<area6 area_id="7" lgmin="110" lgmax="140" ltmin="-10" ltmax="20"/>
+<area7 area_id="8" lgmin="210" lgmax="240" ltmin="-40" ltmax="10"/>
+<area8 area_id="9" lgmin="240" lgmax="290" ltmin="-40" ltmax="10"/>
+<area9 area_id="10" lgmin="210" lgmax="280" ltmin="10" ltmax="50"/>
+<!--Before 2014 only 6 regions in WCPO-->
+<!--<area0 area_id="1" lgmin="110" lgmax="170" ltmin="10" ltmax="40"/>
+<area1 area_id="2" lgmin="170" lgmax="210" ltmin="10" ltmax="40"/>
+<area2 area_id="3" lgmin="130" lgmax="170" ltmin="-10" ltmax="10"/>
+<area3 area_id="4" lgmin="170" lgmax="210" ltmin="-10" ltmax="10"/>
+<area4 area_id="5" lgmin="143" lgmax="170" ltmin="-40" ltmax="-10"/>
+<area5 area_id="6" lgmin="170" lgmax="210" ltmin="-40" ltmax="-10"/>
+<area6 area_id="7" lgmin="110" lgmax="130" ltmin="-10" ltmax="10"/>
+<area7 area_id="8" lgmin="210" lgmax="240" ltmin="10" ltmax="40"/>
+<area8 area_id="9" lgmin="210" lgmax="290" ltmin="-40" ltmax="10"/>-->
+
+<nb_region_sp_B bet="10"/>
+<area_sp_B> 
+	<bet>1 2 3 4 5 6 7 8 9 10</bet>
+</area_sp_B>
+
+
+<!--<nb_EEZ value="0"/>
+<str_file_maskEEZ value="sp_ncep_check_zones_big_all.txt"/>-->
+<nb_EEZ value="0"/>
+<str_file_maskEEZ value="SP_IPSL_mask_eez_wcpfc.txt"/>
+<EEZ>
+       <eez0 name="New Caledonia" id="-19"/>
+       <eez1 name="Fiji" id="-12"/>
+       <eez2 name="Vanuatu" id="-33"/>
+       <eez3 name="Solomon Islands" id="-29"/>
+       <eez4 name="New Zealand" id="-23"/>
+       <eez5 name="Norfolk" id="-20"/>
+       <eez6 name="Matthew Hunter" id="-16"/>
+</EEZ>
+
+<!-- Placed this at the end since current parfile is set for Poisson likelihood only -->
+
+<likelihood_parameters>
+	<variables use="false"/>
+	<L1 bet="0.01"/>
+        <L2 bet="0.007"/>
+        <L3 bet="0.0"/>
+        <L4 bet="0.01"/>
+	<L5 bet="0.01"/>
+	<L6 bet="0.01"/>
+	<L7 bet="0.01"/>
+	<L8 bet="0.01"/>
+        <S9 bet="0.007"/>
+        <S10 bet="0.0"/>
+        <S11 bet="0.01"/>
+	<S12 bet="0.01"/>
+	<S13 bet="0.01"/>
+	<S14 bet="0.01"/>
+	<P15 bet="0.01"/>
+	<O16 bet="0.01"/>
+</likelihood_parameters>
+
+<prob_zero>
+	<L1 bet="0.0"/>
+        <L2 bet="0.0"/>
+        <L3 bet="0.0"/>
+        <L4 bet="0.0"/>
+	<L5 bet="0.0"/>
+	<L6 bet="0.0"/>
+	<L7 bet="0.0"/>
+	<L8 bet="0.0"/>
+        <S9 bet="0.0"/>
+        <S10 bet="0.0"/>
+        <S11 bet="0.0"/>
+	<S12 bet="0.0"/>
+	<S13 bet="0.0"/>
+	<S14 bet="0.0"/>
+	<P15 bet="0.0"/>
+	<O16 bet="0.0"/>
+</prob_zero>
+
+</par>
