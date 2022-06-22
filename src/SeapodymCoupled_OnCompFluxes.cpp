@@ -605,7 +605,8 @@ int movement_fluxes_only = 1;
 	    for (int r=0; r<nb_reg; r++){
 		int reg = param->area_sp_B[sp][r]-1;
 
-		//For MFCL need to extract quarterly metrics
+		//For MFCL need to extract quarterly metrics, so the biomass in the region gets
+		//initialized once every three months, using calendar seasons
 		if (fluxes_dt_qtr && (month==1 || month==4 || month==7 || month==10)){	
 			Density_region(reg,age).initialize();
 			//only biomass in region reg is non-zero
