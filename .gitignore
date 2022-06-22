@@ -6,3 +6,4 @@ log-changes.txt
 seapodym*
 DOM/unused
 DOM/unused/*
+docs/manual/*.aux
