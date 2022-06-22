@@ -76,6 +76,9 @@ sum1d<-function(vars)
 
 cell.surface.area<-function(lat,dx,dy)
 {#returns the area of a cell on a sphere in sq.km
+ #between 'lat' and 'lat+dy'. Sizes dx and dy are
+ #to be entered in minutes, angle 'lat' in degrees
+ #Computing A= \int_{Phi1_Phi2}{2*pi*cos(\phi)*d\phi}
      R = 6378.1;
      Phi1 = lat*pi/180.0;
      Phi2 = (lat+dy/60.0)*pi/180.0;
