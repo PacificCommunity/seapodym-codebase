@@ -1,0 +1,141 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\citation{Press}
+\citation{Sibert-Fournier}
+\citation{Sibert-Fournier}
+\citation{Sibert}
+\citation{Press}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}Discretisation and numerical solution}{51}{chapter.2}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{ch:numerics}{{2}{51}{Discretisation and numerical solution}{chapter.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}Discretisation of model dimensions}{51}{section.2.1}\protected@file@percent }
+\newlabel{sec:discretization}{{2.1}{51}{Discretisation of model dimensions}{section.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Space discretisation}{51}{subsection.2.1.1}\protected@file@percent }
+\newlabel{sec:d-space}{{2.1.1}{51}{Space discretisation}{subsection.2.1.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces Regular Arakawa-A grid used in numerical approximation of SEAPODYM equations. The quantity $N_i=N(x_i,\cdot )$ is the population density described by model eq.\nobreakspace  {}\textup  {\hbox {\mathsurround \z@ \normalfont  (\ignorespaces \ref  {eq:model-1}\unskip \@@italiccorr )}}. \relax }}{52}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:Arakawa-A}{{2.1}{52}{Regular Arakawa-A grid used in numerical approximation of SEAPODYM equations. The quantity $N_i=N(x_i,\cdot )$ is the population density described by model eq.~\eqref {eq:model-1}. \relax }{figure.caption.31}{}}
+\newlabel{eq:delta-xy}{{2.1}{52}{Space discretisation}{equation.2.1.1}{}}
+\newlabel{eq:xi}{{2.2}{52}{Space discretisation}{equation.2.1.2}{}}
+\newlabel{eq:yj}{{2.3}{52}{Space discretisation}{equation.2.1.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}Time discretisation}{52}{subsection.2.1.2}\protected@file@percent }
+\newlabel{sec:d-time}{{2.1.2}{52}{Time discretisation}{subsection.2.1.2}{}}
+\newlabel{eq:delta-T}{{2.4}{52}{Time discretisation}{equation.2.1.4}{}}
+\newlabel{eq:delta-t}{{2.5}{52}{Time discretisation}{equation.2.1.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.3}Age discretisation}{52}{subsection.2.1.3}\protected@file@percent }
+\newlabel{sec:d-age}{{2.1.3}{52}{Age discretisation}{subsection.2.1.3}{}}
+\newlabel{eq:Delta-a}{{2.6}{53}{Age discretisation}{equation.2.1.6}{}}
+\newlabel{eq:cohort-mean-age}{{2.7}{53}{Age discretisation}{equation.2.1.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2.1}{\ignorespaces Dimension discretisation indices\relax }}{53}{table.caption.32}\protected@file@percent }
+\newlabel{tab:indices}{{2.1}{53}{Dimension discretisation indices\relax }{table.caption.32}{}}
+\newlabel{eq:quantity-grid-tk}{{2.8}{53}{Age discretisation}{equation.2.1.8}{}}
+\newlabel{eq:quantity-grid-Tk}{{2.9}{53}{Age discretisation}{equation.2.1.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Approximation of equations and numerical scheme}{53}{section.2.2}\protected@file@percent }
+\newlabel{sec:equation-discrete-and-numerical-scheme}{{2.2}{53}{Approximation of equations and numerical scheme}{section.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.1}Age integration}{54}{subsection.2.2.1}\protected@file@percent }
+\newlabel{sec:age-integration}{{2.2.1}{54}{Age integration}{subsection.2.2.1}{}}
+\newlabel{eq:aging}{{2.10}{54}{Age integration}{equation.2.2.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.2}Time integration}{54}{subsection.2.2.2}\protected@file@percent }
+\newlabel{sec:two-steps-splitting-method}{{2.2.2}{54}{Time integration}{subsection.2.2.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{First half step}{54}{section*.33}\protected@file@percent }
+\newlabel{eq:2steps-ADI-x}{{2.11}{54}{First half step}{equation.2.2.11}{}}
+\@writefile{toc}{\contentsline {paragraph}{Second half step}{54}{section*.34}\protected@file@percent }
+\newlabel{eq:2steps-ADI-y}{{2.12}{54}{Second half step}{equation.2.2.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.3}Partial derivatives approximation}{54}{subsection.2.2.3}\protected@file@percent }
+\newlabel{sec:ad-derivatives}{{2.2.3}{54}{Partial derivatives approximation}{subsection.2.2.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Advection terms}{55}{section*.35}\protected@file@percent }
+\newlabel{eq:advection-upwind-x}{{2.13}{55}{Advection terms}{equation.2.2.13}{}}
+\newlabel{eq:advection-upwind-y}{{2.14}{55}{Advection terms}{equation.2.2.14}{}}
+\@writefile{toc}{\contentsline {paragraph}{Diffusion terms}{55}{section*.36}\protected@file@percent }
+\newlabel{eq:diffusion-x}{{2.17}{55}{Diffusion terms}{equation.2.2.17}{}}
+\newlabel{eq:diffusion-y}{{2.18}{55}{Diffusion terms}{equation.2.2.18}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.4}Numerical scheme}{56}{subsection.2.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{Discretised equations in open grid cells}{56}{section*.37}\protected@file@percent }
+\newlabel{eq:2steps-ADI-x-upos-vpos}{{2.19}{56}{Discretised equations in open grid cells}{equation.2.2.19}{}}
+\newlabel{eq:2steps-ADI-x-upos-vneg}{{2.20}{57}{Discretised equations in open grid cells}{equation.2.2.20}{}}
+\newlabel{eq:2steps-ADI-x-uneg-vpos}{{2.21}{57}{Discretised equations in open grid cells}{equation.2.2.21}{}}
+\newlabel{eq:2steps-ADI-x-uneg-vneg}{{2.22}{57}{Discretised equations in open grid cells}{equation.2.2.22}{}}
+\newlabel{eq:2steps-ADI-y-vpos-upos}{{2.23}{58}{Discretised equations in open grid cells}{equation.2.2.23}{}}
+\newlabel{eq:2steps-ADI-y-vpos-uneg}{{2.24}{58}{Discretised equations in open grid cells}{equation.2.2.24}{}}
+\newlabel{eq:2steps-ADI-y-vneg-upos}{{2.25}{59}{Discretised equations in open grid cells}{equation.2.2.25}{}}
+\newlabel{eq:2steps-ADI-y-vneg-uneg}{{2.26}{59}{Discretised equations in open grid cells}{equation.2.2.26}{}}
+\@writefile{toc}{\contentsline {subsubsection}{Discretised equations in closed grid cells}{59}{section*.38}\protected@file@percent }
+\newlabel{sec:boundary-conditions}{{2.2.4}{59}{Discretised equations in closed grid cells}{section*.38}{}}
+\@writefile{toc}{\contentsline {paragraph}{1) Neumann boundary conditions}{59}{section*.39}\protected@file@percent }
+\newlabel{eq:2steps-ADI-x-upos-vpos+Neumann}{{2.27}{60}{1) Neumann boundary conditions}{equation.2.2.27}{}}
+\newlabel{eq:2steps-ADI-x-uneg-vpos+Neumann}{{2.28}{60}{1) Neumann boundary conditions}{equation.2.2.28}{}}
+\@writefile{toc}{\contentsline {paragraph}{2) Dirichlet boundary conditions}{60}{section*.40}\protected@file@percent }
+\newlabel{eq:2steps-ADI-x-upos-vpos+Dirichlet}{{2.29}{60}{2) Dirichlet boundary conditions}{equation.2.2.29}{}}
+\@writefile{toc}{\contentsline {paragraph}{3) Global domain}{61}{section*.41}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Tridiagonal matrix system and its resolution}{61}{section.2.3}\protected@file@percent }
+\newlabel{eq:matrix-form-x}{{2.30}{61}{Tridiagonal matrix system and its resolution}{equation.2.3.30}{}}
+\newlabel{eq:matrix-form-y}{{2.31}{61}{Tridiagonal matrix system and its resolution}{equation.2.3.31}{}}
+\citation{Sibert-Fournier}
+\newlabel{eq:second-members-x}{{2.32}{62}{Tridiagonal matrix system and its resolution}{equation.2.3.32}{}}
+\newlabel{eq:second-members-y}{{2.33}{62}{Tridiagonal matrix system and its resolution}{equation.2.3.33}{}}
+\newlabel{eq:A-matrix}{{2.34}{62}{Tridiagonal matrix system and its resolution}{equation.2.3.34}{}}
+\newlabel{eq:B-matrix}{{2.35}{62}{Tridiagonal matrix system and its resolution}{equation.2.3.35}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.1}Diagonal coefficients for Neumann boundary conditions}{62}{subsection.2.3.1}\protected@file@percent }
+\newlabel{eq:matrix-elements-lowerdiag-x}{{2.36}{63}{Diagonal coefficients for Neumann boundary conditions}{equation.2.3.36}{}}
+\newlabel{eq:matrix-elements-diag-x}{{2.37}{63}{Diagonal coefficients for Neumann boundary conditions}{equation.2.3.37}{}}
+\newlabel{eq:matrix-elements-upperdiag-x}{{2.38}{63}{Diagonal coefficients for Neumann boundary conditions}{equation.2.3.38}{}}
+\newlabel{eq:matrix-elements-lowerdiag-y}{{2.39}{64}{Diagonal coefficients for Neumann boundary conditions}{equation.2.3.39}{}}
+\newlabel{eq:matrix-elements-diag-y}{{2.40}{64}{Diagonal coefficients for Neumann boundary conditions}{equation.2.3.40}{}}
+\newlabel{eq:matrix-elements-upperdiag-y}{{2.41}{64}{Diagonal coefficients for Neumann boundary conditions}{equation.2.3.41}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.2}Diagonal coefficients for Dirichlet boundary conditions}{65}{subsection.2.3.2}\protected@file@percent }
+\newlabel{eq:global-flag}{{2.42}{65}{Diagonal coefficients for Dirichlet boundary conditions}{equation.2.3.42}{}}
+\newlabel{eq:alpha}{{2.45}{65}{Diagonal coefficients for Dirichlet boundary conditions}{equation.2.3.45}{}}
+\newlabel{eq:matrix-elements-lowerdiag-x-general}{{2.47}{65}{Diagonal coefficients for Dirichlet boundary conditions}{equation.2.3.47}{}}
+\newlabel{eq:matrix-elements-diag-x-general}{{2.48}{65}{Diagonal coefficients for Dirichlet boundary conditions}{equation.2.3.48}{}}
+\newlabel{eq:matrix-elements-upperdiag-x-general}{{2.49}{65}{Diagonal coefficients for Dirichlet boundary conditions}{equation.2.3.49}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Algorithm}{66}{section.2.4}\protected@file@percent }
+\newlabel{sec:algorithm}{{2.4}{66}{Algorithm}{section.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Initial conditions}{66}{subsection.2.4.1}\protected@file@percent }
+\newlabel{eq:2steps-init-cohort}{{2.50}{66}{Initial conditions}{equation.2.4.50}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.2}Age initialisation}{66}{subsection.2.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.3}Main loop}{66}{subsection.2.4.3}\protected@file@percent }
+\bibcite{Press}{{1}{1992}{{Press et al.}}{{}}}
+\bibcite{Sibert-Fournier}{{2}{1994}{{Sibert and Fournier}}{{}}}
+\bibcite{Sibert}{{3}{1999}{{Sibert et al.}}{{}}}
+\@writefile{toc}{\contentsline {section}{References}{67}{subsection.2.4.3}\protected@file@percent }
+\@setckpt{chapter2/Numerics}{
+\setcounter{page}{68}
+\setcounter{equation}{50}
+\setcounter{enumi}{0}
+\setcounter{enumii}{0}
+\setcounter{enumiii}{0}
+\setcounter{enumiv}{0}
+\setcounter{footnote}{1}
+\setcounter{mpfootnote}{0}
+\setcounter{part}{0}
+\setcounter{chapter}{2}
+\setcounter{section}{4}
+\setcounter{subsection}{3}
+\setcounter{subsubsection}{0}
+\setcounter{paragraph}{0}
+\setcounter{subparagraph}{0}
+\setcounter{figure}{1}
+\setcounter{table}{1}
+\setcounter{parentequation}{0}
+\setcounter{@pps}{0}
+\setcounter{@ppsavesec}{0}
+\setcounter{@ppsaveapp}{0}
+\setcounter{r@tfl@t}{0}
+\setcounter{linenumber}{1}
+\setcounter{LN@truepage}{67}
+\setcounter{caption@flags}{0}
+\setcounter{continuedfloat}{0}
+\setcounter{subfigure}{0}
+\setcounter{subtable}{0}
+\setcounter{LT@tables}{1}
+\setcounter{LT@chunks}{7}
+\setcounter{NAT@ctr}{3}
+\setcounter{Item}{0}
+\setcounter{Hfootnote}{2}
+\setcounter{bookmark@seq@number}{31}
+\setcounter{float@type}{8}
+\setcounter{lstnumber}{1}
+\setcounter{nlinenum}{0}
+\setcounter{section@level}{2}
+\setcounter{lstlisting}{0}
+}

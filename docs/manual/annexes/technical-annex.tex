@@ -1,0 +1,133 @@
+\chapter{Technical annex}\label{ch:appendix-config}
+
+\section{Makefile}
+
+HEADERS= \textbackslash \\
+XMLDocument2.h \textbackslash \\
+calpop.h \textbackslash \\
+Map.h \textbackslash \\
+Matrices.h \textbackslash \\
+Numfunc.h \textbackslash \\
+ReadWrite.h \textbackslash \\
+Param.h \textbackslash \\
+Date.h \textbackslash \\
+SaveTimeArea.h \textbackslash \\
+SeapodymCoupled.h \textbackslash \\
+SimtunaFunc.h \textbackslash \\
+mytypes.h \textbackslash \\
+SeapodymDocConsole.h \textbackslash \\
+ctrace.h \textbackslash \\
+Utilities.h \textbackslash \\
+VarMatrices.h \textbackslash \\
+VarParamCoupled.h \textbackslash \\
+VarSimtunaFunc.h \\
+\\
+SRCS= \textbackslash \\
+main.cpp \textbackslash \\
+XMLDocument2.cpp \textbackslash \\
+VarParamCoupled.cpp \textbackslash \\
+seapodym\_coupled.cpp \textbackslash \\
+Map.cpp \textbackslash \\
+Matrices.cpp \textbackslash \\
+Numfunc.cpp \textbackslash \\
+ReadWrite.cpp \textbackslash \\
+Param.cpp \textbackslash \\
+Date.cpp \textbackslash \\
+SaveTimeArea.cpp \textbackslash \\
+SimtunaFunc.cpp \textbackslash \\
+VarParamCoupled\_xinit.cpp \textbackslash \\
+VarParamCoupled\_reset.cpp \textbackslash \\
+SeapodymCoupled\_EditRunCoupled.cpp \textbackslash \\
+SeapodymCoupled\_OnRunCoupled.cpp \textbackslash \\
+SeapodymCoupled\_OnRunFirstStep.cpp \textbackslash \\
+SeapodymCoupled\_OnReadForcing.cpp \textbackslash \\
+SeapodymCoupled\_OnWriteOutput.cpp \textbackslash \\
+SeapodymDocConsole\_UpdateDisplay.cpp \textbackslash \\
+dv\_spawning\_habitat.cpp \textbackslash \\
+dv\_juvenile\_habitat.cpp \textbackslash \\
+dv\_mortality\_sp.cpp \textbackslash \\
+dv\_spawning\_habitat.cpp \textbackslash \\
+dv\_caldia.cpp \textbackslash \\
+dv\_tridag\_bet.cpp \textbackslash \\
+dv\_calrec\_adre.cpp \textbackslash \\
+dv\_survival.cpp \textbackslash \\
+dv\_precalrec\_juv.cpp \textbackslash \\
+dv\_calrec\_precalrec.cpp \textbackslash \\
+dv\_predicted\_catch.cpp \textbackslash \\
+dv\_predicted\_catch\_without\_effort.cpp \textbackslash \\
+dv\_total\_exploited\_biomass.cpp \textbackslash \\
+dv\_total\_obs\_catch\_age.cpp \textbackslash \\
+dv\_spawning.cpp \textbackslash \\
+dv\_accessibility.cpp \textbackslash \\
+dv\_feeding\_habitat.cpp \textbackslash \\
+dv\_seadonal\_switch.cpp \textbackslash \\
+dv\_total\_pop.cpp \textbackslash \\
+dv\_total\_mortality\_comp.cpp \textbackslash \\
+dv\_food\_requirement\_index.cpp \textbackslash \\
+Calpop\_caldia.cpp  \textbackslash \\
+Calpop\_calrec.cpp  \textbackslash \\
+Calpop\_InitCalPop.cpp  \textbackslash \\
+Calpop\_precaldia.cpp  \textbackslash \\
+Calpop\_precalrec.cpp  \textbackslash \\
+Calpop\_tridag.cpp \textbackslash \\
+Calpop\_recompute\_coefs.cpp \textbackslash \\
+like.cpp \\
+
+\noindent SRCPATH=DOM/src:src \\
+INCPATH=-IDOM/src -Isrc \\
+BINPATH=. \\
+
+
+\noindent OBJPATH=objs \\
+ADMODEL=\$(ADMB\_HOME) \\
+
+\noindent DEBUG= -g \\
+CFLAGS=-DTRUE=true -DFALSE=false -D \_\_GNUDOS\_\_ -Dlinux -O3 -DOPT\_LIB -Wall -Wno-deprecated -I\$(ADMODEL)/include -I/usr/include/libxml2 \$(INCPATH)
+
+LFLAGS= -L\$(ADMODEL)/lib  -ladmbo  -ldl -lstdc++ -lxml2 -lm
+
+CC=gcc \\
+LL=\$(CC) \\
+
+
+\noindent vpath \%.cpp \$(SRCPATH) \\
+vpath \%.h \$(SRCPATH) \\
+
+\noindent OBJECTS=\$(SRCS:\%.cpp=\$(OBJPATH)/\%.o) \\
+
+
+\noindent export OBJECTS \\
+export OBJPATH \\
+
+\noindent export CFLAGS \\
+export LFLAGS \\
+export CC \\
+export LL \\
+
+
+\noindent all: init \$(BINPATH)/seapodym \\
+
+
+\noindent init: \\
+        \indent @test -d \$(OBJPATH) \textbar\textbar \hspace{0.1cm} mkdir -v \$(OBJPATH) \\
+
+\noindent test: init \$(OBJECTS) \\
+        \indent make -f Makefile.test \\
+
+\noindent docs: \$(SRCS) \$(HEADERS) \\
+        \indent @doxygen \\
+
+\noindent \$(BINPATH)/seapodym : \$(OBJECTS) \\
+        \indent \$(LL) -o\$@ \$(DEBUG) \$\textbf{\^}  \$(LFLAGS) \\
+
+\noindent \$(OBJPATH)/\%.o : \%.cpp \\
+        \$(CC) -o\$@ \$(DEBUG) -c \$(CFLAGS) \$(filter \%.cpp, \$\textbf{\^}) \\
+
+\noindent \$(OBJECTS) : \$(HEADERS) \\
+
+\noindent clean: \\        \indent @rm -vf \$(OBJECTS) \$(BINPATH)/seapodym \\
+        \indent @rm -vf \$(OBJECTS) \$(BINPATH)/seapodym.exe \\
+        \indent @rm -vf \$(OBJECTS) \$(BINPATH)/TestSeapodymCoupled \\
+        \indent @rm -vrf \$(OBJPATH) \\
+        \indent @rm -vrf docs \\
+        \indent @rm -vf gmon.out \\

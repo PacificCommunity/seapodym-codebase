@@ -1,0 +1,78 @@
+\begin{longtable}{p{.75cm}p{1.5cm}p{11cm}p{1.5cm}}
+\caption{Species dynamic parameters with their notations, definitions and  references\label{tab:parameters}}\\\hline
+$\boldsymbol \uptheta$	& \textbf{Eq.}&  \textbf{Description} & \textbf{Units}	\\\hline 
+\endfirsthead
+%\multicolumn{3}{@{}l}{\ldots continued}\\\hline
+\multicolumn{3}{@{}l}{Table 1.3 continued}\\\hline
+$\boldsymbol \uptheta$	& \textbf{Eq.}&  \textbf{Description} & \textbf{Units}	\\\hline 
+\endhead % all the lines above this will be repeated on every page
+\hline
+%\multicolumn{3}{r@{}}{continued \ldots}\\
+\endfoot
+\hline
+\endlastfoot
+    \multicolumn{4}{c}{\textit{Recruitment}} \\
+\hline
+    $r$ &(\ref{eq:larvae})  &{Reproduction rate in Beverton--Holt function}&$\text{mo}^{-1}$\\
+    $b$ &(\ref{eq:larvae})  & {slope parameter in Beverton--Holt function}&$\text{Nb}^{-1}\text{km}^2$\\\hline
+    \multicolumn{4}{c}{\textit{Natural mortality}}\\
+\hline
+    $\bar{m}_p$ &(\ref{eq:Mp}) & {Predation mortality rate age age $0$}&$\text{mo}^{-1}$\\
+
+    $\beta_p$&(\ref{eq:Mp})& {Slope coefficient in predation mortality} &\\
+
+    $\bar{m}_s$ & (\ref{eq:Ms}) & {Senescence mortality rate at age $0$}&$\text{mo}^{-1-\beta_s}$\\
+
+    $\beta_s$ &(\ref{eq:Ms})   & Slope coefficient in senescence mortality&\\
+
+    $\epsilon$ &(\ref{eq:Mvar}) & {Variability of mortality rate with habitat index from $\frac{M}{(1+\epsilon)}$ in the worst habitat to $M(1+\epsilon))$ in the best habitat} &\\\hline
+
+   \multicolumn{4}{c}{\textit{ Spawning habitat}} \\
+\hline
+    $\sigma$ &\eqref{eq:spawning-thermal}  & {Standard deviation in temperature Gaussian function of spawning habitat}&$^\circ \text{C}$\\
+
+    $T^{\star}$ & \eqref{eq:spawning-thermal} &{Optimal surface temperature for larvae in spawning habitat definition}&$^\circ \text{C}$\\
+
+    $\alpha$ &\eqref{eq:spawning-prey} & {Prey encounter rate in Holling (type III) function} &$\text{day}^{-1}$\\
+    $\alpha_{F}$ &(\ref{eq:spawning-pred})  & Log-normal mean parameter in predator-dependent function & g$\cdot$m$^{-2}$\\
+    $\beta_{F}$ &(\ref{eq:spawning-pred})  & Log-normal shape parameter in predator-dependent function &\\
+\hline
+   \multicolumn{4}{c}{\textit{ Feeding habitat}}\\
+\hline   
+    $T_0$ & (\ref{eq:temperature-length})& {Preferred temperature for age 0} &$^\circ \text{C}$\\
+    $T_m$ & (\ref{eq:temperature-length}) & {Preferred temperature for the oldest adult fish} & $^\circ \text{C}$\\ 
+    $\sigma_0$ & (\ref{eq:sigma-weight}) 	 & Standard deviation in temperature Gaussian function for age 0 in feeding habitat& $^\circ \text{C}$\\ 
+    $\sigma_m$ & (\ref{eq:sigma-weight}) 	 & Standard deviation in temperature Gaussian function at age A+ &  $^\circ \text{C}$\\       
+    $b_T$ &(\ref{eq:temperature-length})& {Allometric power coefficient for thermal preferences at age} &\\
+    $\gamma$ &(\ref{eq:oxygen})  & {Slope of the oxygen function in layer accessibility}&\\
+
+    $\hat{O}_2$ &(\ref{eq:oxygen}) 	& {Critical value of dissolved oxygen in the layer}& ml/L\\
+    
+    $E_{11}$ &(\ref{eq:eF-matrix})& Epipelagic forage scaling factor & m$^2\cdot$g$^{-1}$\\
+    $E_{22}$ &(\ref{eq:eF-matrix})& Mesopelagic forage scaling factor & m$^2\cdot$g$^{-1}$\\
+    $E_{21}$ &(\ref{eq:eF-matrix})& Migrant mesopelagic forage scaling factor & m$^2\cdot$g$^{-1}$\\
+    $E_{33}$ &(\ref{eq:eF-matrix})& Lower mesopelagic forage scaling factor & m$^2\cdot$g$^{-1}$\\
+    $E_{32}$ &(\ref{eq:eF-matrix})& Migrant lower mesopelagic forage scaling factor & m$^2\cdot$g$^{-1}$\\
+    $E_{31}$ &(\ref{eq:eF-matrix})& Highly migrant lower mesopelagic forage scaling factor & m$^2\cdot$g$^{-1}$\\
+\hline
+    \multicolumn{4}{c}{\textit{ Adult seasonal migrations}} \\
+\hline
+    $\hat{t}$ &(\ref{eq:switch-function}) & Mid-date (day of the year) of seasonal spawning migrations of adults &\text{day}\\
+    
+    $\varrho_s$ &(\ref{eq:season-peak}) & Critical value of day-night ratio, $\varrho$, triggering seasonal migrations& \\
+\hline
+  \multicolumn{4}{c}{\textit{ Movement}} \\
+\hline
+    $c$ &\eqref{eq:diffusion} & {Coefficient of diffusion variability with habitat index}&\\
+    $\sigma$ &\eqref{eq:diffusion}& {Multiplier for the theoretical diffusion rate $\frac{{\bar{V}}^2 \Delta T}{4}$}& \\
+    $V_m$ &\eqref{eq:taxis-coefficient} & {Velocity at maximal habitat gradient and $A=1$, $\text{BL}/\text{s}$}& \\
+    $A$ &\eqref{eq:taxis-coefficient} &{Slope coefficient in allometric function for tuna velocity}&\\
+\hline
+     \multicolumn{4}{c}{\textit{ Fishing mortality and catch prediction}} \\
+\hline
+    $q_f$ &(\ref{eq:FM},~\ref{eq:catch-in-weight})   & Constant catchability coefficients for all declared fisheries&\\
+    $\varsigma_f$ &(\ref{eq:fishery-specific-selectivity})  & Steepness of selectivity function if type I or II, standard deviation if type III&$\text{cm}$\\
+    $\hat{l}_f$ & (\ref{eq:fishery-specific-selectivity})  & Threshold length in sigmoid function; mean length in asymmetric Gaussian function &$\text{cm}$ \\
+    $\mu_f$ &(\ref{eq:fishery-specific-selectivity}) & Lowest selectivity for large fish in case of asymmetric Gaussian selectivity function&\\		
+\hline        
+\end{longtable}

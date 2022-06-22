@@ -1,0 +1,572 @@
+<?xml version="1.0"?>
+<par version="1.0">
+
+<!--==================== -->
+<!--SIMULATION PARAMETERS-->
+<!--==================== -->
+<latitudeMin value="-54.875"/> 
+<latitudeMax value="65.125"/>
+<longitudeMin value="88.375"/>
+<longitudeMax value="290.375"/>
+<space_reso value="2"/>
+<nb_layer value="3"/>
+<deltaX value="120"/>
+<deltaY value="120"/>
+<deltaT value="30"/>
+<iterationNumber value="30"/>
+<tuna_spinup value="0"/>
+<save_first_date year="1998" month="1"/>
+<save_last_date year="2009" month="12"/>
+<nb_yr_forecast value="0"/>
+<nb_step_to_skip value="36"/>
+<!--==================== -->
+<!--LIKELIHOOD PARAMETERS--> 
+<!--==================== -->
+<tag_likelihood_only value="0"/>
+
+<!--type of data in the likelihood: 0 - cpue, 1 - catch -->
+<like_c_cpue value="1"/>
+
+<total_likelihood value="1375175.761915711"/>
+
+<!--likelihood types: 1 - concentrated, 2 - log-normal, 3 - poisson, 4 - negative binomial, 5 - zero-inflated negbin, 6 - truncated poisson -->
+<!--can be different for each fishery (see below the fishery codes) -->
+<likelihood_types>
+	        <bet>3 3 3 3 1</bet>
+</likelihood_types>
+
+<nb_fishery value="5"/>
+<list_fishery_name>L1 L2 L3 L4 L5</list_fishery_name> 
+
+<!--1 - C in metric tones; 0 - C in numbers -->
+<fishery_catch_units>1 1 1 1 1</fishery_catch_units> 
+
+<degrade_fishery_reso_deg value="5"/>
+
+<!--Mask for fishery data usage: 0 - do not take into account-->
+<mask_fishery_sp>
+	<bet>1 1 1 1 1</bet>
+</mask_fishery_sp>
+
+<mask_fishery_no_effort>
+	<bet>0 0 0 0 1</bet>
+</mask_fishery_no_effort>
+
+<mask_fishery_likelihood>
+		<bet>1 1 1 1 1</bet>
+</mask_fishery_likelihood>
+
+<!--length frequencies likelihood: 0 - do not take into account, 1 - account--> 
+<frq_likelihood bet="0"/>
+
+<!--TAG likelihood: 0 - do not take into account, 1 - account-->
+<tag_likelihood bet="0"/>
+
+<!--STOCK likelihood: 0 - do not take into account, 1 - account-->
+<stock_likelihood bet="1"/>
+<!-- The values entered for mean_stock_obs will be used in stock likelihood
+     These can be the total abundance estimated by stock assessment models 
+     within the rectangular region specified -->
+<mean_stock_obs>
+    <bet value="1500" lgmin="110" lgmax="210" ltmin="-40" ltmax="50"/>
+</mean_stock_obs>
+
+
+<!--================= -->
+<!--MODEL INPUT-OUTPUT-->
+<!--================= -->
+
+<!-- Forcing data directory -->
+<strdir value="/data/run-freeglorys-2x30d-1998-2019-po/"/>
+
+<!-- Micronekton density files within forcing directory -->
+<strdir_forage value="forage/"/>
+<!-- Model initial state directory containing bet_cohorts.dym -->
+<strdir_init value="init/bet/19971215/e27.1_clt/e27.1.M/F0/"/>
+
+<!-- Land mask and topographic index files -->
+<str_file_mask value="mask_freeglorys_2deg_corrected_noIO.txt"/>
+<str_file_topo value="topo_noteff.txt"/>
+
+<!--type of oxygen data: 0 for time series, 1 - for monthly, 2 for seasonal-->
+<type_oxy value="1"/>
+
+<!-- Forcing data filenames -->
+<strfile_pp value="po_freeglorys2v4_rxd_2x30d_pp_1998_2019.dym"/>
+<strfile_sst value="po_freeglorys2v4_2x30d_SST_1998_2019.dym"/>
+<strfile_vld value="po_freeglorys2v4_rxd_2x30d_zeu_1998_2019.dym"/>
+<strfile_u layer0="po_freeglorys2v4_rxd_2x30d_U_L1_1998_2019.dym" layer1="po_freeglorys2v4_rxd_2x30d_U_L2_1998_2019.dym" layer2="po_freeglorys2v4_rxd_2x30d_U_L3_1998_2019.dym"/>
+<strfile_v layer0="po_freeglorys2v4_rxd_2x30d_V_L1_1998_2019.dym" layer1="po_freeglorys2v4_rxd_2x30d_V_L2_1998_2019.dym" layer2="po_freeglorys2v4_rxd_2x30d_V_L3_1998_2019.dym"/>
+<strfile_t layer0="po_freeglorys2v4_rxd_2x30d_temperature_L1_1998_2019.dym" layer1="po_freeglorys2v4_rxd_2x30d_temperature_L2_1998_2019.dym" layer2="po_freeglorys2v4_rxd_2x30d_temperature_L3_1998_2019.dym"/>
+<strfile_oxy layer0="po_levitus_WOA2013_2x30d_O2_L1_CLM.dym" layer1="po_levitus_WOA2013_2x30d_O2_L2_CLM.dym" layer2="po_levitus_WOA2013_2x30d_O2_L3_CLM.dym"/>
+
+<strfile_pp_clm value="po_freeglorys2v4_rxd_2x30d_PP_1980.dym"/>
+<strfile_u_clm layer0="po_freeglorys2v4_rxd_2x30d_U_L1_1980.dym" layer1="po_freeglorys2v4_rxd_2x30d_U_L2_1980.dym" layer2="po_freeglorys2v4_rxd_2x30d_U_L3_1980.dym"/>
+<strfile_v_clm layer0="po_freeglorys2v4_rxd_2x30d_V_L1_1980.dym" layer1="po_freeglorys2v4_rxd_2x30d_V_L2_1980.dym" layer2="po_freeglorys2v4_rxd_2x30d_V_L3_1980.dym"/>
+<strfile_t_clm layer0="po_freeglorys2v4_rxd_2x30d_temperature_L1_1980.dym" layer1="po_freeglorys2v4_rxd_2x30d_temperature_L2_1980.dym" layer2="po_freeglorys2v4_rxd_2x30d_temperature_L3_1980.dym"/>
+<strfile_oxy_clm layer0="po_freeglorys2v4_rxd_2x30d_O2_L1_1980.dym" layer1="po_freeglorys2v4_rxd_2x30d_O2_L2_1980.dym" layer2="po_freeglorys2v4_rxd_2x30d_O2_L3_1980.dym"/>
+
+<!--FISHERY DATA -->
+<strdir_fisheries value="/data/fisheries/bet/ds2020/"/>
+
+<file_catch_data>
+        <nb_files bet="1"/>
+                <bet file1="bet_catch_20f_L3cor.txt"/>
+</file_catch_data>
+
+<flex_regstruc value="1"/>
+<file_frq_data>
+        <nb_files bet="2"/>
+                <bet file1="bet_LF_LL_11f_PO.txt"/>
+                <bet file2="bet_LF_PS_PL_OT_9f_PO.txt"/>
+</file_frq_data>
+
+<!--TAGGING DATA -->
+<strdir_tags value="/data/tags/ds2016/"/>
+
+<tags_grid>
+        <reso dx="6" dy="6"/>
+        <longitude east="110.375" west="290.375"/>
+        <latitude south="-30.625" north="29.375"/>
+</tags_grid>
+
+<file_tag_data>
+   <nb_files bet="14"/>
+   <bet file1="bet-pop-tags_20080715.txt" file2="bet-pop-tags_20080815.txt" file3="bet-pop-tags_20080915.txt" file4="bet-pop-tags_20081015.txt" file5="bet-pop-tags_20081115.txt" file6="bet-pop-tags_20081215.txt" file7="bet-pop-tags_20090515.txt" file8="bet-pop-tags_20090615.txt" file9="bet-pop-tags_20090715.txt" file10="bet-pop-tags_20090815.txt" file11="bet-pop-tags_20090915.txt" file12="bet-pop-tags_20091015.txt" file13="bet-pop-tags_20091115.txt" file14="bet-pop-tags_20091215.txt"/>  
+</file_tag_data>
+
+
+<!-- Output Directory and writing options -->
+<strdir_output value="output/"/>
+<write_all_fisheries_dym value="1"/>
+<write_all_cohorts_dym value="1"/>
+
+
+
+<!--====================== -->
+<!--FORAGE MODEL PARAMETERS-->
+<!--====================== -->
+<Tr_max value="527"/>
+<Tr_exp value="-0.125"/>
+<inv_lambda_max value="2109"/>
+<inv_lambda_curv value="-0.125"/>
+<E value="0.0036972"/>
+<c_pp value="0.0948"/>
+<nb_forage value="6"/>
+
+<frg_name>epi meso mmeso bathy mbathy hmbathy</frg_name>
+
+<source_frg epi="0.08" meso="0.17" mmeso="0.08" bathy="0.56" mbathy="0.07" hmbathy="0.04"/>
+<day_layer epi="0" meso="1" mmeso="1" bathy="2" mbathy="2" hmbathy="2"/>
+<night_layer epi="0" meso="1" mmeso="0" bathy="2" mbathy="1" hmbathy="0"/>
+
+<tstep_forage value="30"/>
+<sigma_fcte value="100"/>
+<max_NPP value="200"/>
+<b_F_habitat value="20000"/>
+
+<!--=========================== -->
+<!--PREDATOR MODEL AGE STRUCTURE-->
+<!--=========================== -->
+<nb_species value="1"/>
+
+<sp_name>bet</sp_name>
+
+<nb_life_stages bet="3"/>
+<life_stage>
+        <bet>larvae juvenile adult</bet>
+</life_stage>
+
+<nb_cohort_life_stage>
+        <bet>1 2 82</bet>
+</nb_cohort_life_stage>
+
+<age_recruit bet="3"/>
+<age_mature bet="35"/>
+
+<sp_unit_cohort>
+	<bet>30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30   30   30   30   30   30   30
+	     30   30   30   30   30   30   30   30   30 2520
+        </bet>
+</sp_unit_cohort> 
+
+<!--Just for info, the mean age (in month) of each age class -->
+<!--age = 1   3   5   7   9  11  13  15  17  19  21  23  25  27  29  31  33  35  37
+         39  41  43  45  47  49  51  53  55  57  59  61  63  65  67  69  71  73  75
+         77  79  81  83  85  87  89  91  93  95 138
+-->
+<maturity_age>
+	<bet>0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
+	     0.0001 0.0002 0.0004 0.0007 0.0011 0.0018 0.0030 0.0042 0.0066 0.0101 
+	     0.0136 0.0199 0.0289 0.0378 0.0519 0.0712 0.0905 0.1169 0.1505 0.1841 
+	     0.2240 0.2702 0.3164 0.3647 0.4149 0.4651 0.5128 0.5579 0.6030 0.6434 
+	     0.6792 0.7149 0.7461 0.7727 0.7993 0.8223 0.8415 0.8608 0.8774 0.8912 
+	     0.9051 0.9170 0.9270 0.9370 0.9456 0.9527 0.9599 0.9661 0.9712 0.9763 
+	     0.9806 0.9840 0.9875 0.9904 0.9926 0.9948 0.9964 0.9976 0.9987 0.9994 
+	     0.9996 0.9999 0.9997 0.9992 0.9987 0.9978 0.9966 0.9954 0.9939 0.9921 
+	     0.9903 0.9882 0.9859 0.9836 0.7300
+	</bet>
+</maturity_age>
+
+<!--Optional: if active, vector age_compute_habitat gives the sequence number of 
+    updates of feeding habitat and movement rates. For instance, in this parfile
+    these internal variables will be computed (updated) only 32 times instead of 
+    85, i.e. the number of age classes-->
+<!--
+<age_compute_habitat>
+	<bet>0  1  2  3  4  5  5  6  6  7  7  8  8  9  9 10 10 11 11 12 12 13 13 14 14
+	    15 15 16 16 17 17 18 18 19 19 19 20 20 20 21 21 21 22 22 22 23 23 23 24 24
+	    24 24 25 25 25 25 26 26 26 26 27 27 27 27 27 28 28 28 28 28 29 29 29 29 29
+	    29 30 30 30 30 30 30 30 31 32
+  	</bet>
+</age_compute_habitat>
+-->
+<!--mean length (cm) of individuals in each age class-->
+<length>
+	<bet>9.12  13.55  17.88  22.10  26.21  30.22  34.14  37.95  41.68  45.31
+	     48.85  52.30  55.67  58.95  62.16  65.28  68.33  71.30  74.20  77.03
+	     79.79  82.48  85.10  87.66  90.16  92.59  94.96  97.28  99.54 101.74
+	    103.89 105.98 108.02 110.02 111.96 113.85 115.70 117.51 119.26 120.98
+	    122.65 124.28 125.88 127.43 128.94 130.42 131.86 133.26 134.63 135.97
+	    137.27 138.54 139.78 140.99 142.17 143.31 144.44 145.53 146.60 147.64
+	    148.65 149.64 150.61 151.55 152.46 153.36 154.23 155.08 155.92 156.73
+	    157.52 158.29 159.04 159.77 160.49 161.18 161.86 162.53 163.17 163.80
+	    164.42 165.02 165.61 166.18 180.93
+ 	</bet>
+</length>
+<!--mean weght (kg) of individuals in each age class-->
+<weight>
+	<bet>0.02   0.05   0.12   0.23   0.39   0.59   0.86   1.18   1.57   2.02
+	     2.53   3.11   3.76   4.47   5.25   6.09   6.99   7.95   8.97  10.04
+	    11.17  12.34  13.57  14.84  16.16  17.51  18.91  20.34  21.80  23.29
+	    24.81  26.35  27.92  29.51  31.11  32.73  34.36  36.01  37.66  39.33
+	    40.99  42.67  44.34  46.01  47.69  49.36  51.02  52.69  54.34  55.99
+	    57.63  59.25  60.87  62.48  64.07  65.65  67.22  68.77  70.30  71.82
+	    73.33  74.81  76.28  77.73  79.17  80.58  81.98  83.35  84.71  86.05
+	    87.37  88.67  89.95  91.21  92.45  93.67  94.87  96.05  97.21  98.35
+	    99.47 100.57 101.66 102.72 132.87
+ 	</bet>
+</weight>
+
+
+<!--======================== -->
+<!--PREDATOR MODEL PARAMETERS-->
+<!--======================== -->
+
+<!--=== 1. Available OPTIONS =====-->
+<seasonal_migrations bet="0"/>
+
+<vertical_movement bet="1"/>
+<!-- if optimal mu and sigma (b_sst_larvae and a_sst_larvae) 
+     for larvae assumed different from b_ and a_sst_spawning -->
+<uncouple_sst_larvae bet="1"/>
+
+<gaussian_thermal_function bet="1"/>
+
+<cannibalism_juv bet="0"/>
+
+<food_requirement_in_mortality bet="0"/>
+
+<!--= end of Available OPTIONS ==-->
+
+<!--===  2. Spawning habitat parameters  =======-->
+<a_sst_spawning bet="5.499999377710821">
+	<variable min="0.5" max="5.5" use="false"/>
+</a_sst_spawning>
+
+<b_sst_spawning bet="25.50000000432488">
+	<variable min="25.5" max="31.0" use="false"/>
+</b_sst_spawning>
+
+<!--parameters *_sst_larvae are ignored if 
+    <uncouple_sst_larvae bet="0"/>     -->
+<a_sst_larvae bet="3.749999993906406"> 
+        <variable min="0.5" max="3.75" use="false"/>
+</a_sst_larvae>
+
+<b_sst_larvae bet="26.00001467106519"> 
+        <variable min="26.0" max="28.0" use="false"/>
+</b_sst_larvae>
+
+<alpha_hsp_prey bet="0.02421327707107811">
+        <variable min="0.002" max="0.1" use="false"/>
+</alpha_hsp_prey>
+
+<alpha_hsp_predator bet="0.5000024599599174">
+        <variable min="0.5" max="1.5" use="false"/>
+</alpha_hsp_predator>
+
+<beta_hsp_predator bet="0.7696338480923586">
+	<variable min="0.0" max="2.0" use="false"/>
+</beta_hsp_predator>
+<!--=== end of Spawning habitat parameters =====-->
+
+<!--===  3. Recruitment function   =============-->
+<nb_recruitment bet="0.006500965085506141">
+        <variable min="0.0005" max="0.05" use="true"/>
+</nb_recruitment>
+
+<a_adults_spawning bet="15.72612509571025">
+	<variable min="10" max="20" use="true"/>
+</a_adults_spawning>
+<!--=== end of Recruitment function  ===========-->
+
+<!--=== 4. Juvenile habitat parameters =========-->
+<!--Activated by flag <cannibalism_juv bet="1"/>-->
+<hp_cannibalism bet="5.0">
+	<variable min="0" max="20" use="false"/>
+</hp_cannibalism>
+<!--=== end of Juvenile habitat parameters =====-->
+
+<!--=== 5. Adult seasonal migrations ===========-->
+<!--Activated if <seasonal_migrations bet="1"/> -->
+<spawning_season_peak bet="180.86071670988996">
+        <variable min="0" max="100" use="false"/>
+</spawning_season_peak>
+
+<spawning_season_start bet="1.00477324755014">
+        <variable min="0.95" max="1.2" use="false"/>
+</spawning_season_start>
+<!--=== end of Adult seasonal migrations =======-->
+
+<!--=== 6. Adult feeding habitat ===============-->
+<a_sst_habitat bet="2.434728444404373">
+	<variable min="0.5" max="7.5" use="false"/>
+</a_sst_habitat>
+
+<b_sst_habitat bet="15.48493201609903">
+	<variable min="9.0" max="15.5" use="false"/>
+</b_sst_habitat>
+
+<T_age_size_slope bet="0.7000001820865549">
+        <variable min="0.7" max="3.1" use="false"/>
+</T_age_size_slope>
+
+<!--three parameters below are active only if 
+    <gaussian_thermal_function bet="0"/>-->
+<thermal_func>
+    <delta1 bet="0.04">
+        <variable min="0.0" max="0.05" use="false"/>
+    </delta1>
+
+    <delta2 bet="0.015">
+        <variable min="0.0" max="0.25" use="false"/>
+    </delta2>
+
+    <delta3 bet="0.25">
+        <variable min="0.0" max="10.0" use="false"/>
+    </delta3>
+</thermal_func>
+
+<a_oxy_habitat bet="0.0001120486069333051">
+	<variable min="0.00001" max="0.15" use="false"/>
+</a_oxy_habitat>
+
+<b_oxy_habitat bet="1.485492424315652">
+	<variable min="0.5" max="2.5" use="false"/>
+</b_oxy_habitat>
+
+<eF_habitat>
+    <epi bet="0.999999999843883">
+        <variable min="0.0" max="1.0" use="false"/>
+    </epi>
+
+    <meso bet="0.4858662333732704">
+        <variable min="0.0" max="1.5" use="false"/>
+    </meso>
+
+    <mmeso bet="0.9999997359387802">
+        <variable min="0.0" max="1.0" use="false"/>
+    </mmeso>
+
+    <bathy bet="0.0">
+        <variable min="0.0" max="1.0" use="false"/>
+    </bathy>
+
+    <mbathy bet="0.3653131477844179">
+        <variable min="0.0" max="1.0" use="false"/>
+    </mbathy>
+
+    <hmbathy bet="0.9999999997564847">
+        <variable min="0.0" max="1.0" use="false"/>
+    </hmbathy>
+</eF_habitat>
+<!--=== end of Adult feeding habitat ===========-->
+
+<!--=== 7. Movement parameters    ==============-->
+<sigma_species bet="1.054119672277597"> 
+	<variable min="0" max="1.5" use="false"/>
+</sigma_species>
+
+<c_diff_fish bet="0.9">
+	<variable min="0.0" max="1.0" use="false"/>
+</c_diff_fish>
+
+<MSS_species bet="0.150000000076028">
+	<variable min="0.15" max="2.0" use="false"/>
+</MSS_species>
+
+<MSS_size_slope bet="0.7500119452996615">
+        <variable min="0.5" max="1.1" use="false"/>
+        </MSS_size_slope>
+<!--=== end of Movement parameters    ==========-->
+
+<!--=== 8. Mortality parameters   ==============-->
+<Mp_mean_max bet="0.1135833270984567">
+        <variable min="0.0" max="0.12" use="false"/>
+        </Mp_mean_max>
+
+<Mp_mean_exp bet="0.02306">
+        <variable min="0.01" max="0.5" use="false"/>
+        </Mp_mean_exp>
+
+<Ms_mean_max bet="1.0e-10">
+        <variable min="0.0" max="0.05" use="false"/>
+        </Ms_mean_max>
+
+<Ms_mean_slope bet="3.85">
+        <variable min="0.0" max="5.05" use="false"/>
+        </Ms_mean_slope>
+
+<M_mean_range bet="0.1">
+        <variable min="0.0" max="0.5" use="false"/>
+        </M_mean_range>
+<!--=== end of Mortality parameters   ===========-->
+
+<!--=== 9. Food requirement index  ==============-->
+<!-- Used only if <food_requirement_in_mortality bet="1"/>-->
+<!-- residual competition is the proportion of total F biomass 
+available for a given species in the presence of other species -->
+<residual_competition bet="0.025"/> 
+
+<!-- daily food ration -->
+<forage_ration bet="0.06"/>
+<!--=== end of Food requirement index  ==========-->
+
+
+<!--========================== -->
+<!--FISHERY DATA AND PARAMETERS-->
+<!--========================== -->
+
+<q_sp_fishery>
+	<variables use="true"/>
+
+        <L1 bet="1.298725739770595e-05">
+                <variable min="0.0" max="0.001" use="true" dyn="0.004"/>
+        </L1>
+
+        <L2 bet="2.57024034053101e-05">
+                <variable min="0.0" max="0.001" use="true" dyn="0.004"/>
+        </L2>
+
+        <L3 bet="8.240793041768003e-06">
+                <variable min="0.0" max="0.001" use="true" dyn="0.004"/>
+        </L3>
+
+        <L4 bet="1.73244042928708e-05">
+                <variable min="0.0" max="0.001" use="true" dyn="5e-04"/>
+        </L4>
+ 
+        <L5 bet="0.0">
+                <variable min="0.0" max="0.001" use="false" dyn="0.0"/>
+        </L5>
+</q_sp_fishery>
+
+<!--selectivities as functions of length--> 
+<!--1 - logistic, 1 parameter: main parameter is used as a slope coefficient--> 
+<!--2 - sigmoid, 2 parameters: main parameter as slope coefficient + length_threshold--> 
+<!--3 - asymmetric Gaussian, 3 parameters: length_threshold as optimal value, main as sigma, right_asymptote as the function min on the right --> 
+<s_sp_fishery>
+	<variables use="true"/>
+
+        <L1 bet="23.79737028104424">
+                <variable min="5" max="50" use="true"/>
+                <function_type value="3"/>
+                <length_threshold bet="114.8134593861857" use="true"/>
+                <right_asymptote bet="0.99999999999999976" min="0" max="1" use="false"/>
+        </L1>                                                                                                                                                            
+        <L2 bet="19.5874705020817">
+                <variable min="5" max="60" use="true"/>
+                <function_type value="3"/>
+                <length_threshold bet="126.6702726553326" use="true"/>
+                <right_asymptote bet="0.25" min="0.25" max="1" use="false"/>
+        </L2>                                                                                                                                                            
+        <L3 bet="0.13">
+                <variable min="0.05" max="0.6" use="false"/>
+                <function_type value="2"/>
+                <length_threshold bet="102.0580630708797" use="true"/>
+                <right_asymptote bet="0.4" min="0" max="1" use="false"/>
+        </L3>                                                                                                                                                            
+        <L4 bet="18.86567062907572">
+                <variable min="5" max="36" use="true"/>
+                <function_type value="3"/>
+                <length_threshold bet="130.7283846873609" use="true"/>
+                <right_asymptote bet="0.2294335924829242" min="0" max="1" use="true"/>
+        </L4>
+        <L5 bet="0.1694198322792639">
+                <variable min="0.05" max="0.6" use="true"/>
+                <function_type value="2"/>
+                <length_threshold bet="70.86730272234507" use="true"/>
+                <right_asymptote bet="0.7" min="0" max="1" use="false"/>
+        </L5>
+</s_sp_fishery>
+
+<!--================ -->
+<!--AGGREGATION ZONES-->
+<!--================ -->
+<nb_region value="11"/>
+<use_mask_catch value="0"/>
+<area0 area_id="1" lgmin="120" lgmax="170" ltmin="20" ltmax="50"/>
+<area1 area_id="2" lgmin="170" lgmax="210" ltmin="10" ltmax="50"/>
+<area2 area_id="3" lgmin="140" lgmax="170" ltmin="-10" ltmax="10"/>
+<area3 area_id="4" lgmin="170" lgmax="210" ltmin="-10" ltmax="10"/>
+<area4 area_id="5" lgmin="140" lgmax="170" ltmin="-40" ltmax="-10"/>
+<area5 area_id="6" lgmin="170" lgmax="210" ltmin="-40" ltmax="-10"/>
+<area6 area_id="7" lgmin="110" lgmax="140" ltmin="-10" ltmax="20"/>
+<area7 area_id="8" lgmin="210" lgmax="240" ltmin="-40" ltmax="10"/>
+<area8 area_id="9" lgmin="240" lgmax="290" ltmin="-40" ltmax="10"/>
+<area9 area_id="10" lgmin="210" lgmax="280" ltmin="10" ltmax="50"/>
+<area10 area_id="11" lgmin="140" lgmax="170" ltmin="10" ltmax="20"/>
+
+<nb_region_sp_B bet="11"/>
+<area_sp_B> 
+	<bet>1 2 3 4 5 6 7 8 9 10 11</bet>
+</area_sp_B>
+
+<nb_EEZ value="0"/>
+<!--File maskEEZ should be placed in input data directory-->
+<str_file_maskEEZ value="SP_IPSL_mask_eez_wcpfc.txt"/>
+<EEZ>
+       <eez0 name="New Caledonia" id="-19"/>
+       <eez1 name="Fiji" id="-12"/>
+       <eez2 name="Vanuatu" id="-33"/>
+       <eez3 name="Solomon Islands" id="-29"/>
+       <eez4 name="New Zealand" id="-23"/>
+       <eez5 name="Norfolk" id="-20"/>
+       <eez6 name="Matthew Hunter" id="-16"/>
+</EEZ>
+
+<!-- Parameters likelihood_parametes and prob_zero are 
+     parameters of zero-inflated negative binomial likelihood -->
+<likelihood_parameters>
+	<variables use="false"/>
+	<L1 bet="0.01"/>
+        <L2 bet="0.007"/>
+        <L3 bet="0.0"/>
+        <L4 bet="0.01"/>
+	<L5 bet="0.01"/>
+</likelihood_parameters>
+
+<prob_zero>
+	<L1 bet="0.0"/>
+        <L2 bet="0.0"/>
+        <L3 bet="0.0"/>
+        <L4 bet="0.0"/>
+	<L5 bet="0.0"/>
+</prob_zero>
+
+</par>

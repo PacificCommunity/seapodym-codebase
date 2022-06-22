@@ -628,7 +628,7 @@ int movement_fluxes_only = 1;
 			pop.Precalrec_Calrec_adult(map,mat,*param,rw,Density_region(reg,age),Mortality_copy,tcur,fishing,age,sp,year,month,jday,step_fishery_count,0);
 		}
 
-		//integrate biomass in each region except 'reg'
+		//integrate biomass in each region, i.e., region 'reg' included (what's left in it after movement)
 		for (int rr=0; rr<nb_reg; rr++){
 	       		int oth_reg = param->area_sp_B[sp][rr]-1;
 			double tot_mass_region = 0.0;

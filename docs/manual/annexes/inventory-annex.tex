@@ -1,0 +1,103 @@
+\appendix
+\chapter{Inventory of model variables and input parameters}
+
+\section{Selected notations}
+
+\begin{longtable}{lp{11cm}l}
+\caption{Model variables, notations and units as used in the model code. Note, all notations in this table are given for the model configuration with monthly temporal resolution. The \textbf{units in bold} mean that the variable has a different unit as an input variable. In this case see text in the \textbf{Definition} column. Abbreviations used: m - meter, nmi - nautical mile, d - day, mo - month, Nb - number of individuals, mt - metric tonne.  \label{tab:selected-notations}}
+\\
+ \textbf{Symbol} &   \textbf{Definition} & 	\textbf{Units}\\\hline 
+\endfirsthead
+\multicolumn{3}{@{}l}{Table A.1 continued}\\\hline
+ \textbf{Symbol} &   \textbf{Definition} & 	\textbf{Units}\\
+ \hline
+\endhead % all the lines above this will be repeated on every page
+\hline
+\endfoot
+\hline
+\endlastfoot
+\multicolumn{3}{l}{\textit {Spatial domain}}\\
+\cline{1-3}
+ $\Omega, \partial\Omega$ & two-dimensional model domain and its complex boundary defined by the land mask  & \\
+ $x,y$      & spatial coordinates in two-dimensional model domain     & digital (${}^{\circ}$)\\
+ $z$ 		& vertical coordinates, giving depth of three pelagic layers: (1) $0-1.5 \times Z_{eu}$, (2) $1.5 \times Z_{eu}-4.5 \times Z_{eu}$ and (3) $4.5 \times Z_{eu}-\text{min}\left(10 \times Z_{eu},1000m\right)$  				& m\\
+\cline{1-3}
+ \multicolumn{3}{l}{\textit {Environmental data}}\\
+\cline{1-3}
+ $\mathbf v_z(t,x,y)$ & vector $(u,v)$ of horizontal currents, averaged over vertical layer $z$ (OGCM modelled data), it has units of m$\cdot$s$^{-1}$ in the input file & \textbf{nmi$\cdot$mo$^{-1}$}\\
+ $T_z(t,x,y)$		& water temperature (OGCM modelled data), averaged over layer $z$	&${}^{\circ}$C\\
+ $O_z(t,x,y)$		& concentration of dissolved oxygen, averaged over vertical layer $z$ (BGCH model or Levitus database)		&ml$\cdot$l$^{-1}$\\
+ $P(t,x,y)$ 		  & vertically integrated primary production (either output of BGCH model or VGPM model based on satellite-derived Chl-a data), input data have units mmol~C$\cdot$m$^{-2}\cdot$d$^{-1}$      &\makecell{\\ $\frac{\textbf{mmol C}}{\textbf{m}^2 \textbf{mo}}$}\\
+\cline{1-3}
+\multicolumn{3}{l}{\textit {Coupled ADR model variables}}\\
+\cline{1-3}
+ $F_{z_d,z_n}(t,x,y)$ & density of functional groupw of micronekton (food for tunas) living in pelagic layer $z_d$ during daytime and migrating to layer $z_n$ during night time		&\makecell{\\g$\cdot$m$^{-2}$}\\
+ $N(a,t,x,y)$  & density of tuna population at age $a$, time $t$ and spatial position $(x,y)$	 	& Nb$\cdot$km$^{-2}$ \\
+\cline{1-3}
+ \multicolumn{3}{l}{\textit {Environmental (habitat) indices}}\\
+\cline{1-3}
+ $\Theta(a,x,y,z)$ & accessibility of tuna of age $a$ to the vertical layer $z$\\
+ $H_s(t,x,y)$ 	& spawning or larvae's habitat index\\
+ $H_j(t,x,y)$ 	& juvenile's habitat index\\
+ $H_a(a,t,x,y)$ 	& adult's (feeding and movement) habitat index\\
+\cline{1-3}
+\multicolumn{3}{l}{\textit {Advection-diffusion-reaction parameters}}\\
+\cline{1-3}
+ $\mathbf{v}(a,t,x,y)$ 	& vector field of total tuna density velocity								  & nmi$\cdot$mo$^{-1}$\\
+ $\mathbf{v}_c(a,t,x,y)$ 	& vector field of ocean currents computed as weighted average through all pelagic layers with weights being accessibility to the layers & nmi$\cdot$mo$^{-1}$\\
+ $\mathbf{v}_N(a,t,x,y)$ 	& vector field of tuna density active velocity towards a gradient of stimuli  & nmi$\cdot$mo$^{-1}$\\
+ $D(a,t,x,y)$ 	& diffusion coefficient, measuring the rate of density dispersal due to random movements 										& nmi$^2\cdot$mo$^{-1}$\\
+ $M(a,t,x,y)$ 	& total mortality due to fishing $m_F$ and natural causes $m_N$		& mo$^{-1}$\\
+\cline{1-3}
+\multicolumn{3}{l}{\textit {Optimization variables}}\\
+\cline{1-3}
+ $C_{f}$ 	& total catch by fishery $f$								  			& mt\\
+ $Q_{f,r}$ 	& proportion of length frequencies for fishery $f$ and region $r$	& \\
+ $R_{k}$ 	& density of tagged individuals in the population, which belong to k-th cohort& Nb$\cdot$km$^{-2}$\\
+ $L_{\scriptscriptstyle  C}^{\bar{\text{ }}}$ & catch data contribution to a negative log-likelihood					  					&\\
+ $L_{\scriptscriptstyle  Q}^{\bar{\text{ }}}$ & LF data contribution to a negative log-likelihood					  					&\\
+ $L_{\scriptscriptstyle  R}^{\bar{\text{ }}}$ & tag recaptures contribution to a negative log-likelihood					  					&\\
+ $L\bar{\text{ }}$ & total negative log-likelihood function					  					&\\
+ $\mathbf{H}$ & Hessian matrix					  					&\\
+\hline
+\end{longtable}
+
+\newpage
+
+\section{XML parfile}
+\label{sec:appendix-parfile}
+
+\definecolor{darkgreen}{rgb}{0,0.4,0}
+\definecolor{darkmauve}{rgb}{0.58,0,0.82}
+\definecolor{darkblue}{rgb}{0.0,0.0,0.6}
+\definecolor{cyan}{rgb}{0.0,0.6,0.6}
+\definecolor{darkred}{rgb}{0.8,0.0,0.0}
+
+
+\lstdefinelanguage{MYXML}
+{
+  morecomment=[s]{<!--}{-->},
+  morecomment=[s]{<?}{?>},
+  morestring=[s]{"}{"},
+  stringstyle=\color{darkmauve},
+  identifierstyle=\color{darkblue},
+  keywordstyle=\color{darkred},
+  commentstyle=\color{darkgreen},
+  showspaces=false,
+  breaklines=true,  % sets automatic line breaking
+  breakatwhitespace=false,
+  morekeywords={version,name,value,skj,min,max,use,dyn,layer1,layer2,layer3,file1,file2,file3}% list your attributes here
+  keepspaces=false,
+  basicstyle=\footnotesize, 
+  frame=single, 
+  tabsize=1,   
+  title={An example of SEAPODYM XML parameter file for bigeye reference model configuration with only five fisheries and tagging data with 14 cohorts of tagged and recaptured tunas.\\}  %\lstname
+}
+
+
+\lstset{language=MYXML}
+
+%\begin{comment}
+\lstinputlisting{annexes/parfiles/bet_e27.1.M.2_est.xml}
+
+%\end{comment}

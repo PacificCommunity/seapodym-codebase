@@ -1,0 +1,246 @@
+\documentclass[a4paper,12pt,twoside]{book}
+%\documentclass[a4paper,12pt,leqno]{book}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{latexsym}
+\usepackage{amsfonts}
+\usepackage{upgreek}
+%\usepackage{cite}
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage[usenames,dvipsnames]{xcolor}
+%\usepackage[top=2cm, bottom=2cm, left=1.5cm, right=1.5cm]{geometry}
+\usepackage[titletoc]{appendix} 
+%\usepackage{multirow}
+\usepackage{pgf}
+\pagestyle{myheadings} \markboth{SEAPODYM-MASS Reference Manual}{Release 4.0}
+
+\newcommand\doublespacing{\baselineskip=1.6\normalbaselineskip}
+%\usepackage[pdftex,final]{graphicx}
+\usepackage{rotating}
+\usepackage{textcomp}
+\usepackage{lineno}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\renewcommand{\thesubfigure}{\alph{subfigure}}
+\usepackage{longtable}
+ 
+\renewcommand{\bibname}{References}
+\usepackage[sectionbib]{natbib}
+
+\usepackage[T1]{fontenc} % to make words with '_' searchable, but requires 'lmodern' to look pretty
+\usepackage{lmodern} 
+
+\usepackage{etoolbox}
+%\usepackage{enumitem} to use with horisontal spacing, e.g. \begin{enumerate}[leftmargin=4cm]
+
+
+\usepackage{multirow}
+\let\cite=\citen
+\newcommand\help[1]{{\color{red}(#1 ?)\normalcolor}}
+
+%% Make URLs clickable
+\usepackage[colorlinks, bookmarks=true, linkcolor=blue, urlcolor=blue,citecolor=black]{hyperref}
+
+%% package to make URLs word wrap nicely
+\usepackage{breakurl}
+%% to have the choice of color 
+\newcommand{\myhref}[3][black]{\href{#2}{\color{#1}{#3}}}
+
+%\hyperref[sec:hello]{this section}
+
+\usepackage{comment}
+\usepackage{float}
+
+%% Code highlighting
+\usepackage{listings}
+
+\usepackage[pass]{geometry}
+
+
+%\patchcmd{\thebibliography}{\chapter*}{\section*}{}{}
+
+\setlength{\oddsidemargin}{0pt}
+\setlength{\evensidemargin}{\oddsidemargin}
+\setlength{\textwidth}{6.5truein}
+\newlength{\fullwidth}  \setlength{\fullwidth}{\textwidth}
+\newlength{\fullheight} \setlength{\fullheight}{\textheight}
+\newlength{\halfheight} \setlength{\halfheight}{0.375\fullheight}
+
+\colorlet{config}{Orange}
+\colorlet{forcing}{Green}
+\colorlet{control}{Red}
+\colorlet{cohort}{Blue}
+\colorlet{species}{Turquoise}
+
+%%% OT: macros
+
+\newcommand{\config} {\textbf{\textcolor{config}{[config]}}}
+%\newcommand{\model} {\textbf{\textcolor{model}{[model]}}}
+\newcommand{\forcing}{\textbf{\textcolor{forcing}{[forcing]}}}
+\newcommand{\control}{\textbf{\textcolor{control}{[control]}}}
+\newcommand{\cohort}{\textbf{\textcolor{cohort}{[cohort]}}}
+\newcommand{\species}{\textbf{\textcolor{species}{[species]}}}
+\newcommand{\minitab}[2]{
+  \renewcommand{\arraystretch}{0.6}
+  \begin{tabular}{@{}l@{}}
+    #1\\
+    #2
+  \end{tabular}
+}
+%%% / OT: macros
+
+%Guillaume packages----------------------------------------------------
+\usepackage{makecell} %%guillaume
+\newcommand{\bracedincludegraphics}[2][]{%
+  \sbox0{$\vcenter{\hbox{\includegraphics[width=0.4\textwidth]{#2}}}$}%
+  \overbrace{\left.
+    \vphantom{\copy0}{\box0}
+  \kern-\nulldelimiterspace\right\rbrace}^{\textsc{\normalsize{NLON}}}}
+%----------------------------------------------------------------------
+
+\newcommand{\argmin}{\operatornamewithlimits{argmin}}	
+
+%\title{A reference manual for\\ \vspace{0.5cm}  \LARGE{\bfseries{SEAPODYM-MASS version 4.0}}\\ \Large\slshape{Spatial Ecosystem and POpulation DYnamics Model} \\ \Large\slshape{for Migratory Age-Structured Stocks} \\}
+%\author{I. Senina, O. Titaud, G. Briand, and P. Lehodey}
+%
+%\date{}
+%
+%\frenchspacing
+%\maketitle
+
+\begin{document}
+\newgeometry{top=1cm,bottom=3cm,left=2cm,right=2cm}
+\begin{titlepage}
+\centering
+
+\includegraphics[height=2cm]{intro/figs/SPC-CPS-logo_27_stars} \hspace{1.5cm}
+\includegraphics[height=2cm]{intro/figs/logo-PFRP-large} \hspace{1.5cm}
+\includegraphics[height=2cm]{intro/figs/logo-CLS}
+\noindent{\color{gray}\rule{16cm}{0.4pt}}
+
+\vspace{4cm}
+
+{\fontsize{36pt}{42pt} \bfseries \color{teal} SEAPODYM \par}
+
+\vspace{3.5cm}
+
+%\noindent\rule{14cm}{0.4pt}
+
+%{\Large\scshape{ A reference manual }\\}
+{\Large \slshape \bfseries{Spatial Ecosystem and POpulation DYnamics Model} \\ \Large\slshape{for Migratory Age-Structured Stocks \par}}
+
+\vspace{1.5cm}
+{\large Inna Senina, Olivier Titaud, Guillaume Briand, and Patrick Lehodey \par}
+
+\vspace{3cm}
+{\Large \scshape --version 4.0-- \par}
+
+\vspace{5cm}
+
+\noindent{\color{gray}\rule{5cm}{0.4pt}}
+
+{\large June 2022 \par}
+
+
+\vfill
+
+\end{titlepage}
+\restoregeometry
+
+%\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\vspace{1.0cm}
+\begin{comment}
+\noindent Copyright \copyright  2022 by SPC\footnotemark[1], PFRP\footnotemark[2] and CLS\footnotemark[3].
+
+\footnotetext[1]{Oceanic Fisheries Programme, Secretariat of the Pacific Community, BPA5 Noumea, New Caledonia}
+\footnotetext[2]{Pelagic Fisheries Research Program, University of Hawaii at Manoa. 1000 Pope Road, Honolulu, HI 96822 United States}
+\footnotetext[3]{Marine Ecosystems Modelling, CLS, Sustainable Fisheries Management Business Unit. 11 rue Hermes, 31520 Ramonville Saint-Agne, France}
+\end{comment}
+%\input{intro/License}
+
+\mbox{ }
+\vspace{4cm}
+
+\begin{center}{\copyright Pacific Community (SPC) 2022}\end{center}
+All rights for commercial/for profit reproduction or translation, in any form, reserved. SPC authorises the partial reproduction or translation of this material for scientific, educational or research purposes, provided that SPC and the source document are properly acknowledged. Permission to reproduce the document and/or translate in whole, in any form, whether for commercial/for profit or non-profit purposes, must be requested in writing. Original SPC artwork may not be altered or separately published without permission.
+
+\vspace{.5cm}
+
+\begin{center} 
+Original text: English
+
+\vspace{2cm}
+%Pacific Community Cataloguing-in-publication data
+
+\vspace{7.5cm}
+Prepared for publication at SPC’s headquarters. \\
+B.P. D5, 98848 Noumea Cedex, New Caledonia, 2022 \\
+
+www.spc.int | spc@spc.int
+
+\end{center}
+
+\chapter*{Preface}
+
+SEAPODYM is a numerical modelling framework developed initially for investigating population dynamics of tunas under the influence of environment and fishing (\url{www.spc.int/ofp/seapodym}; \url{www.seapodym.eu}). The modelling effort started in 1995 at the Pacific Community (SPC) in Noumea, New Caledonia, under two consecutive EU-funded projects: SPR-TRAMP (1995-2000) and PROCFISH (2002-2005). The model development has continued under a grant from the Pelagic Fisheries Research Program (PFRP) at the University of Hawaii, allowing the implementation of a quantitative approach to estimate model parameters from massive spatio-temporal catch and size data (2004-2007). Since 2007 the development has been conducted at Collecte Localisation Satellites in Toulouse, France, in collaboration with the Oceanic Fisheries Program of SPC and under various research projects and funding provided by PFRP, the European Commission, Global Environment Facility (GEF) and the French National Research Agency. 
+
+SEAPODYM includes two conceptually different dynamical models: i) a model of spatio-temporal dynamics of functional groups of zooplankton and micronekton, that is called SEAPODYM for Lower and Mid-Trophic Level (SEAPODYM-LMTL), and ii) a model describing full spatio-temporal dynamics of a single species population, called SEAPODYM for Migratory Age-Structured Stocks (SEAPODYM-MASS). The underlying continuous equations of SEAPODYM-MASS are classical advection-diffusion-reaction equations with an ageing term, describing the population dynamics in time, age and two-dimensional space. Using environmental data and outputs of the SEAPODYM-LMTL model as a forcing, this model predicts the biomass of modelled species as well as the catch and size frequency of catch based on parameter estimation and data assimilation techniques.
+
+This reference manual describes version 4.0 of the SEAPODYM-MASS model and software, which has been updated and enhanced with a method for integrating tagging data to inform movement parameters, a new mechanism of modelling seasonal migrations between feeding and spawning grounds, revised definitions of habitat indices and movement rates, and a method to account for fishing mortality and to predict catch in the absence of fishing effort data. In addition to a complete model, this version allows running the simulations and estimations of movement parameters of a single or selected cohorts using tagging data and building the following minimal models with maximum likelihood estimation (MLE) method: i) a model of spawning habitat, ii) a model of feeding habitats for selected age classes, and iii) a model of virgin stock (without fisheries) with population density considered as an observation in the likelihood. These model applications can be used in model downscaling and/or adaptation to a different forcing dataset.
+
+After a general introduction, this reference manual provides the full mathematical description of underlying continuous models, the numerical approximation scheme, a comprehensive guide on how to run numerical simulations and design various simulation studies, and a suite of numerical and statistical recipes for \textit{data assimilation} in complex spatio-temporal fisheries models, aimed at informing model parameters from massive geo-referenced data and providing quantitative model reconstruction of observed phenomena as well as unbiased model predictions of the independent observations.
+
+\clearpage
+
+\chapter*{List of changes from version 3.0}
+
+\begin{itemize}
+\item Integration of a movement model of tagged fish and tagging data likelihood.
+\item Implementation of an alternative approach to account for fishing mortality and to
+predict catch without fishing effort, i.e. based on observed catch only.
+\item Introduction of an additional likelihood term to allow estimation of minimal biomass supporting observed catches.
+\item A fully revised method to describe seasonal spawning migrations with a new mechanism of modelling large-scale migrations in the Eulerian model context.
+\item Revised spawning habitat as a product of prey, predator and thermal functions, 
+the latter with seasonal variable when playing the role of movement habitat of spawning adults.
+\item Estimation of one additional parameter associated to each functional group of prey,
+providing more flexibility in the representation of vertical behaviour and
+access to preferred forage when computing the feeding habitat index.
+\item Decoupled optimal temperature and thermal range for larval survival and for feeding habitat at age zero, to allow a separate estimation of these parameters.
+\item Extension of sensitivity analysis by allowing two types of model global sensitivity runs: all-at-a-time (AAT) and one-at-a-time (OAT) runs, with names referring to the model parameter variations.
+\item A standalone habitat models build {\bfseries seapodym\_habitats}, computing either spawning or multiple feeding habitats (at selected ages) in a simulation or optimisation mode, with associated parameter estimation from provided habitat fields.
+\item A standalone model build {\bfseries seapodym\_densities} for population dynamics without fisheries, where biomass is considered both as observations and predictions in the likelihood.
+\item A standalone model build {\bfseries seapodym\_fluxes} to compute the biomass flow rates between $n$ non-overlapping regions. The outputs of this application are stored in $n \times n$ matrices for each age class and quarterly time period.
+\item Various code modifications to minimise the memory use during adjoint gradient computation.
+
+\end{itemize}
+
+\clearpage
+
+{
+  \hypersetup{linkcolor=black}
+  \tableofcontents
+}
+
+\clearpage
+
+
+\include{intro/Introduction}
+\include{chapter1/Model}
+\include{chapter2/Numerics}
+\include{chapter3/Configurations}
+\include{chapter4/Parametrisation}
+
+%\backmatter
+\include{annexes/appendices}
+%\backmatter
+%\include{References}
+
+\clearpage
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+

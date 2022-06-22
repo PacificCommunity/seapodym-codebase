@@ -20,6 +20,7 @@ VarSimtunaFunc.h
 
 SRCS= \
 main_simulation.cpp \
+ad_buffers.cpp \
 XMLDocument2.cpp \
 VarParamCoupled.cpp \
 seapodym_coupled.cpp \
@@ -88,6 +89,7 @@ Calpop_InitCalPop.cpp  \
 Calpop_precaldia.cpp  \
 Calpop_precalrec.cpp  \
 Calpop_tridag.cpp \
+hessian.cpp \
 like.cpp
 
 SRCPATH=DOM/src:src
