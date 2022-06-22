@@ -14,24 +14,26 @@ Description: This small package provides functions to read,
 -----------------------------------------------------------
 
 -----------------------------------------------------------
-Build:
+Build (Linux only, for Windows see method #2):
 
-1. In command line (linux, for Windows only see method #2)
+1. In command line outside of downloaded package directory
 
    CMD build dym  
 
 Installation:   
 
-1. From package.tar.gz file, in command line (prompt in Windows)
+1. From pkg.tar.gz file, in command line (prompt in Windows)
 
    R CMD INSTALL dym_0.0.tar.gz
 
-   Note, in Windows install the Rtools package to enable the installation from tar.gz file
+   Note, in Windows install the Rtools package to enable the 
+   installation from tar.gz
 
-2. With R devtools package, in R environment
+2. With R devtools package, in R environment (no need to 
+   build first)
 
    library(devtools)
-   devtools::install_github("PacificCommunity/seapodym-codebase/tree/master/rtools/dym")
+   devtools::install_github("[path]/seapodym/rtools/dym")
   
 
 
