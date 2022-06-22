@@ -1,0 +1,13 @@
+Package: seamaps
+Version: 0.0
+Title: Nice maps with land, coastline and grid, which can be combined with any geo-referenced data (oceanographic,  biological, catch, etc.).
+Author: Inna Senina <innas@spc.int>
+Maintainer: Inna Senina <innas@spc.int>
+Depends: R (>= 1.0.0)
+Description: This small package provides functions to plot nice maps, color palettes and utilities to prepare SEAPODYM data for plotting.
+License: TBD
+SystemRequirements: GMT (>=6.0.0)
+URL: TBD
+NeedsCompilation: no
+Date: 2022-05-11
+RoxygenNote: 7.1.2
