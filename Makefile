@@ -153,5 +153,5 @@ clean:
 	@rm -vf $(OBJECTS) $(BINPATH)/seapodym.exe
 	@rm -vf $(OBJECTS) $(BINPATH)/TestSeapodymCoupled
 	@rm -vrf $(OBJPATH)
-	@rm -vrf docs
-	@rm -vf gmon.out
+	#@rm -vrf docs/code-dox
+	#@rm -vf gmon.out
