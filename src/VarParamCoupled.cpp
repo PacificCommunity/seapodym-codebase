@@ -42,8 +42,6 @@ bool VarParamCoupled::read(const string& parfile)
 //lower-right grid cell 
 	nbi = int(((longitudeMax - longitudeMin)*60.0/deltaX)) +2;
 	nbj = int(((latitudeMax  - latitudeMin)*60.0/deltaY)) +2;
-	//nbi = int(((longitudeMax - longitudeMin)*60.0/deltaX)) +2;
-	//nbj = int(((latitudeMax  - latitudeMin)*60.0/deltaY)) +2;
 	//maxn= Utilities::MyMax( nbi, nbj );
 
 //Dimensions *dim;
@@ -51,7 +49,8 @@ bool VarParamCoupled::read(const string& parfile)
 //cout << x << endl;
 
         iterationNumber = doc.getInteger("/iterationNumber", "value");
-        tuna_spinup = doc.getInteger("/tuna_spinup", "value");
+	//Disactivate spinup here
+        tuna_spinup = 0;//doc.getInteger("/tuna_spinup", "value");
         if (!doc.get("/save_first_date","year").empty()){
 		int year = doc.getInteger("/save_first_date","year");
 		int month = doc.getInteger("/save_first_date","month");
@@ -75,7 +74,8 @@ bool VarParamCoupled::read(const string& parfile)
 		ndatini = get_year(save_first_yr)*10000+get_month(save_first_yr)*100+15;
 		ndatfin = get_year(save_last_yr)*10000+get_month(save_last_yr)*100+15;
 	}
-        nb_yr_forecast = doc.getInteger("/nb_yr_forecast", "value");
+	//Disactivate forecast simulated with climatology of historical series
+        nb_yr_forecast = 0;//doc.getInteger("/nb_yr_forecast", "value");
 	nbsteptoskip   = doc.getInteger("/nb_step_to_skip", "value");
 
 	//update ndatfin using nb_yr_forecast value:
@@ -1042,29 +1042,25 @@ cout << mask_fishery_sp_no_effort(sp)<< endl;
 	// ZONES OF AGGREGATION 
 	////////////////////////
         use_mask_catch = 0;
-	flex_regstruc = 0;
-	if (!doc.get("/flex_regstruc","value").empty()){
-		flex_regstruc = doc.getInteger("/flex_regstruc","value");
-		// regions for asismilation of LF data
-		if (flex_regstruc){
-			for (int sp=0;sp<nb_species;sp++) 
-				if (frq_like[sp])
-					define_regions();
-				else {
-					cout << "WARNING: LF likelihood is not active -> flex_regstruc is turned OFF!" << endl; 
-					flex_regstruc = 0;
-				}
+	use_lf_regstruc = 0;
+	// regions for assimilation of LF data
+	for (int sp=0;sp<nb_species;sp++){ 
+		if (frq_like[sp]){
+			use_lf_regstruc = 1;
+			if (nb_species>1)
+				cout << "ATTENTION: Verify that LF data for species " << sp << " have the same regional structure!" << endl; 
+			define_regions();
+		}else {
+			cout << "WARNING: LF likelihood is not active -> use_lf_regstruc is turned OFF!" << endl; 
+			use_lf_regstruc = 0;
 		}
 	}
-	if (!flex_regstruc){
+	if (!use_lf_regstruc){
 		if (sum(mask_fishery_sp)>0 && !doc.get("/use_mask_catch","value").empty()) {
 			use_mask_catch = doc.getInteger("/use_mask_catch","value");
 		}
 		nb_region = doc.getInteger("/nb_region", "value");
-		cout << "WARNING: flex_regstruc is OFF, areas in parfile will be used as aggregation zones and to compute LFs!" << endl; 
-		for (int sp=0;sp<nb_species;sp++) 
-			if (frq_like[sp])
-				cout << "ATTENTION: Verify that LF data for species " << sp << " have the same regional structure!" << endl; 
+		cout << "WARNING: use_lf_regstruc is OFF, areas in parfile will be used as aggregation zones and to compute LFs!" << endl; 
 		if (nb_region) {
 			area = new region*[nb_region];
 			for (int a=0; a< nb_region; a++) {

@@ -1971,7 +1971,7 @@ void CReadWrite::read_frq_data(CParam& param, PMap& map, const float startdate, 
 			return;
 		}
 	
-		if (!param.flex_regstruc){
+		if (!param.use_lf_regstruc){
 			read_lf_WCPO(param,param.file_frq_data[0],startdate,enddate,sp);
 			if (param.nb_frq_files==2)
 				read_lf_WCPO(param,param.file_frq_data[1],startdate,enddate,sp);
@@ -1990,10 +1990,8 @@ void CReadWrite::read_frq_data(CParam& param, PMap& map, const float startdate, 
 					int nbinsfil = 0;
 					for (int a=a0; a<nb_ages; a++)
 						if (frq(f,r,y,q,a)>0) nbinsfil++;
-					//if (nbinsfil>0 && nbinsfil<=0.25*nb_ages){
 					if (nbinsfil>0 && nbinsfil<=2){
 						frq(f,r,y,q).initialize();
-//cout << f << " " << startdate+y << " "<< q << " " << r << " " << nbinsfil << " this LF record was deleted!" endl;
 					}
 				}
 	}

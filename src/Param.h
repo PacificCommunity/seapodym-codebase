@@ -80,7 +80,7 @@ public:
 	double  total_like;
 	int fdata_rm;
 
-	int flex_regstruc;
+	int use_lf_regstruc;
 	int use_mask_catch;
 
 	string* parfile_names;
