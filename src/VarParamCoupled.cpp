@@ -149,15 +149,18 @@ bool VarParamCoupled::read(const string& parfile)
 		strfile_v.push_back(str_dir+doc.get("/strfile_v", ostr.str()));
 		strfile_oxy.push_back(str_dir+doc.get("/strfile_oxy", ostr.str()));
 	}
-	strfile_ppmc = str_dir+doc.get("/strfile_pp_clm", "value");
-	for (int k=0;k<nb_layer;k++){
-		std::ostringstream ostr;
-		ostr << "layer" << k;
-		strfile_tmc.push_back(str_dir+doc.get("/strfile_t_clm", ostr.str()));
-		strfile_umc.push_back(str_dir+doc.get("/strfile_u_clm", ostr.str()));
-		strfile_vmc.push_back(str_dir+doc.get("/strfile_v_clm", ostr.str()));
-		if (!type_oxy)
-			strfile_oxymc.push_back(str_dir+doc.get("/strfile_oxy_clm", ostr.str()));
+	//Climatological files to be ignored in the parfile: no spinup or forecasts in this version.
+	if (tuna_spinup || nb_yr_forecast){
+		strfile_ppmc = str_dir+doc.get("/strfile_pp_clm", "value");
+		for (int k=0;k<nb_layer;k++){
+			std::ostringstream ostr;
+			ostr << "layer" << k;
+			strfile_tmc.push_back(str_dir+doc.get("/strfile_t_clm", ostr.str()));
+			strfile_umc.push_back(str_dir+doc.get("/strfile_u_clm", ostr.str()));
+			strfile_vmc.push_back(str_dir+doc.get("/strfile_v_clm", ostr.str()));
+			if (!type_oxy)
+				strfile_oxymc.push_back(str_dir+doc.get("/strfile_oxy_clm", ostr.str()));
+		}
 	}
 
 	///////////////////////////////
