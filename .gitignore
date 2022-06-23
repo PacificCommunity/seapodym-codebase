@@ -7,4 +7,7 @@ seapodym*
 DOM/unused
 DOM/unused/*
 docs/manual/*.aux
-skj-parfile.xml
+example-configs/run/SKJ-INTERIM-2x30d/output
+example-configs/run/SKJ-INTERIM-2x30d/sim.out
+example-configs/run/SKJ-INTERIM-2x30d/newparfile.xml
+
