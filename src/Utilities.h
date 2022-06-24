@@ -13,6 +13,11 @@
 
 using  namespace std;
 
+
+/*!
+\brief Old SEAPODYM class containing conversions and array handling functions.
+\details Most of the functions to handle multi-dimensional array of doubles (de)allocation are currently handled by Autodif classes and functions, so only functions for the arrays of string are used.
+*/
 class Utilities
 {
 public:

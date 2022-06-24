@@ -171,6 +171,10 @@ private:
 	double elapsed_time_reading;
 };
 
+/*!
+\brief Class handling tag releases.
+\details It stores and returns the information about release position and fish age at release.
+*/
 class tag_release
 {
   public:

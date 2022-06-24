@@ -15,6 +15,10 @@ using  namespace std;
 
 const unsigned char daysInMonth[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
+/*!
+\brief Class written by J.Jouanno to handle date format.
+\details The model supports three date formats depending on the calendar: 360-day year (most frequently used), 365-day year and standard calendar with leap years. 
+*/
 class Date 
 {
 public:

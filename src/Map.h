@@ -12,7 +12,7 @@ enum type_de_bords
 };
 
 /*!
-\brief Class has information about spatial domain: the land mask, the indexing and the boundaries.
+\brief Class managing spatial domain and grid: the land mask, the indexing and the boundaries.
 \details This class reads land mask, EEZ mask (if exist) and topographic indices. 
 The boundary conditions are defined here as well using the land mask information.
 Also, the ragged array indices are computed and stored in this class.
@@ -68,9 +68,10 @@ private:
 	void domain_type(const int nlon); 
 };
 
-// Classe permettant de gérer les cotés des cellules 
-// dans les deux directions	x (i) et y (j)
-// il ya 4 possibilites sur chaque axe: ouvert, ferme, ferme a droite, ferme a gauche
+/*!
+\brief Class handling the type of the borders of a grid cell.
+\details For a given pair of indices (i,j) structure cote stores the type of cell's borders, two in x and two in y direction - left-closed (G_FERME), right-closed (D_FERME) or open (SANS) for ocean cells, and land (TERRE) if the land is next to the land cell. 
+*/
 class CBord
 {
 public:

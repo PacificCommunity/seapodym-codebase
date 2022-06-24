@@ -20,7 +20,7 @@ using  namespace std;
 
 /*!
 \brief Seapodym parameter class.
-\details All static SEAPODYM parameters are defined and described here. However for DVAR parameters see class VarParamCoupled
+\details All static SEAPODYM parameters are defined and described here. For the DVAR parameters see class VarParamCoupled
 */
 class CParam
 {
@@ -291,7 +291,11 @@ public:
 	IVECTOR nb_region_fishery; 	// nb de regions par fishery 
 	IMATRIX area_sp_B; 		// liste des regions par espece ou aggreger les biomasses [sp][area_id]
 	
-	struct	region			// definition de la structure region
+	/*!
+	\brief Structure defining the regional ID and boundaries
+	\details The derived instance **area is used for regional extractions, mostly in the IO routines. 
+	*/
+	struct	region			
 	{
 		int area_id;
 		double lgmin;
@@ -299,7 +303,7 @@ public:
 		double ltmin;
 		double ltmax;
 	};
-	
+
 	region **area;			// structure contenant les limites des regions [nb_region](area_id, lgmin, lgmax,ltmin,ltmax)
 	int	nb_EEZ;			// nb de ZEE
 	IVECTOR EEZ_ID;			// code des ZEE [nb_EEZ]
