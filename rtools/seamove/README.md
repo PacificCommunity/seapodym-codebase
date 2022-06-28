@@ -4,12 +4,12 @@ R library to extract SEAPODYM movement fluxes (biomass flow rate) from donor to 
 
 ## About
 
-Package: seamove
-Version: 0.0
-Title: Reading and visualizing SEAPODYM regional fluxes as well as exporting them in the Multifan-CL format.
-Author: Inna Senina <innas@spc.int>
-Maintainer: Inna Senina <innas@spc.int>
-Depends: R (>= 1.0.0)
+Package: seamove\
+Version: 0.0\
+Title: Reading and visualizing SEAPODYM regional fluxes as well as exporting them in the Multifan-CL format.\
+Author: Inna Senina <innas@spc.int>\
+Maintainer: Inna Senina <innas@spc.int>\
+Depends: R (>= 1.0.0)\
 Description: This small package provides functions to read outputs of seapodym\_fluxes application, from a single or multiple simulations, plot them and to export them in the format used by Multifan-CL, i.e. as seasonal movement probabilities for a given age and regional structure.
 
 ## Installation
