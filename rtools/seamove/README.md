@@ -35,7 +35,7 @@ Method #2. With R devtools package, in R environment (no need to build first)
 
 For the algorithm to compute the biomass flow rates between regions, see the Reference Manual of the SEAPODYM model. This document provides the definition of the SEAPODYM fluxes as well as the method to convert them to the movement probabilities that can be used by the Multifan-CL stock-assessment model. 
 
-\section*{Biomass fluxes \protect\footnote{ Here in the sense of the mass flow rate} in SEAPODYM}
+**Biomass fluxes in SEAPODYM **
 Let $B_{a,t,x,y}$ be the biomass density (in mt/km$^2$) of tuna population at age $a=1,...,A+$, time $t$ and grid cell $(x,y)$.
 Let's consider two regions, $r_1$ and $r_2$. For a given age $a$, we denote 
 
@@ -43,7 +43,7 @@ Let's consider two regions, $r_1$ and $r_2$. For a given age $a$, we denote
 \beta_{r_1,r_2}=\sum_{i,j \in r_2} B_{t+\Delta t,x,y} \cdot \textsc{A}_{xy}, \mbox{ when } B_{t,x,y} \mbox{ } \forall x,y \in r_1 \mbox{ at time } t,
 \end{equation}
 
-\noindent where $\textsc{A}_{xy}$ is the grid cell surface area in km$^2$. Hence, we say $\beta_{r_1,r_2}$ is the total regional biomass moving from region $r_1$ to region $r_2$ during time period $(t,t+\Delta t)$.
+where $\textsc{A}_{xy}$ is the grid cell surface area in km$^2$. Hence, we say $\beta_{r_1,r_2}$ is the total regional biomass moving from region $r_1$ to region $r_2$ during time period $(t,t+\Delta t)$.
 
 For a given age $a$ and $n$ regions we have $n \times n$ matrix with all elements corresponding to the same time $t+\Delta t$:
 \begin{equation}
@@ -58,14 +58,15 @@ For a given age $a$ and $n$ regions we have $n \times n$ matrix with all element
   \right),
 \end{equation}
 
-\noindent where the $\sum_{j} \beta_{i,j}$ is the total biomass that was in region $i$ before the movement occurred, i.e., at time $t$, and the $\sum_{i} \beta_{i,j}$ is the biomass in region $j$ after the movement occurred, i.e., at time $t+\Delta t$. In other words, 
+where the $\sum_{j} \beta_{i,j}$ is the total biomass that was in region $i$ before the movement occurred, i.e., at time $t$, and the $\sum_{i} \beta_{i,j}$ is the biomass in region $j$ after the movement occurred, i.e., at time $t+\Delta t$. In other words, 
+
 \begin{itemize}
  \item[] $\sum_{j!=i} \beta_{i,j}$ -- \textbf{outgoing biomass} from region $i$ to other regions, 
  \item[]$\sum_{i!=j} \beta_{i,j}$ -- \textbf{incoming biomass} to region $j$ from other regions, and 
  \item[] $\beta_{ii}$ -- the \textbf{resident biomass} that stayed in the region $i$ during the time period $(t,t+\Delta t)$. 
 \end{itemize}
 
-\noindent As seen from above, the elements of matrix $\mathbf{F}_{t,a}$ have units of mass flow rate, i.e., mt/$\Delta t$. In current SEAPODYM implementation, $\Delta t$ is set to 3-months period, hence $\beta_{ij}$ units are mt/qtr. 
+As seen from above, the elements of matrix $\mathbf{F}_{t,a}$ have units of mass flow rate, i.e., mt/$\Delta t$. In current SEAPODYM implementation, $\Delta t$ is set to 3-months period, hence $\beta_{ij}$ units are mt/qtr. 
 
 A simulation with {\ttfamily seapodym\_fluxes} application computes $n_a \times n_t$ of $n \times n$ matrices, written in $n_a$ ASCII files and named {\ttfamily spname\_FluxesRegion\_age[a-1].txt}.
 
@@ -89,5 +90,23 @@ In this example, the monthly age classes starting from age class 5 (sixth age cl
 
 ![Albacore movement](./images/movement_probability_r3-to-r2.png)
 
+The corresponding Multifan-CL file has the following format (showing first 3 out of 48 matrices):
+
+# movement matrices 
+# Movement period  1  age class  1 
+0.838916915     0.0656896789    4.21166e-05     0.0815094382
+0.1457539343    0.6141360933    0.0768163309    0.040903316
+0.0005730184    0.3075730943    0.9112193905    0.0142863863
+0.0147561323    0.0126011335    0.011922162     0.8633008595
+# Movement period  1  age class  2 
+0.7946963272    0.090934798     0.0001013088    0.0729199857
+0.1801971161    0.5913836087    0.0685374126    0.0346378466
+0.0013443627    0.2995804674    0.9182012399    0.0179501287
+0.023762194     0.0181011259    0.0131600387    0.8744920391
+# Movement period  1  age class  3 
+0.7443293031    0.1113497971    0.0002236023    0.0604780656
+0.2227105117    0.5702049001    0.0664859114    0.0374895022
+0.002926814     0.2951082607    0.9175607577    0.0252582241
+0.0300333712    0.0233370421    0.0157297286    0.8767742082
 
 
