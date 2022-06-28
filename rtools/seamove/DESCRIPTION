@@ -1,0 +1,13 @@
+Package: seamove
+Version: 0.0
+Title: Reading and visualizing SEAPODYM regional fluxes as well as exporting them in the Multifan-CL format.
+Author: Inna Senina <innas@spc.int>
+Maintainer: Inna Senina <innas@spc.int>
+Depends: R (>= 1.0.0), RColorBrewer
+Description: This small package provides functions to read outputs of seapodym_fluxes application, from a single or multiple simulations, plot them and to export them in the format used by Multifan-CL, i.e. as seasonal movement probabilities for a given age and regional structure.
+License: TBD
+SystemRequirements: none
+URL: TBD
+NeedsCompilation: no
+Date: 2022-05-31
+RoxygenNote: 7.1.2
