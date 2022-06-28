@@ -37,12 +37,12 @@ For the algorithm to compute the biomass flow rates between regions, see the Ref
 
 **Biomass fluxes in SEAPODYM**
 
-![Biomass fluxes section 1](/images/seamove-algo-section1.png)
+![Biomass fluxes section 1](./images/seamove-algo-section1.png)
 
 
 **Converting F matrix to movement probabilities for Multifan-CL**
 
-![Biomass fluxes section 2](/images/seamove-algo-section2.png)
+![Biomass fluxes section 2](./images/seamove-algo-section2.png)
 
 ## Examples 
 
