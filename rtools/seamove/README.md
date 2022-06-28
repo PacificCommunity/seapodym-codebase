@@ -33,6 +33,42 @@ Method #2. With R devtools package, in R environment (no need to build first)
 
 ## Algorithm
 
+For the algorithm to compute the biomass flow rates between regions, see the Reference Manual of the SEAPODYM model. This document provides the definition of the SEAPODYM fluxes as well as the method to convert them to the movement probabilities that can be used by the Multifan-CL stock-assessment model. 
+
+\section*{Biomass fluxes \protect\footnote{ Here in the sense of the mass flow rate} in SEAPODYM}
+Let $B_{a,t,x,y}$ be the biomass density (in mt/km$^2$) of tuna population at age $a=1,...,A+$, time $t$ and grid cell $(x,y)$.
+Let's consider two regions, $r_1$ and $r_2$. For a given age $a$, we denote 
+
+\begin{equation}
+\beta_{r_1,r_2}=\sum_{i,j \in r_2} B_{t+\Delta t,x,y} \cdot \textsc{A}_{xy}, \mbox{ when } B_{t,x,y} \mbox{ } \forall x,y \in r_1 \mbox{ at time } t,
+\end{equation}
+
+\noindent where $\textsc{A}_{xy}$ is the grid cell surface area in km$^2$. Hence, we say $\beta_{r_1,r_2}$ is the total regional biomass moving from region $r_1$ to region $r_2$ during time period $(t,t+\Delta t)$.
+
+For a given age $a$ and $n$ regions we have $n \times n$ matrix with all elements corresponding to the same time $t+\Delta t$:
+\begin{equation}
+  \label{eq:F-matrix}
+  \mathbf{F}_{t,a}=\left(
+    \begin{array}{cccc}
+      \beta_{1,1} & \beta_{1,2} & \ldots &  \beta_{1,n}\\
+      \beta_{2,1} & \beta_{2,2} & \ldots &  \beta_{2,n}\\
+      \vdots      & \vdots      & \vdots &  \vdots     \\
+      \beta_{n,1} & \beta_{n,2} & \ldots &  \beta_{n,n}
+    \end{array}
+  \right),
+\end{equation}
+
+\noindent where the $\sum_{j} \beta_{i,j}$ is the total biomass that was in region $i$ before the movement occurred, i.e., at time $t$, and the $\sum_{i} \beta_{i,j}$ is the biomass in region $j$ after the movement occurred, i.e., at time $t+\Delta t$. In other words, 
+\begin{itemize}
+ \item[] $\sum_{j!=i} \beta_{i,j}$ -- \textbf{outgoing biomass} from region $i$ to other regions, 
+ \item[]$\sum_{i!=j} \beta_{i,j}$ -- \textbf{incoming biomass} to region $j$ from other regions, and 
+ \item[] $\beta_{ii}$ -- the \textbf{resident biomass} that stayed in the region $i$ during the time period $(t,t+\Delta t)$. 
+\end{itemize}
+
+\noindent As seen from above, the elements of matrix $\mathbf{F}_{t,a}$ have units of mass flow rate, i.e., mt/$\Delta t$. In current SEAPODYM implementation, $\Delta t$ is set to 3-months period, hence $\beta_{ij}$ units are mt/qtr. 
+
+A simulation with {\ttfamily seapodym\_fluxes} application computes $n_a \times n_t$ of $n \times n$ matrices, written in $n_a$ ASCII files and named {\ttfamily spname\_FluxesRegion\_age[a-1].txt}.
+
 
 ## Examples 
 
