@@ -38,7 +38,7 @@ Method #2. With R devtools package, in R environment (no need to build first)
 
 Simulations of seapodym\_fluxes were run with the following regional structure specified in the XML parfile.
 
-![Albacore assessment regions](/images/alb-regions.png)
+![Albacore assessment regions](./images/alb-regions.png)
 
 The simulation directory `ALB.DIR` contains the folder `output` with alb\_FluxesRegion\_age[a].txt.
 
@@ -51,7 +51,7 @@ Let's run the main function handling all necessary steps to extract, convert the
 
 In this example, the monthly age classes starting from age class 5 (sixth age class with mean age 5.5 months, the information provided in the outputs) till age class 148 of SEAPODYM (the value of age.plus=FALSE indicates that this is not an A+ class) will be aggregated to quarterly resolution (parameter `aggregate.age=3`), resulting in 48 age classes. The routine will write the movement-matrices-for-MFCL.txt file as well as plot the results as shown on the figure below for the movement from region 3 to region 2.
 
-![](/images/movement_probability_r3-to-r2.png)
+![Albacore movement](./images/movement_probability_r3-to-r2.png)
 
 
 
