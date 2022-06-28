@@ -36,6 +36,7 @@ Method #2. With R devtools package, in R environment (no need to build first)
 For the algorithm to compute the biomass flow rates between regions, see the Reference Manual of the SEAPODYM model. This document provides the definition of the SEAPODYM fluxes as well as the method to convert them to the movement probabilities that can be used by the Multifan-CL stock-assessment model. 
 
 **Biomass fluxes in SEAPODYM**
+
 Let $B_{a,t,x,y}$ be the biomass density (in mt/km$^2$) of tuna population at age $a=1,...,A+$, time $t$ and grid cell $(x,y)$.
 Let's consider two regions, $r_1$ and $r_2$. For a given age $a$, we denote 
 
@@ -92,11 +93,17 @@ In this example, the monthly age classes starting from age class 5 (sixth age cl
 The corresponding Multifan-CL file has the following format (showing first 3 out of 48 matrices):
 
 `# movement matrices` 
+
 `# Movement period  1  age class  1` 
+
 `0.838916915     0.0656896789    4.21166e-05     0.0815094382`
+
 `0.1457539343    0.6141360933    0.0768163309    0.040903316`
+
 `0.0005730184    0.3075730943    0.9112193905    0.0142863863`
+
 `0.0147561323    0.0126011335    0.011922162     0.8633008595`
+
 # Movement period  1  age class  2 
 0.7946963272    0.090934798     0.0001013088    0.0729199857
 0.1801971161    0.5913836087    0.0685374126    0.0346378466
