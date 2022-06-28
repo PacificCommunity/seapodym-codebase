@@ -1,4 +1,4 @@
-# SEAPODYM R tools: SEAMOVE library
+﻿# SEAPODYM R tools: SEAMOVE library
 
 R library to extract SEAPODYM movement fluxes (biomass flow rate) from donor to recepient region as a result of seapodym\_fluxes simulation with specific regional structure, and to convert them to the seasonal movement probabilities to be used in Multifan-CL. The regional and age structure of Multifan-CL should be defined in the SEAPODYM configuration (XML parfile) for the simulation.
 
@@ -37,8 +37,9 @@ For the algorithm to compute the biomass flow rates between regions, see the Ref
 
 **Biomass fluxes in SEAPODYM**
 
-Let $B_{a,t,x,y}$ be the biomass density (in mt/km$^2$) of tuna population at age $a=1,...,A+$, time $t$ and grid cell $(x,y)$.
-Let's consider two regions, $r_1$ and $r_2$. For a given age $a$, we denote 
+Let $B_{a,t,x,y}$ be the biomass density (in mt/km$^2$) of tuna population at age $a=1,...,A+$, time $t$ and grid cell $(x,y)$. Let's consider two regions, $r_1$ and $r_2$. 
+
+For a given age $a$, we denote 
 
 $$
 \beta_{r_1,r_2}=\sum_{i,j \in r_2} B_{t+\Delta t,x,y} \cdot \textsc{A}_{xy}, \mbox{ when } B_{t,x,y} \mbox{ } \forall x,y \in r_1 \mbox{ at time } t,
@@ -97,7 +98,7 @@ The corresponding Multifan-CL file has the following format (showing the first a
 `0.838916915     0.0656896789    4.21166e-05     0.0815094382`\
 `0.1457539343    0.6141360933    0.0768163309    0.040903316`\
 `0.0005730184    0.3075730943    0.9112193905    0.0142863863`\
-`0.0147561323    0.0126011335    0.011922162     0.8633008595`\
+`0.0147561323    0.0126011335    0.011922162     0.8633008595`
 
    ...
 
@@ -105,7 +106,7 @@ The corresponding Multifan-CL file has the following format (showing the first a
 `0.4060219046    0.1762980184    0.0365511329    0.009762555`\
 `0.4817955074    0.5495944799    0.2966057932    0.0494251044`\
 `0.0774210711    0.2225508171    0.5968152217    0.0592941163`\
-`0.0347615169    0.0515566846    0.0700278521    0.8815182243`\
+`0.0347615169    0.0515566846    0.0700278521    0.8815182243`
 
 
 
