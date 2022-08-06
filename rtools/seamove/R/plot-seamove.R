@@ -12,8 +12,8 @@ modcols<-function(pal,coef){
   return(out)
 }
 
-plot.monthly.mean.fluxes<-function(dat,reg,age,add.B=TRUE)
-{
+plot.monthly.mean.fluxes<-function(dat,reg,add.B=TRUE,age.title="")
+{#IS 20220802: see modifications in plot.qtr.mean.fluxes. Need to integrate them here
   dates<-as.Date(labels(dat))
   mo.names<-substr(month.name,1,3)
   nb.reg<-sqrt(length(dat[[1]]))
@@ -45,7 +45,7 @@ plot.monthly.mean.fluxes<-function(dat,reg,age,add.B=TRUE)
   max.sum2<- max(-colSums(fluxes.out))
   print(c(max.sum1,max.sum2))
   max.sum<-1.25*max(max.sum1,max.sum2)
-  pal<-brewer.pal(12,"Set3")
+  pal<-brewer.pal(12,"Set3") 
   mycol<-c(pal,modcols(pal,0.7),modcols(pal,1.3)) #36 colors max
   mycol<-mycol[regions]
   
@@ -54,7 +54,7 @@ plot.monthly.mean.fluxes<-function(dat,reg,age,add.B=TRUE)
   barplot(fluxes.in,ylim=mylim,col=mycol); axis(2,col="white",lwd=3)
   barplot(fluxes.out,add=TRUE,col=mycol)
   abline(h=0,lwd=2)
-  legend("topleft",paste("reg",regions,sep="."),bty="n",fill=mycol,ncol=6)
+  legend("topleft",paste("reg",regions,sep=" "),bty="n",fill=mycol,ncol=6)
   par(new=TRUE)
   plot(1:12,net.fluxes,type="b",lwd=1.5,xaxt="n",yaxt="n",xlab='',ylab='',ylim=mylim);
   if (add.B){
@@ -62,11 +62,10 @@ plot.monthly.mean.fluxes<-function(dat,reg,age,add.B=TRUE)
     print(B.reg)
     plot(1:12,B.reg,type="b",lwd=2,xaxt="n",yaxt="n",xlab='',ylab='');axis(4)
   }
-  title(paste(generic.name(sp)," biomass fluxes for region ",reg," and age ",A," months",
- 	      "\n (mean length ",L,"cm, mean weight ",W,"kg)",sep=""))
+  title(paste0(generic.name(sp)," biomass fluxes for region ",reg," and ",age.title)) 	    
 }
 
-plot.qtr.mean.fluxes<-function(dat,reg,age,add.B=TRUE)
+plot.qtr.mean.fluxes<-function(dat,reg,add.B=TRUE,age.title="")
 {
 	
   dates<-as.Date(labels(dat))
@@ -91,10 +90,24 @@ plot.qtr.mean.fluxes<-function(dat,reg,age,add.B=TRUE)
       mat<-matrix(dat[[i]],nb.reg,nb.reg,byrow=F)
       mat.mean<-mat.mean + mat/length(ind)
       #Biomass in the region before the movement:
-      B.reg[qtr]<-sum(mat.mean[reg,])
+      #it should be shifter by 3 months back to correspond 
+      #to the model reference biomass (see function get.B.ts)
+      #do not modify weights, so the total B corresponds 
+      #to the model solution after time and age integration
+      qtr.ref<-qtr-1; if (qtr.ref==0) qtr.ref<-4
+      B.reg[qtr.ref]<-sum(mat.mean[reg,])
     }
     fluxes.out[,qtr]<- -mat.mean[reg,regions]
     fluxes.in[,qtr]<- mat.mean[regions,reg]
+  }
+  funit<-"metric tons/quarter"
+  bunit<-"metric tons"
+  if (mean(B.reg)>1000){
+    B.reg<-0.001*B.reg
+    fluxes.in<-0.001*fluxes.in
+    fluxes.out<-0.001*fluxes.out
+    funit<-"thous. metric tons/quarter"
+    bunit<-"thous. metric tons"
   }
 
   net.fluxes<-colSums(fluxes.in+fluxes.out) # fluxes.out are negative
@@ -105,25 +118,32 @@ plot.qtr.mean.fluxes<-function(dat,reg,age,add.B=TRUE)
   max.sum2<- max(-colSums(fluxes.out))
   print(max.sum1); print(max.sum2)
   max.sum<-1.25*max(max.sum1,max.sum2)
-  pal<-brewer.pal(12,"Set3")
+  pal<-brewer.pal(12,"Set3")[c(2,1,3:12)]
   mycol<-c(pal,modcols(pal,0.7),modcols(pal,1.3)) #36 colors max
   mycol<-mycol[regions]
 
   mylim<-c(-max.sum,max.sum)
-  par(las=1,mar=c(3,5,5,3))
-  barplot(fluxes.in,ylim=mylim,col=mycol,space=0.5); axis(2,col="white",lwd=3)
-  barplot(fluxes.out,add=TRUE,col=mycol,space=0.5)
-  abline(h=0,lwd=2)
-  legend("topleft",paste("reg",regions,sep="."),bty="n",fill=mycol,ncol=6)
-  par(new=TRUE)
-  plot(1:4,net.fluxes,type="b",lwd=1.5,xaxt="n",yaxt="n",xlab='',ylab='',ylim=mylim);
+  if (add.B) mylim<-c(-1.2*max(B.reg),1.2*max(B.reg))
+  par(las=1,mar=c(3,5,5,4),tck=-0.02,mgp=c(3,0.5,0))
+  bp<-barplot(fluxes.in,ylim=mylim,col=mycol,space=0.5,border=mycol); 
+  axis(2,col="white",lwd=3);  
+  barplot(fluxes.out,add=TRUE,col=mycol,space=0.5,border=mycol)#"gray20")
+  abline(h=0)
+  legend("topleft",paste("reg",regions,sep=" "),bty="n",fill=mycol,border=mycol,ncol=6)
+  lines(bp,net.fluxes,type="b",lwd=1.5);
   if (add.B){
-    par(new=TRUE)
     print(B.reg)
-    plot(1:4,B.reg,type="l",lty=3,lwd=2,xaxt="n",yaxt="n",xlab='',ylab='',ylim=c(0,max(B.reg)));axis(4)
+    col.B<-"gray40"
+    par(new=TRUE,col.axis=col.B)
+    plot(bp,B.reg,type="b",pch=20,cex=0.5,lty=3,lwd=2,xaxt="n",yaxt="n",xlab='',ylab='',
+    	ylim=c(0.8*min(B.reg),1.2*max(B.reg)),xlim=c(bp[1]-0.5,bp[4]+0.5),col=col.B);
+	axis(4,col=col.B)
+    par(col.axis=1)	
   }
-  title(paste(generic.name(sp)," biomass fluxes for region ",reg," and age ",A," months",
-	     "\n (mean length ",L,"cm, mean weight ",W,"kg)",sep=""))
+  par(las=0); 
+  mtext(funit,2,line=3,cex=1.25)
+  mtext(bunit,4,line=3,cex=1.25)
+  title(paste0(generic.name(sp)," biomass flow rates for region ",reg," and ",age.title))
 }
 
 #' Plotting seasonal movement probabilities by age between two regions, either read from 'movement-matrices-for-MFCL.txt' file or computed from SEAPODYM outputs.   
@@ -135,7 +155,7 @@ plot.qtr.mean.fluxes<-function(dat,reg,age,add.B=TRUE)
 #' i<-1; j<-2; 
 #' move_ij<-get.movement.prob.by.age.season(file.name,i,j,nbr,nba)	
 #' plot.movement.prob.by.age.season(move_ij,i,j)
-#' @export
+#' @export plot.movement.prob.by.age.season
 plot.movement.prob.by.age.season<-function(move_ij,ri,rj)
 {		
   mycol<-brewer.pal(8,"Set2")[c(6,3,2,8)]; col.fg<-"grey40"
@@ -159,7 +179,9 @@ plot.movement.prob.by.age.season<-function(move_ij,ri,rj)
 }
 
 
-#' Plotting SEAPODYM fluxes for a given region in PDF file. The monthly or quatrerly mean values averaged over the time series written in the output files, or the monthly or quarterly fluxes for a selected year. This function uses global environment variables 'sp' and 'figs.dir'. If 'sp' was not set, it will be reset from the file names, which are conventional. Same for figs.dir, it will be created in the working directory if it was not defined earlier. 
+#' Plotting SEAPODYM fluxes for a given region in PDF file. 
+#' 
+#' The monthly or quatrerly mean values averaged over the time series written in the output files, or the monthly or quarterly fluxes for a selected year. This function uses global environment variables 'sp' and 'figs.dir'. If 'sp' was not set, it will be reset from the file names, which are conventional. Same for figs.dir, it will be created in the working directory if it was not defined earlier. 
 #' @param dir is the SEAPODYM output directory containing files [spname]_FluxesRegion_age[a].txt, where a is the age class indices from 0 to A+.
 #' @param reg is the region for which the fluxes, i.e., biomass flow per deltaT from and to 'reg', will be plotted.
 #' @param age is the vector of age class indices, selected for plotting. Must be a sub-set of age classes written in the outputs.
@@ -168,7 +190,7 @@ plot.movement.prob.by.age.season<-function(move_ij,ri,rj)
 #' @param add.B is logical parameter, if set to TRUE, then the total biomass in the region 'reg' before the movement will be added to the plot on the right-hand y axis.
 #' @examples 
 #' plot.fluxes.region("./output/",1,3:10) # plot fluxes from and into region 1 for only immature adults (if skipjack)
-#' @export
+#' @export plot.fluxes.region
 plot.fluxes.region<-function(dir,reg,age=0:18,year=NULL,treso="quarterly",add.B=FALSE)
 {
   files<-check.vars(dir)
@@ -181,13 +203,67 @@ plot.fluxes.region<-function(dir,reg,age=0:18,year=NULL,treso="quarterly",add.B=
     if (length(ind)==0) {dev.off(); stop(paste("Error:: No file for age",a))}
   
     dat<-read.data.fluxes(files[ind],year)
+    age.title<-paste0("age ",A," months","\n (mean length ",L,"cm, mean weight ",W,"kg)")
     if (treso=="monthly")
-        plot.monthly.mean.fluxes(dat,reg,age,add.B)
+        plot.monthly.mean.fluxes(dat,reg,add.B,age.title)
     if (treso=="quarterly")
-        plot.qtr.mean.fluxes(dat,reg,age,add.B)
+        plot.qtr.mean.fluxes(dat,reg,add.B,age.title)
   }
   dev.off()
 }
+
+#' Plotting SEAPODYM fluxes for a given region in PDF file. 
+#' 
+#' The monthly or quatrerly mean values averaged over the time series written in the output files, or the monthly or quarterly fluxes for a selected year. This function uses global environment variables 'sp' and 'figs.dir'. If 'sp' was not set, it will be reset from the file names, which are conventional. Same for figs.dir, it will be created in the working directory if it was not defined earlier. 
+#' @param dir is the SEAPODYM output directory containing files [spname]_FluxesRegion_age[a].txt, where a is the age class indices from 0 to A+.
+#' @param reg is the region for which the fluxes, i.e., biomass flow per deltaT from and to 'reg', will be plotted.
+#' @param age is the vector of age class indices, selected as constituting the life stage. Must be a sub-set of age classes written in the outputs. It the responsibility of the user to select the ages that correspond to the life stage. Selected range will be included in the plot title
+#' @param year by default is set to NULL, but it can be set to a value within the temporal range in the outputs.
+#' @param areso is the age resolution of fluxes that will be plotted, can be either "monthly" or "quarterly". 
+#' @param treso is the temporal resolution of fluxes that will be plotted, can be either "monthly" or "quarterly". If the outputs are written as quarterly, both options will provide the same quarterly visualization. If outputs are monthly and treso is quarterly, then the monthly fluxes will be aggregated into quarterly. 
+#' @param add.B is logical parameter, if set to TRUE, then the total biomass in the region 'reg' before the movement will be added to the plot on the right-hand y axis.
+#' @examples 
+#' plot.fluxes.region("./output/",1,3:10) # plot fluxes from and into region 1 for only immature adults (if skipjack)
+#' @export plot.fluxes.region.lstage
+plot.fluxes.region.lstage<-function(dir,reg,age=0:18,lstage.name="all",
+					year=NULL,areso="monthly",treso="quarterly",add.B=FALSE)
+{ 
+  files<-check.vars(dir)
+  if (areso=="monthly")
+    age.title<-paste0(lstage.name,"\n(",paste0(min(age)," - ",max(age)+1)," months of age)")
+  if (areso=="quarterly")
+    age.title<-paste0(lstage.name,"\n(",paste0(range(age),collapse=" - ")," quarters of age)")
+  lstage.name<-gsub(" ","-",lstage.name)
+  pdf.name<-paste(figs.dir,"/",sp,"_fluxes_reg",reg,"_",lstage.name,".pdf",sep="")
+  if (!is.null(year)) 
+    pdf.name<-paste(figs.dir,"/",sp,"_fluxes_year",year,"_reg",reg,"_",lstage.name,".pdf",sep="")
+
+  pdf(pdf.name,7,5)
+  
+  counter<-0
+  for (a in age){
+    ind<-grep(paste0("_age",a,".txt"),files)
+    if (length(ind)==0) {dev.off(); stop(paste("Error:: No file for age",a))}
+    counter<-counter+1
+  
+    dat<-read.data.fluxes(files[ind],year)
+    dates<-as.Date(labels(dat))
+    nbt<-length(dates)
+    if (counter==1)
+      dat.sum<-dat
+    if (counter>1){
+      for (ti in 1:nbt)
+        dat.sum[[ti]]<-dat.sum[[ti]]+dat[[ti]]
+    } 
+  }
+  if (treso=="monthly")
+      plot.monthly.mean.fluxes(dat.sum,reg,add.B,age.title)
+  if (treso=="quarterly")
+      plot.qtr.mean.fluxes(dat.sum,reg,add.B,age.title)
+
+  dev.off()
+}
+
 
 #To be described later: this function to be used once plotting the movements with uncertainties
 #@examples 
