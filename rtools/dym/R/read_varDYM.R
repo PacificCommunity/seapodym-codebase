@@ -25,6 +25,12 @@
         return(c(year,month))
     }
 
+    gen.monthly.dates<-function(t0,tfin){
+    	days<-seq(as.Date(paste(t0[1],t0[2],15,sep="-")),as.Date(paste(tfin[1],tfin[2],15,sep="-")),1)
+	days15<-days[which(as.numeric(format(days,"%d"))==15)]
+	return(days15)
+    }
+
     read.dims.dym<-function(file.in){
 
 	#1-reading
