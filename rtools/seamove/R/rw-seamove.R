@@ -78,6 +78,71 @@ read.data.fluxes<-function(filename,years=NULL)
  return(mat)
 }
 
+get.weights.header<-function(dir,age=1:1)
+{ #Important: age indices in SEAPODYM start with 0!
+
+  W<-array(NA,length(age)+age[1])
+  for (a in age){
+    filename<-paste0(dir,"/",sp,"_FluxesRegion_age",a,".txt")
+    hea<-read.data.fluxes.header(filename)
+    W[a+1]<-hea$wei;
+  }
+  return(W)
+}
+
+
+#' function extracts the total biomass in the region before the movement. It is equal to the model state vector saved at previous time step and before ageing (subject to change once the outputs in SEAPODYM will be written after ageing). The biomass extracted from 'fluxes' files is extracted at quarterly time step (depends on the time unit of biomass flow rates). The variable 'sp' should be defined.
+#' @param dir is the full (or relative if working in local directory) path to the output directory.
+#' @param age is the vector of ages, for which the extraction is to be done.
+#' @param reg is the region, for which the biomass extraction is to be done.
+#' @param years is the set of years, for which the extraction is to be done.
+#' @return Returns the list with dates and biomass time series.
+#' @examples
+#' dir<-"./output"; sp<-"skj"
+#' dat<-get.B.ts(dir,3:47,1,1983:2010) # extracting the total biomass of skipjack
+#' dat<-get.B.ts(dir,1:1,1,1983:2010)  # extracting the biomass of skipjack larvae
+#' @export
+get.B.ts<-function(dir,age,reg,years)
+{
+  # will need weights to get the biomass saved in SEAPODYM simulation after movement
+  # and mortality at t-1.
+  if (age[1]==0){
+    message("Removing zero-index age.")
+    age<-age[-1]
+  }
+ 
+  #Important: indices of W start with 1
+  #while indices of age start with 0
+  #so Fluxes_ageA should use W[A]/W[A+1] and not W[A-1]/W[A]
+  W<-get.weights.header(dir,c(age[1]-1,age))
+  a1<-age[1]
+  print(W)
+  print(length(W))
+  dat<-read.data.fluxes(paste0(dir,"/",sp,"_FluxesRegion_age",a1,".txt"),years)
+  nbr<-sqrt(length(dat[[1]]))
+  dates<-as.Date(labels(dat))
+  nbt<-length(dates)
+  for (ti in 1:nbt) dat[[ti]]<-dat[[ti]]*W[a1]/W[a1+1]
+  print(sum(matrix(dat[[1]])))
+
+  if (length(age)>1){
+    for (a in age[-1]){ 
+      dat.a<-read.data.fluxes(paste0(dir,"/",sp,"_FluxesRegion_age",a,".txt"),years); 
+      for (ti in 1:nbt) dat[[ti]]<-dat[[ti]]+dat.a[[ti]]*W[a]/W[a+1] 
+    }
+  }
+
+  B.flx<-array(NA,nbt); 
+  for (i in 1:nbt) B.flx[i]<-rowSums(matrix(dat[[i]],nbr,nbr))[reg]
+ 
+  add.months<-function(date,n) seq(date, by = paste (n, "months"), length = 2)[2]
+  #model solution at the beginning of first quarterly time step = the one saved 
+  #at the previous monthly step, so, shift by 3 months in needed
+  dates.out<-seq(add.months(dates[1],-3),add.months(dates[nbt],-3),paste(3,"months"))
+
+  return(list(t=dates.out,B=B.flx))
+}
+
 read.mfcl.move.file<-function(filename,nbr,nba)
 {
   dat<-read.table(filename,skip=1,nrows=1e5)
@@ -86,7 +151,7 @@ read.mfcl.move.file<-function(filename,nbr,nba)
   return(mat)
 }
 
-#' Reading the SEAPODYM output file with movement matrices and reduces their dimensions to the MFCL regional structure, given the provided mapping between MFCL and SEAPODYM regions, where SEAPODYM regions follow: nbr.sea > nbr.mfcl, total.area(regs.sea) = total.area(regs.mfcl), and reg.mfcl.i = sum_j(regs.sea.j). The function will write the SEAPODYM output files with reduced regional structure in the new output directory.
+#' Reading the SEAPODYM output file with movement matrices and reduces their dimensions to the MFCL regional structure, given the provided mapping between MFCL and SEAPODYM regions, where all regions are non-overlapping and SEAPODYM regions follow: nbr.sea > nbr.mfcl, total.area(regs.sea) = total.area(regs.mfcl), and for a given MFCL 'i-th' region reg.mfcl.i = sum.j(regs.sea.j). The function writes the SEAPODYM output files with reduced regional structure in the new output directory.
 #' @param dir.in is the SEAPODYM output directory containing files [spname]_FluxesRegion_age[a].txt, where a is the age class indices from 0 to A+, with the original regional structure defined in simulations.
 #' @param dir.out is the new output directory containing files [spname]_FluxesRegion_age[a].txt with new regional structure.
 #' @param age is the vector of age class indices, determines the window of age classes to be extracted from the outputs. Note, the age indices must be a sub-set of age classes written in the outputs.
@@ -164,7 +229,8 @@ reg.structure.mapping<-function(dir.in,dir.out,age,reg.mfcl)
     message("done.")
 }
 
-#' Aggregating the age structure of the SEAPODYM movement fluxes to a coarser age structure used in the Multifan-CL model configuration. 
+#' Aggregating the age structure of the SEAPODYM movement fluxes to a coarser age structure used in the Multifan-CL model configuration.
+#' 
 #' @param dir.in is the SEAPODYM output directory containing files [spname]_FluxesRegion_age[a].txt, where a is the age class indices from 0 to A+. 
 #' @param dir.out is the new output directory containing files [spname]_FluxesRegion_age[a].txt with the age structure as defined in Multifan-CL. 
 #' @param a0, am are the first and last index of age classes to be extracted from the outputs in dir.in and aggregated to coarser age structure. The vector given by a0:am should be a sub-set of age classes in the outputs.
@@ -178,7 +244,7 @@ reg.structure.mapping<-function(dir.in,dir.out,age,reg.mfcl)
 #' dir.in<-"SKJ-DIR/output"
 #' dir.out<-"SKJ-DIR/output-mfcl/"
 #' nba<-aggregate.age.classes(dir.in,dir.out,a0,am=48,age.plus=TRUE,aggregate.by=3)
-#' @export
+#' @export aggregate.age.classes
 aggregate.age.classes<-function(dir.in,dir.out,a0,am,a.plus=TRUE,aggregate.by=3)
 {
   if ((!a.plus & (am-a0+1)%%aggregate.by!=0)| (a.plus & (am-a0)%%aggregate.by!=0))
@@ -254,6 +320,7 @@ aggregate.age.classes<-function(dir.in,dir.out,a0,am,a.plus=TRUE,aggregate.by=3)
 }
 
 #' Computing four seasonal vectors of movement probabilities by age for ri-->rj directly from SEAPODYM output files [spname]_FluxesRegion_age[a].txt. See also function get.movement.prob.by.age.season(), which reads the movement probabilities previously exported to the Multifan-CL format.
+#'
 #' @param dir is the SEAPODYM output directory containing files [spname]_FluxesRegion_age[a].txt, where a is the age class indices from 0 to A+.
 #' @param ri and rj are two regions, so that the vector of probabilities at age will be derived for ri->rj movement.
 #' @param age is the vector of selecled age class indices, must be a sub-set of age classes written in the outputs.
@@ -295,6 +362,7 @@ comp.movement.prob.by.age.season<-function(dir,ri,rj,age=0:50,print.out=FALSE)
 }
 
 #' Function reads the Multifan-CL file with movement probabilities with seasonal and age structure.
+#'
 #' @param filename is the name of the Multifan-CL file with movement probabilities.
 #' @param ri and rj are two regions, so that the vector of probabilities at age describe ri->rj movement.
 #' @param age is the vector of Multifan-CL age class indices, beginning with 1.
@@ -323,6 +391,7 @@ get.movement.prob.by.age.season<-function(filename,ri,rj,nbr,age)
 }
 
 #' Converting the SEAPODYM movement fluxes to the Multifan-CL movement probabilities. 
+#'
 #' @param dir.in is the SEAPODYM output directory containing files [spname]_FluxesRegion_age[a].txt, where a is the age class indices from 0 to A+. It can either be the original output with the original regional and age structures defined in simulations, or the aggregated outputs.
 #' @param dir.out is the new output directory containing files [spname]_FluxesRegion_age[a].txt with the regional and age structures defined in Multifan-CL. The file with movement probabilities will be written in this directory as well.
 #' @param years can be given in case the movement matrices should be extracted for a given sub-set of years. The default value is NULL. 
@@ -333,6 +402,7 @@ get.movement.prob.by.age.season<-function(filename,ri,rj,nbr,age)
 #' @param aggregate.reg has the logical value indicating whether the SEAPODYM regional structure should be mapped to Multifan-CL. See reg.mfcl and function reg.structure.mapping() for more details.
 #' @param reg.mfcl is the list with MFCL regions, where each element of the list contains the indices of the seapodym regions. Default value is NULL.
 #' @param plot.out activates plotting of resulting movement probabilities for Multifan-CL regions and age structure. Defalt value is TRUE. Note, the PNG files with plots will be written in figs.dir in the working directory.
+#'
 #' @examples
 #' # Example #1: skipjack model with 48 monthly age classes and 15 regions, 
 #' # extracting movement rates for age classes older than 3 months of age,
