@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot-seamove.R
 \name{plot.fluxes.region}
 \alias{plot.fluxes.region}
-\title{Plotting SEAPODYM fluxes for a given region in PDF file. The monthly or quatrerly mean values averaged over the time series written in the output files, or the monthly or quarterly fluxes for a selected year. This function uses global environment variables 'sp' and 'figs.dir'. If 'sp' was not set, it will be reset from the file names, which are conventional. Same for figs.dir, it will be created in the working directory if it was not defined earlier.}
+\title{Plotting SEAPODYM fluxes for a given region in PDF file.}
 \usage{
 \method{plot}{fluxes.region}(dir, reg, age = 0:18, year = NULL, treso = "quarterly", add.B = FALSE)
 }
@@ -20,7 +20,7 @@
 \item{add.B}{is logical parameter, if set to TRUE, then the total biomass in the region 'reg' before the movement will be added to the plot on the right-hand y axis.}
 }
 \description{
-Plotting SEAPODYM fluxes for a given region in PDF file. The monthly or quatrerly mean values averaged over the time series written in the output files, or the monthly or quarterly fluxes for a selected year. This function uses global environment variables 'sp' and 'figs.dir'. If 'sp' was not set, it will be reset from the file names, which are conventional. Same for figs.dir, it will be created in the working directory if it was not defined earlier.
+The monthly or quatrerly mean values averaged over the time series written in the output files, or the monthly or quarterly fluxes for a selected year. This function uses global environment variables 'sp' and 'figs.dir'. If 'sp' was not set, it will be reset from the file names, which are conventional. Same for figs.dir, it will be created in the working directory if it was not defined earlier.
 }
 \examples{
 plot.fluxes.region("./output/",1,3:10) # plot fluxes from and into region 1 for only immature adults (if skipjack)

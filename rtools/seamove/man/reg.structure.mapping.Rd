@@ -2,7 +2,7 @@
 % Please edit documentation in R/rw-seamove.R
 \name{reg.structure.mapping}
 \alias{reg.structure.mapping}
-\title{Reading the SEAPODYM output file with movement matrices and reduces their dimensions to the MFCL regional structure, given the provided mapping between MFCL and SEAPODYM regions, where SEAPODYM regions follow: nbr.sea > nbr.mfcl, total.area(regs.sea) = total.area(regs.mfcl), and reg.mfcl.i = sum_j(regs.sea.j). The function will write the SEAPODYM output files with reduced regional structure in the new output directory.}
+\title{Reading the SEAPODYM output file with movement matrices and reduces their dimensions to the MFCL regional structure, given the provided mapping between MFCL and SEAPODYM regions, where all regions are non-overlapping and SEAPODYM regions follow: nbr.sea > nbr.mfcl, total.area(regs.sea) = total.area(regs.mfcl), and for a given MFCL 'i-th' region reg.mfcl.i = sum.j(regs.sea.j). The function writes the SEAPODYM output files with reduced regional structure in the new output directory.}
 \usage{
 reg.structure.mapping(dir.in, dir.out, age, reg.mfcl)
 }
@@ -16,7 +16,7 @@ reg.structure.mapping(dir.in, dir.out, age, reg.mfcl)
 \item{reg.mfcl}{is the list with MFCL regions, where each element of the list contains the indices of the seapodym regions.}
 }
 \description{
-Reading the SEAPODYM output file with movement matrices and reduces their dimensions to the MFCL regional structure, given the provided mapping between MFCL and SEAPODYM regions, where SEAPODYM regions follow: nbr.sea > nbr.mfcl, total.area(regs.sea) = total.area(regs.mfcl), and reg.mfcl.i = sum_j(regs.sea.j). The function will write the SEAPODYM output files with reduced regional structure in the new output directory.
+Reading the SEAPODYM output file with movement matrices and reduces their dimensions to the MFCL regional structure, given the provided mapping between MFCL and SEAPODYM regions, where all regions are non-overlapping and SEAPODYM regions follow: nbr.sea > nbr.mfcl, total.area(regs.sea) = total.area(regs.mfcl), and for a given MFCL 'i-th' region reg.mfcl.i = sum.j(regs.sea.j). The function writes the SEAPODYM output files with reduced regional structure in the new output directory.
 }
 \examples{
 # Example #1:
