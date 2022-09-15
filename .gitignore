@@ -3,7 +3,11 @@ objs/*
 unused
 unused/*
 log-changes.txt
-seapodym*
+seapodym
+seapodym_cltags
+seapodym_fluxes
+seapodym_densities
+seapodym_habitats
 DOM/unused
 DOM/unused/*
 docs/manual/*.aux
