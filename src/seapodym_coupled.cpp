@@ -535,6 +535,8 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 	}
 	else if (sftype==2){//ONE-AT-a-TIME sensitivity analysis
 		cout << "\nstarting computing likelihoods for OAT sensitivity analysis" << endl;
+		string dirout = get_path(parfile);
+		string newparfile  = dirout +"/newparfile.xml";
 
 		gradient_structure::set_NO_DERIVATIVES();
 		dvector xr;
@@ -542,25 +544,23 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 		xr.allocate(0,nxr);
 		xr.initialize();
 		double like = 1e2*sc.param->get_parval(1);//to be used for the seed
-//		double fmin = 1e10; //uncomment to always have non-increasing (<=) fmin between iterations
+		double fmin = 1e10; //uncomment to always have non-increasing (<=) fmin between iterations
 
 		for (int i=1; i<=nvar; i++){
 		//for (int i=nvar; i>=1; i--){
 		//for (int i=1; i<=2; i++){
 		
-			double fmin = 1e10; //uncomment to allow increase in function value in iterations
+			//double fmin = 1e10; //uncomment to allow increase in function value in iterations
 			
 			double xmin = x(i);//parameter value at start
 			int n=(int)like;
 			random_number_generator r(n);
 			randu(r);
 			xr.fill_randu(r);
-			//cout << xr << endl;
 
 			for (int k=0; k<nxr; k++){
 			//for (int k=0; k<1; k++){
 				x(i) = sc.param->par_init_step(i,xr[k]);
-				//cout << x(i) << endl;
 
 				like = sc.run_coupled((dvar_vector)x);
 				if (fmin>like){
@@ -571,8 +571,15 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 			}
 			x(i) = xmin; //if fmin not improved, xmin contains value at start 	
 		}
-		//output parameters corresponding to the minimal function value
-		cout << "Final parameters: x = " << x << endl; 
+		//Note, in case if xmin wasn't updated in the last iteration, 
+		//the instruction 'x(i)=xmin' is useless, then need to reset 
+		//parameters, i.e. to pass them to the VarParam class:
+		sc.param->reset(x);
+		//parameters corresponding to the minimal function value:
+		sc.param->outp_param(x_names,nvar);
+		cout << "Minimal function value: " << fmin << endl; 
+		//write parfile with "best" parameters:
+		sc.write(newparfile.c_str());
 	}
 	else if (sftype==3){//just a forward run, usually to be used in ALL-AT-a-TIME sensitivity analysis
 
