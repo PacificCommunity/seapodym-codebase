@@ -292,7 +292,7 @@ void dv_caldia()
 //					dHdy = (habitat[i][j+1] - habitat[i][j])/dy;
 
 					if (pos_x == SANS)
- 	                   			dHdx = (habitat[i+1][j] - habitat[i][j])/dx;
+ 	                   			dHdx = (habitat[i+1][j] - habitat[i-1][j])/(2*dx);
 //dHdx = max(dHx_right,dHx_left); 	                   			
 					else if (pos_x == D_FERME)
 						dHdx = (habitat[i][j] - habitat[i-1][j])/(dx);
