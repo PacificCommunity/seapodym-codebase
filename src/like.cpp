@@ -43,29 +43,7 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 	int like_type = param->like_types[sp][k];
 
 	bool Clike_comp = true;
-	//In the SA mode either one will be computed, catch or LF likes
-	//In the need of combined likelihoods, introduce a new flag in parfile
-//	if (param->scalc() && param->frq_like[sp])
-//		Clike_comp = false;
 
-if (param->sp_name[0].find("bet")==0){
-	string fishery_name = param->list_fishery_name[f];
-	//ds2008
-//	if ((fishery_name.compare("S8")==0 || fishery_name.compare("S10")==0) && year<1996) Clike_comp = false;
-//	if (fishery_name.compare("S9")==0 && year<=1998) Clike_comp = false;
-//	if (fishery_name.compare("S17")==0 && year<1994) Clike_comp = false;
-	//ds2012
-	if (fishery_name.compare("S15")==0 && year<1996) Clike_comp = false;
-	if (fishery_name.compare("S16")==0 && year<1996) Clike_comp = false;
-	if (fishery_name.compare("S17")==0 && year<1996) Clike_comp = false;
-	if (fishery_name.compare("S22")==0 && year<1994) Clike_comp = false;
-	//if (fishery_name.compare("S22")==0 && year<1994) Clike_comp = false;
-
-//	if (!Clike_comp && !param->gcalc()) {
-//		mat.catch_obs(sp,k).initialize();
-//		mat.catch_est(sp,k).initialize();
-//	}
-}
 if (Clike_comp){
 
 	fillmatrices(map, mat.effort(f), mat.catch_obs(sp,k), mat.dvarCatch_est(sp,k), data_obs, data_est, cpue, param->cpue_mult(f),catch_scaling_factor);
@@ -80,11 +58,6 @@ if (Clike_comp){
 			break;
 		
 		case 3: likelihood = Poisson(map,data_obs,data_est);
-		//case 3: likelihood = Poisson(map,mat.catch_obs(sp,k),mat.dvarCatch_est(sp,k));
-//test: like_cpue + like_catch:
-//	fillmatrices(map, mat.effort(f), mat.catch_obs(sp,k), mat.dvarCatch_est(sp,k), data_obs, data_est, 1, param->cpue_mult(f));
-//	likelihood += Poisson(map,data_obs,data_est);
-//end of test
 			break;
 	
 		case 4: beta = param->dvarsLike_param(sp,k);
@@ -113,7 +86,6 @@ if (Clike_comp){
 	if (param->frq_like[sp] && (month==3 || month==6 || month==9 || month==12)){
 		const int a0 = a0_adult(sp);
 		const int nb_ages = aN_adult(sp);
-		///const int nb_ages = param->sp_nb_age_class_ad(sp);
 		const int nb_regions_sp = param->nb_region_sp_B(sp);
 		if (like_type==7){//first type of sensitivity analysis
 			likelihood += LFsum_sq(mat.dvarLF_est(sp),nb_ages,nb_regions_sp,k,lflike);
