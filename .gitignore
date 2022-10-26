@@ -13,6 +13,7 @@ DOM/unused/*
 docs/manual/*.aux
 docs/code-dox/html/
 docs/code-dox/latex/
+example-configs/data
 example-configs/run/SKJ-INTERIM-2x30d/output
 example-configs/run/SKJ-INTERIM-2x30d/sim.out
 example-configs/run/SKJ-INTERIM-2x30d/newparfile.xml
