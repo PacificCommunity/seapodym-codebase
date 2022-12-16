@@ -138,12 +138,12 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	//------------------------------------------------------//
 	//	   COMPUTE FLUXES BETWEEN REGIONS		//
 	//------------------------------------------------------//
-	if (param->nb_region==0){
+	if (!param->nb_region && !param->nb_EEZ){
 		cerr << "ERROR: In FLUXES mode the (MFCL) regional structure MUST be defined and activated. Revise the parfile, will stop now!" << endl;
 		exit(1);
 	}
 	//Will consider that LF regional structure has always > 20 regions, while MFCL cannot have more than 20 regions:
-	if (param->nb_region>20){
+	if (!param->nb_EEZ && param->nb_region>20){
 		cerr << "ERROR: The LF regional structure is ON, desactivate LF likelihood to compute fluxes, will stop now!" << endl;
 		exit(1);
 	}
@@ -579,17 +579,21 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	return value(likelihood);
 }
 
+///This function uses regional structure defined in the parfile to compute fluxes as biomass flow rates between regions.
 void SeapodymCoupled::FluxesComp(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur)
 {
+	if (fluxes_between_polygons){
+		FluxesComp_polygons(Density,Habitat,Mortality,age,fishing,year,month,jday,step_fishery_count,tcur);
+		return;
+	}
+
 //temporal here:
 int movement_fluxes_only = 1;
 	const int sp = 0;
 	const int nb_reg = param->nb_region_sp_B[sp];
 
-	//dvar_matrix Density_region;
 	dvar_matrix Mortality_copy;
 	dvar_matrix Habitat_copy;
-	//Density_region.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Habitat_copy.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Mortality_copy.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Habitat_copy = Habitat;
@@ -605,7 +609,7 @@ int movement_fluxes_only = 1;
 	    for (int r=0; r<nb_reg; r++){
 		int reg = param->area_sp_B[sp][r]-1;
 
-		//For MFCL need to extract quarterly metrics, so the biomass in the region gets
+		//For MFCL need to extract quarterly metrics
 		//initialized once every three months, using calendar seasons
 		if (fluxes_dt_qtr && (month==1 || month==4 || month==7 || month==10)){	
 			Density_region(reg,age).initialize();
@@ -647,6 +651,70 @@ int movement_fluxes_only = 1;
 			mat.fluxes_region(age,reg,oth_reg) = tot_mass_region;
 		}
 	    }
+	}
+}
+
+///This function uses EEZ mask, which can contain both EEZ contours and arbitrary, non-overlapping polygons, and computes fluxes as biomass flow rates between different polygons. 
+void SeapodymCoupled::FluxesComp_polygons(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur)
+{
+//temporal here:
+int movement_fluxes_only = 1;
+	const int sp = 0;
+
+	dvar_matrix Mortality_copy;
+	dvar_matrix Habitat_copy;
+	Habitat_copy.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	Mortality_copy.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Habitat_copy = Habitat;
+	Mortality_copy = Mortality;
+
+	if (movement_fluxes_only) Mortality_copy.initialize();	
+
+	if (fluxes_dt_qtr && (month==1 || month==4 || month==7 || month==10)){
+		mat.fluxes_region(age).initialize();
+	}
+
+	//rd - donor region
+	for (int rd=0; rd<param->nb_EEZ; rd++){
+		//For MFCL need to extract quarterly metrics
+		if (fluxes_dt_qtr && (month==1 || month==4 || month==7 || month==10)){	
+			Density_region(rd,age).initialize();
+			//only biomass in region rd is non-zero
+			//initialized with the model state N(a,t,x,y)
+	        	for (int i=map.imin; i <= map.imax; i++){
+		     		for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
+	        			if (map.carte[i][j] && (map.maskEEZ[i][j] == param->EEZ_ID[rd])){
+						Density_region(rd,age,i,j) = Density(i,j);
+					}
+		  		}
+		 	}
+		}
+		if (age<a0_adult[sp]){
+			pop.Precalrec_juv(map, mat, Mortality_copy, tcur);
+			pop.Calrec_juv(map, mat, Density_region(rd,age), Mortality_copy, tcur);
+		}
+		if (age>=a0_adult[sp]){
+			pop.Precaldia_Caldia(map, *param, mat, Habitat_copy, Mortality_copy, sp, age, tcur,jday);
+			pop.Precalrec_Calrec_adult(map,mat,*param,rw,Density_region(rd,age),
+							Mortality_copy,tcur,fishing,age,sp,year,
+							month,jday,step_fishery_count,0);
+		}
+		//now integrate biomass in each region, region 'reg' included (what's left in it after movement)
+		//rr - recipient region
+		for (int rr=0; rr<param->nb_EEZ; rr++){
+			double tot_mass_region = 0.0;
+			double weight = param->weight[sp][age]*0.001;
+		
+			for (int i=map.imin; i <= map.imax; i++){
+				for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
+	       				if (map.carte[i][j] && (map.maskEEZ[i][j] == param->EEZ_ID[rr])){
+						tot_mass_region += value(Density_region(rd,age,i,j))*
+									weight*param->cell_surface_area(j);		
+					}
+			     	}
+			}
+			mat.fluxes_region(age,rd,rr) = tot_mass_region;
+		}
 	}
 }
 
