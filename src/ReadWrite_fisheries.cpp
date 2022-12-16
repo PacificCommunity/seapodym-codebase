@@ -12,11 +12,6 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 
-int lat_extreme = 90; //35 is used to restrict skj fishing data region, default value = 90
-int lon_extreme = 390;  //135 is used to restrict utilization of fishing data for region 7 (PhID), default value = 0
-int lon_L1 = 360;
-int lat_L1 = 0;
-
 double Etot = 0.0;
 double Ctot = 0.0;
 int nrec_oceanmask_original = 0;
@@ -28,11 +23,6 @@ int nrec_oceanmask_original = 0;
 void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt, const int jday_spinup)
 {
 
-// TEST:
-if (param.sp_name[0].find("skj")==0) { lat_extreme = 35; cout << "TEST: skipjack data out of 35S-35N will not be used!" << endl; } 
-if (param.sp_name[0].find("skj")==0) { lon_extreme = 275; cout << "TEST: skipjack data EAST of 85W & SOUTH of 0 will not be used!" << endl; } 
-//if (param.sp_name[0].find("yft")==0) { lon_extreme = 290; cout << "TEST: yellowfin data on the west of 135E will not be used!" << endl; } 
-//if (param.sp_name[0].find("bet")==0) { lon_L1 = 165; lat_L1 = 15; cout << "TEST: for the case of new LL22 fishery need to move bigeye data from L1 to L22 in 165E-150W; 15S-15N in LF data!" << endl; } 
 
 	//IMPORTANT: data for each fishery should be sorted by date!
 	const int nb_fishery = param.get_nbfishery();
@@ -40,7 +30,7 @@ if (param.sp_name[0].find("skj")==0) { lon_extreme = 275; cout << "TEST: skipjac
 	const int nbi = param.get_nbi();
 	const int nbj = param.get_nbj();
 
-	//Inna 2013 INDESO notes:
+	//IMPORTANT:
 	//1. use of monthly data only
 	//2. final date doesn't take into account forecast period
 	const int yearini  = param.ndatini/10000;
@@ -127,178 +117,10 @@ if (param.sp_name[0].find("skj")==0) { lon_extreme = 275; cout << "TEST: skipjac
 			littxt >> fishery >> year >> month >> day >> gear >> lat >> lon >> freso >> eff >> harv;
 			if (lon<0) lon += 360.0;
 			
-			if (param.sp_name[0].find("skj")!=0){
-				//Important to ignore this condition for SKJ while
-				//there are PH-ID data without effort (put to zero)
-				if (eff==0) {rec++; continue;}
-			}
-
-			//'eff=0' should be treated prior to the use in the model, 
-			//i.e. if there are zero effort data then either estimate 
-			//the effort or move the data to the 'no effort' fishery
-
-			if (lat>lat_extreme || lat<-lat_extreme) {rec++; continue;}
-			if (lon>lon_extreme && lat<0.0) {rec++; continue;}
 
 			std::ostringstream ostr;
 			ostr << fishery;
 			string fishery_name = gear+ostr.str();
-//Some additional changes, temporal!			
-if ((param.sp_name[0].find("yft")==0) && (lat>20 || lat<-15) && sum(harv)==0)
-{rec++; continue;} //account for zero catch only for tropical fisheries, where bigeye is the target species
-
-if (param.sp_name[0].find("bet")==0 && fishery_name.compare("S9")==0 && lon<150 && sum(harv)==0)
-{rec++; continue;} //remove zero catch effort coming from ID-PH fisheries
-
-if (param.sp_name[0].find("skj")==0 && fishery_name.compare("S4")==0 && year>1994 && sum(harv)==0)
-{rec++; continue;} //remove zero catch effort coming from ID-PH fisheries
-//Inna 20160415
-//if (param.sp_name[0].find("skj")==0 && fishery_name.compare("L8")==0 && sum(harv)==0)
-//{rec++; continue;} //remove zero catch effort coming from Japanese long-line fishery
-
-
-//if ((lat>20 || lat<-15) && (fishery<6 || fishery==8))
-//	eff *= 0.7;
-/* //DS-2015b ONLY!!!
-if (param.sp_name[0].find("bet")==0){
-        if ((fishery_name.compare("L4")==0 || fishery_name.compare("L5")==0) && year<=2000)
-                eff *= 1.85; //no fit : 1.75 for e5, 1.85 for e5_2_3
-        //if (fishery_name.compare("L5")==0 && year<=2000)
-        //        eff *= 1.85; //no fit
-	if ((fishery_name.compare("L3")==0) && year>=2007 && lon<180 && lat>20) 
-                eff *= 0.1; //another fleet with lower CPUE
-	if ((fishery_name.compare("L3")==0) && year<=1990) 
-                eff *= 0.5; //no fit
-        if ((fishery_name.compare("L1")==0) && year<=1991)
-                eff *= 1.25; //no fit
-        if (fishery_name.compare("S14")==0 && year<1994)
-                eff *= 0.15; //no fit
-        if (fishery_name.compare("S14")==0 && year>=2009)
-                eff *= 0.7; //no fit
-        if (fishery_name.compare("S14")==0 && year==2000 && month>=2 && month<=9)
-                eff *= 2.0; //no fit
-        if (fishery_name.compare("S11")==0 && year<=1997)
-                eff *= 0.7; //no fit
-        if (fishery_name.compare("L7")==0 && year<=1995)
-                eff *= 0.25; //no fit
-        if (fishery_name.compare("P15")==0 && year>=2005)
-                eff *= 2.5; //no fit
-}*/
-if (param.sp_name[0].find("yft")==0){
-	if ((fishery_name.compare("S13")==0 || fishery_name.compare("S14")==0) && year<1987)
-		eff *= 0.6; //no fit
-        if (fishery_name.compare("S12")==0 && year>=2007)
-                eff *= 0.5; //no fit
-//	if ((fishery_name.compare("S15")==0) && year<1989)
-//		eff *= 1.5; //no fit
-//	if ((fishery_name.compare("S15")==0) && year<1994)
-//		eff *= 1.5; //no fit
-}
-if (param.sp_name[0].find("skj")==0){
-        if ( fishery_name.compare("P22")==0 && year==1989)
-                eff *= 0.5; //transition period
-        if ( fishery_name.compare("P23")==0 && year<1991)
-                eff *= 0.5; //transition period
-        if (fishery_name.compare("S5")==0 && year>=2007)
-                eff *= 1.5; //no fit
-        if ((fishery_name.compare("S10")==0 || fishery_name.compare("S13")==0) && year>=1997)
-                eff *= 2.0;//1.5; //different effort units before 1997
-        if ( fishery_name.compare("S12")==0 && year>=1997)
-                eff *= 8.0; //different effort units before 1997
-        //if (fishery_name.compare("S6")==0 && eff>300)
-        //        eff = 300; 
-}
-if (param.sp_name[0].find("alb")==0 && param.longitudeMax>=360){
-
-	if ( fishery_name.compare("L10")==0 && year>2003)
-		eff *= 0.3;
-}
-
-if (param.sp_name[0].find("alb")==0 && param.longitudeMax<360){
-	if (fishery_name.compare("L1")==0){
-	       if (year<1981) eff*=0.3;//no monofilament
-	       if (year==1981) eff*=0.5;//no monofilament
-	       if (year==1982) eff*=0.75;//no monofilament
-	}
-	if (fishery_name.compare("L2")==0 && year==1980 && month>7) eff *=0.5;//erroneous data?
-
-	if (fishery_name.compare("L5")==0){
-	       if (year>=1998 && year<=2004) eff*=0.75;//no JP LL in L5 starting 1998, primary target - bigeye
-	       if (year>=2005 && year<=2009) eff*=1.5;//change of target, now it's albacore
-	       if (year>2009) eff*=2.5;
-	}
-	if (fishery_name.compare("L7")==0 && year>=1998 && year<=2000)
-		eff*=0.85;//not good ENSO in INTERIM
-	if (fishery_name.compare("L10")==0)
-		if (year>=1990) eff *=2.0;//change of the target?
-	if (fishery_name.compare("L12")==0)
-	       if (year>=1993) eff*=2.0;
-	if (fishery_name.compare("L15")==0)
-		if (year>2002) eff *=0.6;
-	if (fishery_name.compare("L16")==0){
-		if (year==2008 && month>4 && month<11) eff *=3.0;
-		if (year==2009 && month>4) eff *=3.0;
-		if (year==2010 && month>4) eff *=1.5;
-	}
-	
-}
-/*
-//TEST to compare ECCO&INTERIM e11 and e3 respectively with NCEP e4 run:
-if (param.sp_name[0].find("yft")==0){
-        if (fishery_name.compare("L1")==0 && year>=1980 && year<1985)
-                eff *= 1.65; //no fit
-//2deg:	
-//        if (fishery_name.compare("L4")==0 && year>=2009)
-//                eff *= 2.0; //no fit
-        if (fishery_name.compare("L4")==0 && year<1982)
-                eff *= 0.5; //no fit
-        if (fishery_name.compare("L5")==0 && year>=2009)
-                eff *= 0.5; //no fit
-        if (fishery_name.compare("L9")==0 && year>=1997)
-                eff *= 0.35; //no fit
-        if ((fishery_name.compare("S14")==0 || fishery_name.compare("S16")==0) && year>2007)
-                eff *= 0.5; //no fit
-        if (fishery_name.compare("S16")==0 && year==1999)
-                eff *= 1.5; //no fit
-        if (fishery_name.compare("P19")==0 && year>=1980 && year<=1984)
-                eff *= 0.65; //no fit
-        if (fishery_name.compare("S20")==0 && year>1985 && year<1994)
-                eff *= 1.5; //no fit
-        if (fishery_name.compare("S20")==0 && year>1998 && year<2005)
-                eff *= 2.0; //no fit
-*/	
-//2deg INTERIM
-/*        if (fishery_name.compare("S21")==0 && year>2000 && year<=2001)
-                eff *= 2.0; //no fit
-        if (fishery_name.compare("S21")==0 && year>2001 && year<2004)
-                eff *= 3.5; //no fit
-        if (fishery_name.compare("S21")==0 && year==2004)
-                eff *= 2.0; //no fit
-        if (fishery_name.compare("S21")==0 && year==1998)
-                eff *= 0.5; //no fit
-*/
-//1deg INTERIM
-/*
-if (fishery_name.compare("S21")==0 && year>=1997 && year<=1998)
-                eff *= 1.25; //no fit	
-if (fishery_name.compare("S21")==0 && year>1998 && year<2001)
-                eff *= 1.5; //no fit	
-if (fishery_name.compare("S21")==0 && year==2001)
-                eff *= 3.0; //no fit	
-if (fishery_name.compare("S21")==0 && year>2001 && year<2004)
-                eff *= 4.0; //no fit	
-if (fishery_name.compare("S21")==0 && year==2004)
-                eff *= 2.5; //no fit	
-if (fishery_name.compare("S21")==0 && year>2004)
-                eff *= 1.25; //no fit	
-//        if (fishery_name.compare("S22")==0 && (year>=1986 && year<=1989))
-//                eff *= 0.3; //no fit
-	
-}
-*/
-if (param.sp_name[0].find("skj")==0){
-if (fishery_name.compare("O9")==0 || fishery_name.compare("S6")==0 || fishery_name.compare("L8")==0){if (eff==0) eff = 1;}
-}
 
 			int f = 0;
 			for (;f<nb_fishery; f++)
@@ -324,31 +146,7 @@ if (fishery_name.compare("O9")==0 || fishery_name.compare("S6")==0 || fishery_na
 						int i = param.lontoi(lon);
 						//const 
 						int j = param.lattoj(lat);	
-/*
-//TEST NATL ALB shift to the sea						
-if (param.sp_name[0].find("alb")==0 && param.latitudeMax>=60){
-	if (fishery_name.compare("B14")==0){
-		i -= 2;
-		//if (map.carte(i,j)==0 && map.carte(i-1,j)>0) i = i-1;
-		//if (map.carte(i,j)==0 && map.carte(i-2,j+1)>0){ i = i-2; j = j+1;}
-	}
-	if (fishery_name.compare("T11")==0 || fishery_name.compare("B204")==0 )
-		if (map.carte(i,j)==0 && map.carte(i-1,j)>0) {i = i-1;}
-	if (fishery_name.compare("T13")==0){
-		i -= 1;
-		if (map.carte(i,j)==0 && map.carte(i-1,j+1)>0) {i = i-1; j = j+1;}
-	}
-	
-}*/
-//Shifts used for SPO validation in the Atlantic:
-if (param.sp_name[0].find("alb")==0 && param.latitudeMax>=60){
-	if (fishery_name.compare("B14")==0){
-		if (map.carte(i,j)==0 && map.carte(i-1,j)>0) i = i-1;
-	}
-	if (fishery_name.compare("T13")==0){
-		i -= 1;
-	}
-}	
+
 						if (i==0 || j==0) {
 							cout << "Attn: fishing data index 0 for (lon,lat) = (" 
 								<< lon << "," << lat << "), (i,j) = (" << i << "," 
@@ -447,22 +245,17 @@ void CReadWrite::degrade_fishery_reso(CParam& param, PMap& map, const int nbt, c
 	int nflat = (int) ((param.latitudeMax - param.latitudeMin + deltaY)/creso+.5);
 	flon.allocate(0,nflon-1); flon.initialize();
 	flat.allocate(0,nflat-1); flat.initialize();
-//	for (int i=0; i<nflon; i++) flon[i] = (param.longitudeMin/* - 0.5*deltaX*/) + creso*(i+0.5);
-//	for (int j=0; j<nflat; j++) flat[j] = param.latitudeMax/* + 0.5*deltaY*/ - creso*(j+0.5);
-//	for (int i=0; i<nflon; i++) flon[i] = param.longitudeMin-0.5 + creso*(i+.5);
-//	for (int i=0; i<nflon; i++) flon[i] = param.longitudeMin + creso*(i+0.5);
-//	for (int j=0; j<nflat; j++) flat[j] = param.latitudeMax - creso*(j+0.5)+0.5; //INTERIM & ECCO 1deg
-float cwest = param.longitudeMin+0.5*deltaX+0.5;//90.0;
-float cnorth= param.latitudeMax-0.5*deltaY+0.5;//65.0;
-	for (int i=0; i<nflon; i++) flon[i] = cwest + creso*(i+0.5);//INTERIM-PO 2deg
-	for (int j=0; j<nflat; j++) flat[j] = cnorth - creso*(j+0.5); //INTERIM-PO 2deg
-//cout << nflon << " "<< nflat << endl;
-//Interested to see only in optimisation mode, which does not support currently high resolutions
-if (deltaX>=1) cout << "Centers of degraded C-cells: " << flon << endl << flat << endl; //exit(1);
+	float cwest = param.longitudeMin+0.5*deltaX+0.5;
+	float cnorth= param.latitudeMax-0.5*deltaY+0.5;
+	for (int i=0; i<nflon; i++) flon[i] = cwest + creso*(i+0.5);
+	for (int j=0; j<nflat; j++) flat[j] = cnorth - creso*(j+0.5); 
+
+	//Interested to see only in optimisation mode, which does not support currently high resolutions
+	if (deltaX>=1) cout << "Centers of degraded C-cells: " << flon << endl << flat << endl; //exit(1);
 
 	int year, month, day, jday, xx;
 	for (int f=0; f<nb_fishery; f++){
-int count = 0;
+	   int count = 0;
            if (!param.mask_fishery_sp_no_effort[0][f]){
 		if (param.mask_fishery_sp[0][f]){
 			if (fishery_reso[f] < creso) { // we want only to degrade resolution!
@@ -486,13 +279,7 @@ int count = 0;
 							int fj = (int)((cnorth-0.5*creso-lat)/creso);
 							int i = param.lontoi(flon[fi]);
 							int j = param.lattoj(flat[fj]);
-//cout << lon << " "<< lat << " "<< flon[fi] << " " << flat[fj] << " " << i << " " << j << endl; 
-//fi = (int)((202.5-cwest-0.5*creso)/creso);
-//fj = (int)((cnorth+27.5-0.5*creso)/creso);
-//i = param.lontoi(flon[fi]);
-//j = param.lattoj(flat[fj]);
-//cout << 202.5 << " "<< -27.5 << " " << flon[fi] << " " << flat[fj] << " "<< i << " " << j << endl;
-//exit(1);						
+
 							//NOTICE: some records may be lost if the C-cell center is on land
 							if (map.carte(i,j)==0) { i = -1;count++;}
 							frec[p].change_coord(flon[fi],flat[fj],i,j);
@@ -543,9 +330,6 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 		}
 	}
 
-	//temporal containers as we don't know here the size of redistributed effort
-	//fishing_effort *efr_tmp;
-
 	int af_m = max(fishery_reso)*60.0/param.deltaX; 
 	int af_n = max(fishery_reso)*60.0/param.deltaY;  
 	if (param.deltaX>60.0) af_m += 2;
@@ -557,6 +341,8 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 	if (maxn<0){ cerr << "Wrong size of memory to allocate for fishing effort at model resolution, nrec_oceanmask is too big:" << nrec_oceanmask_original << "; Will exit now!" << endl; exit(1);}
 
 
+	//temporal containers as we don't know here the size of redistributed effort
+	//fishing_effort *efr_tmp;
 	efr_tmp = new fishing_effort[maxn];
 	dvector C;
 	C.allocate(0,nb_species-1);
@@ -646,6 +432,7 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 	efr = new fishing_effort[nrec_oceanmask];
 	for (int rec=0; rec<nrec_oceanmask; rec++)
 		efr[rec] = efr_tmp[rec];
+	//deleting temporal container
 	delete [] efr_tmp;
 }
 
@@ -833,8 +620,6 @@ void CReadWrite::set_frec_rm_no_effort_fisheries(CParam& param, const PMap& map,
 	double deltaY = (param.deltaY/60);
 	const int yearini  = param.ndatini/10000;
 
-	//temporal containers as we don't know here the size of redistributed effort
-	//fishery_record *frec_tmp;
 
 	int af_m = max(fishery_reso)*60.0/param.deltaX+2; 
 	int af_n = max(fishery_reso)*60.0/param.deltaY+2;  
@@ -992,24 +777,19 @@ void CReadWrite::set_frec_rm_no_effort_fisheries(CParam& param, const PMap& map,
 
 void CReadWrite::get_fishery_data(CParam& param, D3_ARRAY& effort, D4_ARRAY& catch_obs, D3_ARRAY& efflon, D3_ARRAY& efflat, int y, const int m)
 {	
-//	cout << __LINE__ << endl;
 	y -= (int)param.save_first_yr;
 	int k = 0;
 	const int nb_fishery = param.get_nbfishery();
 	for (int f=0; f<nb_fishery; f++){
-//	cout << __LINE__ << endl;
 		effort(f).initialize();
 		efflon(f).initialize();
 		efflat(f).initialize();
 		if (param.mask_fishery_sp[0][f]){
 			catch_obs(0,k).initialize();
-//	cout << f << " " << y << " "<< m << endl;
 			int nstart = position(f,y,m);
 			int nend = nstart+numrec(f,y,m); 
-//	cout << nstart << " "<< nend << endl;
 			for (int p=nstart; p<nend; p++){
 				int i = frec[p].get_i(); 
-//	cout << i << endl;
 				if (i<0) continue;
 				int j = frec[p].get_j(); 
 				effort(f,i,j) += frec[p].get_effort();
@@ -1025,7 +805,6 @@ void CReadWrite::get_fishery_data(CParam& param, D3_ARRAY& effort, D4_ARRAY& cat
 			} k++;
 		}
 	}
-//	cout << __LINE__ << endl;
 }
 
 void CReadWrite::mpa_areas_comp(PMap& map, CParam& param)
@@ -1458,7 +1237,6 @@ void CReadWrite::get_effort_rm(CParam& param, dmatrix& effort, const int f, int 
 		int i = efr[p].get_i();
 		int j = efr[p].get_j();
 		effort(i,j) += efr[p].get_effort();
-//EFR(i,j) = effort(i,j);
 	}
 }
 
@@ -1511,9 +1289,8 @@ void CReadWrite::get_average_selectivity(PMap& map, CParam& param, dvector& swa,
                                 swa(a) += s(f,a)*Ctot(f)/Ctotf;
         }
         swa /= max(swa);
-cout << endl << "Total catches for fisheries used to compute exploited biomass = " << Ctot << endl;
-//cout << "selectivity = " << s << endl;
-cout << "average selectivity = " << swa << endl;
+	cout << endl << "Total catches for fisheries used to compute exploited biomass = " << Ctot << endl;
+	cout << "average selectivity = " << swa << endl;
         //To activate F=0 scenario
         //param.mask_fishery_sp.initialize();
 }
@@ -1551,14 +1328,12 @@ void CReadWrite::read_lf_WCPO(CParam& param, string filename, const float startd
 		std::istringstream iss(s);
 		iss >> nb_intervals >> l1 >> dl;
 
-//cout << __LINE__ << endl;
 		dvector lf(0,nb_intervals-1);
 		lf.initialize();
 		ivector Length(0,nb_intervals-1);
 		for (int l=0; l< nb_intervals; l++)
 			Length(l) = (int)(l1+dl*(l+0.5)); 
 			//Length(l) = (int)(l1+dl*l); 
-//cout << __LINE__ << endl;
 
 		//skip the line
 		getline(littxt,s,'\n');
@@ -1578,7 +1353,6 @@ void CReadWrite::read_lf_WCPO(CParam& param, string filename, const float startd
 				if (frequency == -1) break;
 				lf[l] = frequency;	
 			}
-//cout << __LINE__ << endl;
 			bool fishery_to_throw = true;
 			int f;
 			for (f=0;f<nb_fishery;f++){
@@ -1588,7 +1362,6 @@ void CReadWrite::read_lf_WCPO(CParam& param, string filename, const float startd
 				}
 				
 			}
-//cout << __LINE__ << endl;
 			if (fishery_to_throw) continue;
 
 			float date = year+month/12.0;
@@ -1606,13 +1379,11 @@ void CReadWrite::read_lf_WCPO(CParam& param, string filename, const float startd
 					double left  = 0.5*(L_pr+param.length(sp,a));
 					right = 0.5*(param.length(sp,a)+param.length(sp,a+1));
 					L_pr = param.length(sp,a);
-//cout << f_num << " " << region << endl;
 
 					for (int l=0; l<nb_intervals; l++){
 						if ((Length[l]>left) && (Length[l]<=right))
 							frq(f,region(f_num-1)-1,y,qtr,a) += lf[l];
 					}
-//cout << __LINE__ << endl;
 				}
 				for (int l=0; l<nb_intervals; l++)
 					if ((Length[l]>right)&& (Length[l]<param.length[sp][nb_ages-1]+10))
@@ -1625,7 +1396,6 @@ void CReadWrite::read_lf_WCPO(CParam& param, string filename, const float startd
 	}
 	cout << "Number of size distributions used from LF data: " << nbsd << endl;
 	cout << endl;
-//exit(1);
 }
 
 void CReadWrite::read_lf_EPO(CParam& param, string filename, const float startdate, const float enddate, const int sp)
@@ -1638,7 +1408,6 @@ void CReadWrite::read_lf_EPO(CParam& param, string filename, const float startda
 	int nbsd = 0; //count the number of size distributions to be used
 
 	ifstream littxt(filename.c_str());
-	//ifstream littxt("./skj_LF_IATTC.txt");
 	if (littxt){
 		int region, nb_fleets, nb_records, nb_intervals, l1, dl;
 		string* fcodes;
@@ -1702,8 +1471,6 @@ void CReadWrite::read_lf_EPO(CParam& param, string filename, const float startda
 				for (int l=0; l<nb_intervals; l++)
 					if ((Length[l]>right)&& (Length[l]<param.length[sp][nb_ages-1]+10))
 						frq(f,region-1,y,qtr-1,nb_ages-1) += lf[l];
-//if (f==5 && qtr==1 && region==7) cout << frq(f,region-1,y,qtr-1) << endl;
-//cout << f << " "<< region << " " << y << " "<< qtr << " " << frq(f,region-1,y,qtr) << endl; exit(1);
 			}
 		}
 		littxt.close();
@@ -1848,97 +1615,10 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 					exit(1);
 				}
 
-//test: constrain the sample size by 1000 if S>1000 (see robust LF likelihood)
-double smax = 1000.0;
-//test: constrain the sample size by 500 if S>500 (see robust LF likelihood)
-if (param.sp_name[0].find("skj")==0 || param.sp_name[0].find("alb")==0){ smax = 500;}
-//DS2013:
-//EPO LF are not raised to total catch
-//P2 and L8 have very small sample size as well
-//L8 is wrong after 2007 (question to Peter, not solved yet, 28/08/2013)
-//increase the sample size to increase its weight in LF likelihood
-if (param.sp_name[0].find("skj")==0){
-//Inna 20160526: test new weights to make the balanced contributions to the LF likelihood
-        if (fishery == "P1"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 0.02;
-        }
-        if (fishery=="P21" || fishery=="P22"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 0.001;
-        }
-        if (fishery == "P23"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 0.5;
-        }	
-	if (fishery == "P3"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 0.1;
-        }	
-        if (fishery == "S5"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 0.25;
-        }
-        if (fishery == "S7"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 0.5;
-        }
-        if (fishery == "S10"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 1.5;
-        }
-        if (fishery == "S11"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 10.0;
-        }
-        if (fishery=="S12"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 5.0;
-        }
-        if (fishery=="S13" || fishery=="S14"){
-                for (int a=a0; a<nb_ages; a++)
-                        frq(f,reg-1,y,qtr-1,a) *= 3.0;
-        }
-}
-if (param.sp_name[0].find("bet")==0){
-	if (fishery=="L1") 
-		for (int a=a0; a<nb_ages; a++)
-			frq(f,reg-1,y,qtr-1,a) *= 0.25;
-}
-
-double sumQ = sum(frq(f,reg-1,y,qtr-1));
-//cout << f << " " << sumQ << " ";
-////increase the sample size to increase its weight in LF likelihood
-
-if (param.sp_name[0].find("alb")==0 && param.longitudeMax>360){ //NATL LF data
-	for (int a=a0; a<nb_ages; a++){
-		if (fishery == "L6" || fishery=="L2")
-			frq(f,reg-1,y,qtr-1,a) *= 0.1; 
-		if (fishery == "T13" || fishery == "B14")
-			frq(f,reg-1,y,qtr-1,a) *= 0.01; 
-		if (fishery == "B15" || fishery == "B16")
-			frq(f,reg-1,y,qtr-1,a) *= 0.5; 
-		if (fishery == "T12")
-			frq(f,reg-1,y,qtr-1,a) *= 0.05; 	
-		frq(f,reg-1,y,qtr-1,a) *= 0.5;//5.0; 
-	}
-}
-if (param.sp_name[0].find("alb")==0 && param.longitudeMax<360){ //SPO LF data
-	for (int a=a0; a<nb_ages; a++){
-		if (fishery == "T8")
-			frq(f,reg-1,y,qtr-1,a) *= 0.5;
-		if (fishery == "L10")
-			frq(f,reg-1,y,qtr-1,a) *= 0.2;
-		if (fishery == "L4"){
-			frq(f,reg-1,y,qtr-1,a) *= 0.1;
-			if (y==2006)
-				frq(f,reg-1,y,qtr-1,a) *= 0.05;
-		}
-	}
-}
-
-
-
+				//!!!TEST here: constrain the sample size by 1000 if S>1000 (see robust LF likelihood)
+				//must be taken out to pre-processing
+				double smax = 1000.0;
+				double sumQ = sum(frq(f,reg-1,y,qtr-1));
 				if (sumQ>smax){
 					for (int a=a0; a<nb_ages; a++)
 						frq(f,reg-1,y,qtr-1,a) *= smax/sumQ;
@@ -2008,34 +1688,24 @@ void CReadWrite::read_frq_data(CParam& param, PMap& map, const float startdate, 
         if (map.carte[i][j]){
 	for (int f=0; f<nb_fishery; f++){
 		for (int reg=0; reg<nb_region; reg++){
-			if (param.area[reg]->ltmin>=lat_extreme || param.area[reg]->ltmax<=-lat_extreme) continue; //temporal, skipjack
-			//if (param.area[reg]->lgmin<lon_extreme & param.area[reg]->ltmin<20.0) continue; //temporal, yellowfin
-			if (param.area[reg]->lgmin>lon_extreme && param.area[reg]->ltmin<0.0) continue; //temporal, yellowfin
 		        int r = param.area_sp_B[sp][reg]-1;
 			if ((i>=map.regimin[reg]) && (i<map.regimax[reg]) &&(j>=map.regjmin[reg]) && (j<map.regjmax[reg])){
-//cout << f << " " << reg << " " << r << " ";
 			for (int q=0; q<nbq; q++){
 				for (int y=0; y<nby; y++){
 					if (norm(frq(f,r,y,q))){
-						//cout << param.list_fishery_name[f] << "_region_" << r+1 << " year" << y << " qtr" << q+1 << " "; 
 						for (int a=a0; a< nb_ages; a++){
-							//cout << frq(f,r,y,q,a) << " ";				
 							sum_frq(f,r,q,a) += frq(f,r,y,q,a);
 							sum_frq_fishery(f,q,a) += frq(f,r,y,q,a);
 							sum_frq_region(r,q,a) += frq(f,r,y,q,a);
-						//cout << endl;
 						}
 					}
 				}
 			}
 		}
 }
-	}}}}//exit(1);
+	}}}}
         for (int f=0; f<nb_fishery; f++){
                 for (int reg=0; reg<nb_region; reg++){
-			if (param.area[reg]->ltmin>=lat_extreme || param.area[reg]->ltmax<=-lat_extreme) continue; //temporal, skipjack
-			//if (param.area[reg]->lgmin<lon_extreme & param.area[reg]->ltmin<20.0) continue; //temporal, yellowfin
-			if (param.area[reg]->lgmin>lon_extreme && param.area[reg]->ltmin<0.0) continue; //temporal, yellowfin
                         int r = param.area_sp_B[sp][reg]-1;
 			for (int q=0; q<nbq; q++){
 				for (int a=a0; a< nb_ages; a++){
