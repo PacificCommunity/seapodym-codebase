@@ -190,6 +190,9 @@ void SeapodymCoupled::CalcSums()
 	mat.sum_B_recruit.initialize();
 	mat.sum_B_adult.initialize();
 	mat.sum_total_pop.initialize();
+
+	//total catch per time step
+	double sum_total_catch = 0;
 	
 	//------------------------------------------------------------------
 	//Note, All population stages will be stored in the units of density:
@@ -311,12 +314,12 @@ void SeapodymCoupled::CalcSums()
 //						mat.total_obs_catch[sp][i][j]  = -1;
 //						mat.total_pred_catch[sp][i][j] = -1;	
 //					}
-
-					
+					sum_total_catch += mat.total_obs_catch[sp][i][j];	
 				}
 			}
 		}
 	}
+	SUM_CATCH += sum_total_catch;
 }
 
 void SeapodymCoupled::ConsoleOutput(int flag_simulation, double like)
@@ -397,64 +400,6 @@ for (int i = map.imin; i <= map.imax; i++){
                 }
         }
 }*/
-/*
-//connectivity simulations:
-//SKJ Range Contraction with 2016-2017 regional structure
-int reg;
-for (int i = map.imin; i <= map.imax; i++){
-        const int jmin = map.jinf[i];
-        const int jmax = map.jsup[i]; 
-        for (int j = jmin; j <= jmax; j++){
-                if (map.carte(i,j)){ 
-			reg = 15;
-                        if (i>=map.regimin[reg] && i<map.regimax[reg] && 
-                        	j>=map.regjmin[reg] && j<map.regjmax[reg]){
-                        	//for (int a=0; a<=param->age_recruit[sp]; a++)
-                        	for (int a=param->age_recruit[sp]+1; a<param->sp_nb_cohorts[sp]; a++)
-					if (a>=param->age_mature[sp])
-                                        	mat.dvarDensity(0,a,i,j) = 0.0;
-                        } 
-			reg = 14;
-                        if (i>=map.regimin[reg] && i<map.regimax[reg] && 
-                        	j>=map.regjmin[reg] && j<map.regjmax[reg]){
-                        	for (int a=0; a<=param->age_recruit[sp]; a++)
-                        	//for (int a=param->age_recruit[sp]+1; a<param->sp_nb_cohorts[sp]; a++)
-				//	if (a<param->age_mature[sp])
-                                        	mat.dvarDensity(0,a,i,j) = 0.0;
-                        } 
-			reg = 12;
-                        if (i>=map.regimin[reg] && i<map.regimax[reg] && 
-                        	j>=map.regjmin[reg] && j<map.regjmax[reg]){
-                        	//for (int a=0; a<=param->age_recruit[sp]; a++)
-                        	for (int a=param->age_recruit[sp]+1; a<param->sp_nb_cohorts[sp]; a++)
-					if (a>=param->age_mature[sp])
-                                        	mat.dvarDensity(0,a,i,j) = 0.0;
-                        } 			
-                }
-        }
-
-}
-*/
-//With MFCL-2015 regional structure (used in Seapodym_cltags paper)
-/*int reg = 0;
-for (int i = map.imin; i <= map.imax; i++){
-        const int jmin = map.jinf[i];
-        const int jmax = map.jsup[i]; 
-        for (int j = jmin; j <= jmax; j++){
-                if (map.carte(i,j)){ 
-                        //No recruitment/Young/Adult in region
-                        if (i>=map.regimin[reg] && i<map.regimax[reg] && 
-                                j>=map.regjmin[reg] && j<map.regjmax[reg]){
-                                //for (int a=0; a<=param->age_recruit[sp]; a++)
-                                for (int a=param->age_recruit[sp]+1; a<param->sp_nb_cohort_ad[sp]; a++)
-                                        if (a>=param->age_mature[sp])
-                                                mat.dvarDensity(0,a,i,j) = 0.0;
-                        } 
-                }
-        }
-
-}	
-*/
 
 }
 
