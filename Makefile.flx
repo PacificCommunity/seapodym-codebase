@@ -98,7 +98,7 @@ BINPATH=.
 
 ##############################################################
 OBJPATH=objs
-ADMODEL=$(ADMB_HOME_11)
+ADMODEL=$(ADMB_HOME)
 
 #DEBUG=-pg -g
 DEBUG= -g
@@ -106,7 +106,7 @@ DEBUG= -g
 CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -O3 -DOPT_LIB -Wall -Wno-deprecated -I$(ADMODEL)/include -I/usr/include/libxml2 $(INCPATH)
 
 ###### with optimized library ###########################
-LFLAGS= -L$(ADMODEL)/lib  -ladmbo  -ldl -lstdc++ -lxml2 -lm
+LFLAGS= -L$(ADMODEL)/lib  -ladmbo -lstdc++ -lxml2 -lm
 
 CC=gcc
 LL=$(CC)

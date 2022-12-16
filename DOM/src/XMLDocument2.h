@@ -71,7 +71,7 @@ public:
  * import a parfile into document
  * @param parfile filename
  */
-int read(const char* parfile) throw (runtime_error) {
+int read(const char* parfile) /* throw (runtime_error)*/ {
 	if (parfile == 0) {
 		return -1;
 	}
@@ -181,7 +181,7 @@ string itoa(const int i) const {
  * @param xpath absolute element xpath
  * @param array index
  */
-int getInteger(const string& xpath, const int idx) const throw (runtime_error) {
+int getInteger(const string& xpath, const int idx) /*const throw (runtime_error)*/ {
 	int i = 0;
 	string value = get(xpath, idx);
 	if (!value.empty()) {
@@ -196,7 +196,7 @@ int getInteger(const string& xpath, const int idx) const throw (runtime_error) {
  * @param xpath absolute element xpath
  * @param array index
  */
-double getDouble(const string& xpath, const int idx) const throw (runtime_error) {
+double getDouble(const string& xpath, const int idx) /*const throw (runtime_error)*/ {
 	double d = 0;
 	string value = get(xpath, idx);
 	if (!value.empty()) {
@@ -285,7 +285,7 @@ string get(const string& xpath, const string& attribute) const {
 /**
  * @param xpath absolute element xpath
  */
-double getDouble(const string& xpath) const throw (runtime_error) {
+double getDouble(const string& xpath) /*const throw (runtime_error)*/ {
 	double d = 0;
 	string s = get(xpath);
 	if (!s.empty()) {
@@ -300,7 +300,7 @@ double getDouble(const string& xpath) const throw (runtime_error) {
 /**
  * @param xpath absolute element xpath
  */
-double getDouble(const string& xpath, const string& attribute) const throw (runtime_error) {
+double getDouble(const string& xpath, const string& attribute) /*const throw (runtime_error)*/ {
 	double d = 0;
 	string s = get(xpath, attribute);
 	if (!s.empty()) {
@@ -315,7 +315,7 @@ double getDouble(const string& xpath, const string& attribute) const throw (runt
 /**
  * @param xpath absolute element xpath
  */
-int getInteger(const string& xpath) const throw (runtime_error) {
+int getInteger(const string& xpath) /*const throw (runtime_error)*/ {
 	int integer = 0;
 	string s = get(xpath);
 	if (!s.empty()) {
@@ -329,7 +329,7 @@ int getInteger(const string& xpath) const throw (runtime_error) {
 /**
  * @param xpath absolute element xpath
  */
-int getInteger(const string& xpath, const string& attribute) const throw (runtime_error) {
+int getInteger(const string& xpath, const string& attribute) /*const throw (runtime_error) */{
 	int integer = 0;
 	string s = get(xpath, attribute);
 	if (!s.empty()) {

@@ -98,7 +98,7 @@ BINPATH=.
 
 ##############################################################
 OBJPATH=objs
-ADMODEL=$(ADMB_HOME_11)
+ADMODEL=$(ADMB_HOME)
 
 #DEBUG=-pg -g
 DEBUG= -g
