@@ -176,19 +176,9 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 	time_t time2 = time_sec;
 	double total_elapsed_time = (double)(time2-time0) / 60.0;
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
-//exit(1);
 
 	return 0;
 }
-
-/*
-void buffers_set(long int &mv, long int &mg, long int &mc)
-{
-	mv = gs_var_size_set;
-	mg = gradstack_size_set;
-	mc = cmpdiff_size_set;
-}
-*/
 
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 {
@@ -259,33 +249,13 @@ int seapodym_phases(const char* parfile)
 		exit(1);
 	}
 	littxt.close();
-//cout << gmax << endl;
-//for (int i=0; i<nvar; i++) cout << pnames[i] << " ";
-//cout << endl;
-//return 0;	
+
 
 	ivector phase_par_flags;
 	phase_par_flags.allocate(1,nvar);
 	phase_par_flags.initialize();
 	sc.param->set_all_false(pnames);
 
-/* Solution Without phases
-25 variables; iteration 146; function evaluation 216
-Function value   7.7086164e+06; maximum gradient component mag  -4.4508e+03
-Var   Value    Gradient   |Var   Value    Gradient   |Var   Value    Gradient   
-  1  0.99986 -1.14714e+01 |  2 -0.99994  6.34483e+01 |  3 -4.64191  2.35970e-03
-  4 31.00072  3.30300e+00 |  5  0.99996 -3.67075e+00 |  6  0.18374 -8.07246e+02
-  7 -0.05972 -4.54094e+00 |  8  0.86970  3.25597e+03 |  9 -0.99997  2.33414e+01
- 10 -0.99999  7.45638e+00 | 11 -5.00000  3.15101e+02 | 12 -0.30905 -1.77445e+02
- 13 41.00002  4.40241e-01 | 14  1.50162 -2.13875e+03 | 15  2.25741  1.16399e+03
- 16 -1.70778  7.40958e+02 | 17 -1.00002 -2.63785e+01 | 18 -1.00004 -2.60441e+01
- 19 -0.99943 -9.52677e+00 | 20  0.08492  1.17583e+03 | 21 -2.99979  2.87897e+00
- 22-54.63320  1.69755e-01 | 23  1.00000  2.45711e-04 | 24  0.42592 -1.81926e+03
- 25  2.75384 -4.45081e+03 |
-total penalty: 0.00390813; stock size: 5925.07
-end of forward run, likelihood: 7.37807e+06 0 0 330545 
- 
- */
 	cout << endl << "Starting optimization in phases... "<< endl;
 	for (int phase_no=0; phase_no<4; phase_no++){
 	
@@ -579,6 +549,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 		sc.param->outp_param(x_names,nvar);
 		cout << "Minimal function value: " << fmin << endl; 
 		//write parfile with "best" parameters:
+		sc.param->total_like = fmin;
 		sc.write(newparfile.c_str());
 	}
 	else if (sftype==3){//just a forward run, usually to be used in ALL-AT-a-TIME sensitivity analysis
