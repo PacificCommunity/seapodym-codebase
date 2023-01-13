@@ -496,6 +496,10 @@ bool VarParamCoupled::read(const string& parfile)
 		//in m/sec, i.e. V_mss = MSS_species * pow(L,MSS_size_slope)
                 MSS_size_slope[sp] = doc.getDouble("/MSS_size_slope", sp_name[sp]);
 	}
+	//Adding rmax to the parfile as fixed parameter. Make it par[sp] once it's proven necessary 
+	rmax_currents = 0.3; //0.99 was used in SKJ and ALB INTERIM ref models
+	if (!doc.get("/reduce_currents_coef","value").empty())
+	rmax_currents = doc.getDouble("/reduce_currents_coef", "value");
 
 	///////////////////////////////////////////
 	// Fixed parameters of population structure
@@ -597,17 +601,27 @@ bool VarParamCoupled::read(const string& parfile)
 		//maturity at age (=1 or estimated by MFCL proportions (optional))
 		maturity_age[sp].allocate(0,sp_nb_cohorts[sp]-1);
 		maturity_age[sp] = 1.0;
-		for (int a=0; a<sp_nb_cohorts[sp]; a++){
-			if (a<age_mature[sp]) maturity_age[sp][a] = 0.0;
+		if (doc.get("/maturity_age").empty()){
+			cout << "IMPORTANT: Maturity-at-age described by step function with 0 below and 1 above 50% maturity" << endl;
+			for (int a=0; a<sp_nb_cohorts[sp]; a++){
+				if (a<age_mature[sp]) maturity_age[sp][a] = 0.0;
+			}
 		}
-
 		if (!doc.get("/maturity_age").empty()){
+			cout << "IMPORTANT: Maturity-at-age described by continuous function" << endl;
 			for (int a=0; a<sp_nb_cohorts[sp]; a++)
                 		maturity_age[sp][a] = doc.getDouble("/maturity_age/"+ sp_name[sp], a);
+
 			for (int a=0; a<sp_nb_cohorts[sp]; a++){
-				if (maturity_age[sp][a]>0.15) {
-					cout << "IMPORTANT: first mature age class is " << a << endl;
+				if (maturity_age[sp][a]>=0.15) {
+					cout << "IMPORTANT: first age class with spawning potential (15% of individuals are mature) is " << a << endl;
 					age_mature[sp] = a;
+						break;
+				}
+			}
+			for (int a=0; a<sp_nb_cohorts[sp]; a++){
+				if (maturity_age[sp][a]>=0.5) {
+					cout << "FOR INFORMATION ONLY: first age class with 50% maturity is " << a << endl;
 						break;
 				}
 			}

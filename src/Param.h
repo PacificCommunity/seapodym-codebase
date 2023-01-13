@@ -228,12 +228,13 @@ public:
 					
 
 	DVECTOR hp_cannibalism;		// half_pred coefficent of the juvenile habitat [sp]
-	
 	DVECTOR forage_ration;		// mean daily ration (weight forage/weight fish) for each species [sp]
+
 	DVECTOR sigma_species;		// max diffusion coefficient for each species in nm2/mo [sp]
 	DVECTOR MSS_species;		// max ustained speed for each species in FL/mo [sp]
 	DVECTOR MSS_size_slope;		// scaling exponent of the power low to compute sustainable speed MSS*L^slope
 	DVECTOR c_diff_fish;		// coefficient for the diffusion-Habitat function [sp]
+	double rmax_currents;		// maximal reduction of current velocity due to vertical migrations effect, rmax = 0.0 - no reduction
 
 	dmatrix sigma_ha;		//Gaussian std in adult habitat by sp and age
 	dmatrix temp_age;		//optimal temperature by sp and age
