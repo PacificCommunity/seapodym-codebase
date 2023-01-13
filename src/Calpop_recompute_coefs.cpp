@@ -7,10 +7,8 @@ void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage
 
 
 //constants section
-const double Vmax_diff = 1.25;//1.9;
-//const double rmax = 0.0;
-const double rmax = 0.99;
-const double rc = 0.0005;//0.002;//0.003;
+const double Vmax_diff = 1.25;
+const double rc = 0.0005;
 const double rho = 0.99;
 
 
@@ -174,6 +172,8 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 
 
 	const double Dmax    = sigma_species*Dinf;
+	const double rmax    = param.rmax_currents;
+	
 
 	const double nb_layer = param.nb_layer;
 
@@ -290,7 +290,8 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 
-	const double Dmax  = sigma_species*Dinf;
+	const double Dmax    = sigma_species*Dinf;
+	const double rmax    = param.rmax_currents;
 
 	const double nb_layer = param.nb_layer;
 
@@ -409,6 +410,7 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
+	const double rmax    = param.rmax_currents;
 
 	const double nb_layer = param.nb_layer;
 
@@ -579,6 +581,7 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
+	const double rmax    = param.rmax_currents;
 
 	CBord bord;	
 

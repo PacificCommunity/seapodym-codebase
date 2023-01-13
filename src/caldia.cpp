@@ -3,11 +3,10 @@
 ///Forward functions for: 
 ///precaldia and caldia functions, which perform discrete approximation
 ///of advection-diffusion equation and precomputes diagonal coefficients.
-	
-const double Vmax_diff  = 1.25;//1.9;
-//const double rmax = 0.0;// no reduction of currents due to vertical movement here!
-const double rmax = 0.99;//0.99;
-const double rc = 0.0005;//0.002;//0.003;
+
+//Some constants here waiting for revision and integration to the parfile
+const double Vmax_diff  = 1.25;
+const double rc = 0.0005;
 const double rho = 0.99;
 
 void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, const dmatrix& habitat, const dmatrix& total_pop, double MSS, double MSS_size_slope, double sigma_species, double c_diff_fish, const int sp, const int age, const int jday)
@@ -34,6 +33,7 @@ void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, con
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;//fixed, given in 'body length' units
 	const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
+	const double rmax    = param.rmax_currents;
 	double rho_x = 0.0;
 	double rho_y = 0.0;
 	double v_x = 0.0;

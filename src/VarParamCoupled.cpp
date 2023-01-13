@@ -497,7 +497,7 @@ bool VarParamCoupled::read(const string& parfile)
                 MSS_size_slope[sp] = doc.getDouble("/MSS_size_slope", sp_name[sp]);
 	}
 	//Adding rmax to the parfile as fixed parameter. Make it par[sp] once it's proven necessary 
-	rmax_currents = 0.3; //0.99 was used in SKJ and ALB INTERIM ref models
+	rmax_currents = 0.99; //0.99 was used in SKJ and ALB INTERIM ref models
 	if (!doc.get("/reduce_currents_coef","value").empty())
 	rmax_currents = doc.getDouble("/reduce_currents_coef", "value");
 

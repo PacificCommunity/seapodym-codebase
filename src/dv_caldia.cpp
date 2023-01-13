@@ -23,11 +23,10 @@ int save_identifier_string2(char* str);
 void verify_identifier_string2(char* str);
 void save_long_int_value(unsigned long int x);
 unsigned long int restore_long_int_value(void);
-	
-const double Vmax_diff  = 1.25;//1.9;
-//const double rmax = 0.0;// no reduction of currents due to vertical movement here!
-const double rmax = 0.99;//0.99;
-const double rc = 0.0005;//0.002;//0.003;
+
+//Some constants here waiting for revision and integration to the parfile
+const double Vmax_diff  = 1.25;
+const double rc = 0.0005;
 const double rho = 0.99;
 
 void CCalpop::Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatrices& mat, dvar_matrix& habitat, dvar_matrix& total_pop, const int sp, const int age, const int t_count, const int jday)
@@ -674,6 +673,7 @@ void dv_caldia_UV()
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
 	const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dmax   = sigma_species*Dinf;
+	const double rmax   = param->rmax_currents;
 
 	const int imax = map->imax;
 	const int imin = map->imin;
