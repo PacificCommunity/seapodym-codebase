@@ -148,7 +148,7 @@ public:
 	
 	double elapsed_time_reading;
 	void time_reading_init(){elapsed_time_reading = 0; }
-	//double get_time_reading() {return elapsed_time_reading;}
+
 private:
 	void xbet_comp(const PMap& map);
 	void ybet_comp(const PMap& map);
@@ -162,18 +162,7 @@ private:
 	double d1(const char pos, const double sigmam, const double sigma, const double uinf, const double twodd, const double dd, const double d);
 	double d2(const char pos, const double sigmam, const double sigma, const double sigmap, const double u, const double twodd, const double dd, const double d, const int dt);
 	double d3(const char pos, const double sigma, const double sigmap, const double usup, const double twodd, const double dd, const double d);
-	//double d1h(const char pos, const double sigmam, const double sigma, const double chi, const double cinf, const double uinf, const double twodd, const double dd, const double d);
-	//double d2h(const char pos, const double sigmam, const double sigma, const double sigmap, const double chi, const double cinf, const double csup, const double u, const double twodd, const double dd, const double d, const int dt);
-	//double d3h(const char pos, const double sigma, const double sigmap, const double chi, const double csup, const double usup, const double twodd, const double dd, const double d);
-	//dvariable d1h2(const char pos, dvariable& sigmam, dvariable& sigma, dvariable& chi, dvariable& cinf, double& uinf, const double twodd, const double dd, const double d);
-	//dvariable d2h2(const char pos, dvariable& sigmam, dvariable& sigma, dvariable& sigmap, dvariable& chi, dvariable& cinf, dvariable& csup, double& u, const double twodd, const double dd, const double d, const int dt);
 
-	//dvariable d3h2(const char pos, dvariable& sigma, dvariable& sigmap, dvariable& chi, dvariable& csup, double& usup, const double twodd, const double dd, const double d);
-	//dvariable d1(const char pos, dvariable& sigmam, dvariable& sigma, dvariable& uinf, const double twodd, const double dd, const double d);
-	//dvariable d2(const char pos, dvariable& sigmam, dvariable& sigma, dvariable& sigmap, dvariable& u, const double twodd, const double dd, const double d);
-	//dvariable d3(const char pos, dvariable& sigma,  dvariable& sigmap, dvariable& usup, const double twodd, const double dd, const double d);
-
-	dvar_matrix Uuint; //This can be made local
 };
 /////////////////////////////////////////////////////////////////////////////
 #endif

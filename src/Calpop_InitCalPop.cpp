@@ -43,7 +43,7 @@ void CCalpop::InitCalPop(CParam& param, const PMap& map)
  	const int nti = param.get_nbi();
 	const int ntj = param.get_nbj();
 	uuint.allocate(0, nti, 0, ntj);
-	Uuint.allocate(0, nti, 0, ntj);
+	uuint.initialize();
 
 	maxn = Utilities::MyMax( nti, ntj );//param.get_maxn();
 	iterationNumber = param.iterationNumber; 	
