@@ -280,7 +280,7 @@ public:
 	vector<string>  file_tag_data;
 	int nb_catch_files, nb_frq_files, nb_tag_files;
 	int tag_gauss_kernel_on;
-	int dx_tags, dy_tags; 		// setup of the grid to aggregate tagging data
+	float dx_tags, dy_tags; 	// setup of the grid to aggregate tagging data
 	float lonmin_tags,lonmax_tags, latmin_tags, latmax_tags;
 	bool tags_only;			// flag to deactivate all likelihood terms except tag_like
 

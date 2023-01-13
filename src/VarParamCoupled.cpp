@@ -741,6 +741,17 @@ bool VarParamCoupled::read(const string& parfile)
 					nb_fishery_by_sp[sp] ++;
 			}
 		}
+		//the strdir_output should always be declared for the reference (Fref) run
+		//the directory output_F0 will be automatically created inside if F0 setup is ON
+		if (sum(mask_fishery_sp)==0){
+                	strdir_output = strdir_output + "/output_F0/";
+			string test = strdir_output + "/test";
+		        ofstream ecritbin(test.c_str(), ios::binary|ios::out);
+		        if (!ecritbin){
+                		cerr << "WARNING : Cannot find 'output_F0' directory for no fishing scenario in '" << strdir_output << "', will create it!'" << endl;
+                	mkdir(strdir_output.c_str(),0777);
+        		} else remove(test.c_str());
+		}
 
 		mask_fishery_sp_like.allocate(0, nb_species - 1, 0, nb_fishery - 1);
 		mask_fishery_sp_like = mask_fishery_sp;
@@ -953,8 +964,8 @@ cout << mask_fishery_sp_no_effort(sp)<< endl;
 			nb_tag_files = 0;
 			if (tag_like(sp)){
 				if (!doc.get("/tags_grid").empty()){
-					dx_tags = doc.getInteger(string("/tags_grid/reso"),"dx");
-					dy_tags = doc.getInteger(string("/tags_grid/reso"),"dy");
+					dx_tags = doc.getDouble(string("/tags_grid/reso"),"dx");
+					dy_tags = doc.getDouble(string("/tags_grid/reso"),"dy");
 					if (dx_tags<deltaX/60){ 
 						dx_tags=deltaX/60; 
 						cout << "WARNING: changed the tagging data longitudinal resolution to deltaX = "
