@@ -12,8 +12,6 @@ void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)
 		if (!param->type_oxy)
 			rw.rbin_input2d(param->strfile_oxy[k], map, mat.oxygen[t][k],nbi, nbj, nbytetoskip);
 
-		//mat.tempn[t][0] = 0.0;
-		//mat.tempn[t][2] = 0.0;
 	}
 	UnitConversions(t);
 	if (param->use_sst){
@@ -26,13 +24,15 @@ void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)
 			for (int j = jmin ; j <= jmax; j++){
 				if (map.carte[i][j]){
 
+//BUFFER ZONE to avoid biomass accumulation effect in case of artificially closed boundary					
+//Eventually move this buffer zone declaration into preparation of model forcing or topographic index
 if (param->longitudeMin>80 && param->deltaX>=60.0 && param->deltaY>=60.0) //indicate Pacific ocean domain and coarse resolution
 //The bloc below is executed only in case of the Pacific ocean domain within the IndoPacific area.
 {					
 // to make the buffer zone in IO part of the Pacific ocean domain. This allows avoiding the problems
 // of high densities in shallow waters and complex current system of Indonesian region
 // which is not resolved on coarse resolutions
-// Note, this method can be sabstituted by topographic index, comment in this case
+
 					if (i<param->lontoi(118) && j<=param->lattoj(-3)) {
 						if (mat.sst(t,i,j) > 22)  mat.sst(t,i,j) = 22.0;
 						if (mat.tempn(t,0,i,j)>20.0) mat.tempn(t,0,i,j) = 20.0;
@@ -85,53 +85,16 @@ if (param->sp_name[0].find("skj")==0 && param->use_vld && param->use_sst){
 		}
 	}
 }
-//if (param->sp_name[0].find("bet")==0){
-//	mat.tempn(t,2) = mat.tempn(t,2) + 2.0;
-//}
-/*
-if (param->sp_name[0].find("bet")==0 && param->use_vld && param->use_sst){
-	const int imin = map.imin; 
-	const int imax = map.imax; 
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
-		for (int j = jmin ; j <= jmax; j++){
-			if (map.carte[i][j]){
-				double dTdz = (mat.tempn(t,0,i,j) - mat.tempn(t,1,i,j))/(1000.0*mat.vld(t,i,j));
-				if (dTdz<0.0) dTdz = 0.0;
-				if (dTdz>0.2) dTdz = 0.2;
-				mat.tempn(t,1,i,j) += 5.0*dTdz;
- 				
-				mat.Hj(i,j) = mat.tempn(t,1,i,j);
-			}
-		}
-	}
-}
-*/
 	if (!param->flag_coupling){
 		for (int n=0; n<nb_forage; n++){
 			rw.rbin_input2d(param->strfile_F[n], map, mat.forage[t][n], nbi, nbj, nbytetoskip);
 			
 			mat.forage(t,n) = mat.forage(t,n)+0.000001; //to avoid zero habitat index, expecially in fine resolution simulations F can be zero!!!
-//YFT INTERIM e2.1:
-//if (param->sp_name[0].find("yft")==0)
-//			mat.forage[t][0] = elem_div(mat.forage[t][0],(mat.forage[t][0]+0.25));
-/*//YFT: test
-			if (param->day_layer[n]==0)
-				mat.forage[t][n] = elem_div(mat.forage[t][n],(mat.forage[t][n]+0.25));
-*/
-			//if (param->night_layer[n]==0)
-			//	mat.forage[t][n] = elem_div(mat.forage[t][n],(mat.forage[t][n]+0.25));
-			//else if (param->day_layer[n]==1) mat.forage[t][n] = elem_div(mat.forage[t][n],(mat.forage[t][n]+0.5));
-			//else mat.forage[t][n] = elem_div(mat.forage[t][n],(mat.forage[t][n]+0.5));
 		}
 	} else {
 		for (int n=0; n<nb_forage; n++)
 			rw.rbin_input2d(param->strfile_S[n], map, mat.mats[n], nbi, nbj, nbytetoskip);	
 	}
-//TEST: no F in simulation
-//	for (int n=0; n<nb_forage; n++)
-//		mat.forage[t][n] = 1.0;
 }
 
 void SeapodymCoupled::ReadClimatologyData(int t, int month)

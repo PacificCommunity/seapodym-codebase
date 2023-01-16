@@ -1617,9 +1617,10 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 
 				//!!!TEST here: constrain the sample size by 1000 if S>1000 (see robust LF likelihood)
 				//must be taken out to pre-processing
-				double smax = 1000.0;
+				double smax = 1000.0; //do not allow samples greater 1000
 				double sumQ = sum(frq(f,reg-1,y,qtr-1));
 				if (sumQ>smax){
+					//put warning message HERE
 					for (int a=a0; a<nb_ages; a++)
 						frq(f,reg-1,y,qtr-1,a) *= smax/sumQ;
 				}

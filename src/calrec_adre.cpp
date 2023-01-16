@@ -30,6 +30,7 @@ void CCalpop::calrec1(const PMap& map, dvar_matrix& uu, const dmatrix& mortality
 				if (map.jinf[i] <= j && j <= map.jsup[i]){
 
 					rhs[i]=-d[i][j]*value(uu(i,j-1)) + (2*iterationNumber-e[i][j])*value(uu(i,j)) - f[i][j]*value(uu(i,j+1));
+
                          	} else {
 					cout << __LINE__ << endl; exit(1);
 					//rhs[i]=(2*iterationNumber)*value(uu(i,j));
