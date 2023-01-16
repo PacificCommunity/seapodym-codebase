@@ -610,7 +610,6 @@ int movement_fluxes_only = 1;
 		int reg = param->area_sp_B[sp][r]-1;
 
 		//For MFCL need to extract quarterly metrics
-		//initialized once every three months, using calendar seasons
 		if (fluxes_dt_qtr && (month==1 || month==4 || month==7 || month==10)){	
 			Density_region(reg,age).initialize();
 			//only biomass in region reg is non-zero
@@ -633,7 +632,7 @@ int movement_fluxes_only = 1;
 			pop.Precalrec_Calrec_adult(map,mat,*param,rw,Density_region(reg,age),Mortality_copy,tcur,fishing,age,sp,year,month,jday,step_fishery_count,0);
 		}
 
-		//integrate biomass in each region, i.e., region 'reg' included (what's left in it after movement)
+		//now integrate biomass in each region, region 'reg' included (what's left in it after movement)
 		for (int rr=0; rr<nb_reg; rr++){
 	       		int oth_reg = param->area_sp_B[sp][rr]-1;
 			double tot_mass_region = 0.0;

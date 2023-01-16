@@ -76,7 +76,7 @@ void SeapodymCoupled::WriteOutput(int t, bool fishing)
 void SeapodymCoupled::WriteFluxes()
 {
 	//Note, to put frq_like=0 and stop if regions are not defined and activated in Fluxes comp mode, then remove this condition
-	if (!param->frq_like[0] && param->nb_region>0){
+	if (!param->frq_like[0] && (param->nb_region>0 || param->nb_EEZ)){
 		if (fluxes_dt_qtr && (month==3 || month==6 || month==9 || month==12))
 			rw.SaveFluxesCohortsFileTxt(*param, mat, map, day, month, year);
 	}	
@@ -84,18 +84,6 @@ void SeapodymCoupled::WriteFluxes()
 
 void SeapodymCoupled::WriteFileHeaders()
 {
-/*
-	int nbt_yr = (int) (365.25/deltaT);
-	int n_tt   = (int) (nbt_yr*(param->save_last_yr - param->save_first_yr + param->nb_yr_forecast) + 1.01);
-	float dec  = param->save_first_yr - (int) param->save_first_yr ;
-	dec = ((int)(dec/t_yrdd))* t_yrdd ;
-	float firstdate_rec = ((int) param->save_first_yr) + t_yrdd/2 +  dec;
-
-	dvector zlevel;
-	zlevel.allocate(0, n_tt - 1);
-	for (int n=0; n< n_tt; n++)
-		zlevel[n]= firstdate_rec + (float)(n* t_yrdd);
-*/
 	dvector zlevel;
         zlevel.allocate(0, nbt_total - 1);
         zlevel.initialize();
@@ -117,15 +105,6 @@ void SeapodymCoupled::WriteFileHeaders()
 	//For Joe:
 	//SaveOneCohortDym(0, true, zlevel);
 
-
-	/*to rewrite as the old code with binary fishing data files is now desactivated
-	if (param->wbin_flag){
-		// Write header into files with predicted fisheries data
-		rw.write_fishery_data(*param, map, mat, 0, 0, 0, false);
-		rw.write_frq_data(*param, 0, 0, 0, value(mat.dvarLF_est(0)), false);
-	}
-	*/
-
 	// Create and initialize (txt) files for saving aggregated variables
 	rw.InitSepodymFileTxt(*param);
 
@@ -134,10 +113,17 @@ void SeapodymCoupled::WriteFileHeaders()
 void SeapodymCoupled::InitFileFluxes()
 {
 	//Create and initialize (txt) files with cohort fluxes through regional boundaries
-	//WARNING: single matrix for all species! To be modified in case of multi-species simulations
-	if (!param->frq_like[0] && param->nb_region>0){
+	//WARNING: temporal - single matrix for all species! To be modified in case of multi-species simulations
+	int nb_reg = param->nb_EEZ;
+	//by default will compute fluxes between polygons, except if the nb_EEZ = 0, then use regional structure
+	fluxes_between_polygons = 1;
+	if (!nb_reg){
+		fluxes_between_polygons = 0;
+		nb_reg = param->nb_region_sp_B[0];//attn sp =0!
+	}
+
+	if (!param->frq_like[0] && (param->nb_region || param->nb_EEZ)){
 		fluxes_dt_qtr = 1;
-		const int nb_reg = param->nb_region_sp_B[0];//attn sp =0!
 		const int nb_ages= param->sp_nb_cohorts[0];//attn sp =0!
 		Density_region.allocate(0,nb_reg-1);
 		for (int r=0; r<nb_reg; r++){
@@ -148,7 +134,7 @@ void SeapodymCoupled::InitFileFluxes()
 			}
 		}
 
-		mat.createMatFluxes(param->nb_region_sp_B[0], param->sp_nb_cohorts[0]);
+		mat.createMatFluxes(nb_reg, param->sp_nb_cohorts[0]);
 		rw.InitFluxesCohortsFileTxt(*param);
 	}	
 }
