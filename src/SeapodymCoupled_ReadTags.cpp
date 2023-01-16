@@ -115,7 +115,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 	//in kernel functions will need the length of the cohort
 	//attn, violation of multi-species
 	const int    agemax  = param->sp_nb_cohorts[0]-1;
-	const double lmax    = param->length[0][agemax]*0.01;
+	//const double lmax    = param->length[0][agemax]*0.01;
 
 	t_count_rec.allocate(0,nb_tagpops-1);
 	t_count_rec.initialize();
@@ -215,7 +215,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 				//4. rel positions in ij of model grid
 				int rel_added = 0;
 				i_mod = param->lontoi(lon);
-				j_mod = param->lattoj(lat);	
+				j_mod = param->lattoj(lat);
 				if (i_mod>=map.imin && i_mod<=map.imax && j_mod>=map.jmin && j_mod<=map.jmax){
 					if (map.carte(i_mod,j_mod))
 						rel_added = 1;
@@ -261,7 +261,8 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 							<< map.carte(i_mod,j_mod) << endl;
 					continue;
 				}
-
+				//One more check might be necessary: discrepancy between length(age) at recapture
+				//which depends on the implemented growth model
 				if (age_mod < a0_adult(0) || age_mod >aN_adult(0)) {
 					if (!param->gcalc())
 						cout << "WARNING: age of tag release out of modelled lifespan " << 
@@ -280,7 +281,6 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 				
 				//Now remember releases, which will be used in optimization
 				
-//if (p==5) cout << nbtot_tags<< " " << i_mod << " "<< j_mod << " " << age_mod << " "<< nb_rel[p][tt] << " " << yy << " "<< mm << " "<< dd << " "<< jday_ini << " "<< jday_rel << " "<< ((float)(jday_rel-jday_ini)/deltaT+.5) << " "<<  tt << " "<< t_count_rec(p) << endl;
 				int rel_index = nb_rel[p][tt];
 				rel_rtxt[p][tt][rel_index].set_release(i_mod, j_mod, age_mod);
 				nb_rel[p][tt]++;
@@ -298,36 +298,23 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 						}
 					}
 				} else {//Gaussian Kernel
-					//double sig = (pow(lon_rec-lon,2)+pow(lat_rec-lat,2))/(4*days_liberty/30.25+0.0001);
-					double sigx = pow(lon_rec-lon,2)/(2*dtlib+0.0001);
-					double sigy = pow(lat_rec-lat,2)/(2*dtlib+0.0001);
-					//COMMENT, THIS IS TO COMPARE WITH J-VERSION
-					//if (sigx<0.5) sigx = 0.5;
-					//if (sigx>5.0) sigx = 5.0;
-					//if (sigy>sigx) sigy = sigx;
-					//if (sigy<sigx/2.0) sigy = sigx/2.0;
-					//test another definition (previous is wrong as it gives D and not sigma)
-					sigx = sqrt(2*pow(lon_distance(lon,lon_rec,lat,lat_rec),2)/(2*(dtlib+1)));
-					sigy = sqrt(2*pow(lat_rec-lat,2)/(2*(dtlib+1)));
+					double sigx = sqrt(2*pow(lon_distance(lon,lon_rec,lat,lat_rec),2)/(2*(dtlib+1)));
+					double sigy = sqrt(2*pow(lat_rec-lat,2)/(2*(dtlib+1)));
 					//minimal error (100 nmi)
-					//test BET 20200525: 3 degrees, i.e. 180 nmi
+					//test BET 20200525: 2 degrees, i.e. 120 nmi
 					if (sigx<120/(60*1.852)) sigx = 120/(60*1.852);
 					if (sigy<120/(60*1.852)) sigy = 120/(60*1.852);
-					//maximal bound by Dinf
 					float length_rel= strtof(len_rel.c_str(),NULL);
 					float length_rec= strtof(len_rec.c_str(),NULL);
+					//bound length at age at recapture
 					if (length_rec==0 || length_rec<length_rel){
 						int age_rec = age_mod+dtlib;
 						if (age_rec>agemax) age_rec = agemax;
 						length_rec = param->length(0,age_rec);
 					}
-					double Dinf = pow((1.25-0.25*0.01*length_rec/lmax)*0.01*length_rec*3600*24.0*deltaT/1852,2)/4; 
-					//cout << p << " " << dtlib << " " << length_rel << " "<< length_rec << " " << Dinf <<endl;
-					//cout << sqrt(2*Dinf)/(60*1.852) << endl;
-					if (sigx>sqrt(2*Dinf)/(60*1.852)) sigx = sqrt(2*Dinf)/(60*1.852); //sqrt(2Dt) where t=1
-
 					//finally, do not allow latitudinal error to be larger than longitudinal
 					if (sigy>sigx) sigy = sigx;
+					sigx /= cos(lat_rec*pi/180.0);
 					gaussian_kernel(gkernel,Xlon,Ylat,lon_rec,lat_rec,sigx,sigy);
 					
 					for (int ii=0; ii<nx_obs; ii++){
