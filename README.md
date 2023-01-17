@@ -44,8 +44,8 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   The following libraries should be installed:
 
-    * libxml2 
-    * AUTODIF 
+  * libxml2 
+  * AUTODIF 
 
    The libxml2 library is used to read and write all application parameters in the XML file. If not installed already, you can download and build the library from ftp://xmlsoft.org/libxml2
 
