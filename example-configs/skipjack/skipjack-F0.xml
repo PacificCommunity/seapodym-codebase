@@ -44,7 +44,7 @@
 <tag_likelihood_only value="0"/>
 
 <!--4. STOCK likelihood: 0 - do not take into account, 1 - account-->
-<stock_likelihood skj="1"/>
+<stock_likelihood skj="0"/>
 <!-- The values entered for mean_stock_obs will be used in stock likelihood
      These can be the total abundance estimated by stock assessment models 
      within the rectangular region specified -->
