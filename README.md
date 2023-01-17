@@ -30,13 +30,12 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   In the **Terminal** window, go to the *example-configs* directory and test that the binaries executes nominally on your computer by executing a small habitat model example
 
-    ```
+    
     [~]$ cd ~/seapodym/examples-configs/habitat
-    ```
-
-    ```
+    
+    
     [~]$ ~/seapodym/bin/seapodym_habitats -s habitat.xml
-    ```
+
 
   To run the full-scale pre-configured models, please read the [reference manual](https://github.com/PacificCommunity/seapodym-codebase/docs/manual/Seapodym_user_manual.pdf).
 
@@ -47,7 +46,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
   * libxml2 
   * AUTODIF 
 
-   The libxml2 library is used to read and write all application parameters in the XML file. If not installed already, you can download and build the library from ftp://xmlsoft.org/libxml2
+   The libxml2 library is used to read and write all application parameters in the XML file. If not installed already, you can download and build the library from ftp://xmlsoft.org/libxml2.
 
    The AUTODIF libraries provide an array language extension to C ++ and can be installed as a part of the ADModel Builder software. Visit the [ADMB project](https://github.com/admb-project/admb) page and follow the instructions for [quick installation](https://github.com/admb-project/admb/blob/main/docs/install/QuickStartUnix.md) or [building from source](https://github.com/admb-project/admb/blob/main/docs/install/BuildingSourceUnix.md) of the latest release of the ADMB software. 
 
@@ -59,28 +58,26 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   In the case when shared libraries are to be used, add the following line in the .bashrc:
 
-    ```
-    export LD_LIBRARY_PATH=$ADMB_HOME/lib:$LD_LIBRARY_PATH
-    ```
 
+    export LD_LIBRARY_PATH=$ADMB_HOME/lib:$LD_LIBRARY_PATH
+
+    
   Source code compilation requires the GNU C++ compiler installed on the computer. 
 
   Once the required libraries have been installed and configured, proceed to downloading the source code either from the [latest release](https://github.com/PacificCommunity/seapodym-codebase/releases/seapodym-4.1/), or, alternatively, checking out the github repository:
 
-    ```
+    
     [~]$ git clone https://github.com/PacificCommunity/seapodym-codebase.git
-    ```
+    
   
   Unpack (if downloaded a release) and go to the *src* directory and Makefiles. Compile one of the SEAPODYM applications by typing the command
-
-    ```
+    
     [~]$ make
-    ```
+    
   If the compilation is successful, it will create the binary file *seapodym* that runs the model in a simulation mode. Typing
-
-    ```
+   
     [~]$ seapodym -h
-    ```
+    
   should display the usage instruction and running options. Now go in the *example-configs* directory to run the above habitat example.
 
   A more comprehensive and a full model example, a pre-configured model of skipjack tuna, is also provided with the model code. To run this model, a forcing directory needs to be downloaded from the [data repository](https://osf.io/h8u93) on the OSF platform.
@@ -88,15 +85,13 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
   Unzip and place the forcing files into _~/seapodym/_ or another directory without modifying the folder structure.
 
   Now open the skipjack-F0.xml parfile in the preferred text editor and modify the ${SEAPODYM\_HOME} to the address with unzipped *data* folder.  
-
-    ```
+    
     [~]$ cd example-configs/skipjack/
-    ```
+    
   and run 
 
-    ```
     [~]$ ~/seapodym/bin/seapodym -s skipjack-F0.xml
-    ```
+    
   The simulation log can be compared with Running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be made   
     
 ## Documentation
