@@ -44,15 +44,18 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   The following libraries should be installed:
 
-    **libxml2** library is used to read and write all application parameters in the XML file. If not installed already, you can download and build the library from ftp://xmlsoft.org/libxml2
+    * libxml2 
+    * AUTODIF 
 
-    **AUTODIF** libraries provide an array language extension to C ++. Visit the [ADMB project](https://github.com/admb-project/admb) page and follow the instructions for [building from source](https://github.com/admb-project/admb/blob/main/docs/install/BuildingSourceUnix.md) of the latest release of the ADModel Builder software, which includes Autodif libraries. 
+   The libxml2 library is used to read and write all application parameters in the XML file. If not installed already, you can download and build the library from ftp://xmlsoft.org/libxml2
+
+   The AUTODIF libraries provide an array language extension to C ++ and can be installed as a part of the ADModel Builder software. Visit the [ADMB project](https://github.com/admb-project/admb) page and follow the instructions for [quick installation](https://github.com/admb-project/admb/blob/main/docs/install/QuickStartUnix.md) or [building from source](https://github.com/admb-project/admb/blob/main/docs/install/BuildingSourceUnix.md) of the latest release of the ADMB software. 
 
   Once ADMB software is installed, in the .bashrc file declare environment variable pointing to it, as follows:
 
-    ```
+    
     export ADMB_HOME=/your-path-to-admb-folder/
-    ```
+    
 
   In the case when shared libraries are to be used, add the following line in the .bashrc:
 
