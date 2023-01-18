@@ -24,6 +24,10 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	past_month=month;
 	past_qtr=qtr;
 
+	if (!param->habitat_run_type)
+		cout << endl << "Running Spawning Habitat model" << endl << endl; 		
+	else 
+		cout << endl << "Running Feeding Habitat model for ages: " << param->habitat_run_age << endl << endl; 		
 
 	//routine-specific variables
 	int tcur = t_count; //will be used for forcing variable time control
