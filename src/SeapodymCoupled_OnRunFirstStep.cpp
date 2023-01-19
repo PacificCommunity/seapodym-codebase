@@ -49,22 +49,26 @@ void SeapodymCoupled::OnRunFirstStep()
 	if (!tuna_spinup) 
 		RestoreDistributions(mat.nb_age_built);
 
+	rw.init_writing(*param);
+
 	param->fdata_rm = 0;
-	//Initialization of fishery files variables
-	//1. Read catch and effort data
-	rw.rtxt_fishery_data(*param,map,nbt_total,jday_spinup);
-	//redistribute all fishing effort to the model resolution
-	rw.set_effort_rm(*param,map,nbt_total,jday_spinup);
-	//put all data on the model resolution in case of MPA simulations or EEZ extractions
-	
-	if ((min(param->fishery_reso) < param->catch_reso) 
-	     && !param->mpa_simulation && !param->nb_EEZ){
-		rw.degrade_fishery_reso(*param, map,nbt_total,jday_spinup);
-	}
-	//read LF data file if provided
-	if (param->file_frq_data[0]!=""){
-		for (int sp=0; sp<nb_species; sp++)
-			rw.read_frq_data(*param, map, param->save_first_yr, param->save_last_yr, sp);
+	if (!param->flag_no_fishing){
+		//Initialization of fishery files variables
+		//1. Read catch and effort data
+		rw.rtxt_fishery_data(*param,map,nbt_total,jday_spinup);
+		//redistribute all fishing effort to the model resolution
+		rw.set_effort_rm(*param,map,nbt_total,jday_spinup);
+		//put all data on the model resolution in case of MPA simulations or EEZ extractions
+		
+		if ((min(param->fishery_reso) < param->catch_reso) 
+		     && !param->mpa_simulation && !param->nb_EEZ){
+			rw.degrade_fishery_reso(*param, map,nbt_total,jday_spinup);
+		}
+		//read LF data file if provided
+		if (param->file_frq_data[0]!=""){
+			for (int sp=0; sp<nb_species; sp++)
+				rw.read_frq_data(*param, map, param->save_first_yr, param->save_last_yr, sp);
+		}
 	}
 	func.allocate_dvmatr(map.imin,map.imax,map.jinf,map.jsup);
 	//TAG data reading and allocation section

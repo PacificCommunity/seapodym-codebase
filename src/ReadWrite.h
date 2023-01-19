@@ -124,6 +124,8 @@ public:
 //	string fileF ;
 
 public:
+	void init_writing(CParam& param);
+
 	void rbin_headpar(string file_in, int &nlong, int &nlat, int &nlevel);
 
 	void rtxt_headpar(string file_in, int &nlong, int &nlat, int &nlevel);

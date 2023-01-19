@@ -102,6 +102,22 @@ void CReadWrite::SaveFRspeciesFileTxt(CParam& param, CMatrices& mat, PMap& map, 
         }
 }
 */
+
+///Put here all variables that need to be initialized for writing
+void CReadWrite::init_writing(CParam& param)
+{
+	const int nbi = param.get_nbi();
+	const int nbj = param.get_nbj();
+	
+	//this mask will be used in comparison with MFCL estimations
+        mask_catch.allocate(0,nbi-1,0,nbj-1);
+	mask_catch.initialize(); 
+
+	//Note, if no fishing, the use_mask_catch=false also
+	if (!param.use_mask_catch)
+		mask_catch = 1e3;
+}
+
 //////////////////////////////////////////////////////////
 // ECRITURE EN-TETE FICHIERS DE SAUVEGARDE SEPODYM 'TEXT'
 //////////////////////////////////////////////////////////

@@ -306,15 +306,9 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 {
 	const int nb_fishery = param.get_nbfishery();
 	const int nb_species = param.get_nbspecies();
-	const int nbi = param.get_nbi();
-	const int nbj = param.get_nbj();
 	const int yearini  = param.ndatini/10000;
 	const int yearfin  = param.ndatfin/10000;
 	const int nby = yearfin-yearini+1;
-
-	//this mask will be used in comparison with MFCL estimations
-        mask_catch.allocate(0,nbi-1,0,nbj-1);
-	mask_catch.initialize(); 
 
 	double deltaX = (param.deltaX/60);
 	double deltaY = (param.deltaY/60);
@@ -425,8 +419,6 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 			}
 		}
 	}
-	if (!param.use_mask_catch)
-		mask_catch = 1e3;
 	//reallocate the memory for this class knowing
 	//the true number of records at model resolution
 	efr = new fishing_effort[nrec_oceanmask];
