@@ -3,13 +3,13 @@
 Source code of the SEAPODYM numerical modelling framework and analyses tools, OFP-FEMA. C++, R, Linux.
 
 *Version 4.1*
-*Released January 17, 2023*
+*Released January 19, 2023*
 
 ## About
 
-SEAPODYM (Spatial Ecosystem And POpulation DYnamics Model) has been initiated in the mid 1990s by the Oceanic Fisheries Programme of the Pacific Community (SPC), and its developments were continuously conducted since then at the University of Hawaii (2004-2007), at Collecte Localisation Satellites in Toulouse (2006-2020) and at SPC (2020-now). The objective of this project is to propose a new management tool for biomass estimation at spatial scales smaller than operating stock assessment models, while having quantitative skill of predicting fish stocks spatiotemporal dynamics under the influence of both fishing and environmental variability. 
+SEAPODYM (Spatial Ecosystem And POpulation DYnamics Model) has been initiated in the mid 1990s by the Oceanic Fisheries Programme of the Pacific Community (SPC), and its developments were continuously conducted since then at the University of Hawaii (2004-2007), at Collecte Localisation Satellites in Toulouse (2006-2020) and at SPC (2020-now). The objective of this project is to propose a new scientific tool for biomass estimation at spatial scales smaller than operating stock assessment models, while having quantitative skill of predicting fish stocks spatiotemporal dynamics under the influence of both fishing and environmental variability. 
 
-The codebase implements the SEAPODYM modelling framework, which includes several models and tools, allowing running the full fish population dynamics model with pre-configured parameters, estimating this model parameters by integrating massive fisheries and tagging data, computing and estimating parameters of spawning and feeding habitats, simulating movement dynamics of tagged fish, and evaluating biomass flow rates between designed regions. The model can be parametrised through integration of the commercial fisheries data and the scientific tagging data, and solving optimization problem formulated using the maximum likelihood estimation approach. To ensure the optimization algorithm efficiency, implementation of the model adjoint code allows an exact, analytical evaluation of the likelihood gradient. Additional tools integrated within C++ code include local and global sensitivity analysis, and Hessian approximation. The offline R tools, developed for various model analyses and the IO files manipulations, are included in the repository to facilitate the use of the model.
+The codebase implements the SEAPODYM modelling framework, which includes several models and tools, allowing running the full fish population dynamics model with pre-configured parameters, estimating this model parameters by integrating geo-referenced fisheries and tagging data, computing and estimating parameters of spawning and feeding habitats, simulating movement dynamics of tagged fish, and evaluating biomass flow rates between designed regions. The model can be parametrised through integration of the commercial fisheries data and the scientific tagging data, and solving optimization problem formulated using the maximum likelihood estimation approach. To ensure the optimization algorithm efficiency, implementation of the model adjoint code allows an exact, analytical evaluation of the likelihood gradient. Additional tools integrated within C++ code include local and global sensitivity analysis, and Hessian approximation. The offline R tools, developed for various model analyses and the IO files manipulations, are included in the repository to facilitate the use of the model.
 
 ## Prerequisites 
 
@@ -84,15 +84,15 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   Unzip and place the forcing files into _~/seapodym/_ or another directory without modifying the folder structure.
 
-  Now open the skipjack-F0.xml parfile in the preferred text editor and modify the ${SEAPODYM\_HOME} to the address with unzipped *data* folder.  
+  Now open the skipjack\_F0.xml parfile in the preferred text editor and modify the ${SEAPODYM\_HOME} to the address with unzipped *data* folder.  
     
     [~]$ cd example-configs/skipjack/
     
   and run 
 
-    [~]$ ~/seapodym/bin/seapodym -s skipjack-F0.xml
+    [~]$ ~/seapodym/bin/seapodym -s skipjack_F0.xml
     
-  The simulation log can be compared with Running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be made   
+  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be made to SPC to inquire for the access to the data. 
     
 ## Documentation
 For further information on how to use SEAPODYM for simulation studies and model developments see the [Model Reference Manual](docs/manual/Seapodym_user_manual.pdf). Doxygen generated [Code Documentation](docs/code-dox/codedoc_seapodym.pdf) can be consulted for a quick overview of the C++ numerical model code. 
