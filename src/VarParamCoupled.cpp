@@ -885,8 +885,13 @@ bool VarParamCoupled::read(const string& parfile)
 		//2. LF likelihood
 		frq_like.allocate(0,nb_species-1);
 		frq_like.initialize();
-		for (int sp=0;sp<nb_species;sp++)
+		for (int sp=0;sp<nb_species;sp++){
 			frq_like[sp] = doc.getInteger("/frq_likelihood",sp_name[sp]);
+			if (flag_no_fishing){
+				frq_like[sp] = 0;
+				cout << "WARNING: LF likelihood is forced to OFF in NO FISHING run" << endl;
+			}
+		}
 
 		//3. TAGs likelihood
 		tag_like.allocate(0,nb_species-1);
@@ -922,8 +927,9 @@ bool VarParamCoupled::read(const string& parfile)
 		stock_latmax.initialize();
 
 		for (int sp=0;sp<nb_species;sp++){
-			if (!doc.get("/stock_likelihood",sp_name[sp]).empty())
+			if (!doc.get("/stock_likelihood",sp_name[sp]).empty()){
 				stock_like[sp] = doc.getInteger("/stock_likelihood",sp_name[sp]);
+			}
 		
 			if (stock_like[sp]){
 				mean_stock_obs[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"value"); 
