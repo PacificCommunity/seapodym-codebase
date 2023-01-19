@@ -225,7 +225,6 @@ bool VarParamCoupled::read(const string& parfile)
 				habitat_run_age[n] = doc.getInteger("/habitat_run_ages",n);
 			}
 		}
-		cout << endl << "Habitat type: " << habitat_run_type << "; ages: " << habitat_run_age << endl << endl; 		
 	}
 
 	////////////////////
@@ -602,13 +601,13 @@ bool VarParamCoupled::read(const string& parfile)
 		maturity_age[sp].allocate(0,sp_nb_cohorts[sp]-1);
 		maturity_age[sp] = 1.0;
 		if (doc.get("/maturity_age").empty()){
-			cout << "IMPORTANT: Maturity-at-age described by step function with 0 below and 1 above 50% maturity" << endl;
+			cout << endl << "IMPORTANT: Maturity-at-age described by step function with 0 below and 1 above 50% maturity" << endl << endl;
 			for (int a=0; a<sp_nb_cohorts[sp]; a++){
 				if (a<age_mature[sp]) maturity_age[sp][a] = 0.0;
 			}
 		}
 		if (!doc.get("/maturity_age").empty()){
-			cout << "IMPORTANT: Maturity-at-age described by continuous function" << endl;
+			cout << endl << "IMPORTANT: Maturity-at-age described by continuous function" << endl;
 			for (int a=0; a<sp_nb_cohorts[sp]; a++)
                 		maturity_age[sp][a] = doc.getDouble("/maturity_age/"+ sp_name[sp], a);
 
@@ -625,6 +624,7 @@ bool VarParamCoupled::read(const string& parfile)
 						break;
 				}
 			}
+			cout << endl;
 		}
 		migrations_by_maturity_flag = 0;
 	}		
@@ -744,6 +744,7 @@ bool VarParamCoupled::read(const string& parfile)
 		//the strdir_output should always be declared for the reference (Fref) run
 		//the directory output_F0 will be automatically created inside if F0 setup is ON
 		if (sum(mask_fishery_sp)==0){
+			flag_no_fishing = true;
                 	strdir_output = strdir_output + "/output_F0/";
 			string test = strdir_output + "/test";
 		        ofstream ecritbin(test.c_str(), ios::binary|ios::out);
@@ -773,7 +774,8 @@ bool VarParamCoupled::read(const string& parfile)
 						mask_fishery_sp_no_effort[sp][f] = doc.getInteger(string("/mask_fishery_no_effort/") + sp_name[sp], f);
 				}
 				//fisheries_no_effort_exist will be used as a flag to avoid catch removal from density of tags
-cout << mask_fishery_sp_no_effort(sp)<< endl;				
+				if (!flag_no_fishing)
+					cout << "FISHERIES without effort (1) in the simulation: " << mask_fishery_sp_no_effort(sp) << endl;				
 				fisheries_no_effort_exist[sp] = sum(mask_fishery_sp_no_effort[sp]);
 				
 				//check: if no effort fisheries have different catch units in the parfile 
@@ -1073,23 +1075,25 @@ cout << mask_fishery_sp_no_effort(sp)<< endl;
 	use_lf_regstruc = 0;
 	// regions for assimilation of LF data
 	for (int sp=0;sp<nb_species;sp++){ 
-		if (frq_like[sp]){
+		if (frq_like[sp] && !flag_no_fishing){
 			use_lf_regstruc = 1;
+			cout << "WARNING: LF likelihood is active -> using LF regions for biomass aggregation!" << endl; 
 			if (nb_species>1)
 				cout << "ATTENTION: Verify that LF data for species " << sp << " have the same regional structure!" << endl; 
 			define_regions();
-		}else {
-			cout << "WARNING: LF likelihood is not active -> use_lf_regstruc is turned OFF!" << endl; 
+		} else {
+			if (!frq_like[sp])
+				cout << "WARNING: LF likelihood is not active -> use_lf_regstruc is OFF -> use regional structure for biomass aggregation" << endl; 
 			use_lf_regstruc = 0;
 		}
 	}
 	if (!use_lf_regstruc){
-		if (sum(mask_fishery_sp)>0 && !doc.get("/use_mask_catch","value").empty()) {
+		if (!flag_no_fishing && !doc.get("/use_mask_catch","value").empty()) {
 			use_mask_catch = doc.getInteger("/use_mask_catch","value");
 		}
 		nb_region = doc.getInteger("/nb_region", "value");
-		cout << "WARNING: use_lf_regstruc is OFF, areas in parfile will be used as aggregation zones and to compute LFs!" << endl; 
 		if (nb_region) {
+			cout << "INFO: Parfile regional structure in use; number of regions: " << nb_region << endl; 
 			area = new region*[nb_region];
 			for (int a=0; a< nb_region; a++) {
         	               	std::ostringstream ostr;
@@ -1131,7 +1135,11 @@ cout << mask_fishery_sp_no_effort(sp)<< endl;
 				area_sp_B[sp].allocate(0, 0);
 				area_sp_B[sp][0] = 0;//1;
 			}
-			cout << "WARNING: nb_region=0, no PREDICTED LFs will be computed"<< endl; 
+			cout << endl << "WARNING!!!!!! nb_region=0 -> NO biomass aggregations"; 
+			if (!flag_no_fishing)
+				cout << "; NO predicted LFs computed!"<< endl; 
+			else cout << endl;
+			cout << endl;
 		}
 	}	
 

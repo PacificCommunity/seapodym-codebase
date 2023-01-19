@@ -97,7 +97,6 @@ void PMap::lit_map(CParam &param)
 	global = 0;//Attn: for optimization no global until fixed!
 	deltaX = param.deltaX;
 	double reso_x = param.deltaX/60.0;
-	cout << imax << " " << imin << " " << nti << endl;
 	domain_type((nti-2)*reso_x);
 //global = 0;//ATTN: put global to zero to be able to run with summy fisheries. Re-set when needed.
 	definit_cell_bords(nti,ntj); // appel de la fonction 
@@ -119,10 +118,6 @@ void PMap::reg_indices(CParam& param)
 		regimin[a] = param.lontoi(lonmin); regimax[a] = param.lontoi(lonmax);
 		regjmin[a] = param.lattoj(latmin); regjmax[a] = param.lattoj(latmax);
 
-//		regimin[a] = (int) ( (param.area[a]->lgmin - param.longitudeMin)*60.0/param.deltaX +1);
-//		regimax[a] = (int) ( (param.area[a]->lgmax - param.longitudeMin)*60.0/param.deltaX +1);
-//		regjmax[a] = (int) ( (param.latitudeMax - param.area[a]->ltmin)*60.0/param.deltaY +1);
-//		regjmin[a] = (int) ( (param.latitudeMax - param.area[a]->ltmax)*60.0/param.deltaY +1);
 
 //cout << a+1 << "\t" << param.area[a]->lgmin << "\t" << param.area[a]->lgmax << "\t" << param.area[a]->ltmin << "\t" << param.area[a]->ltmax << endl;
 //cout << a+1 << "\t" << regimin[a] << "\t" << regimax[a] << "\t" << regjmin[a] << "\t" << regjmax[a] << endl;
