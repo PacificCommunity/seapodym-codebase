@@ -251,7 +251,8 @@ void CReadWrite::degrade_fishery_reso(CParam& param, PMap& map, const int nbt, c
 	for (int j=0; j<nflat; j++) flat[j] = cnorth - creso*(j+0.5); 
 
 	//Interested to see only in optimisation mode, which does not support currently high resolutions
-	if (deltaX>=1) cout << "Centers of degraded C-cells: " << flon << endl << flat << endl; //exit(1);
+	if (deltaX>=1) cout << "Centers of degraded C-cells: \n" << flon[0] << ", " << flon[1] << ",..., " << flon[nflon-1] << endl << 
+							    	    flat[0] << ", " << flat[1] << ",..., " << flat[nflat-1] << endl; 
 
 	int year, month, day, jday, xx;
 	for (int f=0; f<nb_fishery; f++){
