@@ -114,31 +114,11 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 		}
 	}
 
-	//Create time vector for output DYM files
-	dvector zlevel;
-        zlevel.allocate(0, nbt_total - 1);
-        zlevel.initialize();
-
 	//Output DYM file name
 	string fileout;
 	fileout = param->strdir_output + param->sp_name[0] + "_density_output.dym";
 	if (writeoutputfiles){
-	        Date::zlevel_run(*param,mat.zlevel,nbt_total,zlevel,nbt_start_series);
-
-		// Create and initialize (dym) files for saving spatial variables
-		//rewrite dym mask by the mask used in the run, i.e. map.carte:
-		for (int i=0; i<nbi-2; i++){
-		        for (int j=0; j<nbj-2; j++){
-				mat.mask[j][i] = map.carte[i+1][j+1];
-			}
-		}
-		double minval=0.0;
-		double maxval=1.0;
-		rw.wbin_header(fileout, param->idformat, param->idfunc, minval, maxval,
-                                        param->nlong, param->nlat, nbt_total,
-                                        zlevel[0], zlevel[nbt_total-1],
-                                        mat.xlon, mat.ylat, zlevel, mat.mask);
-	
+		WriteFileHeaders_submodel(fileout);	
 		if (!param->gcalc())
 			ConsoleOutput(0,0);
 	}

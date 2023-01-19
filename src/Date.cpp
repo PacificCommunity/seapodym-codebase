@@ -308,36 +308,27 @@ int Date::dym_startdate_run(CParam& param, const dvector zlevel_dym, const int n
 		++nini; 
 	}
 //nini = 0;	
-cout << __FILE__ << " " << __LINE__ << "; skip in DYM files " << nini << endl; //exit(1);
+cout << __FILE__ << " : Time steps to skip in DYM files " << nini << endl; //exit(1);
 	return nini;
 }
 
-
+/*
 void Date::zlevel_run(CParam& param, const dvector zlevel_dym, const int nbstot, dvector& zlevel, const int nini)
 {
-//note: the case with forecast is not yet done!
+//note: the case with forecast is no longer implemented!
+//note: this function is used for writing only. 
+//note: it uses dates from input DYMs (zlevel_dym)
 	int deltaT = param.deltaT;
 	int dt = (zlevel_dym[1]-zlevel_dym[0])*365.25;
 
-if (dt==31) dt = 30;//soda_test dates are not written with 30 days time step
 
-int t_series = 0;
+	int t_series = 0;
 	for (int n=0; n<nbstot; n++){
-if (deltaT==30 && dt==6 )
-		t_series = (int)(n*deltaT/5.92 + 1.0)  + nini;//to run GLORYS 6day files on 30day time step
-if (deltaT==30 && dt==7 )
-		t_series = (int)(n*deltaT/6.875) + nini;
-if (deltaT==dt)
-		zlevel[n] = zlevel_dym[n*deltaT/dt+nini];
-		//temporal for 7 days time step:
-		//will write the dates in dym files in the middle of time step
-		//zlevel[n] = zlevel_dym[n*deltaT/dt+nini]+(int)deltaT/(2*365.25);
-else
-		zlevel[n] = zlevel_dym[t_series-1];
-		//zlevel[n] = zlevel_dym[n+nini];
+		zlevel[n] = zlevel_dym[n+nini];
 	}
 //cout << dt << " " << deltaT << " " << zlevel << endl; //exit(1);
 }
+*/
 
 // Leap year or not ?
 int Date::leapYear(int year) {

@@ -87,7 +87,10 @@ void SeapodymCoupled::WriteFileHeaders()
 	dvector zlevel;
         zlevel.allocate(0, nbt_total - 1);
         zlevel.initialize();
-        Date::zlevel_run(*param,mat.zlevel,nbt_total,zlevel,nbt_start_series);
+	for (int n=0; n<nbt_total; n++)
+		zlevel[n] = mat.zlevel[n+nbt_start_series];
+	
+        //Date::zlevel_run(*param,mat.zlevel,nbt_total,zlevel,nbt_start_series);
 
 	// Create and initialize (dym) files for saving spatial variables
 	//rewrite dym mask by the mask used in the run, i.e. map.carte:
@@ -108,6 +111,30 @@ void SeapodymCoupled::WriteFileHeaders()
 	// Create and initialize (txt) files for saving aggregated variables
 	rw.InitSepodymFileTxt(*param);
 
+}
+
+void SeapodymCoupled::WriteFileHeaders_submodel(const string fileout)
+{
+	//Create time vector for output DYM files
+	dvector zlevel;
+        zlevel.allocate(0, nbt_total - 1);
+        zlevel.initialize();
+	for (int n=0; n<nbt_total; n++)
+		zlevel[n] = mat.zlevel[n+nbt_start_series];
+
+	// Create and initialize (dym) files for saving spatial variables
+	//rewrite dym mask by the mask used in the run, i.e. map.carte:
+	for (int i=0; i<nbi-2; i++){
+	        for (int j=0; j<nbj-2; j++){
+			mat.mask[j][i] = map.carte[i+1][j+1];
+		}
+	}
+	double minval=0.0;
+	double maxval=1.0;
+	rw.wbin_header(fileout, param->idformat, param->idfunc, minval, maxval,
+                                param->nlong, param->nlat, nbt_total,
+                                zlevel[0], zlevel[nbt_total-1],
+                                mat.xlon, mat.ylat, zlevel, mat.mask);
 }
 
 void SeapodymCoupled::InitFileFluxes()

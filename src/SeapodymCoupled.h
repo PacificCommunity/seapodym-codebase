@@ -14,7 +14,6 @@ public:
 	SeapodymCoupled(){/*DoesNothing*/};
 	SeapodymCoupled(const char* parfile) 
 	{
-TRACE(month)
 		param = new VarParamCoupled();
 		param->init_param();
 		EditRunCoupled(parfile);
@@ -114,6 +113,7 @@ private:
 	///void RestoreDistributions(ivector nb_juv_built, ivector nb_age_built);
 	void RestoreDistributions(ivector& nb_age_built);
 	void WriteFileHeaders();
+	void WriteFileHeaders_submodel(const string fileout);
 	void WriteOutput(int t, bool fishing);
 	void InitFileFluxes();
 	void WriteFluxes();

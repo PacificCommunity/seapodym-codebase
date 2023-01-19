@@ -35,7 +35,7 @@ public:
 	static int get_nbstot(const int ndat000, const int ndatfin, const int jdays_run, const int deltaT, const int date_mode, ivector& rundates);
 	static int get_nbt_before_first_recruitment(const int first_recruitment_date, const int ndatini, const int deltaT, const int date_mode);
         static int dym_startdate_run(CParam& param, const dvector zlevel_dym, const int nbstot);
-        static void zlevel_run(CParam& param, const dvector zlevel_dym, const int nbstot, dvector& zlevel, const int nbt_start_series);
+        //static void zlevel_run(CParam& param, const dvector zlevel_dym, const int nbstot, dvector& zlevel, const int nbt_start_series);
         static int leapYear(int year) ;
 	static int dayWithinMonth(int day, int month, int year);
 	static unsigned long julday(int day, int month, int year);
