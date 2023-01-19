@@ -283,6 +283,7 @@ public:
 	float dx_tags, dy_tags; 	// setup of the grid to aggregate tagging data
 	float lonmin_tags,lonmax_tags, latmin_tags, latmax_tags;
 	bool tags_only;			// flag to deactivate all likelihood terms except tag_like
+	bool flag_no_fishing;		// flag for 'no fishing' simulation				
 
 	string  m_file_in_str;		// fichier lecture
 	string  m_file_out_str; 	// fichier ecriture
