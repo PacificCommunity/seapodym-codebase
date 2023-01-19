@@ -70,6 +70,10 @@ void SeapodymCoupled::OnRunFirstStep()
 				rw.read_frq_data(*param, map, param->save_first_yr, param->save_last_yr, sp);
 		}
 	}
+	else {
+		cout << "     SIMULATION WITHOUT FISHING!!!" << endl;
+		cout << "----------------------------------------------------" << endl;
+	}
 	func.allocate_dvmatr(map.imin,map.imax,map.jinf,map.jsup);
 	//TAG data reading and allocation section
 	nb_tagpops = param->nb_tag_files;

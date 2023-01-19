@@ -71,11 +71,14 @@ void CCalpop::InitCalPop(CParam& param, const PMap& map)
 
 	//Exploited biomass
 	int nb_ne_fishery = sum(param.mask_fishery_sp_no_effort[0]);//ATTN: violation of multi-species
-	cout << nb_ne_fishery << endl;
-	dvarsSNsum.allocate(0,nb_ne_fishery-1);
-	for (int fne=0; fne<nb_ne_fishery; fne++){
-		dvarsSNsum(fne).allocate(map.imin, map.imax, map.jinf, map.jsup);
-		dvarsSNsum(fne).initialize();
+	if (!nb_ne_fishery & !param.flag_no_fishing) 
+		cout << "INFORMATION: All fisheries have effort" << endl;
+	if (nb_ne_fishery){
+		dvarsSNsum.allocate(0,nb_ne_fishery-1);
+		for (int fne=0; fne<nb_ne_fishery; fne++){
+			dvarsSNsum(fne).allocate(map.imin, map.imax, map.jinf, map.jsup);
+			dvarsSNsum(fne).initialize();
+		}
 	}
 
 	//Selectivity
