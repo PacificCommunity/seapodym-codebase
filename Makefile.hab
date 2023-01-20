@@ -39,7 +39,7 @@ VarParamCoupled_reset.cpp \
 SeapodymCoupled_EditRunCoupled.cpp \
 SeapodymCoupled_Funcs.cpp \
 Seapodym_OnRunHabitat.cpp \
-SeapodymCoupled_OnRunFirstStep.cpp \
+SeapodymHabitat_OnRunFirstStep.cpp \
 SeapodymCoupled_OnReadForcing.cpp \
 SeapodymCoupled_OnWriteOutput.cpp \
 SeapodymCoupled_ReadTags.cpp \
