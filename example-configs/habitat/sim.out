@@ -1,0 +1,64 @@
+
+starting time: Fri Jan 20 19:45:23 2023
+
+SST is in use in this simulation!
+
+IMPORTANT: Maturity-at-age described by step function with 0 below and 1 above 50% maturity
+
+WARNING: LF DATA ARE ABSENT
+FISHERIES without effort (1) in the simulation:  0
+WARNING: LF likelihood is not active -> use_lf_regstruc is OFF -> use regional structure for biomass aggregation
+INFO: Parfile regional structure in use; number of regions: 1
+Is global domain? NO
+INFORMATION: All fisheries have effort
+src/Date.cpp : Time steps to skip in DYM files 0
+
+Control variables in optimisation:
+1. a sst spawning(0) = 2
+2. b sst spawning(0) = 25
+3. alpha hsp prey(0) = 0.005
+4. alpha hsp predator(0) = 0.1
+5. beta hsp predator(0) = 1.5
+Total number of variables: 5
+
+-----Standard Time Stepping - 360 days calendar-----
+Number of time steps in simulation : 12
+Number of time steps in spin up    : 0
+Delta T                            : 30
+Jday_run                           : 720045
+Start Date Run                     : 20000115
+End Date Run                       : 20001215
+----------------------------------------------------
+Reading input habitat file... 
+
+Running Spawning Habitat model
+
+total penalty: 4.70641e-06; 
+Model temporal dynamics:
+step| Date          | Input Habitat  | Model_Habitat  | Likelihood    
+----------------------------------------------------------------------------------------------------------
+1   | Jan 15, 2000  | 11.3426        | 14.0701        | 245.821
+2   | Feb 15, 2000  | 11.4704        | 14.1619        | 495.522
+3   | Mar 15, 2000  | 11.7976        | 13.4113        | 722.044
+4   | Apr 15, 2000  | 11.9297        | 12.6523        | 916.104
+5   | May 15, 2000  | 11.4347        | 13.1223        | 1104.72
+6   | Jun 15, 2000  | 10.6273        | 13.3505        | 1289.95
+7   | Jul 15, 2000  | 10.499         | 13.3344        | 1483.56
+8   | Aug 15, 2000  | 11.3196        | 12.8963        | 1689.43
+9   | Sep 15, 2000  | 12.5241        | 12.722         | 1922.77
+10  | Oct 15, 2000  | 12.3774        | 13.0268        | 2156.62
+11  | Nov 15, 2000  | 12.2651        | 13.2183        | 2386.28
+12  | Dec 15, 2000  | 11.6071        | 13.7899        | 2617.34
+end of forward run, likelihood: 2617.34 0
+
+Control variables in optimisation:
+1. a sst spawning(0) = 2
+2. b sst spawning(0) = 25
+3. alpha hsp prey(0) = 0.005
+4. alpha hsp predator(0) = 0.1
+5. beta hsp predator(0) = 1.5
+
+finished time: Fri Jan 20 19:45:23 2023
+
+
+total time: 0 minutes
