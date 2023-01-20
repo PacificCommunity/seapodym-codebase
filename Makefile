@@ -94,7 +94,7 @@ like.cpp
 
 SRCPATH=DOM/src:src
 INCPATH=-IDOM/src -Isrc
-BINPATH=.
+BINPATH=bin
 
 ##############################################################
 OBJPATH=objs
@@ -133,6 +133,7 @@ all: init $(BINPATH)/seapodym
 
 init:
 	@test -d $(OBJPATH) || mkdir -v $(OBJPATH)
+	@test -d $(BINPATH) || mkdir -v $(BINPATH)
 
 test: init $(OBJECTS)
 	make -f Makefile.test

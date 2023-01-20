@@ -91,7 +91,7 @@ like.cpp
 
 SRCPATH=DOM/src:src
 INCPATH=-IDOM/src -Isrc
-BINPATH=.
+BINPATH=bin
 
 ##############################################################
 OBJPATH=objs
