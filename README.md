@@ -26,7 +26,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   Note, the compiler GNU C++ should be installed. 
 
-  Download the precompiled binary release corresponding to your Linux system and gcc versions from [Releases](https://github.com/PacificCommunity/seapodym-codebase/releases/seapodym-4.1/) directory. Extract contents of the zip file to a folder _~/seapodym/_.
+  Download the precompiled binary release corresponding to your Linux system and gcc versions from [Releases](https://github.com/PacificCommunity/seapodym-codebase/releases/tag/seapodym-4.1/) directory. Extract contents of the zip file to a folder _~/seapodym/_.
 
   In the **Terminal** window, go inside the extracted *bin* folder and type
 
