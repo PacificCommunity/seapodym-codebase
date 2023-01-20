@@ -28,15 +28,11 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   Download the precompiled binary release corresponding to your Linux system and gcc versions from [Releases](https://github.com/PacificCommunity/seapodym-codebase/releases/seapodym-4.1/) directory. Extract contents of the zip file to a folder _~/seapodym/_.
 
-  In the **Terminal** window, go to the *example-configs* directory and test that the binaries executes nominally on your computer by executing a small habitat model example
-    
-    [~]$ cd ~/seapodym/examples-configs/habitat
-    
-    
-    [~]$ ~/seapodym/bin/seapodym_habitats -s habitat.xml
+  In the **Terminal** window, go inside the extracted *bin* folder and type
 
+  [~/seapodym/bin/]$ seapodym -h
 
-  The simulation log can be compared with the one provided in sim.out file. 
+  This command should display the usage instruction and running options of SEAPODYM.
 
 2. **Building from source**
 
@@ -69,21 +65,44 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
     [~]$ git clone https://github.com/PacificCommunity/seapodym-codebase.git
     
   
-  If downloaded a release, unpack the archive. Go into the folder, which contains the *src* directory and Makefiles. Compile one of the SEAPODYM applications by typing the command
+  If downloaded a release, unpack the archive. Go into the folder with the *src* directory and Makefiles, which is presumably named _~/seapodym/_. Compile one of the SEAPODYM applications by typing the command
     
-    [~]$ make
+    [~/seapodym/]$ make
     
-  If the compilation is successful, it will create the binary file *seapodym* that runs the model in a simulation mode. Typing
+  If the compilation is successful, it will create the binary file _seapodym_ in directory _bin_. This application runs the model in a simulation mode only. Executing
    
-    [~]$ seapodym -h
-    
+    [~/seapodym/bin/]$ seapodym -h
+  
   should display the usage instruction and running options. To compile the sub-model of species habitats type
 
-    [~]$ make -f Makefile.hab
+    [~/seapodym/]$ make -f Makefile.hab
 
-  The binary file *seapodym\_habitats* should be created. To test simulation run with this executable, go in the *example-configs/habitat* directory to run the above habitat example.
+  The binary file *seapodym\_habitats* should be created. Type
 
-  A more comprehensive and a full model example, a pre-configured model of skipjack tuna, is also provided with the model code. To run this model, the corresponding forcing directory needs to be downloaded from the [data repository](https://osf.io/h8u93) on the OSF platform.
+    [~/seapodym/bin/]$ seapodym_habitats -h
+
+  to see the running options of this SEAPODYM sub-model. 
+
+  For convenience, the path to the _~/seapodym/bin/_ directory can be added to variable PATH in the user's _~/.bashrc_.
+
+
+## Running SEAPODYM models
+    
+  Example **habitat**
+
+  Go to the *example-configs* directory and test that the binaries execute nominally and the models generate expected outputs on your computer by executing a small habitat model example
+    
+    [~]$ cd ~/seapodym/examples-configs/habitat    
+    
+    [~/seapodym/examples-configs/habitat]$ seapodym_habitats -s habitat.xml
+
+  The simulation log can be compared with the one provided in sim.out file. 
+
+  Note, it is important to keep option *-s* while running tests. If it is omited, the application _seapodym\_habitats_ will start optimization, which is advised for advanced users only. 
+
+  Example **skipjack**
+
+  This is a more comprehensive full model example, the pre-configured model of skipjack tuna, based on the [parameter estimation approach with fisheries and tagging data](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2018-0470). To run this model, the corresponding forcing directory needs to be downloaded from the [data repository](https://osf.io/h8u93) on the OSF platform.
 
   Unzip and place the forcing files into a local directory without modifying the folder structure.
 
@@ -93,7 +112,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
     
   and run 
 
-    [~]$ ~/seapodym/bin/seapodym -s skipjack_F0.xml
+    [~/seapodym/example-configs/skipjack/]$ seapodym -s skipjack_F0.xml
     
   The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be made to SPC to inquire for the access to the data. 
      
