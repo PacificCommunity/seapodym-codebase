@@ -27,7 +27,7 @@
         filen <- tempfile("gmtmap")
         on.exit(unlink(c(filen, ".gmtcommands4")))
         cmd <- paste("gmt pscoast -Rd",x1,"/",x2,"/",y1,"/",y2, " -Jx0.5id -P -G -D", 
-	             res, " -X0 -Y0 >", filen,sep = "")
+	             res, " -X0 -Y0 > ", filen,sep = "")
         system(cmd)
         
         txt <- readLines(filen); 
@@ -75,7 +75,7 @@
    if (coastline){# & !(x1<180 & x2>360)){
      filen <- tempfile("gmtmap") ;  on.exit(unlink(c(filen, ".gmtcommands4")))
      res <- c("f", "h", "i", "l", "c")[resolution]
-     cmd <- paste("gmt pscoast -Rd",x1,"/",x2,"/",y1,"/",y2," -Jx2id -W -M  -D",res," >",filen,sep="")
+     cmd <- paste("gmt pscoast -Rd",x1,"/",x2,"/",y1,"/",y2," -Jx2id -W -M  -D",res," > ",filen,sep="")
      system(cmd)
      dat <- readLines(filen);
      ff<-function(str)if(regexpr("#",str)>0){
@@ -105,7 +105,7 @@
     usr<-par("usr"); x1<-usr[1]; x2<-usr[2]; y1<-usr[3]; y2<-usr[4];
     filen <- tempfile("gmtmap") ;  on.exit(unlink(c(filen, ".gmtcommands4")))
     res <- c("f", "h", "i", "l", "c")[reso]
-    cmd <- paste("gmt pscoast -R",x1,"/",x2,"/",y1,"/",y2," -Jx2id -W -M -D",res," >",filen,sep="")
+    cmd <- paste("gmt pscoast -R",x1,"/",x2,"/",y1,"/",y2," -Jx2id -W -M -D",res," > ",filen,sep="")
     system(cmd)
     dat <- readLines(filen);
     ff<-function(str)if(regexpr("#",str)>0){
