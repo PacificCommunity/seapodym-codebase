@@ -282,17 +282,17 @@
 
 <spawning_season_start skj="1.250054625443927">
 	<variable min="1.0" max="1.5" use="false"/>
-        </spawning_season_start>
+</spawning_season_start>
 <!--=== end of Adult seasonal migrations =======-->
 
+<!--=== 6. Adult feeding habitat ===============-->
 <a_sst_habitat skj="3.000002576905231">
         <variable min="3.0" max="6.5" use="true"/>
-        </a_sst_habitat>
+</a_sst_habitat>
 
-<!--=== 6. Adult feeding habitat ===============-->
 <b_sst_habitat skj="26.04960048814059">
         <variable min="18.0" max="26.05" use="true"/>
-        </b_sst_habitat>
+</b_sst_habitat>
 
 <T_age_size_slope skj="2.83057972721579">
         <variable min="0.5" max="3.0" use="true"/>
