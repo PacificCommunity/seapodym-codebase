@@ -12,7 +12,7 @@ void dv_calrec_precalrec(void);
 void dv_calrec_with_catch_precalrec();
 void dftridag1(dvector& a, dvector& bet, dvector& c,dvector& rhs,dvector& uvec, dvector& gam, dvector& dfa,dvector& dfbet,dvector& dfc,dvector& dfrhs,
     dvector& dfuvec, dvector& dfgam, int inf, int sup);
-void dfxbet1(dmatrix& dfa, dmatrix& dfbm, dmatrix& dfc, dmatrix& dfxbet, dmatrix& dfw, dmatrix& xbet, const dmatrix a, const dmatrix bm, const dmatrix c, unsigned long int pos_map, const int maxn, const int dt);
+void dfxbet1(dmatrix& dfa, dmatrix& dfbm, dmatrix& dfc, dmatrix& dfxbet, dmatrix& xbet, const dmatrix a, const dmatrix bm, const dmatrix c, unsigned long int pos_map, const int maxn, const int dt);
 int save_identifier_string2(char* str);
 void verify_identifier_string2(char* str);
 void save_long_int_value(unsigned long int x);
@@ -44,8 +44,6 @@ void CCalpop::Precalrec_Calrec_adult(const PMap& map, VarMatrices& mat, VarParam
 	ybet = value(Ybet); 
 	dmatrix M = value(mortality);
 
-	dvar_matrix W(0,maxn-1,0,maxn-1);
-	W.initialize();
 	
 	bm = value(dvarsB);
 	precalrec_juv_comp(map, bm, M);
@@ -76,7 +74,6 @@ void CCalpop::Precalrec_Calrec_adult(const PMap& map, VarMatrices& mat, VarParam
 	dvarsE.save_dvar_matrix_position();
 	dvarsF.save_dvar_matrix_position();
 	Xbet.save_dvar_matrix_position();
-	W.save_dvar_matrix_position();
 	Ybet.save_dvar_matrix_position();
 	mortality.save_dvar_matrix_position();
 	save_double_value(c_diff);
@@ -135,7 +132,6 @@ void dv_calrec_precalrec()
 	const double c_diff  = restore_double_value();	
 	const dvar_matrix_position M_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position ybet_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position w_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position xbet_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position f_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position e_pos    = restore_dvar_matrix_position();
@@ -164,7 +160,6 @@ void dv_calrec_precalrec()
 	dmatrix dfuu	= restore_dvar_matrix_derivatives(uu_pos);
 	dmatrix dfM	= restore_dvar_matrix_derivatives(M_pos);
 	dmatrix dfb	= restore_dvar_matrix_derivatives(b_pos);
-	dmatrix dfw	= restore_dvar_matrix_derivatives(w_pos);
 
 	CMatrices* mat = (CMatrices*) pos_mat;
 	PMap* map = (PMap*) pos_map;
@@ -342,7 +337,7 @@ void dv_calrec_precalrec()
 	//ADJOINT FOR PRECALREC FUNCTION
 
 	//xbet_comp(map,dt);
-	dfxbet1(dfa,dfbm,dfc,dfxbet,dfw,xbet,a,bm,c,pos_map,maxn,2*iterationNumber);
+	dfxbet1(dfa,dfbm,dfc,dfxbet,xbet,a,bm,c,pos_map,maxn,2*iterationNumber);
 
 	for (int j = jsup; j >= jinf; j--){
 		const int imin = map->iinf(j);
@@ -355,7 +350,6 @@ void dv_calrec_precalrec()
 
 		}
 	}
-//cout << norm(dfa) << " " << norm(dfw) << " " << norm(dfM) << endl;
 	dfa.save_dmatrix_derivatives(a_pos); 
 	dfbm.save_dmatrix_derivatives(bm_pos); 
 	dfc.save_dmatrix_derivatives(c_pos); 
@@ -366,7 +360,6 @@ void dv_calrec_precalrec()
 	dff.save_dmatrix_derivatives(f_pos);
 	dfuu.save_dmatrix_derivatives(uu_pos); 
 	dfb.save_dmatrix_derivatives(b_pos);
-	dfw.save_dmatrix_derivatives(w_pos);
 	dfM.save_dmatrix_derivatives(M_pos);
 }
 
@@ -394,7 +387,6 @@ void dv_calrec_with_catch_precalrec()
 	const double c_diff  = restore_double_value();	
 	const dvar_matrix_position M_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position ybet_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position w_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position xbet_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position f_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position e_pos    = restore_dvar_matrix_position();
@@ -424,7 +416,6 @@ void dv_calrec_with_catch_precalrec()
 	dmatrix dfuu	= restore_dvar_matrix_derivatives(uu_pos);
 	dmatrix dfM	= restore_dvar_matrix_derivatives(M_pos);
 	dmatrix dfb	= restore_dvar_matrix_derivatives(b_pos);
-	dmatrix dfw	= restore_dvar_matrix_derivatives(w_pos);
 	dmatrix dfCobs	= restore_dvar_matrix_derivatives(Cobs_pos);
 	dmatrix dfCest	= restore_dvar_matrix_derivatives(Cest_pos);
 
@@ -677,7 +668,7 @@ void dv_calrec_with_catch_precalrec()
 	//ADJOINT FOR PRECALREC FUNCTION
 
 	//xbet_comp(map,dt);
-	dfxbet1(dfa,dfbm,dfc,dfxbet,dfw,xbet,a,bm,c,pos_map,maxn,2*iterationNumber);
+	dfxbet1(dfa,dfbm,dfc,dfxbet,xbet,a,bm,c,pos_map,maxn,2*iterationNumber);
 
 	for (int j = jsup; j >= jinf; j--){
 		const int imin = map->iinf(j);
@@ -701,11 +692,9 @@ void dv_calrec_with_catch_precalrec()
 	dff.save_dmatrix_derivatives(f_pos);
 	dfuu.save_dmatrix_derivatives(uu_pos); 
 	dfb.save_dmatrix_derivatives(b_pos);
-	dfw.save_dmatrix_derivatives(w_pos);
 	dfM.save_dmatrix_derivatives(M_pos);
 	dfCobs.save_dmatrix_derivatives(Cobs_pos);
 	dfCest.save_dmatrix_derivatives(Cest_pos);
-//	dfCest_pr.save_dmatrix_derivatives(Cest_pr_pos);
 }
 
 
@@ -754,7 +743,7 @@ void dftridag1(dvector& a, dvector& bet, dvector& c,dvector& rhs,dvector& uvec, 
 
 } // end of dftridag
 
-void dfxbet1(dmatrix& dfa, dmatrix& dfbm, dmatrix& dfc, dmatrix& dfxbet, dmatrix& dfw, dmatrix& xbet, const dmatrix a, const dmatrix bm, const dmatrix c, unsigned long int pos_map, const int maxn, const int dt)
+void dfxbet1(dmatrix& dfa, dmatrix& dfbm, dmatrix& dfc, dmatrix& dfxbet, dmatrix& xbet, const dmatrix a, const dmatrix bm, const dmatrix c, unsigned long int pos_map, const int maxn, const int dt)
 {
 	PMap* map = (PMap*) pos_map;
 
@@ -782,15 +771,15 @@ void dfxbet1(dmatrix& dfa, dmatrix& dfbm, dmatrix& dfc, dmatrix& dfxbet, dmatrix
 		for (int i=imax; i>=imin+1; i--){
 			
 			//xbet[j][i] = 1/w[j][i];
-			dfw(j,i)    -= (1/(w(j,i)*w(j,i)))*dfxbet(j,i);
+			double dfw   = -(1/(w(j,i)*w(j,i)))*dfxbet(j,i);
 			dfxbet(j,i)  = 0.0;
 
 			//w[j][i] = bm[j][i]+dt-c[j][i-1]*a[j][i]*xbet[j][i-1];
-			dfbm(j,i)    += dfw(j,i);
-			dfc(j,i-1)   -= a(j,i)*xbet(j,i-1)*dfw(j,i);
-			dfa(j,i)     -= c(j,i-1)*xbet(j,i-1)*dfw(j,i);
-			dfxbet(j,i-1)-= c(j,i-1)*a(j,i)*dfw(j,i);
-			dfw(j,i)      = 0.0;
+			dfbm(j,i)    += dfw;
+			dfc(j,i-1)   -= a(j,i)*xbet(j,i-1)*dfw;
+			dfa(j,i)     -= c(j,i-1)*xbet(j,i-1)*dfw;
+			dfxbet(j,i-1)-= c(j,i-1)*a(j,i)*dfw;
+			//dfw(j,i)      = 0.0;
 
 		}
 		//xbet[j][inf] = 1/(bm[j][imin]+dt);

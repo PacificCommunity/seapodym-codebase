@@ -40,6 +40,11 @@ void CCalpop::InitCalPop(CParam& param, const PMap& map)
 	Xbet.initialize();
 	Ybet.initialize();
 
+	Mss_species.allocate(map.imin, map.imax, map.jinf, map.jsup);    Mss_species.initialize();
+	Mss_size_slope.allocate(map.imin, map.imax, map.jinf, map.jsup); Mss_size_slope.initialize();
+	C_diff_fish.allocate(map.imin, map.imax, map.jinf, map.jsup);    C_diff_fish.initialize();
+	Sigma_species.allocate(map.imin, map.imax, map.jinf, map.jsup);  Sigma_species.initialize();
+
  	const int nti = param.get_nbi();
 	const int ntj = param.get_nbj();
 	uuint.allocate(0, nti, 0, ntj);

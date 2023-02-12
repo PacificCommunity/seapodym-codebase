@@ -135,6 +135,9 @@ public:
 	dvar_matrix Xbet;
 	dvar_matrix Ybet;
 
+	//movement parameters and their derivatives
+	dvar_matrix Mss_species, Mss_size_slope, C_diff_fish, Sigma_species;	
+
 	dvar3_array dvarsSNsum;
 	d3_array Selectivity;
 
@@ -162,6 +165,7 @@ private:
 	double d1(const char pos, const double sigmam, const double sigma, const double uinf, const double twodd, const double dd, const double d);
 	double d2(const char pos, const double sigmam, const double sigma, const double sigmap, const double u, const double twodd, const double dd, const double d, const int dt);
 	double d3(const char pos, const double sigma, const double sigmap, const double usup, const double twodd, const double dd, const double d);
+
 
 };
 /////////////////////////////////////////////////////////////////////////////

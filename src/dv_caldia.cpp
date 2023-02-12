@@ -12,7 +12,7 @@ void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage
 		double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr, const int nl, 
 		const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
 
-void dfybet_comp(dmatrix& dfybet, dmatrix& dfw, dmatrix& dfd, dmatrix& dfe, dmatrix& dff, const dmatrix d, const dmatrix e, const dmatrix f, unsigned long int pos_map, const int maxn, const int dt);
+void dfybet_comp(dmatrix& dfybet, dmatrix& dfd, dmatrix& dfe, dmatrix& dff, const dmatrix d, const dmatrix e, const dmatrix f, unsigned long int pos_map, const int maxn, const int dt);
 void dfd1_comp(const char pos, double& dfd1, double& dfsigmam, double& dfsigma, double& dfuinf, const double uinf, const double twodd, const double d);
 void dfd2_comp(const char pos, double& dfd2, double& dfsigmam, double& dfsigma, double& dfsigmap, double& dfu, const double u, const double twodd, const double d);
 void dfd3_comp(const char pos, double& dfd3, double& dfsigma, double& dfsigmap, double& dfusup, const double usup, const double twodd, const double d);
@@ -31,19 +31,16 @@ const double rho = 0.99;
 
 void CCalpop::Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatrices& mat, dvar_matrix& habitat, dvar_matrix& total_pop, const int sp, const int age, const int t_count, const int jday)
 {
-	CBord bord;
 	dvariable mss_species  = param.dvarsMSS_species[sp];
 	dvariable mss_size_slope  = param.dvarsMSS_size_slope[sp];
 	dvariable c_diff_fish  = param.dvarsC_diff_fish[sp];
 	dvariable sigma_species= param.dvarsSigma_species[sp];
 
-	dvar_matrix Mss_species(map.imin, map.imax, map.jinf, map.jsup); Mss_species = mss_species;
-	dvar_matrix Mss_size_slope(map.imin, map.imax, map.jinf, map.jsup); Mss_size_slope = mss_size_slope;
-	dvar_matrix C_diff_fish(map.imin, map.imax, map.jinf, map.jsup); C_diff_fish = c_diff_fish;
-	dvar_matrix Sigma_species(map.imin, map.imax, map.jinf, map.jsup); Sigma_species = sigma_species;
 
-	dvar_matrix W(0,maxn-1,0,maxn-1);
-	W.initialize();
+	Mss_species    = mss_species;
+	Mss_size_slope = mss_size_slope;
+	C_diff_fish    = c_diff_fish;
+	Sigma_species  = sigma_species;
 
 	precaldia_comp(map, param, mat, value(habitat), value(total_pop),  value(mss_species), value(mss_size_slope), value(sigma_species), value(c_diff_fish), sp, age, jday);
 
@@ -79,7 +76,6 @@ void CCalpop::Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatri
 	dvarsE.save_dvar_matrix_position();
 	dvarsF.save_dvar_matrix_position();
 	Ybet.save_dvar_matrix_position();
-	W.save_dvar_matrix_position();
 	mat.dvarsAdvection_x.save_dvar_matrix_position();
 	mat.dvarsAdvection_y.save_dvar_matrix_position();
 	mat.dvarsDiffusion_x.save_dvar_matrix_position();
@@ -99,8 +95,6 @@ void CCalpop::Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatri
 	save_long_int_value(pop);	
 	unsigned long int cparam = (unsigned long int)&param;
 	save_long_int_value(cparam);
-	unsigned long int cbord = (unsigned long int)&bord;
-	save_long_int_value(cbord);
 	unsigned long int cmat   = (unsigned long int)&mat;
 	save_long_int_value(cmat);
 	save_int_value(t_count);
@@ -123,7 +117,6 @@ void dv_caldia()
 	unsigned jday      = restore_int_value();
 	unsigned t_count   = restore_int_value();
 	unsigned long int pos_mat   = restore_long_int_value();
-	unsigned long int pos_bord  = restore_long_int_value();
 	unsigned long int pos_param = restore_long_int_value();
 	unsigned long int pos_pop   = restore_long_int_value();
 	unsigned long int pos_map   = restore_long_int_value();
@@ -140,7 +133,6 @@ void dv_caldia()
 	const dvar_matrix_position difx_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position advy_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position advx_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position w_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position ybet_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position f_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position e_pos    = restore_dvar_matrix_position();
@@ -168,13 +160,12 @@ void dv_caldia()
 	dmatrix dfe 	 = restore_dvar_matrix_derivatives(e_pos);
 	dmatrix dff 	 = restore_dvar_matrix_derivatives(f_pos);
 	dmatrix dfybet 	 = restore_dvar_matrix_derivatives(ybet_pos);
-	dmatrix dfw 	 = restore_dvar_matrix_derivatives(w_pos);
 
 	CMatrices* mat 	 = (CMatrices*) pos_mat;
 	PMap* map 	 = (PMap*) pos_map;
 	CCalpop* pop 	 = (CCalpop*) pos_pop;
 	CParam* param 	 = (CParam*) pos_param;
-	CBord* bord 	 = (CBord*) pos_bord;
+	CBord bord;
 
 	const int jinf = map->jmin;
 	const int jsup = map->jmax;
@@ -213,12 +204,12 @@ void dv_caldia()
 	pop->Recomp_DEF_coef(*map, *param, *mat, t_count, jday, habitat, d, e, f, adv_x, adv_y, sp, age, mss_species, c_diff_fish, sigma_species);
 
 	//ybet_comp();
-	dfybet_comp(dfybet,dfw,dfd,dfe,dff,d,e,f,pos_map,maxn,dt);
+	dfybet_comp(dfybet,dfd,dfe,dff,d,e,f,pos_map,maxn,dt);
 
 	for (int i=isup; i >= iinf; i--){
 		for (int j=map->jsup[i]; j>=map->jinf[i] ; j--){
-			bord->b	  = map->bord_cell[i][j];
-			char pos  = bord->cotey();
+			bord.b	  = map->bord_cell[i][j];
+			char pos  = bord.cotey();
 
 			//f[i][j] = d3(pos, sigma, sigmap, vsup, twodydy, dydy, dy);
 			dfd3_comp(pos, dff(i,j), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j+1), adv_y(i,j+1), twodydy, dy);
@@ -233,8 +224,8 @@ void dv_caldia()
 
 	for (int j=jsup; j >= jinf; j--){
 		for (int i=map->isup[j]; i>=map->iinf[j] ; i--){                            
-			bord->b	  = map->bord_cell[i][j];
-			char pos  = bord->cotex();
+			bord.b	  = map->bord_cell[i][j];
+			char pos  = bord.cotex();
 
 			//c[j][i] = d3(pos, sigma, sigmap, usup, twodxdx, dxdx, dx);
 			dfd3_comp(pos, dfc(j,i), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i+1,j), adv_x(i+1,j), twodxdx, dx);
@@ -270,10 +261,10 @@ void dv_caldia()
 		for (int j = jmax; j >= jmin; j--){
 			const int nl = map->carte(i,j);
 			if (nl>0) {
-				bord->b	   = map->bord_cell[i][j];
+				bord.b	   = map->bord_cell[i][j];
 				//bord.b   = map->nbl_bord_cell[i][j];
-				char pos_x = bord->cotex();
-				char pos_y = bord->cotey();
+				char pos_x = bord.cotex();
+				char pos_y = bord.cotey();
 			
 				//first recompute dHdx and dHdy
 				double dHdx = 0.0;
@@ -448,7 +439,6 @@ void dv_caldia()
 	dfe.save_dmatrix_derivatives(e_pos);
 	dff.save_dmatrix_derivatives(f_pos);
 	dfybet.save_dmatrix_derivatives(ybet_pos); 
-	dfw.save_dmatrix_derivatives(w_pos);
 	dfH.save_dmatrix_derivatives(H_pos);
 	dfAdv_x.save_dmatrix_derivatives(advx_pos);
 	dfAdv_y.save_dmatrix_derivatives(advy_pos);
@@ -469,7 +459,6 @@ void dv_caldia_UV()
 	unsigned jday      = restore_int_value();
 	unsigned t_count   = restore_int_value();
 	unsigned long int pos_mat   = restore_long_int_value();
-	unsigned long int pos_bord  = restore_long_int_value();
 	unsigned long int pos_param = restore_long_int_value();
 	unsigned long int pos_pop   = restore_long_int_value();
 	unsigned long int pos_map   = restore_long_int_value();
@@ -486,7 +475,6 @@ void dv_caldia_UV()
 	const dvar_matrix_position difx_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position advy_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position advx_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position w_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position ybet_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position f_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position e_pos    = restore_dvar_matrix_position();
@@ -518,13 +506,12 @@ void dv_caldia_UV()
 	dmatrix dfe 	 = restore_dvar_matrix_derivatives(e_pos);
 	dmatrix dff 	 = restore_dvar_matrix_derivatives(f_pos);
 	dmatrix dfybet 	 = restore_dvar_matrix_derivatives(ybet_pos);
-	dmatrix dfw 	 = restore_dvar_matrix_derivatives(w_pos);
 
 	PMap* map 	 = (PMap*) pos_map;
 	CMatrices* mat 	 = (CMatrices*) pos_mat;
 	CCalpop* pop 	 = (CCalpop*) pos_pop;
 	CParam* param 	 = (CParam*) pos_param;
-	CBord* bord 	 = (CBord*) pos_bord;
+	CBord bord;
 
 	const int jinf = map->jmin;
 	const int jsup = map->jmax;
@@ -539,10 +526,10 @@ void dv_caldia_UV()
 	double twodydy = 2*dy*dy;
 
 	//Recompute u and v matrices
-	dmatrix u, v;
-	u.allocate(iinf, isup, map->jinf, map->jsup);
-	v.allocate(iinf, isup, map->jinf, map->jsup);
+	dmatrix u(U_pos);
+	dmatrix v(V_pos);
 	u.initialize(); v.initialize();
+
 	//Parameters to recompute accessibility to layers 
 	const double oxy_teta = param->a_oxy_habitat[sp];
 	const double oxy_cr   = param->b_oxy_habitat[sp];
@@ -609,11 +596,9 @@ void dv_caldia_UV()
 	adv_x.initialize();
 	adv_y.initialize();
 
-	dmatrix d,e,f;
-
-	d.allocate(iinf, isup, map->jinf, map->jsup);
-	e.allocate(iinf, isup, map->jinf, map->jsup);
-	f.allocate(iinf, isup, map->jinf, map->jsup);
+	dmatrix d(d_pos);
+	dmatrix e(e_pos);
+	dmatrix f(f_pos);
 	d.initialize();
 	e.initialize();
 	f.initialize();
@@ -628,12 +613,12 @@ void dv_caldia_UV()
 	pop->Recomp_DEF_UV_coef(*map, *param, *mat, u, v, habitat, d, e, f, adv_x, adv_y, sp, age, mss_species, c_diff_fish, sigma_species,jday);
 
 	//ybet_comp();
-	dfybet_comp(dfybet,dfw,dfd,dfe,dff,d,e,f,pos_map,maxn,dt);
+	dfybet_comp(dfybet,dfd,dfe,dff,d,e,f,pos_map,maxn,dt);
 
 	for (int i=isup; i >= iinf; i--){
 		for (int j=map->jsup[i]; j>=map->jinf[i] ; j--){
-			bord->b	  = map->bord_cell[i][j];
-			char pos  = bord->cotey();
+			bord.b	  = map->bord_cell[i][j];
+			char pos  = bord.cotey();
 
 			//f[i][j] = d3(pos, sigma, sigmap, vsup, twodydy, dydy, dy);
 			dfd3_comp(pos, dff(i,j), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j+1), adv_y(i,j+1), twodydy, dy);
@@ -648,8 +633,8 @@ void dv_caldia_UV()
 
 	for (int j=jsup; j >= jinf; j--){
 		for (int i=map->isup[j]; i>=map->iinf[j] ; i--){                            
-			bord->b	  = map->bord_cell[i][j];
-			char pos  = bord->cotex();
+			bord.b	  = map->bord_cell[i][j];
+			char pos  = bord.cotex();
 
 			//c[j][i] = d3(pos, sigma, sigmap, usup, twodxdx, dxdx, dx);
 			dfd3_comp(pos, dfc(j,i), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i+1,j), adv_x(i+1,j), twodxdx, dx);
@@ -685,11 +670,11 @@ void dv_caldia_UV()
 			const int nl = map->carte(i,j);
 			if (nl>0) {
 
-				bord->b     = map->bord_cell[i][j];
+				bord.b     = map->bord_cell[i][j];
 				//bord.b   = map->nbl_bord_cell[i][j];
-				char pos_x = bord->cotex();
-				char pos_y = bord->cotey();
-				
+				char pos_x = bord.cotex();
+				char pos_y = bord.cotey();
+
 				//first recompute dHdx and dHdy
 				double dHdx = 0.0;
 				double dHdy = 0.0;
@@ -914,13 +899,11 @@ void dv_caldia_UV()
 	dfe.save_dmatrix_derivatives(e_pos);
 	dff.save_dmatrix_derivatives(f_pos);
 	dfybet.save_dmatrix_derivatives(ybet_pos); 
-	dfw.save_dmatrix_derivatives(w_pos);
 	dfH.save_dmatrix_derivatives(H_pos);
 	dfU.save_dmatrix_derivatives(U_pos);
 	dfV.save_dmatrix_derivatives(V_pos);
 	dfAdv_x.save_dmatrix_derivatives(advx_pos);
 	dfAdv_y.save_dmatrix_derivatives(advy_pos);
-//cout << __FILE__ << " "<< __LINE__ << endl;
 	dfDiff_x.save_dmatrix_derivatives(difx_pos);
 	dfDiff_y.save_dmatrix_derivatives(dify_pos);
 	dfMSS_slope.save_dmatrix_derivatives(msss_pos);
@@ -930,7 +913,7 @@ void dv_caldia_UV()
 	dfC_diff.save_dmatrix_derivatives(cdiff_pos);
 }
 
-void dfybet_comp(dmatrix& dfybet, dmatrix& dfw, dmatrix& dfd, dmatrix& dfe, dmatrix& dff, const dmatrix d, const dmatrix e, const dmatrix f, unsigned long int pos_map, const int maxn, const int dt)
+void dfybet_comp(dmatrix& dfybet, dmatrix& dfd, dmatrix& dfe, dmatrix& dff, const dmatrix d, const dmatrix e, const dmatrix f, unsigned long int pos_map, const int maxn, const int dt)
 {
 	PMap* map = (PMap*) pos_map;
 	const int imin = map->imin;
@@ -957,15 +940,15 @@ void dfybet_comp(dmatrix& dfybet, dmatrix& dfw, dmatrix& dfd, dmatrix& dfe, dmat
 		for (int j=jmax; j>=jmin+1; j--){
 			
 			//ybet[i][j] = 1/w[i][j];
-			dfw(i,j)    -= (1/(w(i,j)*w(i,j)))*dfybet(i,j);
+			double dfw   = -(1/(w(i,j)*w(i,j)))*dfybet(i,j);
 			dfybet(i,j)  = 0.0;
 
 			//w[i][j] = e[i][j]+dt-f[i][j-1]*d[i][j]*ybet[i][j-1];
-			dfe(i,j)     += dfw(i,j);
-			dff(i,j-1)   -= d(i,j)*ybet(i,j-1)*dfw(i,j);
-			dfd(i,j)     -= f(i,j-1)*ybet(i,j-1)*dfw(i,j);
-			dfybet(i,j-1)-= f(i,j-1)*d(i,j)*dfw(i,j);
-			dfw(i,j)      = 0.0;
+			dfe(i,j)     += dfw;
+			dff(i,j-1)   -= d(i,j)*ybet(i,j-1)*dfw;
+			dfd(i,j)     -= f(i,j-1)*ybet(i,j-1)*dfw;
+			dfybet(i,j-1)-= f(i,j-1)*d(i,j)*dfw;
+			//dfw         = 0.0;
 
 		}
 		//ybet[i][jmin] = 1/(e[i][jmin]+dt);
