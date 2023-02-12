@@ -278,7 +278,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		//spatial 2d
 		//* Note, the comments denoted '//*' is the code of SKJ taglike (verion J)
 		//int nb_obs = sum(rec_obs_like);
-		const float ww = 0.01; //use it if TL weight are off
+		const float ww = 1.0; //use it if TL weight are off, but need to make it species-specific
 		//const float ww = 5e-5;//20201215: increasing weight to 5e-4 for CLT experiments
 		//double sf = 1.0;
 		//double sf = ww*(1.0-nb_obs/(5.0+nb_obs));
