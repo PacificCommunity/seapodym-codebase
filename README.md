@@ -2,8 +2,8 @@
 
 Source code of the SEAPODYM numerical modelling framework and analyses tools, OFP-FEMA. C++, R, Linux.
 
-*Version 4.2*
-*Released February 14, 2023*
+*Version 4.1*
+*Pre-released January 21, 2023*
 
 ## About
 
