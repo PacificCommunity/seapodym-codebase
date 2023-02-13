@@ -48,7 +48,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	int step_fishery_count= 0;
 	int jday = 0; 
 	int nbstoskip = param->nbsteptoskip; // nb of time step to skip before computing likelihood
-	ivector Nobs(0,nb_fishery-1); Nobs.initialize();
 
 	if (!param->gcalc()){
 		//need to read oxygen in case if month==past_month
@@ -76,7 +75,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	//----------------------------------------------//	
 	dvar_matrix Spawning_Habitat;
 	dvar_matrix Total_pop;
-	dvar_matrix mature_fish, immature_fish;
 	dvar_matrix Habitat; 
 	dvar_matrix IFR; 
 	dvar_matrix ISR_denom; 
@@ -87,8 +85,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	mature_fish.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-	immature_fish.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 
 	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
@@ -102,8 +98,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Spawning_Habitat.initialize();
 	Habitat.initialize();
 	Mortality.initialize();
-	mature_fish.initialize();
-	immature_fish.initialize();
 
 	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
@@ -375,7 +369,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 					if (!tags_only || tags_age_habitat(age))
 						func.Average_currents(*param, mat, map, age, tcur, pop_built);
 				}
-					
+				
 				//2014: catch at age computation for fisheries without effort data
 				//pop.Ctot_no_effort_sp_age_comp(map, *param, mat, value(mat.dvarDensity(sp,age)), tcur, sp, age);				
 				//this section will work only if seasonality switch is ON 
@@ -394,12 +388,13 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 					}
 					double mean_age = mean_age_cohort[sp][age];
 
+					if (!tags_only){
 					if (!param->food_requirement_in_mortality(sp)){
 						func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);//checked
 					} else {
 						Food_Requirement_Index(IFR, FR_pop, ISR_denom, sp, age, tcur, jday);
 						func.Mortality_Sp(*param, mat, map, Mortality, IFR, sp, mean_age, age, tcur);//checked
-					}
+					}}
 
 					if (param->age_compute_habitat[sp][age]!=param->age_compute_habitat[sp][age-1]){
 						if (!tags_only || tags_age_habitat(age))
