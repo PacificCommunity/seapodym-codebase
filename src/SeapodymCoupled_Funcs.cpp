@@ -325,6 +325,7 @@ void SeapodymCoupled::CalcSums()
 void SeapodymCoupled::ConsoleOutput(int flag_simulation, double like)
 {
         if (flag_simulation){
+	    if (!param->tags_only){
                 cout << setw(4)  << left << t_count<<"| "
                      << setw(14) << date_str<<"| "
                      << setw(14) << mat.sum_B_larvae[0]<<" | "
@@ -333,8 +334,16 @@ void SeapodymCoupled::ConsoleOutput(int flag_simulation, double like)
                      << setw(14) << mat.sum_B_adult[0]<<" | "
                      << setw(14) << mat.sum_total_pop[0]<<" | "
                      << like << endl;
+	    } else {
+                cout << setw(4)  << left << t_count<<"| "
+                     << setw(14) << date_str<<"| "
+                     << setw(14) << sum(mat.total_obs_catch(0))<<" | "
+                     << setw(14) << sum(mat.total_pred_catch(0))<<" | "
+                     << like << endl;		    
+	    }
         }
         else{
+	    if (!param->tags_only){
                 //CalcSums();
                 // Comment: Larvae biomass is the result of spawning function S(t-1) and ADRE at time t
                 // we have Larvae(t=1)=0 because S(t-1) is computed after CalcSums()
@@ -348,7 +357,17 @@ void SeapodymCoupled::ConsoleOutput(int flag_simulation, double like)
                      << setw(14) << "Total_pop"<<" | "
                      << setw(14) << "Likelihood"<< endl;
 
-                cout << "----------------------------------------------------------------------------------------------------------"<< endl;
+                cout << "--------------------------------------------------------------------------------------------------------------------"<< endl;
+	    } else {
+                cout << endl << "Model temporal dynamics:" << endl;
+                cout << setw(4)  << left << "step"<<"| "
+                     << setw(14) << "Date"<<"| "
+                     << setw(14) << "Observed tags"<<" | "
+                     << setw(14) << "Modelled tags"<<" | "
+                     << setw(14) << "Likelihood"<< endl;
+
+                cout << "------------------------------------------------------------------"<< endl;
+	    }
         }
 }
 
