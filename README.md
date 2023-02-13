@@ -2,8 +2,8 @@
 
 Source code of the SEAPODYM numerical modelling framework and analyses tools, OFP-FEMA. C++, R, Linux.
 
-*Version 4.1*
-*Released January 19, 2023*
+*Version 4.2*
+*Released February 14, 2023*
 
 ## About
 
@@ -43,7 +43,11 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
   * libxml2 
   * AUTODIF 
 
-  The libxml2 library is used to read and write all application parameters in the XML file. If not installed already, you can download and build the library from ftp://xmlsoft.org/libxml2.
+  The libxml2 library is used to read and write all application parameters in the XML file. If not installed already, you can install it with the command:
+
+    [~]$ sudo apt-get install libxml2-dev
+
+  choosing the package libxml2-dev, which contains header files that are required to compile SEAPODYM applications.   
 
   The AUTODIF libraries provide an array language extension to C ++ and can be installed as a part of the ADModel Builder software. Visit the [ADMB project](https://github.com/admb-project/admb) page and follow the instructions for [quick installation](https://github.com/admb-project/admb/blob/main/docs/install/QuickStartUnix.md) or [building from source](https://github.com/admb-project/admb/blob/main/docs/install/BuildingSourceUnix.md) of the latest release of the ADMB software. 
 
@@ -53,13 +57,21 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
     export ADMB_HOME=/your-path-to-admb-folder/
     
 
-  In the case when shared libraries are to be used, add the following line in the .bashrc:
+  In the case when shared (dynamic) libraries are to be used, add the following line in the .bashrc:
 
 
     export LD_LIBRARY_PATH=$ADMB_HOME/lib:$LD_LIBRARY_PATH
 
 
-  Once the required libraries have been installed and configured, proceed to downloading the source code either from the [latest release](https://github.com/PacificCommunity/seapodym-codebase/releases/seapodym-4.1/), or, alternatively, checking out the github repository:
+  Finally, create the following soft link for the optimized AUTODIF library in the _lib_ folder that was compiled with the gcc version installed on your machine. For example, if the directory containing ADMB package is _~/admb/_ and the static library file is called _libadmbo-x86_64-linux-g++11.a_, do
+
+
+    [~/] cd ~/admb/lib
+
+    [~/admb/lib/]$ln -s libadmbo-x86_64-linux-g++11.a libadmbo.a
+
+
+  Once the required libraries have been installed and configured, proceed to installing SEAPODYM. The source code can be downloaded either from the [latest release](https://github.com/PacificCommunity/seapodym-codebase/releases/seapodym-4.1/), or, alternatively, checking out the github repository:
 
     
     [~]$ git clone https://github.com/PacificCommunity/seapodym-codebase.git
@@ -96,7 +108,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
     
     [~/seapodym/examples-configs/habitat]$ seapodym_habitats -s habitat.xml
 
-  The simulation log can be compared with the one provided in sim.out file. 
+  The simulation log can be compared with the one provided in the sim.out file. 
 
   Note, it is important to keep option *-s* while running tests. If it is omited, the application _seapodym\_habitats_ will start optimization, which is advised for advanced users only. 
 
@@ -114,7 +126,24 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
     [~/seapodym/example-configs/skipjack/]$ seapodym -s skipjack_F0.xml
     
-  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be made to SPC to inquire for the access to the data. 
+  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be sent to SPC to inquire for the access to the data. Then, the simulation with fishing can be run with the XML configuration file skipjack.xml, and the screen log compared with provided sim.out file.
+
+  Example **albacore**
+
+  Similarly to skipjack example, this the pre-configured model of albacore tuna, [parameterized and validated with fisheries data](https://www.sciencedirect.com/science/article/pii/S0967064519301511). The configuration file will allow running the South Pacific population dynamics model. To run this model, download the forcing directory from the [OSF data repository](https://osf.io/j53hc).
+
+  Unzip and place the forcing files into a local directory without modifying the folder structure.
+
+  Open the albacore\_F0.xml parfile and modify the ${SEAPODYM\_HOME} to the address with unzipped *data* folder. 
+    
+    [~]$ cd example-configs/albacore/
+    
+  and run 
+
+    [~/seapodym/example-configs/albacore/]$ seapodym -s albacore_F0.xml
+    
+  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be sent to SPC to inquire for the access to the data. Then, the simulation with fishing can be run with the XML configuration file albacore.xml, and the screen log compared with provided sim.out file.
+
      
 ## Documentation
 For further information on how to use SEAPODYM for simulation studies and model developments see the [Model Reference Manual](docs/manual/Seapodym_user_manual.pdf). Doxygen generated [Code Documentation](docs/code-dox/codedoc_seapodym.pdf) can be consulted for a quick overview of the C++ numerical model code. 
