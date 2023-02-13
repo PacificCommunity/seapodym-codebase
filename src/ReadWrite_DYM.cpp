@@ -529,7 +529,7 @@ void CReadWrite::InitSepodymFileDym(CParam& param, CMatrices& mat, int nb_mo, DV
 		}
 	}
 	int nfiles = 0;
-	if (nb_fishery)	{
+	if (nb_fishery && !param.flag_no_fishing){
 		//Generate the name of the files
 		for (int sp =0; sp<nb_species;sp++){
 			dymFileSpC.push_back(param.strdir_output+param.sp_name[sp]+"_Cobs.dym");
@@ -601,7 +601,7 @@ void CReadWrite::SaveSepodymFileDym(CParam& param, PMap& map, CMatrices& mat)
 	
 
 		// PREDICTED AND OBSERVED CATCH and CPUE
-		if (nb_fishery){
+		if (nb_fishery && !param.flag_no_fishing){
 			int ixv = 0;
 			SaveDymFile(map, mat, dymFileSpC[ixv],  mat.total_obs_catch[sp],  nlon, nlat); ixv++;
 			SaveDymFile(map, mat, dymFileSpC[ixv],  mat.total_pred_catch[sp], nlon, nlat); ixv++;

@@ -46,16 +46,17 @@ void SeapodymCoupled::WriteOutput(int t, bool fishing)
 		//save binary files with population distributions
 		rw.SaveSepodymFileDym(*param, map, mat);
 
-
-		if (qtr != past_qtr)
-			mat.C_N_sp_age_fishery_qtr.initialize();
-		//mat.C_N_sp_age_fishery_qtr = mat.C_N_sp_age_fishery;
-		if (month==3 || month==6 || month==9 || month==12){
-			for (int sp=0; sp< nb_species;sp++)
-				for (int age=a0_adult[sp];age<aN_adult[sp];age++)
-					for (int k=0; k<param->nb_fishery_by_sp[sp];k++)
-						for (int r=0; r<param->nb_region_sp_B[sp];r++)
-							mat.C_N_sp_age_fishery_qtr[sp][age][r][k] = mat.C_N_sp_age_fishery[sp][age][k][r];
+		if (!param->flag_no_fishing){
+			if (qtr != past_qtr)
+				mat.C_N_sp_age_fishery_qtr.initialize();
+			//mat.C_N_sp_age_fishery_qtr = mat.C_N_sp_age_fishery;
+			if (month==3 || month==6 || month==9 || month==12){
+				for (int sp=0; sp< nb_species;sp++)
+					for (int age=a0_adult[sp];age<aN_adult[sp];age++)
+						for (int k=0; k<param->nb_fishery_by_sp[sp];k++)
+							for (int r=0; r<param->nb_region_sp_B[sp];r++)
+								mat.C_N_sp_age_fishery_qtr[sp][age][r][k] = mat.C_N_sp_age_fishery[sp][age][k][r];
+			}
 		}
 	}
 	//save ascii file with sums

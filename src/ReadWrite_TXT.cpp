@@ -158,7 +158,7 @@ void CReadWrite::InitSepodymFileTxt(CParam& param)
 				<<"B Total"<<param.sp_name[sp] <<'\t';
 		}
 
-		if (nb_fishery){
+		if (nb_fishery && !param.flag_no_fishing){
 			for (int f=0;f<nb_fishery; f++){
 				for (int sp=0;sp<nb_species;sp++){
 					if (param.mask_fishery_sp[sp][f]){
@@ -271,7 +271,7 @@ void CReadWrite::InitSepodymFileTxt(CParam& param)
                                         ecritSumEEZ<<param.sp_name[sp]<< " B Young " << param.EEZ_name[a] << '\t';
                                         ecritSumEEZ<<param.sp_name[sp]<< " B Adult " << param.EEZ_name[a] << '\t';
                                         ecritSumEEZ<<param.sp_name[sp]<< " B tot. " << param.EEZ_name[a] << '\t';
-                                        if (nb_fishery){
+                                        if (nb_fishery && !param.flag_no_fishing){
                                                 for (int f=0;f<nb_fishery; f++){
                                                         if (param.mask_fishery_sp[sp][f]){
 
@@ -326,7 +326,7 @@ void CReadWrite::InitSepodymFileTxt(CParam& param)
 	// ecriture des noms de variable du fichier SpatialCorr.txt
 	// un fichier par espece
 	// fichier correlations captures predites-observees
-		
+if (!param.flag_no_fishing){
 	if (nb_fishery)	{
 		//Generate the name of the files
 		for (int sp=0; sp<nb_species;sp++)
@@ -334,7 +334,7 @@ void CReadWrite::InitSepodymFileTxt(CParam& param)
 			dymFileSpCorr.push_back(param.strdir_output+param.sp_name[sp]+"_Spatial_Corr.txt");
 		}
 	}
-
+	
 	ofstream ecritcor;
 
 	if (nb_fishery)	{ 
@@ -359,12 +359,12 @@ void CReadWrite::InitSepodymFileTxt(CParam& param)
 			}
 		}
 	}
-    
+}
 	//////////////////////////////////////
 	//WRITE HEADERS OF SP_LF_Q_FISHERY.TXT
 	//ecriture des noms de variable du fichier LF_QFishery.txt
     //fichier Frequences de longueurs par trimestre
-	
+if (!param.flag_no_fishing){	
 	if (nb_fishery>0)
 	{
 		//Generate the name of the files
@@ -412,12 +412,17 @@ void CReadWrite::InitSepodymFileTxt(CParam& param)
 		}
 	}
 }
+}
 
 void CReadWrite::InitFluxesCohortsFileTxt(CParam& param)
 {
 	int nb_species = param.get_nbspecies();
+	int nb_reg = param.nb_EEZ;
+	if (!nb_reg){ 
+		nb_reg = param.nb_region_sp_B[0];//attn sp =0!
+	}
 
-	if (param.nb_region){
+	if (param.nb_region || param.nb_EEZ){
 	    for (int sp=0; sp<nb_species;sp++){
 		double mean_age_cohort = (double).5*param.sp_unit_cohort[sp][0];
 		for (int a=0; a<param.sp_nb_cohorts[sp]; a++){
@@ -432,7 +437,7 @@ void CReadWrite::InitFluxesCohortsFileTxt(CParam& param)
 				ecritJreg << "Mean age(months) " << mean_age_cohort << endl;
 				ecritJreg << "Mean length(cm) " << param.length(sp,a) << endl;
 				ecritJreg << "Mean weight(kg) " << param.weight(sp,a) << endl;
-				ecritJreg << "Nb.regions " << param.nb_region_sp_B[sp] << endl;
+				ecritJreg << "Nb.regions " << nb_reg << endl;
 				ecritJreg<<endl;
 				ecritJreg.close();
 			}
@@ -447,7 +452,14 @@ void CReadWrite::InitFluxesCohortsFileTxt(CParam& param)
 void CReadWrite::SaveFluxesCohortsFileTxt(CParam& param, CMatrices& mat, PMap& map, int day, int month, int year)
 {
 	int nb_species = param.get_nbspecies();
-	if (param.nb_region){
+	int fluxes_between_polygons = 1;
+	int nb_reg = param.nb_EEZ;
+	if (!nb_reg){ 
+		nb_reg = param.nb_region_sp_B[0];//attn sp =0!
+		fluxes_between_polygons = 0;
+	}
+	
+	if (param.nb_region || param.nb_EEZ){
 	    for (int sp=0; sp<nb_species;sp++){
 		for (int a=0; a<param.sp_nb_cohorts[sp]; a++){
 			std::ostringstream ostr;
@@ -458,16 +470,27 @@ void CReadWrite::SaveFluxesCohortsFileTxt(CParam& param, CMatrices& mat, PMap& m
 			if (ecritJreg){
 
 				ecritJreg << "# "<< year << '-' << month << '-' << day << endl;
-				int nb_reg = param.nb_region_sp_B[sp];
-				if (nb_reg>0){
-				for (int ri=0; ri<nb_reg; ri++){
-					int reg_i = param.area_sp_B[sp][ri]-1;
-					for (int rj=0; rj<nb_reg; rj++){
-						int reg_j = param.area_sp_B[sp][rj]-1;
-						ecritJreg << mat.fluxes_region(a,reg_i,reg_j) << '\t';
+				if (!fluxes_between_polygons){
+					int nbreg = param.nb_region_sp_B[sp];
+					if (nbreg>0){
+						for (int ri=0; ri<nb_reg; ri++){
+							int reg_i = param.area_sp_B[sp][ri]-1;
+							for (int rj=0; rj<nb_reg; rj++){
+								int reg_j = param.area_sp_B[sp][rj]-1;
+								ecritJreg << mat.fluxes_region(a,reg_i,reg_j) << '\t';
+							}
+							ecritJreg << endl;
+						}
 					}
-					ecritJreg << endl;
-				}}
+				} else {
+					for (int ri=0; ri<nb_reg; ri++){
+						for (int rj=0; rj<nb_reg; rj++){
+							ecritJreg << mat.fluxes_region(a,ri,rj) << '\t';
+						}
+						ecritJreg << endl;
+					}
+
+				}
 				ecritJreg.close();
 			}
 			else cout<<endl<<"WARNING : Cannot append to the file "<<fileJreg<<endl;
@@ -524,7 +547,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 				<< mat.sum_B_adult[sp]  <<'\t'
 				<< mat.sum_total_pop[sp]<<'\t';
 		}
-		if (nb_fishery>0){ 
+		if (nb_fishery>0 && !param.flag_no_fishing){ 
 			int k = 0;
 			for (int f=0; f<nb_fishery; f++){
 				for (int sp=0;sp<nb_species;sp++){
@@ -734,7 +757,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
                                         sumEEZ = save.SumByEEZ(map,EEZ_ID,mat.total_pop[sp],cell_area,nlon,nlat);
                                         ecritSumEEZ << sumEEZ <<'\t';
 
-                                        if (nb_fishery){
+                                        if (nb_fishery && !param.flag_no_fishing){
                                                 int k = 0; int Nb_obs = 0;
                                                 for (int f=0;f<nb_fishery; f++){
                                                         if (param.mask_fishery_sp[sp][f]){
@@ -804,7 +827,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 	//////////////////////////////////////
 	//UPDATE SPATIALCORR.TXT
 	ofstream ecritcor;
-	if (nb_fishery>0)
+	if (nb_fishery>0 && !param.flag_no_fishing)
 	{	
 		for (int sp=0;sp<nb_species;sp++)
 		{	
@@ -840,6 +863,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 	
 	//////////////////////////////////////
 	//UPDATE SP_LF_Q_FISHERY.TXT
+	if (!param.flag_no_fishing){
 	// quarterly catch in number by age(size)by species and fishery
 	ofstream ecritQtr_N;
 
@@ -901,10 +925,12 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 			}
 		}
 	}
+	}
 	//////////////////////////////////////
 	// Write/Rewrite the file (s)
 	//////////////////////////////////////
 	//UPDATE SP_LF_Q_SUM.TXT
+if (!param.flag_no_fishing){
 	//sum of catch in number by age(size) by species, by region and fishery
 	//sum for each of four quarter over all the series + sum of the four quarters
 
@@ -953,12 +979,12 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 			}
 		}
 	}
-
+}
 	//////////////////////////////////////
 	//WRITE HEADERS OF SP_LF_Q_SUM.TXT
 	//ecriture des noms de variable du fichier LF_QFishery.txt
     //fichier Frequences de longueurs par trimestre
-	
+if (!param.flag_no_fishing){
 	//if ( (nb_fishery>0) && (qtr2  != qtr1) && (ntq>0) )
 	if ( (nb_fishery>0) && (mois2==3 || mois2==6 || mois2==9 || mois2==12)) {
 		//Generate the name of the files
@@ -1057,6 +1083,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 			}
 		}//espece et fichier suivant
 	}
+}
 }
 ///////////////////////////
 
