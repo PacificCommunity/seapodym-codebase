@@ -382,8 +382,7 @@ void CMatrices::createMatEffort(const PMap& map, int nbi, int nbj, int nb_fleet)
 	efflat.initialize();
 }
 
-void CMatrices::createMatCatch(const PMap& map, int nbi, int nbj, int nb_species, const IVECTOR& nb_fleet, const ivector a0_adult,
-			const IVECTOR& nb_cohorts, const IVECTOR& nb_region_sp)
+void CMatrices::createMatTotCatch(const PMap& map, int nbi, int nbj, int nb_species)
 {
 	total_obs_catch.allocate(0, nb_species - 1);
 	total_pred_catch.allocate(0, nb_species - 1);
@@ -393,7 +392,11 @@ void CMatrices::createMatCatch(const PMap& map, int nbi, int nbj, int nb_species
 		total_obs_catch(sp).initialize();
 		total_pred_catch(sp).initialize();
 	}
+}
 
+void CMatrices::createMatCatch(const PMap& map, int nbi, int nbj, int nb_species, const IVECTOR& nb_fleet, const ivector a0_adult,
+			const IVECTOR& nb_cohorts, const IVECTOR& nb_region_sp)
+{
 	Ctot_proportion_fishery.allocate(0,nb_species-1);
 	Ctot_proportion_fishery.initialize();
 	for (int sp = 0; sp < nb_species; sp++){

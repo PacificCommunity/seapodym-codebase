@@ -676,6 +676,23 @@ bool VarParamCoupled::read(const string& parfile)
 	/////////////////////////
 	// END OF SPECIES SECTION  
 	////////////////////////
+	
+	/////////////////////
+	//TAGEST model flags
+	/////////////////////
+	tag_like.allocate(0,nb_species-1);
+	tag_like.initialize();
+	tags_only = false;
+	for (int sp=0;sp<nb_species;sp++){
+		if (!doc.get("/tag_likelihood",sp_name[sp]).empty())
+			tag_like[sp] = doc.getInteger("/tag_likelihood",sp_name[sp]);
+		if (tag_like[sp]){
+			if (!doc.get("/tag_likelihood_only","value").empty()){
+				int flag = doc.getInteger("/tag_likelihood_only","value");
+				if (flag) tags_only = true;
+			}
+		}
+	}
 
 	/////////////////////
 	// FISHERIES SECTION    
@@ -733,12 +750,16 @@ bool VarParamCoupled::read(const string& parfile)
 		nb_fishery_by_sp.initialize();
 
 		mask_fishery_sp.allocate(0, nb_species - 1, 0, nb_fishery - 1);
+		mask_fishery_sp.initialize();
 			 
-		for (int sp=0;sp<nb_species;sp++) {
-			for (int f=0;f<nb_fishery;f++) {
-				mask_fishery_sp[sp][f] = doc.getInteger(string("/mask_fishery_sp/") + sp_name[sp], f);
-				if (mask_fishery_sp[sp][f]) 
-					nb_fishery_by_sp[sp] ++;
+		if (!tags_only){
+		//No run with fisheries in tags_only mode!!!
+			for (int sp=0;sp<nb_species;sp++) {
+				for (int f=0;f<nb_fishery;f++) {
+					mask_fishery_sp[sp][f] = doc.getInteger(string("/mask_fishery_sp/") + sp_name[sp], f);
+					if (mask_fishery_sp[sp][f]) 
+						nb_fishery_by_sp[sp] ++;
+				}
 			}
 		}
 		//the strdir_output should always be declared for the reference (Fref) run
@@ -854,7 +875,7 @@ bool VarParamCoupled::read(const string& parfile)
 
 	
 		/////////////////////////
-		//   LIKELIHOOD SECTION    
+		//MAIN LIKELIHOOD SECTION    
 		/////////////////////////
 
 		//Optimization control:
@@ -893,19 +914,10 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 		}
 
-		//3. TAGs likelihood
-		tag_like.allocate(0,nb_species-1);
-		tag_like.initialize();
-		tags_only = false;
+		//3. TAGs likelihood: further options here (see above the code for main flags)
 		tag_gauss_kernel_on = 1;
 		for (int sp=0;sp<nb_species;sp++){
-			if (!doc.get("/tag_likelihood",sp_name[sp]).empty())
-				tag_like[sp] = doc.getInteger("/tag_likelihood",sp_name[sp]);
 			if (tag_like[sp]){
-				if (!doc.get("/tag_likelihood_only","value").empty()){
-					int flag = doc.getInteger("/tag_likelihood_only","value");
-					if (flag) tags_only = true;
-				}
 				if (!doc.get("/tag_gauss_kernel_on","value").empty()){
 					tag_gauss_kernel_on = doc.getInteger("/tag_gauss_kernel_on","value");
 				}

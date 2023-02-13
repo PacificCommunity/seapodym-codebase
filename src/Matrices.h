@@ -125,6 +125,7 @@ public:
 	void createMatHabitat_input(const PMap& map, const int nb_ages, const int nbt_total);
 	void createMatSpecies(const PMap& map, int t0, int nbt, int nbi, int nbj, int nb_species, const ivector a0_adult, const ivector sp_nb_age_class);
 	void createMatEffort(const PMap& map, int nbi, int nbj, int nb_fleet);
+	void createMatTotCatch(const PMap& map, int nbi, int nbj, int nb_species);
 	void createMatCatch(const PMap& map,int nbi,int nbj,int nb_species,const IVECTOR& nb_fleet,const ivector a0_adult, const IVECTOR& nb_cohorts, const IVECTOR& nb_region);
 	void createMatMortality(int nforage, int nbi, int nbj);
 	void MeanVarMovement(const PMap& map, const dmatrix& Adv_x, const dmatrix& Adv_y, const dmatrix& Diff, 

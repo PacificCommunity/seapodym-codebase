@@ -57,7 +57,7 @@ int SeapodymCoupled::EditRunCoupled(const char* parfile)
 	double mval;
 	rw.rbin_header(param->strfile_pp, param->idformat, param->idfunc, mval, mval, nlon, nlat, param->nlevel, 
 			param->startdate, param->enddate, mat.xlon, mat.ylat, mat.zlevel, mat.mask);
-	nbt_start_series = Date::dym_startdate_run(*param,mat.zlevel,nbt_total);
+	nbt_start_series = Date::dym_startdate_run(*param,mat.zlevel,nbt_total);	
 
 	//Create only time-independent variables here
 	mat.CreateMatTransport(map, nbi, nbj);
@@ -66,7 +66,11 @@ int SeapodymCoupled::EditRunCoupled(const char* parfile)
 	mat.createMatSource(nb_forage, Tr_step+1, nbi, nbj);	
 	mat.createMatMortality(nb_forage, nbi, nbj);
 
-	if (nb_fishery){
+	//temporarily keep the total catch even in F0 runs
+	//as it is yet used to write tag recaptures in tags_only runs
+	mat.createMatTotCatch(map,nbi,nbj,nb_species);
+	if (nb_fishery && !param->flag_no_fishing){
+		
 		mat.createMatEffort(map,nbi,nbj,nb_fishery);
 		mat.CreateMatCatch(map,nbi,nbj,nb_species, param->nb_fishery_by_sp,a0_adult,aN_adult,param->nb_region_sp_B);
 	}
