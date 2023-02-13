@@ -3,6 +3,7 @@
 Source code of the SEAPODYM numerical modelling framework and analyses tools, OFP-FEMA. C++, R, Linux.
 
 *Version 4.1*
+
 *Pre-released January 21, 2023*
 
 ## About
@@ -118,7 +119,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   Unzip and place the forcing files into a local directory without modifying the folder structure.
 
-  Now open the skipjack\_F0.xml parfile in the preferred text editor and modify the ${SEAPODYM\_HOME} to the address with unzipped *data* folder.  
+  Now open the skipjack\_F0.xml parfile in the preferred text editor and modify the ${SEAPODYM\_HOME}, so to provide the full absolute path to the unzipped *data* folder.  
     
     [~]$ cd example-configs/skipjack/
     
@@ -130,11 +131,11 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   Example **albacore**
 
-  Similarly to skipjack example, this the pre-configured model of albacore tuna, [parameterized and validated with fisheries data](https://www.sciencedirect.com/science/article/pii/S0967064519301511). The configuration file will allow running the South Pacific population dynamics model. To run this model, download the forcing directory from the [OSF data repository](https://osf.io/j53hc).
+  Similarly to skipjack example, this is the pre-configured example to run the albacore tuna model, [parameterized and validated with fisheries data](https://www.sciencedirect.com/science/article/pii/S0967064519301511). The configuration file will allow running the population dynamics model of the south Pacific stock. To run this model, download the forcing directory from the [OSF data repository](https://osf.io/j53hc).
 
   Unzip and place the forcing files into a local directory without modifying the folder structure.
 
-  Open the albacore\_F0.xml parfile and modify the ${SEAPODYM\_HOME} to the address with unzipped *data* folder. 
+  Open the albacore\_F0.xml parfile and modify the ${SEAPODYM\_HOME}, so to provide the full absolute path to the unzipped *data* folder. 
     
     [~]$ cd example-configs/albacore/
     
