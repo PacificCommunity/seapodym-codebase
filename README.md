@@ -127,7 +127,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
     [~/seapodym/example-configs/skipjack/]$ seapodym -s skipjack_F0.xml
     
-  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be sent to SPC to inquire for the access to the data. Then, the simulation with fishing can be run with the XML configuration file skipjack.xml, and the screen log compared with provided sim.out file.
+  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public. To inquire for the access to the data, please email <ofpdatarequest@spc.int>. Your request will be examined based on the eligibility of your organisation and your project. Then, the simulation with fishing can be run with the XML configuration file skipjack.xml, and the screen log compared with provided sim.out file.
 
   Example **albacore**
 
@@ -143,7 +143,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
     [~/seapodym/example-configs/albacore/]$ seapodym -s albacore_F0.xml
     
-  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public, so the specific requests should be sent to SPC to inquire for the access to the data. Then, the simulation with fishing can be run with the XML configuration file albacore.xml, and the screen log compared with provided sim.out file.
+  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public. To inquire for the access to the data, please email <ofpdatarequest@spc.int>. Your request will be examined based on the eligibility of your organisation and your project. Then, the simulation with fishing can be run with the XML configuration file albacore.xml, and the screen log compared with provided sim.out file.
 
      
 ## Documentation
