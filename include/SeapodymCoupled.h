@@ -27,7 +27,8 @@ friend class tag_release;
 	void xinit(dvector& x, adstring_array& names) { param->xinit(x, names); }
 	double run_coupled(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCoupled(x, writeoutputfiles); }
 	double run_habitat(dvar_vector x, const bool writeoutputfiles = false) { return OnRunHabitat(x, writeoutputfiles); }
-	double run_density(dvar_vector x, const bool writeoutputfiles = false) { return OnRunDensity(x, writeoutputfiles); }		
+	double run_density(dvar_vector x, const bool writeoutputfiles = false) { return OnRunDensity(x, writeoutputfiles); }
+	double run_flux(dvar_vector x, const bool writeoutputfiles = false) { return OnRunFlux(x, writeoutputfiles); }			
 	dvariable reset(dvar_vector x) { return param->reset(x); }
 
 	void write(const char* parfile) {
@@ -39,6 +40,7 @@ friend class tag_release;
 
 	int EditRunCoupled(const char* parfile);
 	double OnRunCoupled(dvar_vector x, const bool writeoutputfiles = false);
+	double OnRunFlux(dvar_vector x, const bool writeoutputfiles = false);
 	void OnSimulationEnd();
 
 	double OnRunHabitat(dvar_vector x, const bool writeoutputfiles = false);

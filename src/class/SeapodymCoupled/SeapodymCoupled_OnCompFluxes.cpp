@@ -14,7 +14,7 @@
 /*!
 \brief The tuna population main loop is in this function.
 */
-double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
+double SeapodymCoupled::OnRunFlux(dvar_vector x, const bool writeoutputfiles)
 {
 	InitializeAll();
 	SUM_CATCH = 0.0;
