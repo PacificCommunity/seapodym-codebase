@@ -5,97 +5,99 @@
 #ifndef __XMLDocument_h__
 #define __XMLDocument_h__
 
-#include <iostream>
-#include <string>
-#include <stdexcept>
 #include <cstdlib>
+#include <iostream>
+#include <stdexcept>
+#include <string>
 
 /// @cond TellsDoxygenToSkipThese
-using std::cout;
+using std::atoi;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::string;
-using std::atoi;
-//using std::atof;
-using std::strtod;
+// using std::atof;
 using std::runtime_error;
+using std::strtod;
 
 /// @endcond
 
-#include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/framework/XMLDocumentHandler.hpp>
+#include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/sax/HandlerBase.hpp>
-#include <xercesc/util/XMLString.hpp>
+#include <xercesc/sax/SAXException.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/RuntimeException.hpp>
-#include <xercesc/sax/SAXException.hpp>
+#include <xercesc/util/XMLString.hpp>
 
 XERCES_CPP_NAMESPACE_USE
 
 class XMLDocument {
-public:
+   public:
+    XMLDocument() { initialize(); }
 
-XMLDocument() { 
-	initialize(); 
-}
+    XMLDocument(const XMLDocument& p) {
+        cerr << "Error: " << __FILE__ << ':' << __LINE__ << '\n';
+    }
 
-XMLDocument(const XMLDocument& p) { 
-	cerr << "Error: " << __FILE__ << ':' << __LINE__ << '\n'; 
-}
+    virtual ~XMLDocument() {
+        if (parser != 0) {
+            delete parser;
+            parser = 0;
+        }
+        if (errHandler != 0) {
+            delete errHandler;
+            errHandler = 0;
+        }
+    }
 
-virtual ~XMLDocument() {
-	if (parser != 0) {
-		delete parser;
-		parser = 0;
-	}
-	if (errHandler != 0) {
-		delete errHandler;
-		errHandler = 0;
-	}
-}
+   public:
+    int read(const char* parfile) throw(runtime_error);
 
-public:
+    string get(const string& element, const string& attribute) const;
 
-int read(const char* parfile) throw (runtime_error);
+    double getDouble(const string& element, const string& attribute) const
+        throw(runtime_error) {
+        double d = 0;
+        string s = get(element, attribute);
+        if (!s.empty()) {
+            // d = atof(s.c_str());
+            d = strtod(s.c_str());
+        } else {
+            throw runtime_error(
+                "Error: XMLDocument::getDouble element=\"" + element +
+                "\" does not exist\n");
+        }
+        return d;
+    }
 
-string get(const string& element, const string& attribute) const;
+    int getInteger(const string& element, const string& attribute) const
+        throw(runtime_error) {
+        int integer = 0;
+        string s = get(element, attribute);
+        if (!s.empty()) {
+            integer = atoi(s.c_str());
+        } else {
+            throw runtime_error(
+                "Error: XMLDocument::getInteger  element=\"" + element +
+                "\" does not exist\n");
+        }
+        return integer;
+    }
 
-double getDouble(const string& element, const string& attribute) const throw (runtime_error) {
-	double d = 0;
-	string s = get(element, attribute);
-	if (!s.empty()) {
-		//d = atof(s.c_str());
-		d = strtod(s.c_str());
-	} else {
-		throw runtime_error("Error: XMLDocument::getDouble element=\"" + element + "\" does not exist\n");
-	}
-	return d;
-}
+    int write(const char* parfile) throw(runtime_error);
 
-int getInteger(const string& element, const string& attribute) const throw (runtime_error) {
-	int integer = 0;
-	string s = get(element, attribute);
-	if (!s.empty()) {
-		integer = atoi(s.c_str());
-	} else {
-		throw runtime_error("Error: XMLDocument::getInteger  element=\"" + element + "\" does not exist\n");
-	}
-	return integer;
-}
+   private:
+    /**
+     * setups up xerces-c enviroment
+     */
+    int initialize() throw(runtime_error);
+    string getValue(const DOMNode* node, const string& attribute) const;
 
-int write(const char* parfile) throw (runtime_error);
-
-private:
-/**
- * setups up xerces-c enviroment
- */
-int initialize() throw (runtime_error);
-string getValue(const DOMNode* node, const string& attribute) const;
-
-private:
-DOMDocument *doc;
-XercesDOMParser* parser;
-ErrorHandler* errHandler;
+   private:
+    DOMDocument* doc;
+    XercesDOMParser* parser;
+    ErrorHandler* errHandler;
 };
 #endif

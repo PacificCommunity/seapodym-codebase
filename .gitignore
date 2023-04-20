@@ -15,3 +15,4 @@ example-configs/skipjack/output
 example-configs/skipjack/newparfile.xml
 example-configs/skipjack/*.tmp
 example-configs/skipjack/fmin.log
+build
