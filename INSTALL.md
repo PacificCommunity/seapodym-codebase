@@ -91,7 +91,7 @@ cd build
 cmake ..
 ```
 **But** if you did not installed ADMB in standard directories, you must pass corresponding arguments :
-- `-D CMAKE_PREFIX_PATH=/path_to_admb_folder/build/admb`
+- `-D CMAKE_PREFIX_PATH=/path_to_admb_folder/build/`
 
 > Since ADMB creates libraries which name contains informations about compiler and system configuration, it is recommanded to rename both static (`.a`) and dynamic (`.so`) libraries this way :
 > - `libadmb.a` and `libadmb.so`
