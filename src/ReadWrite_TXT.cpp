@@ -864,18 +864,13 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 	//////////////////////////////////////
 	//UPDATE SP_LF_Q_FISHERY.TXT
 	if (!param.flag_no_fishing){
-	// quarterly catch in number by age(size)by species and fishery
-	ofstream ecritQtr_N;
+		// quarterly catch in number by age(size)by species and fishery
+		ofstream ecritQtr_N;
 
-//exit(1);
-	// si nouveau trimestre ENREGISTRE a condition qu'il y ait eu un passage (ntq) au minimum
-	//if ( (nb_fishery>0) && (qtr2  != qtr1) && (ntq>0) )
-//cout << param.nb_region_sp_B[0] << endl; exit(1);
-	if (sum(param.mask_fishery_sp[0])!=0) {year0_fishing = (int)(param.ndatini/10000);}
-	int year = yr2-year0_fishing;//(int)param.save_first_yr;
-	if ( (nb_fishery>0) && (mois2==3 || mois2==6 || mois2==9 || mois2==12)) {
-		for (int sp=0; sp< nb_species;sp++)
-		{
+		if (sum(param.mask_fishery_sp[0])!=0) {year0_fishing = (int)(param.ndatini/10000);}
+		int year = yr2-year0_fishing;//(int)param.save_first_yr;
+		if ( (nb_fishery>0) && (mois2==3 || mois2==6 || mois2==9 || mois2==12)) {
+			for (int sp=0; sp< nb_species;sp++){
 			const int a0	     = param.sp_a0_adult[sp];
 			const int nb_ages    = param.sp_nb_cohorts[sp];
 
@@ -891,7 +886,6 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 								if (!param.nb_yr_forecast)
 									sumobs  += frq(f,reg,year,mois2/3-1,a);
 							}
-							//if (sumpred>0 && sumobs>0){
 							if (sumpred>0){
 								ecritQtr_N << yr2 << '\t'<< qtr1 <<'\t'<< mois2 << '\t'<< param.list_fishery_name[f] << '\t' << reg+1 << '\t';
 								for (int a=a0;a<nb_ages;a++)
@@ -902,33 +896,27 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 					}
 				}
 						
-/*
-				//ecritQtr_N <<"Quarter "<< qtr1 <<'\t'<< "Year "<< yr2 <<endl;
-				for (int a=0;a<param.sp_nb_age_class_ad[sp];a++)
-				{
-					ecritQtr_N  <<param.length[sp][a]<<'\t';
-					for (int reg=0; reg< param.nb_region_sp_B[sp]; reg++)
-					{
-						for (int k=0;k<param.nb_fishery_by_sp[sp]; k++)
-						{
-							ecritQtr_N  << mat.C_N_sp_age_fishery_qtr[sp][a][reg][k] <<'\t';
-						}
-					}
-					ecritQtr_N << endl;
-				}
-*/
 				ecritQtr_N.close();
 			}
 			else
 			{
 				cout<<endl<<"WARNING : Cannot write file "<<dymFileSpLF[sp]<<endl;
 			}
+			}
 		}
 	}
-	}
+
+/*
+// IS 20230512, suppressing the output of SP_LF_Q_SUM
+// This file is obsolete and to be removed. The same 
+// information can be derived from LF_Q_fishery. 
+// The routine is extremely slow for multiple regions 
+// (e.g. 100% of runtime with 600 regions).
+
 	//////////////////////////////////////
 	// Write/Rewrite the file (s)
 	//////////////////////////////////////
+	
 	//UPDATE SP_LF_Q_SUM.TXT
 if (!param.flag_no_fishing){
 	//sum of catch in number by age(size) by species, by region and fishery
@@ -980,6 +968,7 @@ if (!param.flag_no_fishing){
 		}
 	}
 }
+	
 	//////////////////////////////////////
 	//WRITE HEADERS OF SP_LF_Q_SUM.TXT
 	//ecriture des noms de variable du fichier LF_QFishery.txt
@@ -1029,6 +1018,7 @@ if (!param.flag_no_fishing){
 		}
 
 	}
+	
 	//////////////////////////////
 	// ECRITURE des sommes des captures par age, region pecherie pour les 4 trimestres et le total des 4
 	double totalregion; 
@@ -1084,6 +1074,8 @@ if (!param.flag_no_fishing){
 		}//espece et fichier suivant
 	}
 }
+*/
+
 }
 ///////////////////////////
 
