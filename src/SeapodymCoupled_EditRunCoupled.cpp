@@ -74,6 +74,8 @@ int SeapodymCoupled::EditRunCoupled(const char* parfile)
 		mat.createMatEffort(map,nbi,nbj,nb_fishery);
 		mat.CreateMatCatch(map,nbi,nbj,nb_species, param->nb_fishery_by_sp,a0_adult,aN_adult,param->nb_region_sp_B);
 	}
+	lflike_fishery.allocate(0,nb_fishery-1);
+	clike_fishery.allocate(0,nb_fishery-1);
 	param->init_param_dym();
 
 	return 0;

@@ -94,8 +94,9 @@ private:
 	i3_array tagpop_age_solve;
 	
 
-	double catch_scaling_factor;
 	double lflike; // double value of lf_like
+	dvector lflike_fishery;
+	dvector clike_fishery;
 
 	void get_catch_lf_like(dvariable& likelihood);
 	double get_stock_like(dvariable& total_stock, dvariable& likelihood);
@@ -125,6 +126,7 @@ private:
 	void CalcSums();
 	void CalcMeanTemp(const int t_count, const int tcur);
 	void ConsoleOutput(int flag,double like);
+	void OutputLikelihoodsFishery();
 	void InitializeAll();
 	void ReadTimeSeriesData(int t, int t_series);
 	void ReadClimatologyData(int t, int month);

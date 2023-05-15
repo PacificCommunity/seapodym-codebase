@@ -371,6 +371,22 @@ void SeapodymCoupled::ConsoleOutput(int flag_simulation, double like)
         }
 }
 
+void SeapodymCoupled::OutputLikelihoodsFishery()
+{
+	cout << endl << "---Negative log-likelihoods by fishery---"<< endl;
+	cout << setw(7) << right << "  fcode" << " | " << setw(11) <<  "Catch" << " | " << setw(11) << "LF" << " | " <<endl;
+	cout << "-----------------------------------------"<< endl;
+	for (int f=0; f<nb_fishery; f++)
+		cout << setw(7) <<  right << param->list_fishery_name[f] << " | " << 
+			setw(11) << clike_fishery[f] << " | " <<
+			setw(11) << lflike_fishery[f] << " | " << endl;
+	cout << "-----------------------------------------"<< endl;
+	cout << right <<"  Total : " << setw(11) << sum(clike_fishery) << " | " << 
+					setw(11) << sum(lflike_fishery) << " | " << endl;
+	cout << "-----------------------------------------";//<< endl;
+}
+
+
 void SeapodymCoupled::Set_density_region_age_zero(const int sp)
 {//Function to be written. For the moment the old temporal code commented here
 
