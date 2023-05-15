@@ -15,9 +15,6 @@ void CCalpop::Precalrec_total_mortality_comp(const PMap& map, VarParamCoupled& p
 {
 	int k = 0;
 	const int nb_fishery = param.get_nbfishery();
-	dvar_matrix Q, Sslope;
-	Q.allocate(map.imin, map.imax, map.jinf, map.jsup); Q.initialize();
-	Sslope.allocate(map.imin, map.imax, map.jinf, map.jsup); Sslope.initialize();
 
 	dmatrix effort;
 	effort.allocate(map.imin, map.imax, map.jinf, map.jsup);
@@ -35,8 +32,11 @@ void CCalpop::Precalrec_total_mortality_comp(const PMap& map, VarParamCoupled& p
 			const double selectivity = Selectivity(sp,f,age);
 			double sq  = selectivity * catchability;
 
-			Q = param.dvarsQ_sp_fishery[sp][k];
-			Sslope = param.dvarsSslope_sp_fishery[sp][k];
+			//re-use dvar_matrices that are no longer used 
+			//within the time step. It will avoid extra 
+			//dvar_matrix class allocations
+			Mss_species = param.dvarsQ_sp_fishery[sp][k];
+			Mss_size_slope = param.dvarsSslope_sp_fishery[sp][k];
 			mat.dvarsU.initialize();
 			mat.dvarsV.initialize();
 			if (param.s_func_type[f]>1){
@@ -65,8 +65,8 @@ void CCalpop::Precalrec_total_mortality_comp(const PMap& map, VarParamCoupled& p
 			precalrec_total_mortality_comp(map.carte, effort, mortality, sq, mat.lat_correction);
 
 			save_identifier_string2((char*)"total_mortality_comp_begin");
-			Q.save_dvar_matrix_position();
-			Sslope.save_dvar_matrix_position();
+			Mss_species.save_dvar_matrix_position();
+			Mss_size_slope.save_dvar_matrix_position();
 			mat.dvarsU.save_dvar_matrix_position();
 			mat.dvarsV.save_dvar_matrix_position();
 			mortality.save_dvar_matrix_position();

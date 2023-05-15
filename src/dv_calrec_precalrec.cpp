@@ -60,11 +60,6 @@ void CCalpop::Precalrec_Calrec_adult(const PMap& map, VarMatrices& mat, VarParam
 		calrec_with_catch(map,param,uu,value(mat.dvarCtot_age_obs[sp][age]),mat.dvarCtot_age_est[sp][age]);
 	}
 	save_identifier_string2((char*)"Precalrec_Calrec_begin");
-	if (param.vert_movement(sp)){
-		//just for recomputation of diag.coef.
-		mat.u.save_dmatrix_position();
-		mat.v.save_dmatrix_position();
-	}
 	uu.save_dvar_matrix_position();
 	dvarsA.save_dvar_matrix_position();
 	dvarsB.save_dvar_matrix_position();
@@ -141,11 +136,6 @@ void dv_calrec_precalrec()
 	const dvar_matrix_position b_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position a_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position uu_pos   = restore_dvar_matrix_position();
-	dmatrix u,v;
-	if (vert_move){
-		const dmatrix_position V_pos   = restore_dmatrix_position();
-		const dmatrix_position U_pos   = restore_dmatrix_position();
-	}
 	verify_identifier_string2((char*)"Precalrec_Calrec_begin");
 
 	dmatrix uu(uu_pos);
@@ -396,11 +386,6 @@ void dv_calrec_with_catch_precalrec()
 	const dvar_matrix_position b_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position a_pos    = restore_dvar_matrix_position();
 	const dvar_matrix_position uu_pos   = restore_dvar_matrix_position();
-	dmatrix u,v;
-	if (vert_move){
-		const dmatrix_position V_pos   = restore_dmatrix_position();
-		const dmatrix_position U_pos   = restore_dmatrix_position();
-	}
 	verify_identifier_string2((char*)"Precalrec_Calrec_begin");
 
 

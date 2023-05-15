@@ -67,7 +67,6 @@ public:
 		//CMatrices::createMatSpecies(map, t0, nbt, nbi, nbj, nb_species, a0_adult, sp_nb_cohorts);
 		CMatrices::createMatSpecies(map, t0, nbt, nbi, nbj, 1, a0_adult, sp_nb_cohorts);
 		dvarDensity.allocate(0, nb_species - 1);
-		dvarDensity.allocate(0, nb_species - 1);
 		for (int sp = 0; sp < nb_species; sp++) {
 			//const int agemax_sp = sp_nb_cohorts(sp);
 			const int agemax_sp = sp_nb_cohorts(0);
