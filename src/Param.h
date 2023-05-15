@@ -156,6 +156,7 @@ public:
 	vector<string> strfile_u,strfile_v,strfile_t,strfile_oxy;	// array of string [nb_layer]
 	vector<string> strfile_umc,strfile_vmc,strfile_tmc, strfile_oxymc;		// array of string [nb_layer]
 	string strdir_output;
+	string strout_tags;
 	int write_all_cohorts_dym;
 	int write_all_fisheries_dym;
 	

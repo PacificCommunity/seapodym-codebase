@@ -916,11 +916,19 @@ bool VarParamCoupled::read(const string& parfile)
 
 		//3. TAGs likelihood: further options here (see above the code for main flags)
 		tag_gauss_kernel_on = 1;
+		strout_tags = "./tags/";
 		for (int sp=0;sp<nb_species;sp++){
 			if (tag_like[sp]){
 				if (!doc.get("/tag_gauss_kernel_on","value").empty()){
 					tag_gauss_kernel_on = doc.getInteger("/tag_gauss_kernel_on","value");
 				}
+				//TODO: make a small function to check and create unexisting folder (three times in the code now)
+				string test = strout_tags + "/test";
+			        ofstream ecritbin(test.c_str(), ios::binary|ios::out);
+			        if (!ecritbin){
+			                cerr << "WARNING : tags output directory does not exist, will create the new folder './tags'" << endl;
+			                mkdir(strout_tags.c_str(),0777);
+			        } else remove(test.c_str());	
 			}
 		}
 
