@@ -19,7 +19,7 @@ double log_factorial(const double x);
 dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const int nobs)
 {
         double catch_mult = 1.0; // need to make it a vector of length nb_fishery 
-			  // and assign values outside of this routine
+				 // and assign values outside of this routine
 
 	dvariable likelihood = 0.0;
 	dmatrix data_obs;

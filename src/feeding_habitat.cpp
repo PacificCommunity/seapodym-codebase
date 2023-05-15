@@ -72,8 +72,7 @@ void VarSimtunaFunc::Hf_comp(VarParamCoupled& param, VarMatrices& mat, const PMa
 				//3. If not optimizing, will write habitat to DYM files
 				if (!param.gcalc()){
 					//last immature group if seasonal migrations, otherwise first mature
-					//if (age < param.age_mature[sp])  
-					if (age == 11)  
+					if (age < param.age_mature[sp])  
 						mat.Hs[i][j] =  value(Ha(i,j));
 
 					//always the last age computed here, will be overwritten by adult habitat

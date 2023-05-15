@@ -72,6 +72,7 @@ void SeapodymCoupled::OnRunFirstStep()
 		}
 	}
 	else {
+		cout << "----------------------------------------------------" << endl;
 		cout << "     SIMULATION WITHOUT FISHING!!!" << endl;
 		cout << "----------------------------------------------------" << endl;
 	}
