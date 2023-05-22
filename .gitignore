@@ -4,9 +4,9 @@ bin
 bin/*
 unused
 unused/*
+.vscode/
+.vscode/*
 log-changes.txt
-DOM/unused
-DOM/unused/*
 docs/manual/*.aux
 docs/code-dox/html/
 docs/code-dox/latex/
