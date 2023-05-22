@@ -2,8 +2,8 @@
  * $Id$<br/>
  * Copyright&copy;2005 University of Hawaii, Pelagic Fisheries Research Program
  */
-#ifndef __XMLDocument2_h__
-#define __XMLDocument2_h__
+#ifndef __XMLDocument_h__
+#define __XMLDocument_h__
 
 #include <iostream>
 #include <string>
@@ -30,12 +30,12 @@ using std::setprecision;
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 
-class XMLDocument2 {
+class XMLDocument {
 public:
 /**
  *
  */
-XMLDocument2() { 
+XMLDocument() { 
 	doc = 0;
 	context = 0;
 	xmlInitParser();
@@ -44,14 +44,14 @@ XMLDocument2() {
 /**
  *
  */
-XMLDocument2(const XMLDocument2& p) { 
+XMLDocument(const XMLDocument& p) { 
 	cerr << "Error: " << __FILE__ << ':' << __LINE__ << '\n'; 
 }
 
 /**
  *
  */
-virtual ~XMLDocument2() {
+virtual ~XMLDocument() {
 	if (doc != 0) {
 		xmlFreeDoc(doc);
 		doc = 0;

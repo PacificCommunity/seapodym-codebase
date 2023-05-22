@@ -2,8 +2,7 @@
 #define __VarParamCoupled_h__
 
 #include <cstdlib>
-//#include <fvar.hpp>
-#include "XMLDocument2.h"
+#include "XMLDocument.h"
 #include "Param.h"
 #include "ReadWrite.h"
 
@@ -25,7 +24,7 @@ private:
 	int _nvarcalc;
 	bool _gradcalc;
 	bool _saruns;
-	XMLDocument2 doc;
+	XMLDocument doc;
 	CReadWrite rw;
 
 	dvector dvarpars;
