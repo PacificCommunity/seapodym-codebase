@@ -1,5 +1,5 @@
 HEADERS= \
-XMLDocument2.h \
+XMLDocument.h \
 calpop.h \
 Map.h \
 Matrices.h \
@@ -21,7 +21,7 @@ VarSimtunaFunc.h
 SRCS= \
 main_simulation.cpp \
 ad_buffers.cpp \
-XMLDocument2.cpp \
+XMLDocument.cpp \
 VarParamCoupled.cpp \
 seapodym_coupled.cpp \
 Map.cpp \
@@ -92,8 +92,8 @@ Calpop_tridag.cpp \
 hessian.cpp \
 like.cpp
 
-SRCPATH=DOM/src:src
-INCPATH=-IDOM/src -Isrc
+SRCPATH=src/utilities:src/data:src/models/control:src/models/functions:src/models/parameters:src/models/solver
+INCPATH=include
 BINPATH=bin
 
 ##############################################################
@@ -103,7 +103,7 @@ ADMODEL=$(ADMB_HOME)
 #DEBUG=-pg -g
 DEBUG= -g
 #production code
-CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -O3 -DOPT_LIB -Wall -Wno-deprecated -I$(ADMODEL)/include -I/usr/include/libxml2 $(INCPATH)
+CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -O3 -DOPT_LIB -Wall -Wno-deprecated -I$(ADMODEL)/include -I/usr/include/libxml2 -I$(INCPATH)
 
 ###### with optimized library ###########################
 LFLAGS= -L$(ADMODEL)/lib  -ladmbo -lstdc++ -lxml2 -lm
@@ -113,7 +113,7 @@ LL=$(CC)
 
 
 vpath %.cpp $(SRCPATH)
-vpath %.h $(SRCPATH)
+vpath %.h $(INCPATH)
 
 OBJECTS=$(SRCS:%.cpp=$(OBJPATH)/%.o)
 
@@ -131,6 +131,7 @@ all: init $(BINPATH)/seapodym_fluxes
 
 init:
 	@test -d $(OBJPATH) || mkdir -v $(OBJPATH)
+	@test -d $(BINPATH) || mkdir -v $(BINPATH)
 
 test: init $(OBJECTS)
 	make -f Makefile.test

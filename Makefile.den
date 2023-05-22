@@ -1,5 +1,5 @@
 HEADERS= \
-XMLDocument2.h \
+XMLDocument.h \
 calpop.h \
 Map.h \
 Matrices.h \
@@ -21,7 +21,7 @@ VarSimtunaFunc.h
 SRCS= \
 main_densities.cpp \
 ad_buffers.cpp \
-XMLDocument2.cpp \
+XMLDocument.cpp \
 VarParamCoupled.cpp \
 seapodym_density.cpp \
 Map.cpp \
@@ -89,31 +89,31 @@ Calpop_recompute_coefs.cpp \
 hessian.cpp \
 like.cpp
 
-SRCPATH=DOM/src:src
-INCPATH=-IDOM/src -Isrc
+SRCPATH=src/utilities:src/data:src/models/control:src/models/functions:src/models/parameters:src/models/solver
+INCPATH=include
 BINPATH=bin
 
 ##############################################################
 OBJPATH=objs
-ADMODEL_HOME=$(ADMB_HOME)
+ADMODEL=$(ADMB_HOME)
 
 #DEBUG=-pg -g
 DEBUG= -g
 #production code
-CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -O3 -DOPT_LIB -Wall -Wno-deprecated -I$(ADMODEL_HOME)/include -I/usr/include/libxml2 $(INCPATH)
+CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -O3 -DOPT_LIB -Wall -Wno-deprecated -I$(ADMODEL)/include -I/usr/include/libxml2 -I$(INCPATH)
 
 ###### with safe library ################################
 #LFLAGS=-lm -L$(ADMODEL_HOME)/lib  -ladmb -lstdc++ -lxml2 
 
 ###### with optimized library ###########################
-LFLAGS= -L$(ADMODEL_HOME)/lib  -ladmbo -lstdc++ -lxml2 -lm
+LFLAGS= -L$(ADMODEL)/lib  -ladmbo -lstdc++ -lxml2 -lm
 
 CC=gcc
 LL=$(CC)
 
 
 vpath %.cpp $(SRCPATH)
-vpath %.h $(SRCPATH)
+vpath %.h $(INCPATH)
 
 OBJECTS=$(SRCS:%.cpp=$(OBJPATH)/%.o)
 
@@ -131,6 +131,7 @@ all: init $(BINPATH)/seapodym_densities
 
 init:
 	@test -d $(OBJPATH) || mkdir -v $(OBJPATH)
+	@test -d $(BINPATH) || mkdir -v $(BINPATH)
 
 test: init $(OBJECTS)
 	make -f Makefile.test
