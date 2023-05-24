@@ -1,5 +1,6 @@
 #include "SeapodymCoupled.h"
 
+void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood);
 ///This is the main loop for the model without fishing and fitting of density. 
 ///Similar to the default function, it includes the following calls:
 ///1- Initialising population density 
@@ -45,7 +46,6 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	int step_fishery_count= 0;
 	int jday = 0; 
 	int nbstoskip = param->nbsteptoskip; // nb of time step to skip before computing likelihood
-	ivector Nobs(0,nb_fishery-1); Nobs.initialize();
 
 	if (!param->gcalc()){
 		//need to read oxygen in case if month==past_month
@@ -60,17 +60,15 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	//----------------------------------------------//
 	// 	LIKELIHOOD INITIALISATION SECTION       //
 	//----------------------------------------------//	
-	double stocklike = 0.0;
 	dvariable likelihood = 0.0;
-	dvariable total_stock = 0.0;
 	//Reset model parameters:
 	reset(x);
+
 	//----------------------------------------------//
 	// 	LOCAL MATRICES ALLOCATION SECTION       //
 	//----------------------------------------------//	
 	dvar_matrix Spawning_Habitat;
 	dvar_matrix Total_pop;
-	dvar_matrix mature_fish, immature_fish;
 	dvar_matrix Habitat; 
 	dvar_matrix IFR; 
 	dvar_matrix ISR_denom; 
@@ -83,8 +81,6 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Density_pred.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-	mature_fish.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-	immature_fish.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 
 	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
@@ -98,8 +94,6 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	Spawning_Habitat.initialize();
 	Habitat.initialize();
 	Mortality.initialize();
-	mature_fish.initialize();
-	immature_fish.initialize();
 
 	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
@@ -137,15 +131,8 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////
 
-	//Add penalty function to the likelihood for sum(eF_habitat)<eF_sum
-	//Not used currently
-	double eFlike = 0.0;
-/*	if (param->tag_like[0]){
-		dvariable dvarEF_sum = sum(param->dvarsEF_habitat);
-		likelihood -= 1e1*log(eF_sum-dvarEF_sum);
-		eFlike -= 1e1*log(eF_sum - value(dvarEF_sum));
-	}
-*/
+	//Spin-up control: to be removed from functions
+	int pop_built = 1;
 	for (;t_count <= nbt_total; t_count++)
 	{
 
@@ -189,10 +176,6 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				ReadClimatologyOxy(tcur, qtr);
 			}
 		}
-		//Spin-up control: to be removed
-		int pop_built = 0; 
-		if (t_count > nbt_building) 
-			pop_built = 1;
 		//------------------------------------------------------------------------------//
 		//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//
 		//------------------------------------------------------------------------------//
@@ -249,8 +232,6 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 			}
 			
 			//4. Transport and mortality of adult cohort
-			///if (t_count > nbt_spinup_forage + nt_yn){ TO BE FIXED!!!
-			///for (int age=0; age<=nb_age_built[sp]; age++){///TO BE FIXED!!!	
 			for (int n=0; n<param->sp_nb_cohort_ad[sp]; n++){
 
 				//NOTE: currently current averaging doesn't depend on seasonal migrations
@@ -259,8 +240,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 					func.Average_currents(*param, mat, map, age, tcur, pop_built);
 				}
 					
-				//this section will work only if seasonality switch is ON 
-				//and for <1 maturity at age parameter
+				//the option with smooth maturity to be revised and if necessary to be used later
 				if (param->migrations_by_maturity_flag && param->seasonal_migrations[sp]){
 					cout << "In this version no smooth maturity; enter the age at first maturity. Exit now!" << endl; exit(1);
 					
@@ -285,6 +265,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 						pop.Precaldia_Caldia(map, *param, mat, Habitat, Total_pop, sp, age, tcur, jday);//checked	
 					}
 					if (!param->gcalc()){
+						// Additional outputs:
 						// only in simulation mode: compute mean speed 
 						// in BL/sec and mean diffusion rate in nmi^2/day
 						mat.MeanVarMovement(map,mat.advection_x,
@@ -321,9 +302,6 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				CalcMeanTemp(t_count,tcur);
 				CalcSums();
 			}
-			//Compute total stock before the new recruitment (survival)
-			if (param->stock_like[sp] && t_count > nbt_building+nbstoskip)
-				Total_Stock_comp(total_stock, sp);
 
 			//5. Compute spawning biomass (sum of young and adults density weighted by maturity-at-age)
 			SpawningBiomass_comp(Total_pop, sp);
@@ -344,44 +322,10 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 
 		//------------------------------------------------------//
 		//		COMPUTING LIKELIHOOD			//
-		//------------------------------------------------------//
-		//I. Total abundance likelihood: augmented only if param->stock_like = true
-		//Can be useful to constrain the total abundance if the spatial distribution
-		//fitting alone cannot provide the same abundance as in density_input.
-		if (t_count == nbt_total)
-			stocklike += get_stock_like(total_stock, likelihood);
-		
-		//II. Biomass density likelihood. Note, degrade it to the resolution of the density_input
-		if (t_count > nbt_building+nbstoskip){
-		int rr_x = (int)nlon/nlon_input; 
-		int rr_y = (int)nlat/nlat_input; 
-		TTRACE(rr_x,rr_y)
-		if (rr_x<1 || rr_y<1){ 
-			cerr << "Model resolution should be divisible without remainder by the resolution of input density field." << 
-			         endl<< "Currenly nlon/nlon_input = " << rr_x << ", and nlat/nlat_input = " << rr_y << endl << "Will exit now...";
-			exit(1);
-		}
-		int i0 = 0; int iN = nlon_input; //put 40-160 for 135E-110W in PO-2deg configuration
-		int j0 = 0; int jN = nlat_input; //put 40-90 for 25S-25N in PO-2deg configuration
-		for (int sp=0; sp < nb_species; sp++){
-                        for (int i=i0; i < iN; i++){
-				for (int j=j0; j<jN ; j++){
-					if (mat.density_input(t_count,i,j)){
-						dvariable Bsum = 0.0;
-						for (int ii=0; ii<rr_x; ii++)
-						for (int jj=0; jj<rr_y; jj++){
-							if (map.carte(rr_x*i+ii,rr_y*j+jj)){
-							       	Bsum += Density_pred[rr_x*i+ii][rr_y*j+jj];
-							}
-						}
-							
-						if (Bsum>0)	 
-	                                		likelihood += (rr_x*rr_y*mat.density_input(t_count,i,j)-Bsum)*
-							      	      (rr_x*rr_y*mat.density_input(t_count,i,j)-Bsum);
-                                        }
-                                }
-                        }
-		}}
+		//------------------------------------------------------//	
+		//Biomass density likelihood. Note, degrade it to the resolution of the density_input
+		if (t_count > nbt_building+nbstoskip)
+			update_density_like(Density_pred, mat.density_input(t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood);
 
 		if (writeoutputfiles){
 			if (!param->gcalc())	
@@ -411,9 +355,38 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 	param->total_like = value(likelihood);
-	cout << "end of forward run, likelihood: " << value(likelihood)-eFlike << " " << eFlike << endl;
+	cout << "end of forward run, likelihood: " << value(likelihood) << endl;
 
 	return value(likelihood);
+}
+
+//potentially to be moved to like.cpp
+void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood){
+
+	int rr_x = (int)nlon/nlon_input; 
+	int rr_y = (int)nlat/nlat_input; 
+	//TTRACE(rr_x,rr_y)
+	if (rr_x<1 || rr_y<1){ 
+		cerr << "Model resolution should be divisible without remainder by the resolution of input density field." << 
+		         endl<< "Currenly nlon/nlon_input = " << rr_x << ", and nlat/nlat_input = " << rr_y << endl << "Will exit now...";
+		exit(1);
+	}
+	for (int i=0; i<nlon_input; i++){
+		for (int j=0; j<nlat_input ; j++){
+			if (density_input(i,j)){
+				dvariable Bsum = 0.0;
+				for (int ii=0; ii<rr_x; ii++)
+				for (int jj=0; jj<rr_y; jj++){
+					if (map_carte(rr_x*i+ii,rr_y*j+jj))
+					       	Bsum += Density_pred[rr_x*i+ii][rr_y*j+jj];
+				}
+				
+				if (Bsum>0)	 
+	                      		likelihood += (rr_x*rr_y*density_input(i,j)-Bsum)*
+					      	      (rr_x*rr_y*density_input(i,j)-Bsum);
+			}
+		}
+	}
 }
 
 void SeapodymCoupled::ReadDensity()
@@ -427,20 +400,18 @@ void SeapodymCoupled::ReadDensity()
 
 	int nlevel = 0;
 	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
-	cout << nlon_input << " "<< nlat_input << " " << nlevel << endl;
+	cout << "Input density dimensions (nt, nx, ny): " << nlevel << " " << nlon_input << " "<< nlat_input << endl;
 
 	mat.density_input.allocate(1,nbt_total);
 	for (int t=1; t<=nbt_total; t++){
 		mat.density_input[t].allocate(0, nlon_input, 0, nlat_input);
 		mat.density_input[t].initialize();
 	}
-	cout << nbt_total << endl; 
 	for (; t_count<=nbt_total; t_count++){
 		getDate(jday);
 		if (t_count > nbt_building) {
 			//TIME SERIES 
 			t_series = t_count - nbt_building + nbt_start_series;
-			//cout << t_series << endl;
 			//----------------------------------------------//
 			//	READING DENSITY DATA			//
 			//----------------------------------------------//
@@ -467,7 +438,7 @@ void SeapodymCoupled::ReadDensity()
 				for (int i=0;i<nlon_input;i++)
 				{
 					litbin.read(( char *)&buf,sizeofDymInputType);
-					mat.density_input[t_count][i][j]= buf;
+					mat.density_input[t_count][i+1][j+1]= buf;
 				}
 			}
 		
