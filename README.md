@@ -94,9 +94,11 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
     [~/seapodym/bin/]$ seapodym_habitats -h
 
-  to see the running options of this SEAPODYM sub-model. To compile all model applications at once, run the following batch file inside folder containing Makefiles
+  to see the running options of this SEAPODYM sub-model. 
 
-    [~/seapodym/bin/]$ . all.bat
+  To compile all model applications at once, run the following batch file inside folder containing Makefiles
+
+    [~/seapodym/]$ . all.bat
 
   For convenience, the path to the _~/seapodym/bin/_ directory can be added to variable PATH in the user's _~/.bashrc_. 
 
@@ -105,11 +107,11 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
     
   Example #1. **Habitat**
 
-  Go to the *example-configs* directory and test that the binaries execute nominally and the models generate expected outputs on your computer by executing a small habitat model example
+  Go to the *example-configs* directory and test that the binaries execute nominally and the models generate expected outputs on your computer by executing a small habitat model example.
     
     [~]$ cd ~/seapodym/examples-configs/habitat    
 
-  **Simulation** run
+  *Simulation run*
 
   To execute habitat model in simulation mode type the command with option *-s*
     
@@ -117,7 +119,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   The simulation log can be compared with the one provided in the sim.out file. 
   
-  **Optimization** run
+  *Optimization run*
 
   If option *-s* is omited, the application _seapodym\_habitats_ will start optimization. Note, due to much higher CPU and RAM demands compared to simulation mode, running optimization experiments is advised only after familializing yourself with the model and method basics, described in [Model Reference Manual](docs/manual/Seapodym_user_manual.pdf). 
 
@@ -130,25 +132,25 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   Example #2. **Skipjack**
 
-  This is a more comprehensive full model example, the pre-configured model of skipjack tuna, based on the [parameter estimation approach with fisheries and tagging data](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2018-0470). To run this model, the corresponding forcing directory needs to be downloaded from the public [data repository](https://osf.io/h8u93) on the OSF platform.
+  This is a more comprehensive full model example, the pre-configured model of skipjack tuna, based on the [parameter estimation approach with fisheries and tagging data](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2018-0470). To run this model, the corresponding forcing directory needs to be downloaded from the public [data repository](https://osf.io/h8u93) on the OSF platform. 
 
-  Unzip and place the forcing files into a local directory without modifying the folder structure.
+  Once downloaded, unzip and place the forcing files into a local directory without modifying the folder structure.
 
-  Now open the skipjack\_F0.xml parfile in the preferred text editor and modify the ${SEAPODYM\_HOME}, so to provide the full absolute path to the unzipped *data* folder.  
+  Now open the skipjack\_F0.xml parfile in the preferred text editor and replace the ${SEAPODYM\_HOME} by the full absolute path to the unzipped *data* folder.  
     
     [~]$ cd example-configs/skipjack/
 
-  **Simulation** run    
+  *Simulation run*
     
   To run this optimal model in simulation mode type the following command
 
     [~/seapodym/example-configs/skipjack/]$ seapodym -s skipjack_F0.xml
     
-  The simulation log can be compared with the one provided in sim\_F0.out file. The binary outputs will be written in folder _output/output\_F0\_/_.
+  The simulation log can be compared with the one provided in sim\_F0.out file. The binary outputs will be written in folder _output/output\_F0_.
 
   Note that running this simulation with fishing requires fisheries data, which are not public. To inquire for the access to the data, please email <ofpdatarequest@spc.int>. Your request will be examined based on the eligibility of your organisation and your project. Then, the simulation with fishing can be run with the XML configuration file skipjack.xml, and the screen log compared with provided sim.out file.
 
-  **Optimization** run
+  *Optimization run*
 
   It is possible to run optimization without fisheries data using _seapodym\_densities_ application. Make sure it has been built. If not run the batch file to compile all five applications (see *Building from source* instructions above). Similarly to _seapodym\_habitats_, this application uses model outputs as "observations". Using this example configuration, make a copy of _skipjack\_F0.xml_ parfile
 
