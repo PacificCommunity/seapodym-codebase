@@ -1,0 +1,772 @@
+
+starting time: Wed May 24 18:55:25 2023
+
+SST is in use in this simulation!
+
+IMPORTANT: Maturity-at-age described by step function with 0 below and 1 above 50% maturity
+
+WARNING: LF likelihood is forced to OFF in NO FISHING run
+WARNING: LF likelihood is not active -> use_lf_regstruc is OFF -> use regional structure for biomass aggregation
+INFO: Parfile regional structure in use; number of regions: 5
+Is global domain? NO
+src/utilities/Date.cpp : Time steps to skip in DYM files 0
+
+Control variables in optimisation:
+1. Mp mean exp(0) = 0.0759582
+2. Ms mean max(0) = 0.00452179
+3. Ms mean slope(0) = 1.13737
+4. M mean range(0) = 2.30324e-07
+5. a sst spawning(0) = 1.49263
+6. b sst spawning(0) = 31.1
+7. a sst larvae(0) = 1.49263
+8. b sst larvae(0) = 28.5003
+9. alpha hsp prey(0) = 0.000569604
+10. alpha hsp predator(0) = 2.30637
+11. beta hsp predator(0) = 1.53425
+12. a sst habitat(0) = 3
+13. b sst habitat(0) = 26.0496
+14. T age size slope(0) = 2.83058
+15. a oxy habitat(0) = 0.0001
+16. b oxy habitat(0) = 3.76416
+17. eF habitat epi(0) = 3.99991
+18. eF habitat mmeso(0) = 0.897307
+19. eF habitat hmbathy(0) = 3.99995
+20. sigma species(0) = 4.80589
+21. MSS species(0) = 0.489361
+22. MSS size slope(0) = 0.427877
+23. c diff fish(0) = 0.929416
+24. nb recruitment(0) = 0.0387262
+25. a adults spawning(0) = 0.160522
+Total number of variables: 25
+
+-----Standard Time Stepping - 360 days calendar-----
+Number of time steps in simulation : 60
+Number of time steps in spin up    : 0
+Delta T                            : 30
+Jday_run                           : 712485
+Start Date Run                     : 19790115
+End Date Run                       : 19831215
+----------------------------------------------------
+Reading all forcing variables at once... 
+----------------------------------------------------
+     SIMULATION WITHOUT FISHING!!!
+----------------------------------------------------
+Reading input density file... 
+Input density dimensions (nt, nx, ny): 60 101 60
+Number of time steps in simulation: 60
+
+entering minimization loop
+total penalty: 0.000288439; end of forward run, likelihood: 27.5711
+function evaluation 0
+
+Initial statistics: phase= 1 | nvar= 25 | iter=  0 | nll=2.76e+01 | mag=2.22e+03 | par[ 11]=param[11]
+25 variables; iteration 0; function evaluation 0
+Function value 2.7571057e+01; maximum gradient component mag 2.2168e+03
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.70732  1.00552e+03 |  2 -0.06098 -6.50267e+02 |  3 -0.09597 -1.11908e+03
+  4 -0.99957  1.90967e-01 |  5 -0.00469  9.25212e+01 |  6  0.99561 -8.69011e-01
+  7 -0.00469  2.17597e+02 |  8 -0.98471 -3.94445e-01 |  9 -0.96961 -2.15577e+02
+ 10  0.64092 -2.42737e+02 | 11  0.01454  2.21680e+03 | 12 -0.99891  1.82781e-02
+ 13  0.99103 -3.94709e-01 | 14  0.66468 -1.57328e+01 | 15 -1.00000 -1.41097e-03
+ 16  0.63816 -5.69093e+01 | 17  0.99386  2.06469e-01 | 18 -0.06549  1.33578e+01
+ 19  0.99534  2.99881e-01 | 20  0.74748 -1.34522e+01 | 21 -0.59487  3.16309e+02
+ 22 -0.75298 -1.37688e+01 | 23  0.63860  2.08770e+01 | 24 -0.51603  1.24147e+03
+ 25 -0.24240 -6.44337e+02 |
+total penalty: 2.88365e-04; end of forward run, likelihood: 2.94503e-01
+function evaluation 1
+
+Intermediate statistics: phase= 1 | nvar= 25 | iter=  1 | nll=2.95e-01 | mag=9.50e+01 | par[ 11]=param[11]
+25 variables; iteration 1; function evaluation 1
+Function value 2.9450348e-01; maximum gradient component mag 9.5035e+01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71296  5.12351e+01 |  2 -0.05733 -3.29084e+01 |  3 -0.08969 -5.63147e+01
+  4 -0.99957  8.35600e-04 |  5 -0.00521  6.22546e+00 |  6  0.99562 -5.31855e-02
+  7 -0.00592  1.21564e+01 |  8 -0.98471 -1.55596e-01 |  9 -0.96840 -7.44542e+00
+ 10  0.64228 -1.08467e+01 | 11  0.00209  9.50349e+01 | 12 -0.99891  2.46438e-03
+ 13  0.99103 -4.94057e-02 | 14  0.66477 -1.40422e+00 | 15 -1.00000 -3.47593e-05
+ 16  0.63848 -1.09772e+01 | 17  0.99386  1.60860e-02 | 18 -0.06557  9.28997e-01
+ 19  0.99534  2.14751e-02 | 20  0.74755 -9.05518e-01 | 21 -0.59665  1.55501e+01
+ 22 -0.75291 -6.04065e-01 | 23  0.63848  1.33589e+00 | 24 -0.52300  6.51732e+01
+ 25 -0.23878 -3.15989e+01 |
+total penalty: 3.26167e-04; end of forward run, likelihood: 5.28232e+02
+function evaluation 2
+total penalty: 2.89992e-04; end of forward run, likelihood: 1.37629e+00
+function evaluation 3
+total penalty: 2.88695e-04; end of forward run, likelihood: 2.07134e-01
+function evaluation 4
+phase= 1 | nvar= 25 | iter=  2 | nll=2.07e-01 | mag=1.32e+02 | par[ 11]=param[11]
+25 variables; iteration 2; function evaluation 4
+Function value 2.0713393e-01; maximum gradient component mag 1.3214e+02
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71599  5.97772e+01 |  2 -0.05554 -3.94157e+01 |  3 -0.08685 -6.80940e+01
+  4 -0.99956  5.57697e-03 |  5 -0.00661  5.87572e+00 |  6  0.99563 -5.14367e-02
+  7 -0.00736  1.36594e+01 |  8 -0.98461 -7.86871e-02 |  9 -0.97038 -1.19732e+01
+ 10  0.64188 -1.45526e+01 | 11  0.00872  1.32137e+02 | 12 -0.99891  1.62711e-03
+ 13  0.99106 -3.13736e-02 | 14  0.66527 -1.03765e+00 | 15 -1.00000 -8.20773e-05
+ 16  0.64464  3.61637e+00 | 17  0.99386  1.20117e-02 | 18 -0.06579  7.71775e-01
+ 19  0.99533  1.81259e-02 | 20  0.74776 -4.31414e-01 | 21 -0.59718  9.25830e+00
+ 22 -0.75294 -4.18425e-01 | 23  0.63822  1.07617e-02 | 24 -0.52815  7.70349e+01
+ 25 -0.23776 -3.73250e+01 |
+total penalty: 2.89184e-04; end of forward run, likelihood: 2.59492e-01
+function evaluation 5
+total penalty: 2.88878e-04; end of forward run, likelihood: 1.73745e-01
+function evaluation 6
+phase= 1 | nvar= 25 | iter=  3 | nll=1.74e-01 | mag=1.33e+02 | par[ 11]=param[11]
+25 variables; iteration 3; function evaluation 6
+Function value 1.7374492e-01; maximum gradient component mag 1.3260e+02
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71714  5.89697e+01 |  2 -0.05451 -3.89711e+01 |  3 -0.08504 -6.73271e+01
+  4 -0.99956  1.07670e-02 |  5 -0.00738  5.78923e+00 |  6  0.99563 -5.45641e-02
+  7 -0.00830  1.33984e+01 |  8 -0.98454 -4.11882e-02 |  9 -0.97166 -1.15528e+01
+ 10  0.64173 -1.45439e+01 | 11  0.01174  1.32601e+02 | 12 -0.99891  1.00650e-03
+ 13  0.99107 -2.27725e-02 | 14  0.66553 -1.01395e+00 | 15 -1.00000 -1.32671e-04
+ 16  0.64398  2.65705e+00 | 17  0.99386  1.19819e-02 | 18 -0.06588  8.17154e-01
+ 19  0.99533  1.97362e-02 | 20  0.74767 -9.12933e-01 | 21 -0.59284  2.34007e+01
+ 22 -0.75314 -1.00981e+00 | 23  0.63869  1.90883e+00 | 24 -0.53172  7.69606e+01
+ 25 -0.23788 -3.74150e+01 |
+total penalty: 2.88910e-04; end of forward run, likelihood: 1.33198e-01
+function evaluation 7
+phase= 1 | nvar= 25 | iter=  4 | nll=1.33e-01 | mag=1.24e+02 | par[ 11]=param[11]
+25 variables; iteration 4; function evaluation 7
+Function value 1.3319815e-01; maximum gradient component mag 1.2375e+02
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71724  5.33075e+01 |  2 -0.05336 -3.58594e+01 |  3 -0.08283 -6.23832e+01
+  4 -0.99955  1.12187e-02 |  5 -0.00856  5.15479e+00 |  6  0.99564 -4.96216e-02
+  7 -0.00974  1.16080e+01 |  8 -0.98444  1.53732e-02 |  9 -0.97462 -1.05586e+01
+ 10  0.64147 -1.34391e+01 | 11  0.01634  1.23752e+02 | 12 -0.99891  1.09853e-03
+ 13  0.99108 -2.47728e-02 | 14  0.66592 -9.83753e-01 | 15 -1.00000 -1.36786e-04
+ 16  0.63828 -2.84799e+00 | 17  0.99385  1.25751e-02 | 18 -0.06601  8.18564e-01
+ 19  0.99533  1.86848e-02 | 20  0.74773 -7.83597e-01 | 21 -0.59349  1.86930e+01
+ 22 -0.75315 -8.06840e-01 | 23  0.63840  1.23779e+00 | 24 -0.53829  6.95219e+01
+ 25 -0.23914 -3.36962e+01 |
+total penalty: 2.88030e-04; end of forward run, likelihood: 5.94091e-02
+function evaluation 8
+phase= 1 | nvar= 25 | iter=  5 | nll=5.94e-02 | mag=6.39e+01 | par[ 11]=param[11]
+25 variables; iteration 5; function evaluation 8
+Function value 5.9409067e-02; maximum gradient component mag 6.3860e+01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.70601  2.58658e+01 |  2 -0.05204 -1.75800e+01 |  3 -0.07661 -3.07827e+01
+  4 -0.99954  6.35948e-03 |  5 -0.01034  1.98887e+00 |  6  0.99566 -2.18926e-02
+  7 -0.00896  5.20004e+00 |  8 -0.98452  4.23757e-02 |  9 -0.98524 -3.42999e+00
+ 10  0.64114 -6.84475e+00 | 11  0.01671  6.38603e+01 | 12 -0.99891  2.74183e-04
+ 13  0.99113 -8.55590e-03 | 14  0.66713 -4.30883e-01 | 15 -1.00000 -1.13119e-04
+ 16  0.63787 -1.24781e+00 | 17  0.99384  5.68087e-03 | 18 -0.06667  3.84102e-01
+ 19  0.99531  8.92202e-03 | 20  0.74786 -4.54711e-01 | 21 -0.59312  1.13153e+01
+ 22 -0.75324 -4.80516e-01 | 23  0.63869  1.04060e+00 | 24 -0.54983  3.32322e+01
+ 25 -0.25068 -1.61706e+01 |
+total penalty: 2.82970e-04; end of forward run, likelihood: 6.78136e-01
+function evaluation 9
+total penalty: 2.89696e-04; end of forward run, likelihood: 3.58840e-02
+function evaluation 10
+phase= 1 | nvar= 25 | iter=  6 | nll=3.59e-02 | mag=4.64e+00 | par[ 24]=param[24]
+25 variables; iteration 6; function evaluation 10
+Function value 3.5883967e-02; maximum gradient component mag -4.6378e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.70252 -2.58142e+00 |  2 -0.05115  1.47992e+00 |  3 -0.07341  2.42421e+00
+  4 -0.99954  6.93440e-04 |  5 -0.01018 -7.85742e-01 |  6  0.99566  3.44092e-03
+  7 -0.00833 -1.07393e+00 |  8 -0.98454  4.83160e-02 |  9 -0.99651 -8.18629e-02
+ 10  0.64113  8.93348e-02 | 11  0.01631  4.42415e-01 | 12 -0.99891 -3.82778e-04
+ 13  0.99115  4.79292e-03 | 14  0.66771  4.71871e-02 | 15 -1.00000 -6.62654e-05
+ 16  0.63729 -6.30277e-01 | 17  0.99384 -4.84335e-04 | 18 -0.06692 -1.71329e-02
+ 19  0.99530 -1.58810e-04 | 20  0.74799 -1.63549e-01 | 21 -0.59277  4.45771e+00
+ 22 -0.75334 -1.64920e-01 | 23  0.63806  8.21726e-01 | 24 -0.55361 -4.63776e+00
+ 25 -0.25608  1.97468e+00 |
+total penalty: 2.79849e-04; end of forward run, likelihood: 2.17402e-01
+function evaluation 11
+total penalty: 2.88331e-04; end of forward run, likelihood: 3.32835e-02
+function evaluation 12
+phase= 1 | nvar= 25 | iter=  7 | nll=3.33e-02 | mag=4.72e+00 | par[ 21]=param[21]
+25 variables; iteration 7; function evaluation 12
+Function value 3.3283506e-02; maximum gradient component mag 4.7207e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.70432 -1.47110e+00 |  2 -0.04971  1.03309e+00 |  3 -0.07138  1.84360e+00
+  4 -0.99951  2.89472e-04 |  5 -0.01043 -1.16308e+00 |  6  0.99566  6.22437e-03
+  7 -0.00949 -7.71604e-01 |  8 -0.98436  4.21309e-02 |  9 -0.99645 -1.11606e-01
+ 10  0.64148 -2.15103e-01 | 11  0.01648  3.06276e+00 | 12 -0.99892 -6.52448e-04
+ 13  0.99120  1.02469e-02 | 14  0.66879  1.89873e-01 | 15 -1.00000 -3.63522e-05
+ 16  0.63695 -7.80143e-01 | 17  0.99383 -1.84051e-03 | 18 -0.06723 -1.02241e-01
+ 19  0.99529 -2.26248e-03 | 20  0.74841 -1.52530e-01 | 21 -0.59287  4.72066e+00
+ 22 -0.75359 -1.92376e-01 | 23  0.63615  6.29618e-01 | 24 -0.55205 -2.34038e+00
+ 25 -0.26096  9.21692e-01 |
+total penalty: 2.87197e-04; end of forward run, likelihood: 2.91834e-02
+function evaluation 13
+phase= 1 | nvar= 25 | iter=  8 | nll=2.92e-02 | mag=4.96e+00 | par[ 21]=param[21]
+25 variables; iteration 8; function evaluation 13
+Function value 2.9183405e-02; maximum gradient component mag 4.9592e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.70720 -5.14396e-01 |  2 -0.04929  3.33989e-01 |  3 -0.07260  5.86357e-01
+  4 -0.99946  1.40600e-03 |  5 -0.00803 -6.80157e-01 |  6  0.99565  2.80181e-03
+  7 -0.01152 -6.10062e-01 |  8 -0.98404  4.30992e-02 |  9 -0.99632 -1.25252e-01
+ 10  0.64222 -4.26251e-01 | 11  0.01609  4.94584e+00 | 12 -0.99892 -5.09744e-04
+ 13  0.99124  7.75373e-03 | 14  0.66961  1.04916e-01 | 15 -1.00000 -5.11493e-05
+ 16  0.63724 -6.48069e-01 | 17  0.99383 -9.12991e-04 | 18 -0.06715 -3.95792e-02
+ 19  0.99529 -1.03070e-03 | 20  0.74894 -1.60948e-01 | 21 -0.59278  4.95924e+00
+ 22 -0.75391 -1.99208e-01 | 23  0.63414  3.84400e-01 | 24 -0.55264 -1.11491e+00
+ 25 -0.26694  2.47271e-01 |
+total penalty: 2.84359e-04; end of forward run, likelihood: 2.51962e-02
+function evaluation 14
+phase= 1 | nvar= 25 | iter=  9 | nll=2.52e-02 | mag=6.12e+00 | par[ 11]=param[11]
+25 variables; iteration 9; function evaluation 14
+Function value 2.5196171e-02; maximum gradient component mag 6.1210e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71393  6.20978e-01 |  2 -0.04902 -4.61184e-01 |  3 -0.07715 -8.24897e-01
+  4 -0.99937  3.45126e-03 |  5 -0.00952 -1.15596e+00 |  6  0.99565  5.10934e-03
+  7 -0.01433 -4.12673e-01 |  8 -0.98332  5.10513e-02 |  9 -0.99706 -8.42635e-02
+ 10  0.64415 -5.69713e-01 | 11  0.01473  6.12096e+00 | 12 -0.99892 -6.31209e-04
+ 13  0.99135  9.01672e-03 | 14  0.67249  1.70964e-01 | 15 -1.00000 -5.69866e-05
+ 16  0.63771 -4.20325e-01 | 17  0.99381 -1.68738e-03 | 18 -0.06771 -6.39228e-02
+ 19  0.99527 -1.57702e-03 | 20  0.75011 -1.79746e-01 | 21 -0.59356  5.08432e+00
+ 22 -0.75472 -2.27354e-01 | 23  0.63797  8.18832e-01 | 24 -0.55332  5.39084e-01
+ 25 -0.27783 -7.58658e-01 |
+total penalty: 2.74365e-04; end of forward run, likelihood: 3.19001e-02
+function evaluation 15
+total penalty: 2.81089e-04; end of forward run, likelihood: 2.40815e-02
+function evaluation 16
+phase= 1 | nvar= 25 | iter= 10 | nll=2.41e-02 | mag=1.02e+01 | par[ 11]=param[11]
+25 variables; iteration 10; function evaluation 16
+Function value 2.4081509e-02; maximum gradient component mag 1.0165e+01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71562  2.27926e+00 |  2 -0.04798 -1.51807e+00 |  3 -0.07694 -2.63096e+00
+  4 -0.99936  3.43140e-03 |  5 -0.00703 -6.38995e-01 |  6  0.99564  1.37712e-03
+  7 -0.01226 -3.68829e-03 |  8 -0.98320  4.92592e-02 |  9 -0.99676 -1.35212e-01
+ 10  0.64494 -1.00740e+00 | 11  0.01509  1.01646e+01 | 12 -0.99892 -5.35450e-04
+ 13  0.99140  7.54337e-03 | 14  0.67378  9.79827e-02 | 15 -0.99999 -6.63870e-05
+ 16  0.63755 -5.34985e-01 | 17  0.99381 -7.87334e-04 | 18 -0.06817 -7.74951e-03
+ 19  0.99526 -3.88958e-04 | 20  0.75086 -2.35727e-01 | 21 -0.59409  5.41071e+00
+ 22 -0.75495 -2.36691e-01 | 23  0.64065  1.13410e+00 | 24 -0.55330  2.92652e+00
+ 25 -0.28011 -1.92808e+00 |
+total penalty: 2.76475e-04; end of forward run, likelihood: 2.20723e-02
+function evaluation 17
+phase= 1 | nvar= 25 | iter= 11 | nll=2.21e-02 | mag=1.16e+01 | par[ 11]=param[11]
+25 variables; iteration 11; function evaluation 17
+Function value 2.2072262e-02; maximum gradient component mag 1.1576e+01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71689  2.94990e+00 |  2 -0.04717 -1.97928e+00 |  3 -0.07799 -3.44937e+00
+  4 -0.99936  3.76270e-03 |  5 -0.00647 -5.83438e-01 |  6  0.99566  1.11660e-03
+  7 -0.00849  2.15060e-01 |  8 -0.98310  4.77247e-02 |  9 -0.99655 -1.56631e-01
+ 10  0.64608 -1.15950e+00 | 11  0.01514  1.15761e+01 | 12 -0.99893 -5.31683e-04
+ 13  0.99149  7.69911e-03 | 14  0.67617  1.03768e-01 | 15 -0.99999 -7.68631e-05
+ 16  0.63746 -5.46720e-01 | 17  0.99380 -7.93563e-04 | 18 -0.06934 -1.33436e-02
+ 19  0.99524 -5.27411e-04 | 20  0.75254 -2.16483e-01 | 21 -0.59409  5.44558e+00
+ 22 -0.75533 -2.40302e-01 | 23  0.64036  1.04473e+00 | 24 -0.55385  3.85712e+00
+ 25 -0.28118 -2.37797e+00 |
+total penalty: 2.64659e-04; end of forward run, likelihood: 1.84066e-02
+function evaluation 18
+phase= 1 | nvar= 25 | iter= 12 | nll=1.84e-02 | mag=8.30e+00 | par[ 11]=param[11]
+25 variables; iteration 12; function evaluation 18
+Function value 1.8406627e-02; maximum gradient component mag 8.3034e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71596  1.87008e+00 |  2 -0.04536 -1.22708e+00 |  3 -0.07897 -2.12465e+00
+  4 -0.99940  2.65782e-03 |  5 -0.00498 -5.55600e-01 |  6  0.99565  1.61355e-03
+  7 -0.00834  2.71317e-02 |  8 -0.98282  4.22530e-02 |  9 -0.99688 -1.08107e-01
+ 10  0.64822 -8.13804e-01 | 11  0.01491  8.30342e+00 | 12 -0.99893 -4.95603e-04
+ 13  0.99164  7.40875e-03 | 14  0.68021  1.05428e-01 | 15 -0.99999 -1.13886e-04
+ 16  0.63757 -4.19600e-01 | 17  0.99378 -9.39704e-04 | 18 -0.07055 -2.87277e-02
+ 19  0.99523 -8.62066e-04 | 20  0.75449 -1.85634e-01 | 21 -0.59419  4.72387e+00
+ 22 -0.75615 -2.05106e-01 | 23  0.64049  9.69257e-01 | 24 -0.55331  2.38051e+00
+ 25 -0.28018 -1.58445e+00 |
+total penalty: 2.28564e-04; end of forward run, likelihood: 1.22002e-02
+function evaluation 19
+phase= 1 | nvar= 25 | iter= 13 | nll=1.22e-02 | mag=6.81e+00 | par[ 11]=param[11]
+25 variables; iteration 13; function evaluation 19
+Function value 1.2200160e-02; maximum gradient component mag 6.8101e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.71776  1.72546e+00 |  2 -0.04321 -1.12324e+00 |  3 -0.08045 -1.94573e+00
+  4 -0.99929  2.34241e-03 |  5 -0.00569 -3.80099e-01 |  6  0.99546  7.32706e-04
+  7 -0.00202  1.04540e-01 |  8 -0.98467  2.76840e-02 |  9 -0.99693 -8.86291e-02
+ 10  0.64555 -6.78739e-01 | 11  0.01418  6.81013e+00 | 12 -0.99892 -4.02950e-04
+ 13  0.99133  5.92961e-03 | 14  0.67745  7.12607e-02 | 15 -0.99992 -6.68600e-04
+ 16  0.63783 -2.89383e-01 | 17  0.99390 -4.90313e-04 | 18 -0.06171 -2.02048e-03
+ 19  0.99555 -3.28699e-04 | 20  0.75075 -1.44720e-01 | 21 -0.59471  3.49594e+00
+ 22 -0.75921 -1.49354e-01 | 23  0.63891  6.79980e-01 | 24 -0.55293  2.19063e+00
+ 25 -0.28097 -1.40553e+00 |
+total penalty: 1.66912e-04; end of forward run, likelihood: 5.34131e-03
+function evaluation 20
+phase= 1 | nvar= 25 | iter= 14 | nll=5.34e-03 | mag=5.72e-01 | par[ 11]=param[11]
+25 variables; iteration 14; function evaluation 20
+Function value 5.3413113e-03; maximum gradient component mag -5.7203e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.72270 -2.07494e-01 |  2 -0.04426  1.86330e-01 |  3 -0.08229  3.64811e-01
+  4 -0.99946 -4.03900e-04 |  5 -0.00361 -9.35432e-02 |  6  0.99535  9.34788e-04
+  7  0.00635 -6.89145e-02 |  8 -0.98462  5.60332e-03 |  9 -0.99762 -1.06644e-02
+ 10  0.63534  7.36188e-02 | 11  0.01190 -5.72031e-01 | 12 -0.99874 -1.69641e-04
+ 13  0.98852  3.90173e-03 | 14  0.66739  3.68278e-02 | 15 -0.99826 -2.03854e-03
+ 16  0.63809  1.80594e-03 | 17  0.99393 -3.29479e-04 | 18 -0.07058 -2.53404e-02
+ 19  0.99596 -7.15223e-04 | 20  0.75816  1.43743e-04 | 21 -0.59595 -2.11880e-02
+ 22 -0.77534  4.04093e-03 | 23  0.63777  4.06993e-02 | 24 -0.55078 -4.62509e-01
+ 25 -0.28077  1.48496e-01 |
+total penalty: 1.49916e-04; end of forward run, likelihood: 4.85323e-03
+function evaluation 21
+phase= 1 | nvar= 25 | iter= 15 | nll=4.85e-03 | mag=5.17e+00 | par[ 11]=param[11]
+25 variables; iteration 15; function evaluation 21
+Function value 4.8532317e-03; maximum gradient component mag 5.1745e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.72464  2.38925e+00 |  2 -0.03566 -1.53814e+00 |  3 -0.08619 -2.69096e+00
+  4 -0.99941  2.15510e-04 |  5 -0.00579  2.98429e-01 |  6  0.99522 -2.88978e-03
+  7  0.00895  5.36604e-01 |  8 -0.98920  4.93224e-04 |  9 -0.99791 -4.68135e-02
+ 10  0.62547 -5.87556e-01 | 11  0.01097  5.17447e+00 | 12 -0.99858 -2.43702e-05
+ 13  0.98490  3.41634e-04 | 14  0.65195 -5.27850e-02 | 15 -0.99588 -7.34442e-03
+ 16  0.63820 -1.32032e-01 | 17  0.99397  7.07566e-04 | 18 -0.06633  4.47487e-02
+ 19  0.99629  5.88271e-04 | 20  0.76500 -2.49567e-02 | 21 -0.59606  4.78080e-01
+ 22 -0.78032 -1.38168e-02 | 23  0.63766 -1.02830e-02 | 24 -0.54919  3.12978e+00
+ 25 -0.28084 -1.60132e+00 |
+total penalty: 1.36772e-04; end of forward run, likelihood: 4.59774e-03
+function evaluation 22
+phase= 1 | nvar= 25 | iter= 16 | nll=4.60e-03 | mag=4.88e-01 | par[ 24]=param[24]
+25 variables; iteration 16; function evaluation 22
+Function value 4.5977414e-03; maximum gradient component mag 4.8834e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.72617  4.49379e-01 |  2 -0.03888 -2.40224e-01 |  3 -0.08511 -3.77333e-01
+  4 -0.99912 -6.49501e-04 |  5 -0.00625  8.27933e-02 |  6  0.99534 -7.05424e-04
+  7  0.00935  1.27145e-01 |  8 -0.99244 -2.06381e-04 |  9 -0.99843 -1.17040e-02
+ 10  0.62899 -4.71480e-02 | 11  0.01128  4.00248e-01 | 12 -0.99849 -8.15107e-05
+ 13  0.98300  2.01479e-03 | 14  0.64908 -1.54267e-02 | 15 -0.99180  4.19916e-02
+ 16  0.63822 -5.61637e-02 | 17  0.99397  2.33510e-04 | 18 -0.06545  1.13146e-02
+ 19  0.99654  5.46852e-05 | 20  0.76620  1.89175e-03 | 21 -0.59621 -1.83695e-01
+ 22 -0.78532  1.24312e-02 | 23  0.63769 -4.15208e-02 | 24 -0.54844  4.88341e-01
+ 25 -0.28021 -2.64415e-01 |
+total penalty: 1.58710e-04; end of forward run, likelihood: 4.41171e-03
+function evaluation 23
+phase= 1 | nvar= 25 | iter= 17 | nll=4.41e-03 | mag=1.92e+00 | par[ 11]=param[11]
+25 variables; iteration 17; function evaluation 23
+Function value 4.4117070e-03; maximum gradient component mag -1.9152e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.72757 -5.25966e-01 |  2 -0.04085  3.90143e-01 |  3 -0.08472  7.18455e-01
+  4 -0.99882 -1.09090e-03 |  5 -0.00638  1.74590e-02 |  6  0.99547 -1.00416e-04
+  7  0.00929 -9.97047e-02 |  8 -0.99581  1.49458e-04 |  9 -0.99892  3.56950e-04
+ 10  0.63000  2.14587e-01 | 11  0.01137 -1.91520e+00 | 12 -0.99840 -8.41292e-05
+ 13  0.98115  1.96048e-03 | 14  0.64776 -1.29007e-02 | 15 -0.99710 -4.62460e-03
+ 16  0.63822 -6.23610e-03 | 17  0.99394  1.75353e-04 | 18 -0.06579  1.02224e-02
+ 19  0.99673 -4.50460e-06 | 20  0.76707  6.85665e-03 | 21 -0.59632 -3.60197e-01
+ 22 -0.78954  1.92558e-02 | 23  0.63782 -3.41740e-02 | 24 -0.54782 -9.18751e-01
+ 25 -0.27967  4.23087e-01 |
+total penalty: 1.65117e-04; end of forward run, likelihood: 4.06605e-03
+function evaluation 24
+phase= 1 | nvar= 25 | iter= 18 | nll=4.07e-03 | mag=1.81e+00 | par[ 11]=param[11]
+25 variables; iteration 18; function evaluation 24
+Function value 4.0660494e-03; maximum gradient component mag -1.8056e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.72968 -5.47084e-01 |  2 -0.04108  3.96529e-01 |  3 -0.08559  7.23024e-01
+  4 -0.99831 -1.12700e-03 |  5 -0.00604 -1.43720e-02 |  6  0.99570  2.13182e-04
+  7  0.00861 -1.09822e-01 |  8 -1.00115 -1.19091e-04 |  9 -0.99951  6.17402e-05
+ 10  0.62513  2.07147e-01 | 11  0.01092 -1.80563e+00 | 12 -0.99827 -9.85361e-05
+ 13  0.97838  2.84401e-03 | 14  0.64722 -2.20228e-03 | 15 -0.99761 -2.96687e-03
+ 16  0.63815  6.75276e-03 | 17  0.99387  4.46653e-05 | 18 -0.06954 -5.98412e-04
+ 19  0.99696 -1.40374e-04 | 20  0.76844  1.01195e-02 | 21 -0.59642 -3.40152e-01
+ 22 -0.79386  1.67488e-02 | 23  0.63818 -2.48709e-02 | 24 -0.54697 -9.40060e-01
+ 25 -0.27916  4.23623e-01 |
+total penalty: 1.70177e-04; end of forward run, likelihood: 3.45351e-03
+function evaluation 25
+phase= 1 | nvar= 25 | iter= 19 | nll=3.45e-03 | mag=5.49e-01 | par[ 11]=param[11]
+25 variables; iteration 19; function evaluation 25
+Function value 3.4535142e-03; maximum gradient component mag 5.4931e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.73425  3.23504e-01 |  2 -0.04153 -2.02210e-01 |  3 -0.08720 -3.41483e-01
+  4 -0.99700  6.22415e-04 |  5 -0.00597  4.84618e-02 |  6  0.99615 -3.30097e-04
+  7  0.00776  7.66872e-02 |  8 -1.01101 -1.85816e-03 |  9 -1.00077  5.55191e-03
+ 10  0.61344 -5.93754e-02 | 11  0.00985  5.49308e-01 | 12 -0.99796 -7.12120e-05
+ 13  0.97129  2.60360e-03 | 14  0.64415 -1.12404e-02 | 15 -0.99845 -2.28397e-03
+ 16  0.63807 -1.76563e-02 | 17  0.99375  1.42308e-04 | 18 -0.07356  4.19048e-03
+ 19  0.99747 -3.62844e-05 | 20  0.77159  3.72275e-03 | 21 -0.59663 -5.96327e-02
+ 22 -0.80308  4.09040e-03 | 23  0.63876 -5.48030e-03 | 24 -0.54480  2.85565e-01
+ 25 -0.27761 -1.99317e-01 |
+total penalty: 1.86580e-04; end of forward run, likelihood: 2.88268e-03
+function evaluation 26
+phase= 1 | nvar= 25 | iter= 20 | nll=2.88e-03 | mag=6.87e+00 | par[ 11]=param[11]
+25 variables; iteration 20; function evaluation 26
+Function value 2.8826778e-03; maximum gradient component mag 6.8739e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.74368  2.68555e+00 |  2 -0.03867 -1.83636e+00 |  3 -0.09240 -3.25403e+00
+  4 -0.99541  1.02821e-02 |  5 -0.00587  2.63899e-01 |  6  0.99702 -1.62540e-03
+  7  0.00526  5.85829e-01 |  8 -1.03130 -9.86368e-03 |  9 -1.00398  1.07766e-01
+ 10  0.59285 -8.31638e-01 | 11  0.00785  6.87390e+00 | 12 -0.99723  1.24544e-04
+ 13  0.95375 -3.98628e-03 | 14  0.63859 -5.40055e-02 | 15 -1.00055  1.26975e-03
+ 16  0.63796 -1.17343e-01 | 17  0.99348  6.20444e-04 | 18 -0.07990  3.16798e-02
+ 19  0.99878  1.60741e-04 | 20  0.77683 -1.64569e-02 | 21 -0.59715  5.56689e-01
+ 22 -0.82556 -1.95420e-02 | 23  0.63977  2.52924e-02 | 24 -0.53906  3.61715e+00
+ 25 -0.27300 -1.89568e+00 |
+total penalty: 1.60730e-04; end of forward run, likelihood: 2.32070e-03
+function evaluation 27
+phase= 1 | nvar= 25 | iter= 21 | nll=2.32e-03 | mag=5.32e-01 | par[ 24]=param[24]
+25 variables; iteration 21; function evaluation 27
+Function value 2.3206977e-03; maximum gradient component mag -5.3159e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.74665 -2.69347e-01 |  2 -0.03202  1.48809e-01 |  3 -0.09665  2.41039e-01
+  4 -0.99692  2.97502e-03 |  5 -0.00605 -4.53336e-02 |  6  0.99711  3.02547e-04
+  7  0.00326 -1.21165e-01 |  8 -1.03977 -1.55207e-02 |  9 -1.00553  1.94927e-02
+ 10  0.59657  6.29395e-02 | 11  0.00815 -4.10426e-01 | 12 -0.99688  5.24048e-05
+ 13  0.94630 -4.12541e-04 | 14  0.63509 -7.44773e-03 | 15 -1.00201  3.76726e-04
+ 16  0.63798 -1.14048e-02 | 17  0.99334 -6.84430e-05 | 18 -0.08176 -1.06569e-02
+ 19  0.99958 -2.52891e-05 | 20  0.77872  1.32148e-02 | 21 -0.59735 -3.53112e-01
+ 22 -0.83609  8.84803e-03 | 23  0.64000  5.95012e-04 | 24 -0.53562 -5.31587e-01
+ 25 -0.27033  1.81479e-01 |
+total penalty: 1.48199e-04; end of forward run, likelihood: 1.79295e-03
+function evaluation 28
+phase= 1 | nvar= 25 | iter= 22 | nll=1.79e-03 | mag=3.79e-01 | par[ 11]=param[11]
+25 variables; iteration 22; function evaluation 28
+Function value 1.7929527e-03; maximum gradient component mag -3.7939e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.75066 -3.05064e-02 |  2 -0.02354  7.36276e-02 |  3 -0.10224  1.75064e-01
+  4 -1.00148 -1.98171e-04 |  5 -0.00554 -5.46783e-02 |  6  0.99739  4.22553e-04
+  7  0.00358  3.42388e-02 |  8 -1.03149  3.63611e-03 |  9 -1.00739  2.42529e-02
+ 10  0.59164  4.15041e-02 | 11  0.00760 -3.79388e-01 | 12 -0.99652 -3.56390e-05
+ 13  0.93869  4.71157e-03 | 14  0.64071  1.65834e-02 | 15 -1.00380 -1.33563e-02
+ 16  0.63799 -2.75222e-02 | 17  0.99319 -3.42827e-04 | 18 -0.07848 -2.65178e-02
+ 19  1.00052  6.25905e-05 | 20  0.77753  5.05338e-03 | 21 -0.59737  1.24505e-01
+ 22 -0.84405 -5.20898e-03 | 23  0.64000  2.81415e-02 | 24 -0.53115  5.36446e-02
+ 25 -0.26541 -2.49455e-02 |
+total penalty: 1.51030e-04; end of forward run, likelihood: 1.60896e-03
+function evaluation 29
+phase= 1 | nvar= 25 | iter= 23 | nll=1.61e-03 | mag=5.59e+00 | par[ 11]=param[11]
+25 variables; iteration 23; function evaluation 29
+Function value 1.6089584e-03; maximum gradient component mag 5.5929e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.75666  2.22897e+00 |  2 -0.00957 -1.47333e+00 |  3 -0.11205 -2.70616e+00
+  4 -1.00584 -1.08321e-02 |  5 -0.00493  2.48129e-01 |  6  0.99802 -9.37884e-04
+  7  0.00182  5.49851e-01 |  8 -1.03974  3.40855e-03 |  9 -1.01038  2.31469e-01
+ 10  0.58078 -7.05220e-01 | 11  0.00657  5.59294e+00 | 12 -0.99592  3.92713e-04
+ 13  0.92142 -1.59633e-02 | 14  0.65062 -5.04377e-02 | 15 -1.00290  1.63721e-03
+ 16  0.63802 -1.38540e-01 | 17  0.99303  5.37965e-04 | 18 -0.06989  3.38821e-02
+ 19  1.00141 -2.22161e-04 | 20  0.77397 -1.59194e-02 | 21 -0.59776  6.17842e-01
+ 22 -0.86314 -1.84154e-02 | 23  0.64013  1.43080e-02 | 24 -0.52486  3.14055e+00
+ 25 -0.25760 -1.58455e+00 |
+total penalty: 1.50587e-04; end of forward run, likelihood: 1.36318e-03
+function evaluation 30
+phase= 1 | nvar= 25 | iter= 24 | nll=1.36e-03 | mag=2.22e+00 | par[ 11]=param[11]
+25 variables; iteration 24; function evaluation 30
+Function value 1.3631805e-03; maximum gradient component mag 2.2227e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.75698  8.49775e-01 |  2 -0.01341 -5.60907e-01 |  3 -0.11042 -1.02180e+00
+  4 -1.00351 -3.81991e-03 |  5 -0.00476  7.08626e-02 |  6  0.99790 -2.37452e-04
+  7  0.00127  2.16358e-01 |  8 -1.04025  1.52577e-03 |  9 -1.01025  1.20179e-01
+ 10  0.58155 -2.78015e-01 | 11  0.00665  2.22268e+00 | 12 -0.99597  1.94269e-04
+ 13  0.92300 -6.63787e-03 | 14  0.65253 -1.44055e-02 | 15 -1.00304 -1.08323e-03
+ 16  0.63802 -1.77428e-02 | 17  0.99304  5.99430e-05 | 18 -0.06888  8.24863e-03
+ 19  1.00141 -4.39865e-05 | 20  0.77326  1.05036e-03 | 21 -0.59774  1.95409e-01
+ 22 -0.86245 -8.04365e-03 | 23  0.64006 -1.35091e-03 | 24 -0.52491  1.21890e+00
+ 25 -0.25742 -6.16651e-01 |
+total penalty: 1.52763e-04; end of forward run, likelihood: 1.23125e-03
+function evaluation 31
+phase= 1 | nvar= 25 | iter= 25 | nll=1.23e-03 | mag=3.49e-01 | par[ 11]=param[11]
+25 variables; iteration 25; function evaluation 31
+Function value 1.2312540e-03; maximum gradient component mag 3.4947e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.75819  9.75214e-02 |  2 -0.01283 -5.57158e-02 |  3 -0.11174 -9.45485e-02
+  4 -1.00124 -1.04281e-03 |  5 -0.00399 -3.50989e-02 |  6  0.99793  1.87059e-04
+  7 -0.00040  2.71993e-02 |  8 -1.04150 -7.75102e-05 |  9 -1.01081  5.67692e-02
+ 10  0.58039 -4.25354e-02 | 11  0.00644  3.49475e-01 | 12 -0.99600  5.10780e-05
+ 13  0.92353 -4.15091e-04 | 14  0.65977  9.01453e-03 | 15 -1.00286 -9.16652e-04
+ 16  0.63806  3.20698e-02 | 17  0.99311 -2.50085e-04 | 18 -0.06692 -6.06193e-03
+ 19  1.00145  5.56146e-05 | 20  0.76789 -1.21411e-04 | 21 -0.59770  2.44144e-01
+ 22 -0.86194 -9.41227e-03 | 23  0.63981  2.49409e-02 | 24 -0.52362  1.87580e-01
+ 25 -0.25557 -1.07069e-01 |
+total penalty: 1.53149e-04; end of forward run, likelihood: 1.18079e-03
+function evaluation 32
+phase= 1 | nvar= 25 | iter= 26 | nll=1.18e-03 | mag=7.48e-01 | par[ 11]=param[11]
+25 variables; iteration 26; function evaluation 32
+Function value 1.1807915e-03; maximum gradient component mag -7.4760e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.75979 -3.33353e-01 |  2 -0.01129  2.19480e-01 |  3 -0.11379  4.00192e-01
+  4 -0.99809  5.07338e-04 |  5 -0.00310 -4.56772e-02 |  6  0.99803  3.27681e-04
+  7 -0.00134 -8.21333e-02 |  8 -1.04176  1.21405e-03 |  9 -1.01149  2.54653e-02
+ 10  0.57817  9.69155e-02 | 11  0.00615 -7.47603e-01 | 12 -0.99603  1.33929e-04
+ 13  0.92301 -2.83082e-03 | 14  0.66655  1.10408e-02 | 15 -1.00274 -9.43211e-04
+ 16  0.63808  5.72993e-02 | 17  0.99331 -2.98611e-04 | 18 -0.06592 -1.02078e-02
+ 19  1.00137  8.29325e-05 | 20  0.75985  1.02555e-02 | 21 -0.59802 -2.51157e-01
+ 22 -0.86686  2.46441e-03 | 23  0.63945 -2.51107e-02 | 24 -0.52201 -4.42818e-01
+ 25 -0.25292  2.23436e-01 |
+total penalty: 1.55858e-04; end of forward run, likelihood: 1.14934e-03
+function evaluation 33
+phase= 1 | nvar= 25 | iter= 27 | nll=1.15e-03 | mag=2.49e-01 | par[ 11]=param[11]
+25 variables; iteration 27; function evaluation 33
+Function value 1.1493392e-03; maximum gradient component mag -2.4893e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.75965 -1.39816e-01 |  2 -0.01031  9.44662e-02 |  3 -0.11445  1.74547e-01
+  4 -0.99691  1.51358e-03 |  5 -0.00295 -4.00538e-02 |  6  0.99800  2.61363e-04
+  7 -0.00138 -3.29216e-02 |  8 -1.04171  4.60070e-04 |  9 -1.01157  4.07919e-02
+ 10  0.57777  3.36710e-02 | 11  0.00609 -2.48925e-01 | 12 -0.99618  7.99032e-05
+ 13  0.92629 -1.21262e-03 | 14  0.66903  1.17966e-02 | 15 -1.00235  6.30328e-04
+ 16  0.63809  3.30673e-02 | 17  0.99347 -2.73055e-04 | 18 -0.06480 -7.48283e-03
+ 19  1.00116  5.49563e-05 | 20  0.75706  1.80436e-04 | 21 -0.59796  3.43728e-02
+ 22 -0.86415 -4.43444e-03 | 23  0.63932  1.05533e-02 | 24 -0.52195 -1.63872e-01
+ 25 -0.25245  7.64308e-02 |
+total penalty: 1.57962e-04; end of forward run, likelihood: 1.10962e-03
+function evaluation 34
+phase= 1 | nvar= 25 | iter= 28 | nll=1.11e-03 | mag=2.05e-01 | par[ 21]=param[21]
+25 variables; iteration 28; function evaluation 34
+Function value 1.1096224e-03; maximum gradient component mag 2.0466e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76001  3.05029e-03 |  2 -0.00856  8.18425e-04 |  3 -0.11566  3.67902e-03
+  4 -0.99664  2.25847e-03 |  5 -0.00290 -3.29946e-02 |  6  0.99798  1.97634e-04
+  7 -0.00176  9.40404e-04 |  8 -1.04256  2.33120e-04 |  9 -1.01195  5.00848e-02
+ 10  0.57645 -7.63875e-03 | 11  0.00590  6.93445e-02 | 12 -0.99643  5.51868e-05
+ 13  0.93154 -8.22184e-04 | 14  0.66954  1.04998e-02 | 15 -1.00211  1.22577e-03
+ 16  0.63808 -5.75000e-03 | 17  0.99383 -2.25788e-04 | 18 -0.06411 -4.40490e-03
+ 19  1.00086  2.77377e-05 | 20  0.75564 -5.86360e-03 | 21 -0.59791  2.04660e-01
+ 22 -0.86189 -8.68175e-03 | 23  0.63927  3.03847e-02 | 24 -0.52138  3.95029e-02
+ 25 -0.25165 -3.04452e-02 |
+total penalty: 1.61994e-04; end of forward run, likelihood: 1.03930e-03
+function evaluation 35
+phase= 1 | nvar= 25 | iter= 29 | nll=1.04e-03 | mag=5.79e-01 | par[ 11]=param[11]
+25 variables; iteration 29; function evaluation 35
+Function value 1.0393013e-03; maximum gradient component mag 5.7896e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76061  2.24920e-01 |  2 -0.00580 -1.46076e-01 |  3 -0.11753 -2.67978e-01
+  4 -0.99755  2.09660e-03 |  5 -0.00293 -8.18871e-03 |  6  0.99792  6.38886e-05
+  7 -0.00229  5.29874e-02 |  8 -1.04423  2.02744e-04 |  9 -1.01262  6.95460e-02
+ 10  0.57409 -7.37570e-02 | 11  0.00560  5.78958e-01 | 12 -0.99692  4.76662e-05
+ 13  0.94204 -1.22580e-03 | 14  0.66857  5.09292e-03 | 15 -1.00180  1.66698e-03
+ 16  0.63806 -5.48508e-02 | 17  0.99452 -1.26438e-04 | 18 -0.06366  1.28880e-03
+ 19  1.00028  1.08164e-06 | 20  0.75386 -1.23452e-02 | 21 -0.59783  3.63297e-01
+ 22 -0.85804 -1.26638e-02 | 23  0.63919  4.58781e-02 | 24 -0.52044  3.45092e-01
+ 25 -0.25029 -1.86358e-01 |
+total penalty: 1.70491e-04; end of forward run, likelihood: 9.39390e-04
+function evaluation 36
+phase= 1 | nvar= 25 | iter= 30 | nll=9.39e-04 | mag=1.48e+00 | par[ 11]=param[11]
+25 variables; iteration 30; function evaluation 36
+Function value 9.3939015e-04; maximum gradient component mag 1.4764e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76197  6.30575e-01 |  2 -0.00151 -4.22156e-01 |  3 -0.12053 -7.91010e-01
+  4 -1.00007 -8.60477e-05 |  5 -0.00318  8.51272e-02 |  6  0.99779 -3.70759e-04
+  7 -0.00305  1.41754e-01 |  8 -1.04790  2.66133e-04 |  9 -1.01389  1.09051e-01
+ 10  0.56988 -1.91759e-01 | 11  0.00508  1.47642e+00 | 12 -0.99787  9.50871e-05
+ 13  0.96278 -3.88030e-03 | 14  0.66435 -1.96911e-02 | 15 -1.00136  2.41563e-03
+ 16  0.63804 -1.80267e-01 | 17  0.99590  1.02356e-04 | 18 -0.06373  1.94910e-02
+ 19  0.99917  7.17968e-05 | 20  0.75171 -2.44972e-02 | 21 -0.59769  5.54598e-01
+ 22 -0.85024 -1.71953e-02 | 23  0.63909  6.14648e-02 | 24 -0.51873  8.71570e-01
+ 25 -0.24812 -4.55450e-01 |
+total penalty: 1.65084e-04; end of forward run, likelihood: 8.84945e-04
+function evaluation 37
+phase= 1 | nvar= 25 | iter= 31 | nll=8.85e-04 | mag=1.52e+00 | par[ 11]=param[11]
+25 variables; iteration 31; function evaluation 37
+Function value 8.8494510e-04; maximum gradient component mag 1.5212e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76339  6.69654e-01 |  2 -0.00003 -4.60087e-01 |  3 -0.12190 -8.73534e-01
+  4 -1.00239 -3.13528e-03 |  5 -0.00352  1.35717e-01 |  6  0.99756 -6.46961e-04
+  7 -0.00338  1.42378e-01 |  8 -1.05127 -1.99859e-04 |  9 -1.01486  1.15126e-01
+ 10  0.56673 -1.99040e-01 | 11  0.00473  1.52124e+00 | 12 -0.99860  9.91123e-05
+ 13  0.97837 -3.71223e-03 | 14  0.66007 -3.70323e-02 | 15 -1.00148  3.06538e-03
+ 16  0.63803 -2.40229e-01 | 17  0.99707  1.59129e-04 | 18 -0.06431  2.98712e-02
+ 19  0.99833  2.29758e-04 | 20  0.75152 -2.64053e-02 | 21 -0.59755  5.10142e-01
+ 22 -0.84364 -1.56012e-02 | 23  0.63908  5.49556e-02 | 24 -0.51748  8.87916e-01
+ 25 -0.24673 -4.65615e-01 |
+total penalty: 1.55789e-04; end of forward run, likelihood: 7.99774e-04
+function evaluation 38
+phase= 1 | nvar= 25 | iter= 32 | nll=8.00e-04 | mag=4.77e-01 | par[ 11]=param[11]
+25 variables; iteration 32; function evaluation 38
+Function value 7.9977386e-04; maximum gradient component mag 4.7729e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76480  2.26910e-01 |  2 -0.00083 -1.68754e-01 |  3 -0.12192 -3.30057e-01
+  4 -1.00282 -2.87778e-03 |  5 -0.00375  7.23683e-02 |  6  0.99729 -3.51022e-04
+  7 -0.00336  3.84719e-02 |  8 -1.05374 -4.04692e-04 |  9 -1.01553  7.08161e-02
+ 10  0.56465 -6.29045e-02 | 11  0.00456  4.77291e-01 | 12 -0.99894  5.97755e-05
+ 13  0.98474 -1.99334e-03 | 14  0.65766 -2.37825e-02 | 15 -1.00235  2.01079e-03
+ 16  0.63804 -1.54846e-01 | 17  0.99794  5.55287e-05 | 18 -0.06520  1.79120e-02
+ 19  0.99792  1.73781e-04 | 20  0.75257 -1.33859e-02 | 21 -0.59746  2.37264e-01
+ 22 -0.83974 -8.33441e-03 | 23  0.63915  2.92898e-02 | 24 -0.51656  2.86341e-01
+ 25 -0.24585 -1.56092e-01 |
+total penalty: 1.48264e-04; end of forward run, likelihood: 7.26200e-04
+function evaluation 39
+phase= 1 | nvar= 25 | iter= 33 | nll=7.26e-04 | mag=3.99e-01 | par[ 11]=param[11]
+25 variables; iteration 33; function evaluation 39
+Function value 7.2620013e-04; maximum gradient component mag 3.9868e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76673  1.36198e-01 |  2 -0.00040 -1.03957e-01 |  3 -0.12276 -2.05628e-01
+  4 -1.00102 -4.90063e-04 |  5 -0.00384  6.73300e-02 |  6  0.99658 -2.51866e-04
+  7 -0.00316  2.89606e-02 |  8 -1.05720  2.70107e-03 |  9 -1.01689  8.64087e-02
+ 10  0.55966 -5.19012e-02 | 11  0.00414  3.98678e-01 | 12 -0.99978  1.38362e-05
+ 13  1.00082  9.91979e-05 | 14  0.65594 -1.73006e-02 | 15 -1.00406 -6.23145e-03
+ 16  0.63807 -3.36147e-02 | 17  0.99990  1.20724e-06 | 18 -0.06692  7.97279e-03
+ 19  0.99699  1.27550e-04 | 20  0.75099  3.37864e-03 | 21 -0.59732 -2.22353e-01
+ 22 -0.83006  5.00910e-03 | 23  0.63908 -3.24515e-02 | 24 -0.51489  1.90553e-01
+ 25 -0.24359 -8.15715e-02 |
+total penalty: 1.47541e-04; end of forward run, likelihood: 6.99917e-04
+function evaluation 40
+phase= 1 | nvar= 25 | iter= 34 | nll=7.00e-04 | mag=5.27e-01 | par[ 11]=param[11]
+25 variables; iteration 34; function evaluation 40
+Function value 6.9991663e-04; maximum gradient component mag -5.2714e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76723 -2.55550e-01 |  2 -0.00080  1.59769e-01 |  3 -0.12270  2.88672e-01
+  4 -1.00103 -4.21608e-04 |  5 -0.00381 -1.63819e-02 |  6  0.99643  2.81259e-04
+  7 -0.00321 -6.40222e-02 |  8 -1.05847  7.82762e-04 |  9 -1.01716  3.24987e-02
+ 10  0.55910  7.07720e-02 | 11  0.00410 -5.27138e-01 | 12 -0.99977  6.96739e-06
+ 13  0.99924 -3.27148e-05 | 14  0.65709  2.80421e-03 | 15 -1.00410 -8.43704e-03
+ 16  0.63808  4.23425e-02 | 17  1.00020  4.73086e-06 | 18 -0.06645 -4.73477e-03
+ 19  0.99695 -5.89375e-05 | 20  0.75130  9.36684e-03 | 21 -0.59723 -2.55755e-01
+ 22 -0.82800  5.42672e-03 | 23  0.63910 -2.77706e-02 | 24 -0.51465 -3.31428e-01
+ 25 -0.24347  1.76098e-01 |
+total penalty: 1.50417e-04; end of forward run, likelihood: 6.59442e-04
+function evaluation 41
+phase= 1 | nvar= 25 | iter= 35 | nll=6.59e-04 | mag=1.17e+00 | par[ 11]=param[11]
+25 variables; iteration 35; function evaluation 41
+Function value 6.5944237e-04; maximum gradient component mag -1.1683e+00
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76778 -4.97666e-01 |  2 -0.00028  3.13125e-01 |  3 -0.12322  5.68315e-01
+  4 -1.00085 -3.26709e-04 |  5 -0.00385 -2.25308e-02 |  6  0.99583  3.81429e-04
+  7 -0.00329 -1.28471e-01 |  8 -1.06040 -5.22724e-04 |  9 -1.01788 -9.56425e-03
+ 10  0.55688  1.56009e-01 | 11  0.00386 -1.16828e+00 | 12 -1.00017 -5.52071e-06
+ 13  1.00616  3.23102e-04 | 14  0.65792  9.20849e-04 | 15 -1.00330 -3.82746e-03
+ 16  0.63810  4.60436e-02 | 17  1.00120  2.58331e-05 | 18 -0.06568 -2.84080e-03
+ 19  0.99642 -4.97779e-05 | 20  0.75039  9.84161e-03 | 21 -0.59700 -2.96083e-01
+ 22 -0.81961  7.70459e-03 | 23  0.63903 -2.75395e-02 | 24 -0.51421 -6.91977e-01
+ 25 -0.24291  3.52152e-01 |
+total penalty: 1.57591e-04; end of forward run, likelihood: 5.92480e-04
+function evaluation 42
+phase= 1 | nvar= 25 | iter= 36 | nll=5.92e-04 | mag=8.95e-01 | par[ 11]=param[11]
+25 variables; iteration 36; function evaluation 42
+Function value 5.9248035e-04; maximum gradient component mag -8.9531e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76824 -4.10134e-01 |  2  0.00065  2.50647e-01 |  3 -0.12390  4.48847e-01
+  4 -1.00045 -2.30766e-04 |  5 -0.00386 -2.07321e-02 |  6  0.99451  4.34928e-04
+  7 -0.00334 -1.09131e-01 |  8 -1.06308 -2.44853e-03 |  9 -1.01898 -1.08475e-03
+ 10  0.55231  1.21430e-01 | 11  0.00340 -8.95314e-01 | 12 -1.00071 -2.07980e-05
+ 13  1.01561  7.51603e-04 | 14  0.66020  1.50377e-03 | 15 -1.00216 -7.07094e-04
+ 16  0.63812  6.36154e-02 | 17  1.00262  5.38348e-05 | 18 -0.06493 -1.20312e-03
+ 19  0.99591 -4.53780e-05 | 20  0.74942  1.05812e-02 | 21 -0.59665 -2.86176e-01
+ 22 -0.80747  7.86346e-03 | 23  0.63899 -3.14463e-02 | 24 -0.51374 -5.73426e-01
+ 25 -0.24210  2.86628e-01 |
+total penalty: 1.90133e-04; end of forward run, likelihood: 5.04136e-04
+function evaluation 43
+phase= 1 | nvar= 25 | iter= 37 | nll=5.04e-04 | mag=9.54e-01 | par[ 11]=param[11]
+25 variables; iteration 37; function evaluation 43
+Function value 5.0413553e-04; maximum gradient component mag -9.5414e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76715 -3.90121e-01 |  2  0.00161  2.42947e-01 |  3 -0.12396  4.40462e-01
+  4 -0.99952  5.45051e-05 |  5 -0.00393 -1.06193e-02 |  6  0.99176  6.82955e-04
+  7 -0.00317 -9.36103e-02 |  8 -1.06279  2.57298e-03 |  9 -1.02029 -4.00165e-03
+ 10  0.54598  1.27815e-01 | 11  0.00274 -9.54144e-01 | 12 -1.00153 -5.52385e-05
+ 13  1.02902  1.57382e-03 | 14  0.66407  1.27345e-03 | 15 -0.99961  1.32048e-04
+ 16  0.63814  6.12327e-02 | 17  1.00475  9.83738e-05 | 18 -0.06494 -2.80821e-03
+ 19  0.99508 -1.08291e-04 | 20  0.74759  1.64418e-02 | 21 -0.59596 -4.68268e-01
+ 22 -0.78394  1.71733e-02 | 23  0.63887 -6.18776e-02 | 24 -0.51416 -5.36054e-01
+ 25 -0.24186  2.83157e-01 |
+total penalty: 1.46639e-04; end of forward run, likelihood: 4.45092e-04
+function evaluation 44
+phase= 1 | nvar= 25 | iter= 38 | nll=4.45e-04 | mag=3.90e-01 | par[ 11]=param[11]
+25 variables; iteration 38; function evaluation 44
+Function value 4.4509169e-04; maximum gradient component mag 3.8957e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76611  1.20152e-01 |  2  0.00306 -8.24509e-02 |  3 -0.12433 -1.57626e-01
+  4 -0.99831  5.61839e-04 |  5 -0.00387 -6.38798e-03 |  6  0.98911  5.61668e-04
+  7 -0.00340  3.73255e-02 |  8 -1.06370  2.58592e-03 |  9 -1.02137  8.08799e-02
+ 10  0.53997 -5.57033e-02 | 11  0.00212  3.89565e-01 | 12 -1.00188 -3.54484e-05
+ 13  1.03410  4.29865e-04 | 14  0.66868  7.51480e-03 | 15 -0.99691  4.89859e-03
+ 16  0.63814  4.94265e-02 | 17  1.00583  1.56510e-04 | 18 -0.06465 -4.81836e-03
+ 19  0.99497 -1.56555e-04 | 20  0.74631  1.17573e-02 | 21 -0.59545 -2.53024e-01
+ 22 -0.76945  8.97690e-03 | 23  0.63888 -4.66005e-02 | 24 -0.51449  2.18101e-01
+ 25 -0.24153 -9.78443e-02 |
+total penalty: 1.42371e-04; end of forward run, likelihood: 4.13418e-04
+function evaluation 45
+phase= 1 | nvar= 25 | iter= 39 | nll=4.13e-04 | mag=1.25e-01 | par[ 21]=param[21]
+25 variables; iteration 39; function evaluation 45
+Function value 4.1341810e-04; maximum gradient component mag -1.2546e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76534 -2.50823e-02 |  2  0.00395  1.27639e-02 |  3 -0.12438  2.03612e-02
+  4 -0.99829  5.85831e-04 |  5 -0.00414 -2.55039e-02 |  6  0.98780  9.29810e-04
+  7 -0.00325 -1.40166e-03 |  8 -1.06458  6.64686e-04 |  9 -1.02169  5.00974e-02
+ 10  0.53873 -2.43162e-03 | 11  0.00202  2.46086e-03 | 12 -1.00195 -2.60085e-05
+ 13  1.03501  1.61994e-04 | 14  0.66805  7.93961e-03 | 15 -0.99623  7.59519e-03
+ 16  0.63813 -1.21345e-03 | 17  1.00593  1.71394e-04 | 18 -0.06534 -6.38300e-03
+ 19  0.99492 -1.75052e-04 | 20  0.74602  6.12915e-03 | 21 -0.59518 -1.25458e-01
+ 22 -0.76309  5.07960e-03 | 23  0.63889 -1.73364e-02 | 24 -0.51489  5.88417e-03
+ 25 -0.24179  3.13854e-03 |
+total penalty: 1.42481e-04; end of forward run, likelihood: 3.92819e-04
+function evaluation 46
+phase= 1 | nvar= 25 | iter= 40 | nll=3.93e-04 | mag=4.12e-01 | par[ 11]=param[11]
+25 variables; iteration 40; function evaluation 46
+Function value 3.9281903e-04; maximum gradient component mag 4.1163e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76447  1.42762e-01 |  2  0.00597 -1.04446e-01 |  3 -0.12487 -2.05862e-01
+  4 -0.99871  7.81886e-04 |  5 -0.00444  3.72439e-02 |  6  0.98505 -8.87858e-04
+  7 -0.00330  2.87775e-02 |  8 -1.06619 -1.61296e-03 |  9 -1.02241  7.12420e-02
+ 10  0.53589 -5.85446e-02 | 11  0.00177  4.11634e-01 | 12 -1.00215 -6.89278e-05
+ 13  1.03892  2.34813e-03 | 14  0.66723 -1.00838e-02 | 15 -0.99627  4.00423e-03
+ 16  0.63814 -7.09514e-02 | 17  1.00604 -2.46223e-05 | 18 -0.06522  7.02920e-03
+ 19  0.99480  1.55047e-04 | 20  0.74641 -6.20951e-03 | 21 -0.59481  1.05883e-01
+ 22 -0.75491 -2.46988e-03 | 23  0.63894  1.58110e-02 | 24 -0.51507  2.04287e-01
+ 25 -0.24167 -1.06191e-01 |
+total penalty: 1.42114e-04; end of forward run, likelihood: 3.80111e-04
+function evaluation 47
+phase= 1 | nvar= 25 | iter= 41 | nll=3.80e-04 | mag=1.37e-01 | par[ 21]=param[21]
+25 variables; iteration 41; function evaluation 47
+Function value 3.8011095e-04; maximum gradient component mag 1.3658e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76328 -2.39625e-02 |  2  0.00654  1.14825e-02 |  3 -0.12452  1.79113e-02
+  4 -0.99902  4.81233e-04 |  5 -0.00463  5.97239e-03 |  6  0.98405 -9.08547e-05
+  7 -0.00298 -5.44363e-03 |  8 -1.06512 -7.78696e-04 |  9 -1.02240  4.01359e-02
+ 10  0.53592  3.71046e-04 | 11  0.00179 -1.98425e-02 | 12 -1.00210 -2.94094e-05
+ 13  1.03755  7.91726e-04 | 14  0.66711 -2.75822e-03 | 15 -0.99616  5.22298e-03
+ 16  0.63815 -3.31596e-02 | 17  1.00587  5.15451e-05 | 18 -0.06489  2.41143e-03
+ 19  0.99483  4.14446e-05 | 20  0.74705 -4.93756e-03 | 21 -0.59464  1.36583e-01
+ 22 -0.75132 -3.39856e-03 | 23  0.63893  2.17674e-02 | 24 -0.51582 -1.39731e-02
+ 25 -0.24241  5.18258e-03 |
+total penalty: 1.42272e-04; end of forward run, likelihood: 3.70084e-04
+function evaluation 48
+phase= 1 | nvar= 25 | iter= 42 | nll=3.70e-04 | mag=2.59e-01 | par[ 11]=param[11]
+25 variables; iteration 42; function evaluation 48
+Function value 3.7008392e-04; maximum gradient component mag -2.5917e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76203 -1.18909e-01 |  2  0.00815  7.15460e-02 |  3 -0.12469  1.29706e-01
+  4 -0.99915  2.62439e-04 |  5 -0.00479 -5.23820e-03 |  6  0.98216  4.27509e-04
+  7 -0.00283 -2.95642e-02 |  8 -1.06523 -6.15125e-04 |  9 -1.02297  2.45995e-02
+ 10  0.53364  3.35510e-02 | 11  0.00157 -2.59166e-01 | 12 -1.00229 -3.06776e-05
+ 13  1.04015  6.44120e-04 | 14  0.66818 -6.32210e-04 | 15 -0.99622  5.61398e-03
+ 16  0.63817  7.05404e-04 | 17  1.00626  8.05727e-05 | 18 -0.06501  2.19046e-04
+ 19  0.99458 -2.90822e-05 | 20  0.74660  2.06996e-03 | 21 -0.59433 -5.39941e-02
+ 22 -0.74207  5.63293e-03 | 23  0.63886 -3.22126e-03 | 24 -0.51643 -1.53630e-01
+ 25 -0.24285  7.73246e-02 |
+total penalty: 1.45501e-04; end of forward run, likelihood: 3.59760e-04
+function evaluation 49
+phase= 1 | nvar= 25 | iter= 43 | nll=3.60e-04 | mag=8.21e-02 | par[ 11]=param[11]
+Optimization completed after 19501 d 17 h 17 m 15 s with final statistics:
+  nll=0.000360 | mag=8.20754e-02 | par[ 11]=param[11]
+
+
+ - final statistics:
+25 variables; iteration 43; function evaluation 49
+Function value 3.5976e-04; maximum gradient component mag -8.2075e-02
+Exit code = 1;  converg criter 1.0000e-01
+Var    Value     Gradient |Var    Value     Gradient |Var    Value     Gradient
+  1 -0.76154 -4.11125e-02 |  2  0.00932  2.44271e-02 |  3 -0.12503  4.40442e-02
+  4 -0.99917  3.13061e-04 |  5 -0.00479 -6.46484e-03 |  6  0.98144  3.38287e-04
+  7 -0.00282 -8.35828e-03 |  8 -1.06491 -3.21670e-04 |  9 -1.02318  3.23155e-02
+ 10  0.53307  8.11401e-03 | 11  0.00151 -8.20754e-02 | 12 -1.00227 -1.68893e-05
+ 13  1.03953  1.65516e-04 | 14  0.66884  9.03226e-04 | 15 -0.99679  3.24598e-03
+ 16  0.63818  5.72387e-03 | 17  1.00616  8.74263e-05 | 18 -0.06501  1.54108e-04
+ 19  0.99457 -3.53272e-05 | 20  0.74611 -5.73280e-04 | 21 -0.59429  3.19309e-02
+ 22 -0.74092  1.46478e-03 | 23  0.63881  3.63688e-03 | 24 -0.51660 -3.49411e-02
+ 25 -0.24296  1.54540e-02 |
+total penalty: 1.45501e-04; end of forward run, likelihood: 3.59760e-04
+
+Control variables in optimisation:
+1. Mp mean exp(0) = 6.73343e-02
+2. Ms mean max(0) = 5.07319e-03
+3. Ms mean slope(0) = 1.10364e+00
+4. M mean range(0) = 8.55884e-07
+5. a sst spawning(0) = 1.49248e+00
+6. b sst spawning(0) = 3.10993e+01
+7. a sst larvae(0) = 1.49557e+00
+8. b sst larvae(0) = 2.85052e+01
+9. alpha hsp prey(0) = 3.31493e-04
+10. alpha hsp predator(0) = 2.17858e+00
+11. beta hsp predator(0) = 1.50357e+00
+12. a sst habitat(0) = 3.00001e+00
+13. b sst habitat(0) = 2.60422e+01
+14. T age size slope(0) = 2.83466e+00
+15. a oxy habitat(0) = 1.00635e-04
+16. b oxy habitat(0) = 3.76419e+00
+17. eF habitat epi(0) = 3.99991e+00
+18. eF habitat mmeso(0) = 8.98062e-01
+19. eF habitat hmbathy(0) = 3.99993e+00
+20. sigma species(0) = 4.80381e+00
+21. MSS species(0) = 4.90730e-01
+22. MSS size slope(0) = 4.30627e-01
+23. c diff fish(0) = 9.29497e-01
+24. nb recruitment(0) = 3.86501e-02
+25. a adults spawning(0) = 1.60320e-01
+
+finished time: Wed May 24 19:17:20 2023
+
+
+total time: 2.19167e+01 minutes
+
