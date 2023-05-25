@@ -152,7 +152,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   *Optimization run*
 
-  It is possible to run optimization without fisheries data using _seapodym\_densities_ application. Make sure it has been built. If not run the batch file to compile all five applications (see *Building from source* instructions above). Similarly to _seapodym\_habitats_, this application uses model outputs as "observations". Using this example configuration, make a copy of _skipjack\_F0.xml_ parfile
+  It is possible to run optimization without fisheries data using _seapodym\_densities_ application. Make sure it has been built. If not, run the batch file to compile all five applications (see *Building from source* instructions above). Similarly to _seapodym\_habitats_, this application uses model outputs as "observations". Using this example configuration, make a copy of _skipjack\_F0.xml_ parfile
 
     [~/seapodym/example-configs/skipjack/]$ cp skipjack_F0.xml initparfile.xml
 
