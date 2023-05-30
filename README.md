@@ -156,7 +156,7 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
     [~/seapodym/example-configs/skipjack/]$ cp skipjack_F0.xml initparfile.xml
 
-  Now reduce the simulation time period to five years by modifying the _year_ attribute in _save_last_date_ node from 2010 to 1983. First run the simulation with this parfile
+  In _initparfile.xml_ reduce the simulation time period to five years by modifying the _year_ attribute in _save_last_date_ node from 2010 to 1983. First run simulation with this parfile to generate pseudo-observations
 
     [~/seapodym/example-configs/skipjack/]$ seapodym -s initparfile.xml
 
@@ -164,11 +164,11 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
     
     [~/seapodym/example-configs/skipjack/]$ cp output/output_F0/skj_totbm.dym output/output_F0/skj_density_input.dym
 
-  Now you can run optimization
+  Now modify the _initparfile.xml_ to have non-optimal parameters. For example, test the optimization with perturbed predation mortality slope coefficient _Mp\_mean\_exp_, adding 0.01 to it. Now you can run optimization
 
   [~/seapodym/example-configs/skipjack/]$ seapodym\_densities initparfile.xml
 
-  and compare its outputs with that provided in log file _opt.out_.  
+  and compare the screen outputs with _opt.out_, and parameter estimates with those in _skipjack\_F0.xml_ parfile, which were used to produce pseudo-observations.  
   
 
   Example #3. **Albacore**
