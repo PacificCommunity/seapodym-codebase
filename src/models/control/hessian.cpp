@@ -26,6 +26,7 @@ void Hessian_comp(const char* parfile)
 
 
 	sc.OnRunFirstStep();
+	sc.ReadDensity();
 
 	double likelihood = 0.0;
 
