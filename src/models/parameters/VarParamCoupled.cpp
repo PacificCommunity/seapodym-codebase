@@ -1427,7 +1427,7 @@ bool VarParamCoupled::read(const string& parfile)
 		varproj_nsteps.allocate(0,nb_varproj); varproj_nsteps.initialize();
 		for (int n=0; n<nb_varproj; n++){
 			std::ostringstream ostr;
-			ostr << "var" << n+1;
+			ostr << sp_name[0] << "[" << n+1 << "]";
 			varproj.push_back(doc.get("/hyperspace_projection/" + ostr.str(),"name"));
 			varproj_nsteps[n] = doc.getInteger("/hyperspace_projection/"+ ostr.str(), "nsteps");
 		}	
