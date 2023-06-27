@@ -10,12 +10,14 @@
     #' @param y is the vector of latitude.
     #' @param mask is the land mask - the matrix of integers 0 - 2, with 0 for land, 1 for the sea with only one layer (nearshore), 2 for the sea with two layers and 3 for the sea with three pelagic layers though the depth column.
     #' @param data is the 3d array of data to be written in DYM file.
+    #' @param verbose flag (default value is TRUE) controlling the prompt for the nominal function execution.
     #' @examples 
     #' write.var.dym("sst.dym",tt,x,y,mask,var);
     #' @export
-    write.var.dym<-function(file.out,tvect,x,y,mask,data){
+    write.var.dym<-function(file.out,tvect,x,y,mask,data,verbose=TRUE){
 
-	message("Writing file ",file.out,"...")
+	if (verbose)
+	  message("Writing file ",file.out,"...")
 	#initialization
 	Idfunc<-0;
 	nlon<-length(x)

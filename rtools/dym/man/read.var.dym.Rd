@@ -11,7 +11,8 @@ read.var.dym(
   region = c(NA, NA, NA, NA),
   dt = 30,
   apply.mask = FALSE,
-  t.date.format = FALSE
+  t.date.format = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -20,6 +21,8 @@ read.var.dym(
 \item{t0.user}{is the date provided as c(year,month,day) to be used the first date for extraction. If not specified, start from the first time step written in the DYM file.}
 
 \item{tfin.user}{is the date provided as c(year,month,day) to be used the last date for extraction. If not specified, stop at last time step written in the DYM file.}
+
+\item{verbose}{flag (default value is TRUE) controlling the prompt for the nominal function execution.}
 }
 \value{
 The list of variables written in the DYM file, that is a vector of longitudes, x, latitudes, y, time steps, t, the land mask matrix, landmask and the data 3d matrices, var[t,x,y].
