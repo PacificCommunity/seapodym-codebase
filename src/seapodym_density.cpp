@@ -2,6 +2,7 @@
 #include "SeapodymCoupled.h"
 
 string get_path(const char* full_path);
+void prerun_model(SeapodymCoupled& sc);
 void Hessian_comp(const char* parfile);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
@@ -95,9 +96,9 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 	int itr = 0;
 	ios::sync_with_stdio();
 
-	//initialization of simulation parameters
-	sc.OnRunFirstStep();
-	sc.ReadDensity();
+	//initialization of simulation
+	prerun_model(sc);
+
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
 	string newparfile  = "newparfile.xml";
@@ -160,10 +161,20 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 	return 0;
 }
 
+void prerun_model(SeapodymCoupled& sc)
+{
+	sc.OnRunFirstStep();
+	sc.ReadDensity();
+}
+
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 {
 	double like = 0.0;
 	like = sc.run_density((dvar_vector)x);
+	if (like==0){
+		cerr << "No data in the likelihood - gradient will not be calculated, exiting now!" << endl;
+		exit(1);
+	}
 	gradcalc(nvar,g); 
 	return like;
 }

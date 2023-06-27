@@ -2,6 +2,8 @@
 #include "SeapodymCoupled.h"
 
 //void Hessian_comp(const char* parfile);
+
+void prerun_model(SeapodymCoupled& sc);
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar);
 
 ///2. Option for computing Hessian matrix
@@ -24,8 +26,7 @@ void Hessian_comp(const char* parfile)
 	dvector H2(1, nvar); H2.initialize();
 	dmatrix H(1,nvar,1,nvar); H.initialize();
 
-
-	sc.OnRunFirstStep();
+	prerun_model(sc);
 
 	double likelihood = 0.0;
 
@@ -34,6 +35,7 @@ void Hessian_comp(const char* parfile)
 	likelihood = run_model(sc,x,g1,nvar);
 	
 	cout << "Likelihood and Gradient for estimated vector: \n" << likelihood << "; " << g1 << endl;
+	
 	//two-point finite-difference approximation of the Hessian
 	for (int ix=1; ix<=nvar; ix++){
 		double xs = x(ix);
