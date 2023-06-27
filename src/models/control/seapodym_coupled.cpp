@@ -3,6 +3,7 @@
 //#include <functional> // to pass function as an argument 
 
 string get_path(const char* full_path);
+void prerun_model(SeapodymCoupled& sc);
 void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x);
 void Sensitivity_analysis(const char* parfile, const int sftype);
 void Hessian_comp(const char* parfile);
@@ -108,8 +109,9 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 	int itr = 0;
 	ios::sync_with_stdio();
 
-	//initialization of simulation parameters
-	sc.OnRunFirstStep();
+	//initialization of simulation
+	prerun_model(sc);	
+
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
 	string newparfile  = "newparfile.xml";
@@ -180,10 +182,20 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 	return 0;
 }
 
+void prerun_model(SeapodymCoupled& sc)
+{
+	sc.OnRunFirstStep();
+}
+
+
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 {
 	double like = 0.0;
 	like = sc.run_coupled((dvar_vector)x);
+	if (like==0){
+		cerr << "No data in the likelihood - gradient will not be calculated, exiting now!" << endl;
+		exit(1);
+	}
 	gradcalc(nvar,g); 
 	return like;
 }
@@ -325,8 +337,8 @@ int seapodym_phases(const char* parfile)
 		int itr = 0;
 		ios::sync_with_stdio();
 
-		//initialization of simulation parameters
-		sc.OnRunFirstStep();
+		//initialization of simulation
+		prerun_model(sc);
 
 		time(&time_sec);
 		time_t time1 = time_sec;

@@ -38,7 +38,6 @@ VarParamCoupled_xinit.cpp \
 VarParamCoupled_reset.cpp \
 SeapodymCoupled_Funcs.cpp \
 SeapodymCoupled_Forage.cpp \
-Seapodym_OnRunDensity.cpp \
 SeapodymCoupled_EditRunCoupled.cpp \
 SeapodymCoupled_OnRunCoupled.cpp \
 SeapodymCoupled_OnRunFirstStep.cpp \

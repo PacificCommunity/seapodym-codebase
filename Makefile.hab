@@ -39,7 +39,6 @@ VarParamCoupled_reset.cpp \
 SeapodymCoupled_EditRunCoupled.cpp \
 SeapodymCoupled_Funcs.cpp \
 Seapodym_OnRunHabitat.cpp \
-Seapodym_OnRunDensity.cpp \
 SeapodymHabitat_OnRunFirstStep.cpp \
 SeapodymCoupled_OnReadForcing.cpp \
 SeapodymCoupled_OnWriteOutput.cpp \
