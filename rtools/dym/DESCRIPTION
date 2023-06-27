@@ -1,5 +1,5 @@
 Package: dym
-Version: 0.0
+Version: 0.2
 Title: Read and write DYM files
 Author: Inna Senina <innas@spc.int>
 Maintainer: Inna Senina <innas@spc.int>
@@ -9,5 +9,5 @@ License: TBD
 SystemRequirements: none
 URL: TBD
 NeedsCompilation: no
-Date: 2022-05-10
-RoxygenNote: 7.1.2
+Date: 2022-09-12
+RoxygenNote: 7.2.3

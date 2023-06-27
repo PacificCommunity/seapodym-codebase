@@ -1,6 +1,5 @@
 #20170515: Function to read the data from DYM files with R functions for binary files
 # **********************************************************************************************************
-#source("utils_dym.R")
 
     xtoi.dym<-function(x,xmin,dx) {
         return(round((x-xmin)/dx,digits=0)+1)
@@ -85,15 +84,17 @@
     #' @param file.in is the DYM file accessible with provided path
     #' @param t0.user is the date provided as c(year,month,day) to be used the first date for extraction. If not specified, start from the first time step written in the DYM file.
     #' @param tfin.user is the date provided as c(year,month,day) to be used the last date for extraction. If not specified, stop at last time step written in the DYM file.
+    #' @param verbose flag (default value is TRUE) controlling the prompt for the nominal function execution.
     #' @return The list of variables written in the DYM file, that is a vector of longitudes, x, latitudes, y, time steps, t, the land mask matrix, landmask and the data 3d matrices, var[t,x,y]. 
     #' @examples 
     #' data <- read.var.dym("sst.dym");
     #' var<-data$var; tt<-data$t; x<-data$x; y<-data$y
     #' @export
-    read.var.dym<-function(file.in,t0.user=NULL,tfin.user,region=c(NA,NA,NA,NA),dt=30,apply.mask=FALSE,t.date.format=FALSE){
+    read.var.dym<-function(file.in,t0.user=NULL,tfin.user,region=c(NA,NA,NA,NA),dt=30,apply.mask=FALSE,t.date.format=FALSE,verbose=TRUE){
 
 	#1-reading
-        message("Reading file ",file.in,"...")	    
+	if (verbose)
+          message("Reading file ",file.in,"...")	    
 	con<-file(file.in,"rb") 
 	file.type<-readChar(con,4)
 	grid.id<-readBin(con,integer(),size=4)
@@ -139,8 +140,10 @@
                 message("Warning: the startdate and enddate do not contain day, will use first of month!")
 	        t0.user<-c(t0.user[1:2],1)
 	        tfin.user<-c(tfin.user[1:2],1)
-		print(t0.user)
-		print(tfin.user)
+		if (verbose){
+		  print(t0.user)
+		  print(tfin.user)
+		}
 	    }
 	    t0.user.date<-as.Date(paste(t0.user,collapse="-"))
 	    tfin.user.date<-as.Date(paste(tfin.user,collapse="-"))
@@ -153,13 +156,14 @@
 	    ind<-which(dates>=t0.user.date & dates<=tfin.user.date)
 
 	    if (length(ind)==0 | any(is.na(ind))){
-	       message("Problem with dates!")
+	       message("Problem with dates! Quit now.")
 	       print(ind)
 	       return()
 	    }
 	    if (length(ind)>0 & all(!is.na(ind))){
-              dates<-dates[ind]		    
-              message("Extracting data from ",dates[1]," to ",dates[length(dates)])		    
+              dates<-dates[ind]
+	      if (verbose)
+                message("Extracting data from ",dates[1]," to ",dates[length(dates)])		    
               tvect<-tvect[ind]	
 	      bytestoskip<-(ind[1]-1)*nlon*nlat*4
 	      nlevel<-length(tvect)
@@ -167,7 +171,8 @@
 	}
 	
 	if (bytestoskip>0){
-	  message("Skipping ",bytestoskip/(nlon*nlat*4)," matrices...")		
+	  if (verbose)
+	    message("Skipping ",bytestoskip/(nlon*nlat*4)," matrices...")		
           pos<-seek(con,bytestoskip,"current")
 	}
 	
@@ -197,7 +202,8 @@
 	    j2<-ytoj.dym(y1,ylat[1,1],dy)
 	    j1<-ytoj.dym(y2,ylat[1,1],dy)
 	    if (j1<1) j1<-1; if (j2>nlat) j2<-nlat
-	    message("Extracting data from ",xlon[1,i1]," to ",xlon[1,i2]," and from ",ylat[j2,1]," to ",ylat[j1,1])
+	    if (verbose)
+	      message("Extracting data from ",xlon[1,i1]," to ",xlon[1,i2]," and from ",ylat[j2,1]," to ",ylat[j1,1])
 	    mask<-mask[j1:j2,i1:i2]
 #	    if (length(tvect)>1) 
 		    data<-data[,j1:j2,i1:i2]
@@ -218,11 +224,9 @@
 	    if (length(tvect)==1) data<-t(data[nlat:1,]) 
 	}
 	if (length(tvect)==1){
-		message("HERE1")
 	    data<-data*landmask.na	 
 	    data<-data[nlat:1,]
 	    data<-t(data) 
-		message("HERE2")
 	}
 
 	return(list(x=xlon[1,],y=rev(ylat[,1]),t=dates,var=data,landmask=mask))
@@ -274,13 +278,3 @@
 	return(list(x=xlon[1,],y=rev(ylat[,1]),var=data,landmask=mask))
     }
     
-#t1<-Sys.time()
-#dat<-read.var.dym(file.in,c(2006,1,4),c(2014,11,26),region,7)
-#t2<-Sys.time()
-#t2-t1
-
-#t1<-Sys.time()
-#dat2<-read.var.reg.dym(file.in,c(2006,1,4),c(2014,11,26),region)
-#t2<-Sys.time()
-#t2-t1
-
