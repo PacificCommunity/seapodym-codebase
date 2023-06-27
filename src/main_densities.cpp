@@ -49,7 +49,6 @@ int OptionToCode(char* op, int &sub_option) {
 			}
 			return cmpCode[i];
 		}
-
 	return -1;//by default - optimization
 }
 

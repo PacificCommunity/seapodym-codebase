@@ -54,7 +54,7 @@ int OptionToCode(char* op, int &sub_option) {
 			return cmpCode[i];
 		}
 
-	return -1;//no option - simulation
+	return -1;//default here is simulation
 }
 
 void help(char* argv0) {
