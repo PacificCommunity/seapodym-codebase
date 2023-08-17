@@ -33,7 +33,7 @@ Installation:
    build first)
 
    library(devtools)
-   devtools::install_github("[path]/seapodym/rtools/dym")
+   devtools::install_github("PacificCommunity/seapodym-codebase/rtools/dym")
   
 
 
