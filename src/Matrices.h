@@ -98,6 +98,8 @@ public:
 	DVECTOR sum_B_adult ;	// total biomass of adults by species [nb_species]
 	DVECTOR sum_total_pop ;	// total biomass of pop by species [nb_species]
 
+	DMATRIX larvae_obs;	// observed larvae density by space [i][j]
+	DMATRIX larvae_pred;	// predicted larvae density by species and space [i][j]
 	D3_ARRAY effort;	// observed fishing effort by fishery and space [nb_fishery][i][j]
 	D3_ARRAY efflon,efflat;	// lon-lat coordinates of observed fishing effort by fishery and space [nb_fishery][i][j]
 	D4_ARRAY catch_obs;	// catch observed by [nb_species][nb_fishery_by_sp[sp]][i][j]
@@ -128,6 +130,7 @@ public:
 	void createMatTotCatch(const PMap& map, int nbi, int nbj, int nb_species);
 	void createMatCatch(const PMap& map,int nbi,int nbj,int nb_species,const IVECTOR& nb_fleet,const ivector a0_adult, const IVECTOR& nb_cohorts, const IVECTOR& nb_region);
 	void createMatMortality(int nforage, int nbi, int nbj);
+	void createMatLarvae(const PMap& map);
 	void MeanVarMovement(const PMap& map, const dmatrix& Adv_x, const dmatrix& Adv_y, const dmatrix& Diff, 
 		const double mss, const double sigma_species, const double length_age, const double length_age_max,
 		const int dT, const int sp, const int age);

@@ -553,6 +553,28 @@ void CMatrices::createMatCatch(const PMap& map, int nbi, int nbj, int nb_species
 //cout << __FILE__ << ':' << __LINE__ << endl;
 }
 
+/*void CMatrices::createMatLarvae(const PMap& map, int t0, int nbt)
+{
+	larvae_obs.allocate(t0, nbt);
+	larvae_pred.allocate(t0, nbt);
+	for (int t=t0; t<=nbt; t++){
+		larvae_obs(t).allocate(map.imin, map.imax, map.jinf, map.jsup);	
+		larvae_pred(t).allocate(map.imin, map.imax, map.jinf, map.jsup);	
+	}
+	larvae_obs.initialize();
+	larvae_pred.initialize();
+}*/
+
+void CMatrices::createMatLarvae(const PMap& map)
+{
+	larvae_obs.allocate(map.imin, map.imax, map.jinf, map.jsup);	
+	larvae_pred.allocate(map.imin, map.imax, map.jinf, map.jsup);	
+	larvae_obs.initialize();
+	larvae_pred.initialize();
+}
+
+
+
 void CMatrices::MeanVarMovement(const PMap& map, const dmatrix& Adv_x, const dmatrix& Adv_y, const dmatrix& Diff, 
 		const double mss, const double sigma_species, const double length_age, const double length_age_max,
 		const int dT, const int sp, const int age)

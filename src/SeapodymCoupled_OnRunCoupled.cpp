@@ -154,9 +154,9 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		eFlike -= 1e1*log(eF_sum - value(dvarEF_sum));
 	}
 */
+
 	for (;t_count <= nbt_total; t_count++)
 	{
-	
 		//----------------------------------------------//
 		//              INITIALISATION                  //
 		//----------------------------------------------//
@@ -570,3 +570,20 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	return value(likelihood);
 }
 
+void SeapodymCoupled::ReadLarvae()
+{
+	cout << "Reading input larvae file... " << endl;
+
+	int nlevel, nlon_input, nlat_input;
+	string file_input = param->str_file_larvae;
+
+	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
+
+	mat.createMatLarvae(map);
+
+	int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel + ((nlat_input *nlon_input)* (t_count-1))) * 4;	
+	rw.rbin_input2d(file_input, map, mat.larvae_obs, nbi, nbj, nbytetoskip);
+
+	// TEST
+	cerr << "Larvae data in [35,68]= " << mat.larvae_obs(35,68) << ", should be 31.10696" << endl;
+}

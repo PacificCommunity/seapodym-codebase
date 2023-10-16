@@ -11,7 +11,6 @@ const double c_zoo = 100.0; //constant in the first tests ECCO, need to make it 
 //function of temperature only
 void VarSimtunaFunc::Hj_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hj, double a, double b, const int t)
 {
-
 	for (int i = map.imin; i <= map.imax; i++) {
 		const int jmin = map.jinf[i];
 		const int jmax = map.jsup[i];

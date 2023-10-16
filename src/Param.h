@@ -159,6 +159,9 @@ public:
 	string strout_tags;
 	int write_all_cohorts_dym;
 	int write_all_fisheries_dym;
+	string strdir_larvae;
+	string str_file_larvae;
+	int habitat_spawning_input_categorical_flag;
 	
 ///	IVECTOR sp_nb_age_class_ad;	// number of age classes for each species [sp]
 ///	IVECTOR sp_unit_age_class_ad;	// time step used for the population of the species [sp] (0= pas de calcul de pop; 1=month;2=quarter )

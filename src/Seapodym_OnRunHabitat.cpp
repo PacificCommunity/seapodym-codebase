@@ -1,4 +1,5 @@
 #include "SeapodymCoupled.h"
+#include "NishikawaCategories.h"
 
 ///This is the main loop function for Habitat simulations. It is based on the default
 ///OnRunCoupled function, with modifications to compute either spawning of feeding habitats.
@@ -18,6 +19,8 @@ void HabitatConsoleOutput(int t_count, int flag_simulation, string date_str, dou
 */
 double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 {
+	NishikawaCategories NshkwCat;
+
 	t_count = nbt_building+1;
 	mat.mats.initialize();
 
@@ -48,6 +51,11 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 			ReadClimatologyOxy(1, qtr);
 	}
 	dvariable likelihood = 0.0;
+	// to remove following
+	//int test_inf_likelihood = 0;
+	int nb_Npred_zero = 0;
+	int nb_Npred_notzero = 0;
+
 	reset(x);
 	//----------------------------------------------//
 	// 	LOCAL MATRICES ALLOCATION SECTION       //
@@ -226,34 +234,108 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 		//------------------------------------------------------//
 		if (param->habitat_run_type==0){
 
-	                int rr_x = (int)nlon/nlon_input;
-        	        int rr_y = (int)nlat/nlat_input;
+	        int rr_x = (int)nlon/nlon_input;
+        	int rr_y = (int)nlat/nlat_input;
 			if (rr_x<1 || rr_y<1){ 
 				cerr << "Model resolution should be divisible without remainder by the resolution of input density field." << 
 				         endl<< "Currenly nlon/nlon_input = " << rr_x << ", and nlat/nlat_input = " << rr_y << endl << "Will exit now...";
 				exit(1);
 			}
 
-			for (int i=1; i<nlon_input; i++){
-				for (int j=1; j<nlat_input; j++){
-					double    H_obs  = mat.habitat_input[0][t_count][i][j];
-					if (H_obs>0){
-						int ncount = 0;
-						dvariable Hmean_pred = 0.0;
-						for (int ii=0; ii<rr_x; ii++)
-						for (int jj=0; jj<rr_y; jj++){
-							if (map.carte[rr_x*i+ii][rr_y*j+jj]){
-								Hmean_pred += Habitat(rr_x*i+ii,rr_y*j+jj);
-								ncount ++;
+			if (param->habitat_spawning_input_categorical_flag==0){
+				for (int i=1; i<nlon_input; i++){
+					for (int j=1; j<nlat_input; j++){
+						double    H_obs  = mat.habitat_input[0][t_count][i][j];
+						if (H_obs>0){
+							int ncount = 0;
+							dvariable Hmean_pred = 0.0;
+							for (int ii=0; ii<rr_x; ii++)
+							for (int jj=0; jj<rr_y; jj++){
+								if (map.carte[rr_x*i+ii][rr_y*j+jj]){
+									Hmean_pred += Habitat(rr_x*i+ii,rr_y*j+jj);
+									ncount ++;
+								}
+							}
+							if (ncount)
+									Hmean_pred /= ncount;
+							//if (Hmean_pred>0)
+							likelihood += (H_obs-Hmean_pred)*(H_obs-Hmean_pred);
+						}
+					}
+				}		
+			}else{
+				// If the habitat input is categorical
+				if (month==3 || month==6 || month==9 || month ==12){
+					for (int i=1; i<=nlon; i++){
+						for (int j=1; j<=nlat; j++){
+							if (map.carte[i][j]){
+								int H_obs  = (int)mat.habitat_input[0][t_count][i][j];
+								if (H_obs >= 0){
+									dvariable H_pred = 0.0;
+									H_pred = Habitat(i,j);
+
+									//double R = 0.09;// nb_recruitment
+									double R = 50;// bogus nb_recruitment so that N_pred proportional to H_pred
+									double b = 10000;// bogus a_adults_spawning so that N_pred proportional to H_pred
+									dvariable N_pred;
+									N_pred = H_pred * 1000.0 * R / (1 + b); // Beverton-Holt
+																										
+									//if ((N_pred > 1e-31) || (N_pred < 1e-31 && N_pred>0 && H_obs==0)){
+									//if (N_pred > 0){
+									//if (N_pred > 1e-31){
+									if (N_pred == 0){
+										nb_Npred_zero += 1;
+										if (H_obs != 0){
+											likelihood += 50;
+										}
+									}else{
+										nb_Npred_notzero += 1;
+										dvariable lkhd = NshkwCat.categorical_poisson_comp(H_obs, N_pred);
+
+										//double likelihood_before = value(likelihood);
+										likelihood += lkhd;
+
+										if (t_count==60 && i==92 && j==64){
+											std::cerr << "(" << t_count << "," << i << "," << j << "):" << std::endl;
+											//TRACE(likelihood_before)
+											TRACE(likelihood)
+											TRACE(lkhd)
+											TRACE(H_obs)
+											TRACE(H_pred)
+											TRACE(N_pred)
+										}
+										/*if (t_count==12 && i==62 && j==72){
+											std::cerr << "(" << t_count << "," << i << "," << j << "):" << std::endl;
+											TRACE(likelihood_before)
+											TRACE(likelihood)
+											TRACE(lkhd)
+											TRACE(H_obs)
+											TRACE(H_pred)
+											TRACE(N_pred)
+										}*/
+										/*if (t_count==3 && i==38 && j==49){
+											TRACE(likelihood)
+											TRACE(lkhd)
+											TRACE(H_obs)
+											TRACE(H_pred)
+											TRACE(N_pred)
+										}*/
+									}
+
+									/*if (std::isinf(value(likelihood)) && test_inf_likelihood==0){
+										test_inf_likelihood += 1;
+										std::cerr << "From (" << t_count << "," << i << "," << j << "): likelihood is inf" << std::endl;
+									}*/
+									/*if (likelihood == 0){
+										std::cerr << "From (" << t_count << "," << i << "," << j << "): likelihood is zero" << std::endl;
+									}*/
+								}
+
 							}
 						}
-						if (ncount)
-						       	Hmean_pred /= ncount;
-						//if (Hmean_pred>0)
-						likelihood += (H_obs-Hmean_pred)*(H_obs-Hmean_pred);
-					}
+					}		
 				}
-	                }		
+			}
 		}
 
 
@@ -275,7 +357,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 			double minval=0.0;
 			double maxval=1.0;
 
-                        rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
+            rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
 			//update min-max values in header
 			rw.rwbin_minmax(fileout, minval, maxval);
 
@@ -288,6 +370,10 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 	param->total_like = value(likelihood);
 	cout << "end of forward run, likelihood: " << value(likelihood)-eFlike<< " " << eFlike <<endl;
+
+	// to remove
+	std::cerr << "Number of null N_pred: " << nb_Npred_zero << std::endl;
+	std::cerr << "Number of non-null N_pred: " << nb_Npred_notzero << std::endl;
 
 	return value(likelihood);
 }
@@ -333,24 +419,34 @@ void SeapodymCoupled::ReadHabitat()
 			//will need to prepare the input habitat that contains the data only for the selected time period
 			int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel + ((nlat_input *nlon_input)* (t_count-1))) * 4;
 			if (param->habitat_run_type==0){
-				file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
+				if (param->habitat_spawning_input_categorical_flag==0){
+					file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
+				}else if (param->habitat_spawning_input_categorical_flag==1){
+					file_input = param->str_file_larvae;
+				}
 				//rw.rbin_input2d(file_input, map, mat.habitat_input[0][t_count], nlon_input+2, nlat_input+2, nbytetoskip);
 				ifstream litbin(file_input.c_str(), ios::binary | ios::in);
 				if (!litbin){
 					cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
 					exit(1);
 				}
-				litbin.seekg(nbytetoskip, ios::cur);
+
+				if (param->habitat_spawning_input_categorical_flag==0){
+					litbin.seekg(nbytetoskip, ios::cur);
+				}else if (param->habitat_spawning_input_categorical_flag==1){
+					int qtr = ((t_count - 1) % 12) / 3 + 1;
+					int nbytetoskip_seasonalfile = (9 +(3* nlat * nlon) + 4 + ((nlat *nlon)* (qtr-1))) * 4;
+					litbin.seekg(nbytetoskip_seasonalfile, ios::cur);
+				}
 				const int sizeofDymInputType = sizeof(float);
-		                       float buf;
-		                       for (int j=0;j<nlat_input;j++){
+				float buf;
+				for (int j=0;j<nlat_input;j++){
 					for (int i=0;i<nlon_input;i++){
 						litbin.read(( char *)&buf,sizeofDymInputType);
 						mat.habitat_input[0][t_count][i+1][j+1]= buf;
 					}
 				}
 				litbin.close();
-				
 			} else {
 				for (int n=0; n<param->nb_habitat_run_age; n++){
 					std::ostringstream ostr;
@@ -365,8 +461,8 @@ void SeapodymCoupled::ReadHabitat()
 					}
 					litbin.seekg(nbytetoskip, ios::cur);
 					const int sizeofDymInputType = sizeof(float);
-		                        float buf;
-		                        for (int j=0;j<nlat_input;j++){
+		            float buf;
+		            for (int j=0;j<nlat_input;j++){
 						for (int i=0;i<nlon_input;i++){
 							litbin.read(( char *)&buf,sizeofDymInputType);
 							mat.habitat_input[n][t_count][i+1][j+1]= buf;

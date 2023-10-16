@@ -44,6 +44,8 @@ friend class tag_release;
 	double OnRunHabitat(dvar_vector x, const bool writeoutputfiles = false);
 	void ReadHabitat();
 
+	void ReadLarvae();
+
 	double OnRunDensity(dvar_vector x, const bool writeoutputfiles = false);
 	void ReadDensity();	
 

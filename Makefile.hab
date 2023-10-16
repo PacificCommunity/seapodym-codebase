@@ -16,7 +16,8 @@ ctrace.h \
 Utilities.h \
 VarMatrices.h \
 VarParamCoupled.h \
-VarSimtunaFunc.h
+VarSimtunaFunc.h \
+NishikawaCategories.h
 
 SRCS= \
 main_habitats.cpp \
@@ -58,7 +59,8 @@ dv_feeding_habitat.cpp \
 dv_seasonal_switch.cpp \
 Calpop_InitCalPop.cpp  \
 hessian.cpp \
-like.cpp 
+like.cpp \
+NishikawaCategories.cpp 
 
 SRCPATH=DOM/src:src
 INCPATH=-IDOM/src -Isrc
