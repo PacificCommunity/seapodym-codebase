@@ -51,6 +51,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 			ReadClimatologyOxy(1, qtr);
 	}
 	dvariable likelihood = 0.0;
+	double likelihood_penalty = 50.0;
 	// to remove following
 	int test_inf_likelihood = 0;
 	int nb_Npred_zero = 0;
@@ -289,7 +290,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									if (N_pred == 0){
 										nb_Npred_zero += 1;
 										if (N_obs != 0){
-											likelihood += 50;
+											likelihood += likelihood_penalty;
 										}
 									}else{
 										nb_Npred_notzero += 1;
@@ -297,7 +298,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 										//double likelihood_before = value(likelihood);
 										if (std::isinf(value(lkhd))){
-											lkhd = 50;
+											lkhd = likelihood_penalty;
 										}
 
 										likelihood += lkhd;
