@@ -19,13 +19,13 @@ public:
     //~NishikawaCategories();
 
     void print_fields();
-    dvariable categorical_poisson_comp(int H_obs, dvariable N_pred);// Function to compute the neg. log-likelihood for an observation on an interval
+    dvariable categorical_poisson_comp(int N_obs, dvariable N_pred);// Function to compute the neg. log-likelihood for an observation on an interval
     void dv_categorical_poisson_comp();
     static void dv_categorical_poisson_comp_callback();
 
 private:
-    double Hs_cat[4];// Bounds of intervals
-    double Hs_diff[4];// Widths of intervals
+    double Nobs_cat[4];// Bounds of intervals
+    double Nobs_diff[4];// Widths of intervals
     double dl;// step to compute the numerical integrate
 };
 #endif // NISHIKAWACATEGORIES_H

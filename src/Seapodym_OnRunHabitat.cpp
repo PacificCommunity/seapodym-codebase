@@ -52,7 +52,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	}
 	dvariable likelihood = 0.0;
 	// to remove following
-	//int test_inf_likelihood = 0;
+	int test_inf_likelihood = 0;
 	int nb_Npred_zero = 0;
 	int nb_Npred_notzero = 0;
 
@@ -268,64 +268,71 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				if (month==3 || month==6 || month==9 || month ==12){
 					for (int i=1; i<=nlon; i++){
 						for (int j=1; j<=nlat; j++){
+							/*if (t_count==3 && i==1 && j==45){
+								TRACE(map.carte[i][j])
+							}*/
 							if (map.carte[i][j]){
-								int H_obs  = (int)mat.habitat_input[0][t_count][i][j];
-								if (H_obs >= 0){
+								int N_obs  = (int)mat.habitat_input[0][t_count][i][j];
+								if (N_obs >= 0){
 									dvariable H_pred = 0.0;
 									H_pred = Habitat(i,j);
 
 									//double R = 0.09;// nb_recruitment
-									double R = 50;// bogus nb_recruitment so that N_pred proportional to H_pred
+									double R = 25;// bogus nb_recruitment so that N_pred proportional to H_pred
 									double b = 10000;// bogus a_adults_spawning so that N_pred proportional to H_pred
 									dvariable N_pred;
 									N_pred = H_pred * 1000.0 * R / (1 + b); // Beverton-Holt
 																										
-									//if ((N_pred > 1e-31) || (N_pred < 1e-31 && N_pred>0 && H_obs==0)){
+									//if ((N_pred > 1e-31) || (N_pred < 1e-31 && N_pred>0 && N_obs==0)){
 									//if (N_pred > 0){
 									//if (N_pred > 1e-31){
 									if (N_pred == 0){
 										nb_Npred_zero += 1;
-										if (H_obs != 0){
+										if (N_obs != 0){
 											likelihood += 50;
 										}
 									}else{
 										nb_Npred_notzero += 1;
-										dvariable lkhd = NshkwCat.categorical_poisson_comp(H_obs, N_pred);
+										dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, N_pred);
 
 										//double likelihood_before = value(likelihood);
+										if (std::isinf(value(lkhd))){
+											lkhd = 50;
+										}
+
 										likelihood += lkhd;
 
-										if (t_count==60 && i==92 && j==64){
+										/*if (t_count==3 && i==1 && j==46){
 											std::cerr << "(" << t_count << "," << i << "," << j << "):" << std::endl;
 											//TRACE(likelihood_before)
 											TRACE(likelihood)
 											TRACE(lkhd)
-											TRACE(H_obs)
+											TRACE(N_obs)
 											TRACE(H_pred)
 											TRACE(N_pred)
-										}
+										}*/
 										/*if (t_count==12 && i==62 && j==72){
 											std::cerr << "(" << t_count << "," << i << "," << j << "):" << std::endl;
 											TRACE(likelihood_before)
 											TRACE(likelihood)
 											TRACE(lkhd)
-											TRACE(H_obs)
+											TRACE(N_obs)
 											TRACE(H_pred)
 											TRACE(N_pred)
 										}*/
 										/*if (t_count==3 && i==38 && j==49){
 											TRACE(likelihood)
 											TRACE(lkhd)
-											TRACE(H_obs)
+											TRACE(N_obs)
 											TRACE(H_pred)
 											TRACE(N_pred)
 										}*/
 									}
 
-									/*if (std::isinf(value(likelihood)) && test_inf_likelihood==0){
+									if (std::isinf(value(likelihood)) && test_inf_likelihood==0){
 										test_inf_likelihood += 1;
 										std::cerr << "From (" << t_count << "," << i << "," << j << "): likelihood is inf" << std::endl;
-									}*/
+									}
 									/*if (likelihood == 0){
 										std::cerr << "From (" << t_count << "," << i << "," << j << "): likelihood is zero" << std::endl;
 									}*/
