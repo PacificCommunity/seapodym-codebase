@@ -289,7 +289,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									//if (N_pred > 1e-31){
 									if (N_pred == 0){
 										nb_Npred_zero += 1;
-										if (N_obs != 0){
+										if (N_obs > 0){
 											likelihood += likelihood_penalty;
 										}
 									}else{
