@@ -95,16 +95,17 @@ void NishikawaCategories::dv_categorical_poisson_comp_callback() {
     instance.dv_categorical_poisson_comp();
 }
 
-dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable N_pred, double weight_Nobszero, dvariable sigma){
+dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable N_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
 
+    dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
     dvariable lkhd = 0.0;
     if (N_obs==0.0){
-        lkhd = weight_Nobszero*N_pred*N_pred/(2*sigma**2) ;
+        lkhd = weight_Nobszero*N_pred*N_pred/(2*pow(sigma, 2)) ;
     }else if (N_obs>0){
         if (N_pred<Nobs_cat[N_obs-1]){
-            lkhd = ((N_pred - Nobs_cat[N_obs-1])**2)/(2*sigma**2)
+            lkhd = pow(N_pred - Nobs_cat[N_obs-1], 2)/(2*pow(sigma, 2));
         }else if (N_pred>Nobs_cat[N_obs]){
-            lkhd = ((N_pred - Nobs_cat[N_obs])**2)/(2*sigma**2)
+            lkhd = pow(N_pred - Nobs_cat[N_obs], 2)/(2*pow(sigma, 2));
         }
     }
 
@@ -139,7 +140,7 @@ void NishikawaCategories::dv_mixed_gaussian_comp(){
     double dfsigma = restore_prevariable_derivative(N_pred_pos);
 
     if (N_obs>=0){
-        dfsigma += -2*dflkhd/(sigma**3);
+        dfsigma += -2*dflkhd/pow(sigma, 3);
         if (N_obs==0){
             dfN_pred += weight_Nobszero*dflkhd*N_pred;
         }else{
