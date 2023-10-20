@@ -335,6 +335,7 @@ bool VarParamCoupled::read(const string& parfile)
 		uncouple_sst_larvae.allocate(0,nb_species-1);
 		a_sst_spawning.allocate(0, nb_species - 1);
 		b_sst_spawning.allocate(0, nb_species - 1);
+		likelihood_spawning_sigma.allocate(0, nb_species - 1);
 		a_sst_larvae.allocate(0, nb_species - 1);
 		b_sst_larvae.allocate(0, nb_species - 1);
 		gaussian_thermal_function.allocate(0,nb_species-1);
@@ -399,6 +400,9 @@ bool VarParamCoupled::read(const string& parfile)
 			doc.set("/a_sst_larvae/variable","use","false");		
 			doc.set("/b_sst_larvae/variable","use","false");		
 		}
+
+		// sigma parameter in Gaussian kernel used for spawning habitat likelihood
+		likelihood_spawning_sigma[sp] = doc.getDouble("/likelihood_spawning_sigma", sp_name[sp]);
 
 		//standard deviation in Gaussian temperature function for spawning
                	a_sst_spawning[sp] = doc.getDouble("/a_sst_spawning", sp_name[sp]);
@@ -1221,6 +1225,7 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(M_mean_range,M_mean_range_min,M_mean_range_max,"/M_mean_range",nni);
 	par_read_bounds(a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",nni);
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);
+	par_read_bounds(likelihood_spawning_sigma,likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",nni);
 	par_read_bounds(a_sst_larvae,a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",nni);
 	par_read_bounds(b_sst_larvae,b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",nni);
 	par_read_bounds(alpha_hsp_prey,alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",nni);
@@ -1453,6 +1458,7 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(M_mean_range_min,M_mean_range_max,"/M_mean_range",0,100);
 	par_read(a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",0,10);
 	par_read(b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",0,34);
+	par_read(likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",0,10);
 	par_read(a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",0,10);
 	par_read(b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",0,34);
 	par_read(alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",0,10000);

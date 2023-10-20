@@ -14,6 +14,7 @@ void VarParamCoupled::xinit(dvector& x, adstring_array& x_names)
 
 	par_init(dvarsA_sst_spawning,a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",x,x_names,idx);
 	par_init(dvarsB_sst_spawning,b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",x,x_names,idx);
+	par_init(dvarsLikelihood_spawning_sigma,likelihood_spawning_sigma,likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",x,x_names,idx);
 	par_init(dvarsA_sst_larvae,a_sst_larvae,a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",x,x_names,idx);
 	par_init(dvarsB_sst_larvae,b_sst_larvae,b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",x,x_names,idx);
 	par_init(dvarsAlpha_hsp_prey,alpha_hsp_prey,alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",x,x_names,idx);

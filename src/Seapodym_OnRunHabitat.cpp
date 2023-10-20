@@ -278,8 +278,10 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									dvariable H_pred = 0.0;
 									H_pred = Habitat(i,j);
 
+									double weight_Nobszero = 422/11123;
 									//double R = 0.09;// nb_recruitment
-									double R = 25;// bogus nb_recruitment so that N_pred proportional to H_pred
+									//double R = 25;// bogus nb_recruitment so that N_pred proportional to H_pred
+									double R = 500;// bogus nb_recruitment so that N_pred proportional to H_pred
 									double b = 10000;// bogus a_adults_spawning so that N_pred proportional to H_pred
 									dvariable N_pred;
 									N_pred = H_pred * 1000.0 * R / (1 + b); // Beverton-Holt
@@ -294,7 +296,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 										}
 									}else{
 										nb_Npred_notzero += 1;
-										dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, N_pred);
+										dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, N_pred, weight_Nobszero);
 
 										//double likelihood_before = value(likelihood);
 										if (std::isinf(value(lkhd))){
@@ -303,6 +305,12 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 										likelihood += lkhd;
 
+
+										/*if (t_count==3 && i==1 && j==46){
+											std::cerr << "test lkhd" << std::endl;
+											dvariable lkhd = NshkwCat.categorical_poisson_comp(1, 0.5);
+											TRACE(lkhd)
+										}*/
 										/*if (t_count==3 && i==1 && j==46){
 											std::cerr << "(" << t_count << "," << i << "," << j << "):" << std::endl;
 											//TRACE(likelihood_before)
@@ -380,8 +388,8 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	cout << "end of forward run, likelihood: " << value(likelihood)-eFlike<< " " << eFlike <<endl;
 
 	// to remove
-	std::cerr << "Number of null N_pred: " << nb_Npred_zero << std::endl;
-	std::cerr << "Number of non-null N_pred: " << nb_Npred_notzero << std::endl;
+	//std::cerr << "Number of null N_pred: " << nb_Npred_zero << std::endl;
+	//std::cerr << "Number of non-null N_pred: " << nb_Npred_notzero << std::endl;
 
 	return value(likelihood);
 }

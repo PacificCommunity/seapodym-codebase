@@ -210,6 +210,7 @@ public:
 	dvector spawning_season_start;  // day/night length ratio defining the beginning of spawning migrations
 	DVECTOR a_sst_spawning;		// coefficient of curvature for spawning temperature function [sp]
  	DVECTOR b_sst_spawning;		// SST mean for spawning temperature function [sp]
+	DVECTOR likelihood_spawning_sigma;		// sigma parameter in Gaussian kernel used for spawning habitat likelihood
 	DVECTOR a_sst_larvae;		// a coefficent of the larvae habitat temperature in case uncouple_sst_larvae=1, [sp]
 	DVECTOR b_sst_larvae;		// b coefficent of the larvae habitat temperature in case uncouple_sst_larvae=1, [sp]
 	DVECTOR alpha_hsp_prey;		// previously alpha_spawning became two parameters - one for the prey function

@@ -18,10 +18,14 @@ public:
     // Destructor
     //~NishikawaCategories();
 
-    void print_fields();
-    dvariable categorical_poisson_comp(int N_obs, dvariable N_pred);// Function to compute the neg. log-likelihood for an observation on an interval
+    dvariable categorical_poisson_comp(int N_obs, dvariable N_pred, double weight_Nobszero);// Function to compute the neg. log-likelihood for an observation on an interval
     void dv_categorical_poisson_comp();
     static void dv_categorical_poisson_comp_callback();
+
+    dvariable mixed_gaussian_comp(int N_obs, dvariable N_pred, double weight_Nobszero);// Function to compute the neg. log-likelihood for an observation on an interval
+    void dv_mixed_gaussian_comp();
+    static void dv_mixed_gaussian_comp_callback();
+    
 
 private:
     double Nobs_cat[4];// Bounds of intervals
