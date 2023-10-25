@@ -54,6 +54,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	double likelihood_penalty = 50.0;
 	//double weight_Nobszero = 422.0/11123.0;
 	double weight_Nobszero = 0.0;
+   	double Npredzero_threshold = 0.0;
 
 	// to remove following
 	int test_inf_likelihood = 0;
@@ -289,6 +290,9 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									double b = 10000;// bogus a_adults_spawning so that N_pred proportional to H_pred
 									dvariable N_pred;
 									N_pred = H_pred * 1000.0 * R / (1 + b); // Beverton-Holt
+									if ((N_pred <= Npredzero_threshold) && (N_pred >= 0.0)){
+										N_pred = 0.0;
+									}
 
 									/*// For categorical Poisson likelihood							
 									if (N_pred == 0){
