@@ -2,7 +2,7 @@ SEAPODYM R tools: SEAPODYM-MAPS library
 
 ------------------------------------------------------------
 Package: seamaps
-Version: 0.0
+Version: 0.1
 Title: Nice maps with land, coastline and grid, which can be 
        combined with any geo-referenced data (oceanographic,  
        biological, catch, etc.).

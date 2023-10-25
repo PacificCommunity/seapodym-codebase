@@ -26,9 +26,11 @@
         res <- c("f", "h", "i", "l", "c")[resolution]
         filen <- tempfile("gmtmap")
         on.exit(unlink(c(filen, ".gmtcommands4")))
-        cmd <- paste("gmt pscoast -Rd",x1,"/",x2,"/",y1,"/",y2, " -Jx0.5id -P -G -D", 
-	             res, " -X0 -Y0 > ", filen,sep = "")
+        cmd <- paste0("gmt pscoast -R",x1,"/",x2,"/",y1,"/",y2, " -Jx0.05i -Gblack -D", 
+	              res," -X0 -Y0 >", filen)
+	system("gmt set PS_MEDIA a4")
         system(cmd)
+
         
         txt <- readLines(filen); 
         mat <- matrix(unlist(lapply(txt, read.ps.line)), ncol = 2,
@@ -39,8 +41,8 @@
         }
         maxx <- max(mat[, 1], na.rm = TRUE)
         maxy <- max(mat[, 2], na.rm = TRUE)
-        mat[, 1] <- mat[, 1]/600 + x1
-        mat[, 2] <- mat[, 2]/600 + y1
+        mat[, 1] <- mat[, 1]/60 + x1
+        mat[, 2] <- mat[, 2]/60 + y1
         return(mat)
     }
     junk <- GMT(x1, x2, y1, y2, resolution = resolution)
@@ -75,7 +77,7 @@
    if (coastline){# & !(x1<180 & x2>360)){
      filen <- tempfile("gmtmap") ;  on.exit(unlink(c(filen, ".gmtcommands4")))
      res <- c("f", "h", "i", "l", "c")[resolution]
-     cmd <- paste("gmt pscoast -Rd",x1,"/",x2,"/",y1,"/",y2," -Jx2id -W -M  -D",res," > ",filen,sep="")
+     cmd <- paste0("gmt pscoast -Rd",x1,"/",x2,"/",y1,"/",y2," -Jx2id -W -M  -D",res," >",filen)
      system(cmd)
      dat <- readLines(filen);
      ff<-function(str)if(regexpr("#",str)>0){
@@ -105,7 +107,7 @@
     usr<-par("usr"); x1<-usr[1]; x2<-usr[2]; y1<-usr[3]; y2<-usr[4];
     filen <- tempfile("gmtmap") ;  on.exit(unlink(c(filen, ".gmtcommands4")))
     res <- c("f", "h", "i", "l", "c")[reso]
-    cmd <- paste("gmt pscoast -R",x1,"/",x2,"/",y1,"/",y2," -Jx2id -W -M -D",res," > ",filen,sep="")
+    cmd <- paste("gmt pscoast -R",x1,"/",x2,"/",y1,"/",y2," -Jx2id -W -M -D",res," >",filen,sep="")
     system(cmd)
     dat <- readLines(filen);
     ff<-function(str)if(regexpr("#",str)>0){
@@ -129,12 +131,12 @@
 
 
  #' Plotting map with nice labels and formatting
- #' @param X,Y are the vectors of longitude and latitude, can be of length two, with map borders.
- #' @param reso is the map resolution, from 1 (full resolution) to  5 (crude). Recommended value for basin wide maps is 4.
- #' @param grid is boolean. If TRUE, then the grid will be plotted at intervals determined by function 'axis'.
- #' @param col is the color of the land. 
- #' @param col.sea is the color of the sea. 
- #' @param mar are the user margins passed to function 'par'
+ #' @param X,Y the vectors of longitude and latitude, can be of length two, with map borders.
+ #' @param reso the map resolution, from 1 (full resolution) to  5 (crude). Recommended value for basin wide maps is 4.
+ #' @param grid boolean. If TRUE, then the grid will be plotted at intervals determined by function 'axis'.
+ #' @param col the color of the land. 
+ #' @param col.sea the color of the sea. 
+ #' @param mar the user margins passed to function 'par'
  #' @param cex defines the size of the axis labels passed as cex.axis in function 'par'
  #' @examples 
  #' #Pacific-wide map with default settings 
@@ -170,19 +172,19 @@
  }
 
  #' Plotting map with nice labels and formatting on the existing plot
- #' @param X,Y are the vectors of longitude and latitude, can be of length two, with map borders.
- #' @param reso is the map resolution, from 1 (full resolution) to  5 (crude). Recommended value for basin wide maps is 4.
- #' @param grid is boolean. If TRUE, then the grid will be plotted at intervals determined by function 'axis'.
- #' @param col is the color of the land. 
- #' @param col.sea is the color of the sea. 
- #' @param mar are the user margins passed to function 'par'
+ #' @param X,Y the vectors of longitude and latitude, can be of length two, with map borders.
+ #' @param reso the map resolution, from 1 (full resolution) to  5 (crude). Recommended value for basin wide maps is 4.
+ #' @param grid boolean. If TRUE, then the grid will be plotted at intervals determined by function 'axis'.
+ #' @param col the color of the land. 
+ #' @param col.sea the color of the sea. 
+ #' @param mar the user margins passed to function 'par'
  #' @param cex defines the size of the axis labels passed as cex.axis in function 'par'
  #' @examples 
  #' #Pacific-wide map with default settings 
  #' nice.map(120:290,-50:50)
  #' nice.map(c(120,290),c(-50,50)) # same output
  #' @export
- nice.map.over<-function(X,Y,reso=5,grid=TRUE,col=light.grey,cex=1.0){
+ nice.map.over<-function(X,Y,reso=5,grid=TRUE,col="lightgrey",cex=1.0){
 
    par(cex.axis=cex,tck=-0.01,mgp=c(1,0.5,0))
    nx<-length(X);

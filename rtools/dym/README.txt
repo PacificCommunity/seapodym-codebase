@@ -2,15 +2,18 @@ SEAPODYM R tools: DYM library
 
 -----------------------------------------------------------
 Package: dym
-Version: 0.0
+Version: 1.0
 Title: Read and write DYM files
 Author: Inna Senina <innas@spc.int>
 Maintainer: Inna Senina <innas@spc.int>
 Depends: R (>= 1.0.0)
 Description: This small package provides functions to read, 
-             write and extract the subsets of data from DYM 
-	     files that are the inbuilt binary files of the 
-	     SEAPODYM model.
+	     write and manipulate DYM files, including 
+	     subsetting, arithmetic operations and 
+	     aggregations. DYM files are the inbuilt binary 
+	     files of the SEAPODYM model containing 3d 
+	     variables with dimensions (time,longitude,
+	     latitude) or (age,longitude,latitude).
 -----------------------------------------------------------
 
 -----------------------------------------------------------

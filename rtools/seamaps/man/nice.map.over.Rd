@@ -4,22 +4,22 @@
 \alias{nice.map.over}
 \title{Plotting map with nice labels and formatting on the existing plot}
 \usage{
-nice.map.over(X, Y, reso = 5, grid = TRUE, col = light.grey, cex = 1)
+nice.map.over(X, Y, reso = 5, grid = TRUE, col = "lightgrey", cex = 1)
 }
 \arguments{
-\item{X, Y}{are the vectors of longitude and latitude, can be of length two, with map borders.}
+\item{X, Y}{the vectors of longitude and latitude, can be of length two, with map borders.}
 
-\item{reso}{is the map resolution, from 1 (full resolution) to  5 (crude). Recommended value for basin wide maps is 4.}
+\item{reso}{the map resolution, from 1 (full resolution) to  5 (crude). Recommended value for basin wide maps is 4.}
 
-\item{grid}{is boolean. If TRUE, then the grid will be plotted at intervals determined by function 'axis'.}
+\item{grid}{boolean. If TRUE, then the grid will be plotted at intervals determined by function 'axis'.}
 
-\item{col}{is the color of the land.}
+\item{col}{the color of the land.}
 
 \item{cex}{defines the size of the axis labels passed as cex.axis in function 'par'}
 
-\item{col.sea}{is the color of the sea.}
+\item{col.sea}{the color of the sea.}
 
-\item{mar}{are the user margins passed to function 'par'}
+\item{mar}{the user margins passed to function 'par'}
 }
 \description{
 Plotting map with nice labels and formatting on the existing plot

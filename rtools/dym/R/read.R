@@ -33,7 +33,7 @@
     read.dims.dym<-function(file.in){
 
 	#1-reading
-        message("Reading file ",file.in,"...")	    
+        message("Reading dimensions from file ",file.in)	    
 	con<-file(file.in,"rb") 
 	file.type<-readChar(con,4)
 	grid.id<-readBin(con,integer(),size=4)
@@ -50,7 +50,7 @@
     read.txy.dym<-function(file.in){
 
 	#1-reading
-        message("Reading file ",file.in,"...")	    
+        message("Reading dimensional vectors from ",file.in)	    
 	con<-file(file.in,"rb") 
 	file.type<-readChar(con,4)
 	grid.id<-readBin(con,integer(),size=4)
@@ -80,10 +80,11 @@
     #Attn: need to get the date range before reading data, to avoid reading the whole array when it is not necessary!!!
     #' Reading DYM file
     #'
-    #' Reads DYM file and returns the list of variables
-    #' @param file.in is the DYM file accessible with provided path
-    #' @param t0.user is the date provided as c(year,month,day) to be used the first date for extraction. If not specified, start from the first time step written in the DYM file.
-    #' @param tfin.user is the date provided as c(year,month,day) to be used the last date for extraction. If not specified, stop at last time step written in the DYM file.
+    #' Reads 3d variable from the DYM file, which has dimensions (time,longitude,latitude), and returns the list with time vector, coordinates, land mask and variable data.
+    #' @param file.in the DYM file accessible with provided path
+    #' @param t0.user the date provided as c(year,month,day) to be used the first date for extraction. If not specified, start from the first time step written in the DYM file.
+    #' @param tfin.user the date provided as c(year,month,day) to be used the last date for extraction. If not specified, stop at last time step written in the DYM file.
+    #' @param region the set of four values c(x1,x2,y1,y2) defining east-west and south-north coordinates respectively.
     #' @param verbose flag (default value is TRUE) controlling the prompt for the nominal function execution.
     #' @return The list of variables written in the DYM file, that is a vector of longitudes, x, latitudes, y, time steps, t, the land mask matrix, landmask and the data 3d matrices, var[t,x,y]. 
     #' @examples 
@@ -232,7 +233,12 @@
 	return(list(x=xlon[1,],y=rev(ylat[,1]),t=dates,var=data,landmask=mask))
     }
 
-
+    #' Reads DYM file with population density initial conditions
+    #' @param file.in the name of the DYM file.
+    #' @examples 
+    #' dym <- read.restart.dym("skj_cohorts.dym");
+    #' summary(dym)
+    #' @export
     read.restart.dym<-function(file.in){
 
 	#1-reading

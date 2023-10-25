@@ -16,17 +16,17 @@ nice.map(
 )
 }
 \arguments{
-\item{X, Y}{are the vectors of longitude and latitude, can be of length two, with map borders.}
+\item{X, Y}{the vectors of longitude and latitude, can be of length two, with map borders.}
 
-\item{reso}{is the map resolution, from 1 (full resolution) to  5 (crude). Recommended value for basin wide maps is 4.}
+\item{reso}{the map resolution, from 1 (full resolution) to  5 (crude). Recommended value for basin wide maps is 4.}
 
-\item{grid}{is boolean. If TRUE, then the grid will be plotted at intervals determined by function 'axis'.}
+\item{grid}{boolean. If TRUE, then the grid will be plotted at intervals determined by function 'axis'.}
 
-\item{col}{is the color of the land.}
+\item{col}{the color of the land.}
 
-\item{col.sea}{is the color of the sea.}
+\item{col.sea}{the color of the sea.}
 
-\item{mar}{are the user margins passed to function 'par'}
+\item{mar}{the user margins passed to function 'par'}
 
 \item{cex}{defines the size of the axis labels passed as cex.axis in function 'par'}
 }
