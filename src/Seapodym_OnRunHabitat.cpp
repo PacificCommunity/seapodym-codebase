@@ -52,10 +52,18 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	}
 	dvariable likelihood = 0.0;
 	double likelihood_penalty = 50.0;
+	//double weight_Nobszero = 422.0/11123.0;
+	double weight_Nobszero = 0.0;
+
 	// to remove following
 	int test_inf_likelihood = 0;
 	int nb_Npred_zero = 0;
 	int nb_Npred_notzero = 0;
+	//int nb_lkhd = 0;
+	//int nb_lkhd125 = 0;
+	//int nb_lkhd5 = 0;
+	double lkhd_tcount3 = 0.0;
+	int nb_lkhd_tcount3 = 0;
 
 	reset(x);
 	//----------------------------------------------//
@@ -269,16 +277,12 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				if (month==3 || month==6 || month==9 || month ==12){
 					for (int i=1; i<=nlon; i++){
 						for (int j=1; j<=nlat; j++){
-							/*if (t_count==3 && i==1 && j==45){
-								TRACE(map.carte[i][j])
-							}*/
 							if (map.carte[i][j]){
 								int N_obs  = (int)mat.habitat_input[0][t_count][i][j];
 								if (N_obs >= 0){
 									dvariable H_pred = 0.0;
 									H_pred = Habitat(i,j);
 
-									double weight_Nobszero = 422/11123;
 									//double R = 0.09;// nb_recruitment
 									//double R = 25;// bogus nb_recruitment so that N_pred proportional to H_pred
 									double R = 500;// bogus nb_recruitment so that N_pred proportional to H_pred
@@ -306,13 +310,11 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 									// For mixed Gaussian Kernel likelihood
 									dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, N_pred, weight_Nobszero, *param, 0);
-
 									likelihood += lkhd;
-
-
+									
 									if (std::isinf(value(likelihood)) && test_inf_likelihood==0){
 										test_inf_likelihood += 1;
-										std::cerr << "From (" << t_count << "," << i << "," << j << "): likelihood is inf" << std::endl;
+										std::cerr << "From (" << t_count << "," << i << "," << j << "): likelihood is inf" << std::endl;							
 									}
 								}
 							}
@@ -358,6 +360,12 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	// to remove
 	//std::cerr << "Number of null N_pred: " << nb_Npred_zero << std::endl;
 	//std::cerr << "Number of non-null N_pred: " << nb_Npred_notzero << std::endl;
+	//std::cerr << "Number of non-null lkhd: " << nb_lkhd << std::endl;
+	//std::cerr << "Number of non-null lkhd = 0.125: " << nb_lkhd125 << std::endl;
+	//std::cerr << "Number of non-null lkhd = 0.5: " << nb_lkhd5 << std::endl;
+	//std::cerr << "Likelihood = " << likelihood << std::endl;
+	//std::cerr << "Likelihood at timestep 3 = " << lkhd_tcount3 << std::endl;
+	//std::cerr << "nb_cells with lkhd != 0 at timestep 3 = " << nb_lkhd_tcount3 << std::endl;
 
 	return value(likelihood);
 }

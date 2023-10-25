@@ -29,8 +29,9 @@ public:
     
 
 private:
-    double Nobs_cat[4];// Bounds of intervals
-    double Nobs_diff[4];// Widths of intervals
+    static const int nb_cat = 4;
+    double Nobs_cat[nb_cat];// Bounds of intervals
+    double Nobs_diff[nb_cat];// Widths of intervals
     double dl;// step to compute the numerical integrate
 };
 #endif // NISHIKAWACATEGORIES_H

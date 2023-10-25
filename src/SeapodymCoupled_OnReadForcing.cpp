@@ -24,7 +24,7 @@ void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)
 			for (int j = jmin ; j <= jmax; j++){
 				if (map.carte[i][j]){
 
-//BUFFER ZONE to avoid biomass accumulation effect in case of artificially closed boundary					
+/*//BUFFER ZONE to avoid biomass accumulation effect in case of artificially closed boundary					
 //Eventually move this buffer zone declaration into preparation of model forcing or topographic index
 if (param->longitudeMin>80 && param->deltaX>=60.0 && param->deltaY>=60.0) //indicate Pacific ocean domain and coarse resolution
 //The bloc below is executed only in case of the Pacific ocean domain within the IndoPacific area.
@@ -53,7 +53,7 @@ if (param->longitudeMin>80 && param->deltaX>=60.0 && param->deltaY>=60.0) //indi
 						if (mat.tempn(t,1,i,j)>15.0) mat.tempn(t,1,i,j) = 15.0;
 					}
 					
-}				
+}*/				
 				}
 			}
 		}

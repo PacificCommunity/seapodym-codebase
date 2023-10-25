@@ -5,7 +5,7 @@
 // Intervals: 0, [0,1], [1,5], [5,10], >10
 
 //NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 1, 5, 10}, Nobs_diff{1, 4, 5, 40}, dl(0.1) {}
-NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 0.5, 1, 3}, Nobs_diff{0.5, 0.5, 2, 20}, dl(0.1) {}
+NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 0.5, 1, 5}, Nobs_diff{0.5, 0.5, 2, 25.0}, dl(0.1) {}
 
 dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable N_pred, double weight_Nobszero){
     // 1 - Computes the numerical integral of a Poisson distribution function between the two N_obs bounds
@@ -104,7 +104,7 @@ dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable N_pred, 
     }else if (N_obs>0){
         if (N_pred<Nobs_cat[N_obs-1]){
             lkhd = pow(N_pred - Nobs_cat[N_obs-1], 2)/(2*pow(sigma, 2));
-        }else if (N_pred>Nobs_cat[N_obs]){
+        }else if (N_obs!=nb_cat && N_pred>Nobs_cat[N_obs]){
             lkhd = pow(N_pred - Nobs_cat[N_obs], 2)/(2*pow(sigma, 2));
         }
     }
@@ -146,10 +146,10 @@ void NishikawaCategories::dv_mixed_gaussian_comp(){
         }else{
             if (N_pred<Nobs_cat[N_obs-1]){
                 //lkhd = ((N_pred - Nobs_cat[N_obs-1])**2)/(2*sigma**2)
-                dfN_pred += weight_Nobszero*dflkhd*(N_pred - Nobs_cat[N_obs-1]);
-            }else if (N_pred>Nobs_cat[N_obs]){
+                dfN_pred += dflkhd*(N_pred - Nobs_cat[N_obs-1]);
+            }else if (N_obs!=nb_cat && N_pred>Nobs_cat[N_obs]){
                 //lkhd = ((N_pred - Nobs_cat[N_obs])**2)/(2*sigma**2)
-                dfN_pred += weight_Nobszero*dflkhd*(N_pred - Nobs_cat[N_obs]);
+                dfN_pred += dflkhd*(N_pred - Nobs_cat[N_obs]);
             }
         }
     }

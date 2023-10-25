@@ -402,7 +402,9 @@ bool VarParamCoupled::read(const string& parfile)
 		}
 
 		// sigma parameter in Gaussian kernel used for spawning habitat likelihood
-		likelihood_spawning_sigma[sp] = doc.getDouble("/likelihood_spawning_sigma", sp_name[sp]);
+		if (!doc.get("/likelihood_spawning_sigma",sp_name[sp]).empty()){
+			likelihood_spawning_sigma[sp] = doc.getDouble("/likelihood_spawning_sigma", sp_name[sp]);
+		}
 
 		//standard deviation in Gaussian temperature function for spawning
                	a_sst_spawning[sp] = doc.getDouble("/a_sst_spawning", sp_name[sp]);
