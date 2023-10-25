@@ -52,9 +52,9 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	}
 	dvariable likelihood = 0.0;
 	double likelihood_penalty = 50.0;
-	//double weight_Nobszero = 422.0/11123.0;
+	//double weight_Nobszero = 422.0/11123.0
 	double weight_Nobszero = 0.0;
-   	double Npredzero_threshold = 0.0;
+   	double Npredzero_threshold = 0.01;
 
 	// to remove following
 	int test_inf_likelihood = 0;
