@@ -52,13 +52,13 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	}
 	dvariable likelihood = 0.0;
 	double likelihood_penalty = 50.0;
-	double weight_Nobszero = 422.0/11123.0
+	double weight_Nobszero = 422.0/11123.0;
 	//double weight_Nobszero = 0.0;
 
 	// to remove following
 	int test_inf_likelihood = 0;
-	//int nb_Npred_zero = 0;
-	//int nb_Npred_notzero = 0;
+	int nb_Npred_zero = 0;
+	int nb_Npred_notzero = 0;
 	//int nb_lkhd = 0;
 	//int nb_lkhd125 = 0;
 	//int nb_lkhd5 = 0;
@@ -283,7 +283,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									dvariable H_pred = 0.0;
 									H_pred = Habitat(i,j);
 
-									/*// For categorical Poisson likelihood							
+									// For categorical Poisson likelihood							
 									if (H_pred == 0.0){
 										nb_Npred_zero += 1;
 										if (N_obs > 0){
@@ -299,11 +299,11 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 										}
 
 										likelihood += lkhd;
-									}*/
+									}
 
-									// For mixed Gaussian Kernel likelihood
+									/*// For mixed Gaussian Kernel likelihood
 									dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
-									likelihood += lkhd;
+									likelihood += lkhd;*/
 									
 									if (std::isinf(value(likelihood)) && test_inf_likelihood==0){
 										test_inf_likelihood += 1;
