@@ -284,7 +284,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									dvariable H_pred = 0.0;
 									H_pred = Habitat(i,j);
 
-									//double R = 0.09;// nb_recruitment
+									/*//double R = 0.09;// nb_recruitment
 									//double R = 25;// bogus nb_recruitment so that N_pred proportional to H_pred
 									double R = 500;// bogus nb_recruitment so that N_pred proportional to H_pred
 									double b = 10000;// bogus a_adults_spawning so that N_pred proportional to H_pred
@@ -292,17 +292,17 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									N_pred = H_pred * 1000.0 * R / (1 + b); // Beverton-Holt
 									if ((N_pred <= Npredzero_threshold) && (N_pred >= 0.0)){
 										N_pred = 0.0;
-									}
+									}*/
 
-									/*// For categorical Poisson likelihood							
-									if (N_pred == 0){
+									// For categorical Poisson likelihood							
+									if (H_pred == 0.0){
 										nb_Npred_zero += 1;
 										if (N_obs > 0){
 											likelihood += likelihood_penalty;
 										}
 									}else{
 										nb_Npred_notzero += 1;
-										dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, N_pred, weight_Nobszero);
+										dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
 										
 										//double likelihood_before = value(likelihood);
 										if (std::isinf(value(lkhd))){
@@ -310,11 +310,11 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 										}
 
 										likelihood += lkhd;
-									}*/
+									}
 
-									// For mixed Gaussian Kernel likelihood
+									/*// For mixed Gaussian Kernel likelihood
 									dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
-									likelihood += lkhd;
+									likelihood += lkhd;*/
 									
 									if (std::isinf(value(likelihood)) && test_inf_likelihood==0){
 										test_inf_likelihood += 1;

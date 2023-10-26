@@ -19,7 +19,7 @@ public:
     // Destructor
     //~NishikawaCategories();
 
-    dvariable categorical_poisson_comp(int N_obs, dvariable N_pred, double weight_Nobszero);// Function to compute the neg. log-likelihood for an observation on an interval
+    dvariable categorical_poisson_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp);// Function to compute the neg. log-likelihood for an observation on an interval
     void dv_categorical_poisson_comp();
     static void dv_categorical_poisson_comp_callback();
 

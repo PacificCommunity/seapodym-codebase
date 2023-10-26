@@ -7,9 +7,16 @@
 //NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 1, 5, 10}, Nobs_diff{1, 4, 5, 40}, dl(0.1) {}
 NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 0.5, 1, 5}, Nobs_diff{0.5, 0.5, 2, 25.0}, dl(0.1) {}
 
-dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable N_pred, double weight_Nobszero){
-    // 1 - Computes the numerical integral of a Poisson distribution function between the two N_obs bounds
-    // 2 - applies -log
+dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
+    // 1 - Compute N_pred from H_pred and Hs_to_larvae
+    // 2 - Computes the numerical integral of a Poisson distribution function between the two N_obs bounds
+    // 3 - applies -log
+
+    dvariable h = param.dvarsHs_to_larvae[sp];
+    dvariable N_pred = H_pred * h;
+    if ((N_pred <= Npredzero_threshold) && (N_pred >= 0.0)){
+        N_pred = 0.0;
+    }
 
     double lkhd_before_log = 0.0;
     dvariable lkhd = 0.0;
@@ -30,11 +37,14 @@ dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable N_p
     }
 
     save_identifier_string2((char*)"categorical_poisson_begin");
-    N_pred.save_prevariable_position();
+    H_pred.save_prevariable_position();
+    h.save_prevariable_position();
     lkhd.save_prevariable_position();
     save_double_value(weight_Nobszero);
     save_double_value(lkhd_before_log);
     save_double_value(value(N_pred));
+    save_double_value(value(h));
+    save_double_value(value(H_pred));
     save_int_value(N_obs);
     save_identifier_string2((char*)"categorical_poisson_end");
     
@@ -46,16 +56,21 @@ dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable N_p
 void NishikawaCategories::dv_categorical_poisson_comp(){
     verify_identifier_string2((char*)"categorical_poisson_end");
     const int N_obs = restore_int_value();
+    const double H_pred = restore_double_value();
+    const double h = restore_double_value();
     const double N_pred = restore_double_value();
     const double lkhd_before_log = restore_double_value();
     const double weight_Nobszero = restore_double_value();
     const prevariable_position lkhd_pos = restore_prevariable_position();    
-    const prevariable_position N_pred_pos = restore_prevariable_position();    
+    const prevariable_position h_pos = restore_prevariable_position();    
+    const prevariable_position H_pred_pos = restore_prevariable_position();    
     verify_identifier_string2((char*)"categorical_poisson_begin");
     
     double dflkhd = restore_prevariable_derivative(lkhd_pos);
-    double dfN_pred = restore_prevariable_derivative(N_pred_pos);
+    double dfh = restore_prevariable_derivative(h_pos);
+    double dfH_pred = restore_prevariable_derivative(H_pred_pos);
 
+    double dfN_pred = 0.0;
     if (N_obs==0.0){
         dfN_pred += weight_Nobszero*dflkhd;
     }else if (N_obs>0){
@@ -81,10 +96,13 @@ void NishikawaCategories::dv_categorical_poisson_comp(){
             dfN_pred += -dfw2 * exp(-N_pred);
         }
     }
+    dfh += dfN_pred * H_pred;
+    dfH_pred += dfN_pred * h;
     dflkhd = 0.0;
 
     save_double_derivative(dflkhd, lkhd_pos);
-    save_double_derivative(dfN_pred, N_pred_pos);
+    save_double_derivative(dfh, h_pos);
+    save_double_derivative(dfH_pred, H_pred_pos);
 }
 
 void NishikawaCategories::dv_categorical_poisson_comp_callback() {
