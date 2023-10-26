@@ -128,6 +128,11 @@ public:
         dvar_vector dvarsB_sst_spawning;
 
 // NishikawaCategories.cpp
+       	double Hs_to_larvae_min;
+        double Hs_to_larvae_max;
+        dvar_vector dvarsHs_to_larvae;
+
+// NishikawaCategories.cpp
        	double likelihood_spawning_sigma_min;
         double likelihood_spawning_sigma_max;
         dvar_vector dvarsLikelihood_spawning_sigma;

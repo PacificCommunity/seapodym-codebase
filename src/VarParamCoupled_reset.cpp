@@ -87,6 +87,16 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 		}
 	}
 
+	if (doc.get("/Hs_to_larvae/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsHs_to_larvae[i] = boundp(x[idx], Hs_to_larvae_min, Hs_to_larvae_max, penalty);
+
+			Hs_to_larvae[i] = value(dvarsHs_to_larvae[i]);
+			dvarpars[idx] = Hs_to_larvae[i];
+			++idx;
+		}
+	}
+
 	if (doc.get("/likelihood_spawning_sigma/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {			
 			dvarsLikelihood_spawning_sigma[i] = boundp(x[idx], likelihood_spawning_sigma_min, likelihood_spawning_sigma_max, penalty);

@@ -313,7 +313,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									}*/
 
 									// For mixed Gaussian Kernel likelihood
-									dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, N_pred, weight_Nobszero, *param, 0);
+									dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
 									likelihood += lkhd;
 									
 									if (std::isinf(value(likelihood)) && test_inf_likelihood==0){

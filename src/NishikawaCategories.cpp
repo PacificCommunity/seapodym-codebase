@@ -95,9 +95,15 @@ void NishikawaCategories::dv_categorical_poisson_comp_callback() {
     instance.dv_categorical_poisson_comp();
 }
 
-dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable N_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
+dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
 
     dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
+    dvariable h = param.dvarsHs_to_larvae[sp];
+    dvariable N_pred = H_pred * h;
+    /*if ((N_pred <= Npredzero_threshold) && (N_pred >= 0.0)){
+        N_pred = 0.0;
+    }*/
+
     dvariable lkhd = 0.0;
     if (N_obs==0.0){
         lkhd = weight_Nobszero*N_pred*N_pred/(2*pow(sigma, 2)) ;
@@ -111,10 +117,13 @@ dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable N_pred, 
 
     save_identifier_string2((char*)"mixed_gaussian_begin");
     sigma.save_prevariable_position();
-    N_pred.save_prevariable_position();
+    h.save_prevariable_position();
+    H_pred.save_prevariable_position();
     lkhd.save_prevariable_position();
     save_double_value(weight_Nobszero);
     save_double_value(value(N_pred));
+    save_double_value(value(h));
+    save_double_value(value(H_pred));
     save_double_value(value(sigma));
     save_int_value(N_obs);
     save_identifier_string2((char*)"mixed_gaussian_end");
@@ -128,36 +137,46 @@ void NishikawaCategories::dv_mixed_gaussian_comp(){
     verify_identifier_string2((char*)"mixed_gaussian_end");
     const int N_obs = restore_int_value();
     const double sigma = restore_double_value();
+    const double H_pred = restore_double_value();
+    const double h = restore_double_value();
     const double N_pred = restore_double_value();
     const double weight_Nobszero = restore_double_value();
     const prevariable_position lkhd_pos = restore_prevariable_position();    
-    const prevariable_position N_pred_pos = restore_prevariable_position();    
+    const prevariable_position H_pred_pos = restore_prevariable_position();    
+    const prevariable_position h_pos = restore_prevariable_position();    
     const prevariable_position sigma_pos = restore_prevariable_position();    
     verify_identifier_string2((char*)"mixed_gaussian_begin");
     
     double dflkhd = restore_prevariable_derivative(lkhd_pos);
-    double dfN_pred = restore_prevariable_derivative(N_pred_pos);
-    double dfsigma = restore_prevariable_derivative(N_pred_pos);
+    double dfH_pred = restore_prevariable_derivative(H_pred_pos);
+    double dfh = restore_prevariable_derivative(h_pos);
+    double dfsigma = restore_prevariable_derivative(sigma_pos);
 
+    double dfN_pred = 0.0;
     if (N_obs>=0){
-        dfsigma += -2*dflkhd/pow(sigma, 3);
         if (N_obs==0){
-            dfN_pred += weight_Nobszero*dflkhd*N_pred;
+            dfN_pred += weight_Nobszero*dflkhd*N_pred / pow(sigma, 2);
+            dfsigma += - weight_Nobszero*dflkhd*pow(N_pred, 2) / pow(sigma, 3);
         }else{
             if (N_pred<Nobs_cat[N_obs-1]){
                 //lkhd = ((N_pred - Nobs_cat[N_obs-1])**2)/(2*sigma**2)
-                dfN_pred += dflkhd*(N_pred - Nobs_cat[N_obs-1]);
+                dfN_pred += dflkhd*(N_pred - Nobs_cat[N_obs-1]) / pow(sigma, 2);
+                dfsigma += - dflkhd*pow(N_pred - Nobs_cat[N_obs-1], 2) / pow(sigma, 3);
             }else if (N_obs!=nb_cat && N_pred>Nobs_cat[N_obs]){
                 //lkhd = ((N_pred - Nobs_cat[N_obs])**2)/(2*sigma**2)
-                dfN_pred += dflkhd*(N_pred - Nobs_cat[N_obs]);
+                dfN_pred += dflkhd*(N_pred - Nobs_cat[N_obs]) / pow(sigma, 2);
+                dfsigma += - dflkhd*pow(N_pred - Nobs_cat[N_obs], 2) / pow(sigma, 3);
             }
         }
-    }
 
+    }
+    dfh += dfN_pred * H_pred;
+    dfH_pred += dfN_pred * h;
     dflkhd = 0.0;
 
     save_double_derivative(dflkhd, lkhd_pos);
-    save_double_derivative(dfN_pred, N_pred_pos);
+    save_double_derivative(dfh, h_pos);
+    save_double_derivative(dfH_pred, H_pred_pos);
     save_double_derivative(dfsigma, sigma_pos);
 }
 
