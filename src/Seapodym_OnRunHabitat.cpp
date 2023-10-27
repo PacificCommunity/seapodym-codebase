@@ -295,9 +295,12 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 										
 										//double likelihood_before = value(likelihood);
 										if (std::isinf(value(lkhd))){
-											lkhd = likelihood_penalty;
+											if (lkhd > 0){
+												lkhd = likelihood_penalty;
+											}else{
+												lkhd = 0;
+											}
 										}
-
 										likelihood += lkhd;
 									}
 
