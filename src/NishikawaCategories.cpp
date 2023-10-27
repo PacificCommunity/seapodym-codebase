@@ -21,7 +21,7 @@ dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable H_p
     double lkhd_before_log = 0.0;
     dvariable lkhd = 0.0;
     if (N_obs==0.0){
-        lkhd = weight_Nobszero*N_pred;
+        lkhd = weight_Nobszero*(N_pred + log(1-exp(-N_pred)));
     }else if (N_obs>0){
         // Numerical integral
         int nbl;
@@ -30,7 +30,6 @@ dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable H_p
             double l = Nobs_cat[N_obs-1] + dl * il - dl/2;
             lkhd += pow(N_pred, l) * exp(-N_pred) / std::tgamma(l+1);
         }
-
         lkhd *= dl;
         lkhd_before_log = value(lkhd);
         lkhd = -log(lkhd);
@@ -73,6 +72,7 @@ void NishikawaCategories::dv_categorical_poisson_comp(){
     double dfN_pred = 0.0;
     if (N_obs==0.0){
         dfN_pred += weight_Nobszero*dflkhd;
+        dfN_pred += weight_Nobszero*dflkhd*exp(-N_pred) / (1-exp(-N_pred));
     }else if (N_obs>0){
         // lkhd = -log(lkhd)
         dflkhd = -dflkhd/lkhd_before_log;

@@ -33,6 +33,6 @@ private:
     double Nobs_cat[nb_cat];// Bounds of intervals
     double Nobs_diff[nb_cat];// Widths of intervals
     double dl;// step to compute the numerical integrate
-    double Npredzero_threshold = 0.01;
+    double Npredzero_threshold = 0.0;
 };
 #endif // NISHIKAWACATEGORIES_H
