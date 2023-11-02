@@ -5,7 +5,7 @@
 // Intervals: 0, [0,1], [1,5], [5,10], >10
 
 //NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 1, 5, 10}, Nobs_diff{1, 4, 5, 40}, dl(0.1) {}
-NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 0.5, 1, 5}, Nobs_diff{0.5, 0.5, 2, 25.0}, dl(0.1) {}
+NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 0.5, 1, 5}, Nobs_diff{0.5, 0.5, 4, 25.0}, dl(0.1) {}
 
 dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
     // 1 - Compute N_pred from H_pred and Hs_to_larvae
