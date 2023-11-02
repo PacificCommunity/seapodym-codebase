@@ -294,6 +294,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 										dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
 										
 										//double likelihood_before = value(likelihood);
+										
 										if (std::isinf(value(lkhd))){
 											if (lkhd > 0){
 												lkhd = likelihood_penalty;
@@ -302,6 +303,18 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 											}
 										}
 										likelihood += lkhd;
+
+										/*if (t_count==3){
+											lkhd_tcount3 += value(lkhd);
+											if (lkhd > 0.0){
+												nb_lkhd_tcount3 += 1;
+											}
+											if (value(lkhd) < 0.0){
+												std::cerr << "(" << t_count << "," << i << "," << j << "):" << std::endl;
+												TTTRACE(lkhd, H_pred, N_obs)						
+											}
+										}*/
+
 									}
 
 									/*// For mixed Gaussian Kernel likelihood
