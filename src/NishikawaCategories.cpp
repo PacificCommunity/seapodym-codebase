@@ -2,10 +2,14 @@
 #include <fvar.hpp>
 
 // Class and function to compute the likelihood of a larvae density observed on an interval (raw Nishikawa data).
-// Intervals: 0, [0,1], [1,5], [5,10], >10
 
-//NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 1, 5, 10}, Nobs_diff{1, 4, 5, 40}, dl(0.1) {}
-NishikawaCategories::NishikawaCategories(): Nobs_cat{0, 0.5, 1, 5}, Nobs_diff{0.5, 0.5, 4, 25.0}, dl(0.1) {}
+NishikawaCategories::NishikawaCategories(VarParamCoupled& param): dl(0.1) {
+    int nb_cat = param.nb_larvae_cat;
+    for (int i = 0; i < nb_cat; i++) {
+        Nobs_cat[i] = param.larvae_density_categories[i];
+        Nobs_diff[i] = param.larvae_density_categories_width[i];
+    }
+}
 
 dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
     // 1 - Compute N_pred from H_pred and Hs_to_larvae
@@ -49,15 +53,29 @@ dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable H_p
     save_double_value(value(sigma));
     save_double_value(value(H_pred));
     save_int_value(N_obs);
+    for (int i=nb_cat-1; i>=0; i--){
+        save_double_value(Nobs_cat[i]);
+        save_double_value(Nobs_diff[i]);
+    }
+    save_int_value(nb_cat);
+    save_double_value(dl);
     save_identifier_string2((char*)"categorical_poisson_end");
     
-    gradient_structure::GRAD_STACK1->set_gradient_stack(NishikawaCategories::dv_categorical_poisson_comp_callback);
+    gradient_structure::GRAD_STACK1->set_gradient_stack(dv_categorical_poisson_comp);
 
     return lkhd;
 }
 
-void NishikawaCategories::dv_categorical_poisson_comp(){
+void dv_categorical_poisson_comp(){
     verify_identifier_string2((char*)"categorical_poisson_end");
+    double dl = restore_double_value();
+    int nb_cat = restore_int_value();
+    double Nobs_cat[nb_cat];
+    double Nobs_diff[nb_cat];
+    for (int i=0; i<nb_cat; i++){
+        Nobs_diff[i] = restore_double_value();
+        Nobs_cat[i] = restore_double_value();
+    }
     const int N_obs = restore_int_value();
     const double H_pred = restore_double_value();
     const double sigma = restore_double_value();
@@ -113,22 +131,15 @@ void NishikawaCategories::dv_categorical_poisson_comp(){
     save_double_derivative(dfH_pred, H_pred_pos);
 }
 
-void NishikawaCategories::dv_categorical_poisson_comp_callback() {
-    // Create an instance of the class
-    NishikawaCategories instance;
-
-    // Call the non-static member function on the instance
-    instance.dv_categorical_poisson_comp();
-}
 
 dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
 
     dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
     dvariable h = param.dvarsHs_to_larvae[sp];
     dvariable N_pred = H_pred * h;
-    /*if ((N_pred <= Npredzero_threshold) && (N_pred >= 0.0)){
-        N_pred = 0.0;
-    }*/
+    //if ((N_pred <= Npredzero_threshold) && (N_pred >= 0.0)){
+    //    N_pred = 0.0;
+    //}
 
     dvariable lkhd = 0.0;
     if (N_obs==0.0){
@@ -152,15 +163,25 @@ dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable H_pred, 
     save_double_value(value(H_pred));
     save_double_value(value(sigma));
     save_int_value(N_obs);
+    for (int i=nb_cat-1; i>=0; i--){
+        save_double_value(Nobs_cat[i]);
+    }
+    save_int_value(nb_cat);
     save_identifier_string2((char*)"mixed_gaussian_end");
     
-    gradient_structure::GRAD_STACK1->set_gradient_stack(NishikawaCategories::dv_mixed_gaussian_comp_callback);
+    gradient_structure::GRAD_STACK1->set_gradient_stack(dv_mixed_gaussian_comp);
 
     return lkhd;
 }
 
-void NishikawaCategories::dv_mixed_gaussian_comp(){
+
+void dv_mixed_gaussian_comp(){
     verify_identifier_string2((char*)"mixed_gaussian_end");
+    int nb_cat = restore_int_value();
+    double Nobs_cat[nb_cat];
+    for (int i=0; i<nb_cat; i++){
+        Nobs_cat[i] = restore_double_value();
+    }
     const int N_obs = restore_int_value();
     const double sigma = restore_double_value();
     const double H_pred = restore_double_value();
@@ -204,12 +225,4 @@ void NishikawaCategories::dv_mixed_gaussian_comp(){
     save_double_derivative(dfh, h_pos);
     save_double_derivative(dfH_pred, H_pred_pos);
     save_double_derivative(dfsigma, sigma_pos);
-}
-
-void NishikawaCategories::dv_mixed_gaussian_comp_callback() {
-    // Create an instance of the class
-    NishikawaCategories instance;
-
-    // Call the non-static member function on the instance
-    instance.dv_mixed_gaussian_comp();
 }

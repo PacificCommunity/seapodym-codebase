@@ -19,7 +19,12 @@ void HabitatConsoleOutput(int t_count, int flag_simulation, string date_str, dou
 */
 double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 {
-	NishikawaCategories NshkwCat;
+	NishikawaCategories NshkwCat(*param);
+	double likelihood_penalty = 50.0;
+	double weight_Nobszero = 0.0;
+	if (param->fit_null_larvae==1){
+		weight_Nobszero = param->weight_null_larvae;
+	}
 
 	t_count = nbt_building+1;
 	mat.mats.initialize();
@@ -51,19 +56,6 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 			ReadClimatologyOxy(1, qtr);
 	}
 	dvariable likelihood = 0.0;
-	double likelihood_penalty = 50.0;
-	double weight_Nobszero = 422.0/11123.0;
-	//double weight_Nobszero = 0.0;
-
-	// to remove following
-	int test_inf_likelihood = 0;
-	int nb_Npred_zero = 0;
-	int nb_Npred_notzero = 0;
-	//int nb_lkhd = 0;
-	//int nb_lkhd125 = 0;
-	//int nb_lkhd5 = 0;
-	//double lkhd_tcount3 = 0.0;
-	//int nb_lkhd_tcount3 = 0;
 
 	reset(x);
 	//----------------------------------------------//
@@ -282,48 +274,30 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 								if (N_obs >= 0){
 									dvariable H_pred = 0.0;
 									H_pred = Habitat(i,j);
-
-									// For categorical Poisson likelihood							
-									if (H_pred == 0.0){
-										nb_Npred_zero += 1;
-										if (N_obs > 0){
-											likelihood += likelihood_penalty;
-										}
-									}else{
-										nb_Npred_notzero += 1;
-										dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
-										
-										//double likelihood_before = value(likelihood);
-										
-										if (std::isinf(value(lkhd))){
-											if (lkhd > 0){
-												lkhd = likelihood_penalty;
-											}else{
-												lkhd = 0;
-											}
-										}
-										likelihood += lkhd;
-
-										/*if (t_count==3){
-											lkhd_tcount3 += value(lkhd);
-											if (lkhd > 0.0){
-												nb_lkhd_tcount3 += 1;
-											}
-											if (value(lkhd) < 0.0){
-												std::cerr << "(" << t_count << "," << i << "," << j << "):" << std::endl;
-												TTTRACE(lkhd, H_pred, N_obs)						
-											}
-										}*/
-
-									}
-
-									/*// For mixed Gaussian Kernel likelihood
-									dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
-									likelihood += lkhd;*/
 									
-									if (std::isinf(value(likelihood)) && test_inf_likelihood==0){
-										test_inf_likelihood += 1;
-										std::cerr << "From (" << t_count << "," << i << "," << j << "): likelihood is inf" << std::endl;							
+									if (param->spawning_likelihood_type==0){
+										// For mixed Gaussian Kernel likelihood
+										dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+										likelihood += lkhd;
+									}else if (param->spawning_likelihood_type==1){
+										// For categorical Poisson likelihood	
+										if (H_pred == 0.0){
+											nb_Npred_zero += 1;
+											if (N_obs > 0){
+												likelihood += likelihood_penalty;
+											}
+										}else{
+											nb_Npred_notzero += 1;
+											dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+											if (std::isinf(value(lkhd))){
+												if (lkhd > 0){
+													lkhd = likelihood_penalty;
+												}else{
+													lkhd = 0;
+												}
+											}
+											likelihood += lkhd;
+										}
 									}
 								}
 							}
@@ -365,16 +339,6 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 	param->total_like = value(likelihood);
 	cout << "end of forward run, likelihood: " << value(likelihood)-eFlike<< " " << eFlike <<endl;
-
-	// to remove
-	//std::cerr << "Number of null N_pred: " << nb_Npred_zero << std::endl;
-	//std::cerr << "Number of non-null N_pred: " << nb_Npred_notzero << std::endl;
-	//std::cerr << "Number of non-null lkhd: " << nb_lkhd << std::endl;
-	//std::cerr << "Number of non-null lkhd = 0.125: " << nb_lkhd125 << std::endl;
-	//std::cerr << "Number of non-null lkhd = 0.5: " << nb_lkhd5 << std::endl;
-	//std::cerr << "Likelihood = " << likelihood << std::endl;
-	//std::cerr << "Likelihood at timestep 3 = " << lkhd_tcount3 << std::endl;
-	//std::cerr << "nb_cells with lkhd != 0 at timestep 3 = " << nb_lkhd_tcount3 << std::endl;
 
 	return value(likelihood);
 }

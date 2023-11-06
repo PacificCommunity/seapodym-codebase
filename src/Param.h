@@ -161,7 +161,13 @@ public:
 	int write_all_fisheries_dym;
 	string strdir_larvae;
 	string str_file_larvae;
-	int habitat_spawning_input_categorical_flag;
+	int habitat_spawning_input_categorical_flag;//whether to fit to output/<sp>_spwaning_habitat_input.dym or fit to file_larvae_data
+	int spawning_likelihood_type; // Likelihood function for larvae densities
+	int fit_null_larvae; // Whether to fit to null larvae density observation or not
+	double weight_null_larvae; // weight factor to apply to null larvae densities
+	int nb_larvae_cat; // Number of categories for Nishikawa densities observations
+	double	*larvae_density_categories;	// Categories for Nishikawa densities observations
+	double	*larvae_density_categories_width;	// Width of binned categories for Nishikawa densities observations
 	
 ///	IVECTOR sp_nb_age_class_ad;	// number of age classes for each species [sp]
 ///	IVECTOR sp_unit_age_class_ad;	// time step used for the population of the species [sp] (0= pas de calcul de pop; 1=month;2=quarter )
@@ -192,6 +198,7 @@ public:
 	DVECTOR Ms_mean_max;		// natural mortality: max coeff of the "senescence" increasing sigmoid function
 	DVECTOR M_mean_range;		// range of the variability of natural mortality around M in relation with the habitat
 	dvector residual_competition;	// constant (temp) parameter accounting for competition with species, which are not in the model
+
 
 	int habitat_run_type;		// these two parameters are needed to pass the info to OnRunHabitat on which 
 	int nb_habitat_run_age;		// nb of habitat indices to be run: 1 for spawning (default value) and several for feeding

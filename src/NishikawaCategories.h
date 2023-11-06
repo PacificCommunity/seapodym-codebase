@@ -14,20 +14,12 @@ void verify_identifier_string2(char* str);
 class NishikawaCategories {
 public:
     // Constructor
-    NishikawaCategories();
-
-    // Destructor
-    //~NishikawaCategories();
+    NishikawaCategories(VarParamCoupled& param);
 
     dvariable categorical_poisson_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp);// Function to compute the neg. log-likelihood for an observation on an interval
-    void dv_categorical_poisson_comp();
-    static void dv_categorical_poisson_comp_callback();
 
     dvariable mixed_gaussian_comp(int N_obs, dvariable N_pred, double weight_Nobszero, VarParamCoupled& param, int sp);// Function to compute the neg. log-likelihood for an observation on an interval
-    void dv_mixed_gaussian_comp();
-    static void dv_mixed_gaussian_comp_callback();
     
-
 private:
     static const int nb_cat = 4;
     double Nobs_cat[nb_cat];// Bounds of intervals
@@ -35,4 +27,8 @@ private:
     double dl;// step to compute the numerical integrate
     double Npredzero_threshold = 0.0;
 };
+
+void dv_categorical_poisson_comp();// gradient_structure::GRAD_STACK1->set_gradient_stack can't get a non-static member function as an argument. I would have wanted to make dv_categorical_poisson_comp() a function specific to the NishikawaCategories instance (so depending on its specific Nobs_cat, Nobs_diff, etc.), but it is not possible so I have to get this values using save_double_value and restore_double_value -> loss of memory but only solution I ofund 
+void dv_mixed_gaussian_comp();
+
 #endif // NISHIKAWACATEGORIES_H

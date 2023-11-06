@@ -232,8 +232,22 @@ bool VarParamCoupled::read(const string& parfile)
 		if (habitat_spawning_input_categorical_flag==1){
 			strdir_larvae = doc.get("/strdir_larvae", "value");
 			str_file_larvae = strdir_larvae + doc.get("/file_larvae_data", "value");
+			spawning_likelihood_type = doc.getInteger("/spawning_likelihood_type", "value");
+			fit_null_larvae = doc.getInteger("/fit_null_larvae", "value");
+			if (fit_null_larvae==1){
+				weight_null_larvae = doc.getDouble("/weight_null_larvae", "value");
+			}
+			nb_larvae_cat =  doc.getInteger("/nb_larvae_cat", "value");
+			larvae_density_categories = Utilities::create1d(larvae_density_categories, nb_larvae_cat);
+			larvae_density_categories_width = Utilities::create1d(larvae_density_categories_width, nb_larvae_cat);
+			for (int c=0;c<nb_larvae_cat;c++){
+				larvae_density_categories[c] = doc.getDouble("/larvae_density_categories", c);
+				larvae_density_categories_width[c] = doc.getDouble("/larvae_density_categories_width", c);
+			}
 		}
 	}
+
+	
 
 
 	////////////////////
