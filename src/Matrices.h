@@ -65,10 +65,10 @@ public:
 	D3_ARRAY mortality;
 	
 	ivector nb_age_built;	// counter for the cohort 'built' during spinup
-        dmatrix mean_speed;     // weigthed (by cohort distribution) average of cohort speed
-        dmatrix mean_diffusion; // weigthed (by cohort distribution) average of cohort diffusion rate
-        dmatrix mean_mortality; // weigthed (by cohort distribution) average of mortality-at-age
-        dmatrix mean_temperature;// weigthed average of cohorts ambient temperature
+	dmatrix mean_speed;     // weigthed (by cohort distribution) average of cohort speed
+	dmatrix mean_diffusion; // weigthed (by cohort distribution) average of cohort diffusion rate
+	dmatrix mean_mortality; // weigthed (by cohort distribution) average of mortality-at-age
+	dmatrix mean_temperature;// weigthed average of cohorts ambient temperature
 	D3_ARRAY larvae;	// larvae: biomasse des larves (age0 ->1 mois)
 	D3_ARRAY juvenile;	// juvenile: biomasse des juveniles (age1 ->age_ autonomous)
 	D3_ARRAY young;		// young: biomasse des jeunes (age autonomous-> age mature)
@@ -80,6 +80,9 @@ public:
 	d4_array habitat_input;
 	d3_array density_input;	
 
+	std::vector<int> seasonal_spawning_habitat_input_vectors[4];// Vector of non-NA observed larvae densities
+	std::vector<int> seasonal_spawning_habitat_input_vectors_i[4];// Corresponding i indices
+	std::vector<int> seasonal_spawning_habitat_input_vectors_j[4];// Corresponding j indices
 
 	D3_ARRAY total_obs_catch;	
 	D3_ARRAY total_pred_catch;	

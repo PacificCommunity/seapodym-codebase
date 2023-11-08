@@ -67,6 +67,20 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);  
 	Habitat.initialize();
 
+	// Aggregated habitat over the entire period, only at obs. locations
+	dvar_matrix Habitat_at_obs;
+	IVECTOR kinf;
+	IVECTOR ksup;
+	kinf.allocate(0, 3);
+	ksup.allocate(0, 3);
+	for (int k = 0; k < 4; k++){
+		kinf[k] = 0;
+		ksup[k] = mat.seasonal_spawning_habitat_input_vectors[k].size();
+	}
+	Habitat_at_obs.allocate(0, 3, kinf, ksup);
+	Habitat_at_obs.initialize();	
+	int ntime_season[4] = {0,0,0,0};
+
 	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
 		func.Vars_at_age_precomp(*param,sp);
@@ -81,9 +95,9 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	//DYM file names
 	string fileout;
 	if (param->habitat_run_type>0)
-               	fileout = param->strdir_output + param->sp_name[0] + "_feeding_habitat_output.dym";
+        fileout = param->strdir_output + param->sp_name[0] + "_feeding_habitat_output.dym";
 	else			
-               	fileout = param->strdir_output + param->sp_name[0] + "_spawning_habitat_output.dym";
+        fileout = param->strdir_output + param->sp_name[0] + "_spawning_habitat_output.dym";
 	
 	//Write DYM headers
 	if (writeoutputfiles){
@@ -177,6 +191,15 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 			if (param->habitat_run_type==0){
 				//2.1 Spawning habitat	
 				func.Spawning_Habitat(*param, mat, map, Habitat, 1.0, sp, tcur, jday);
+
+				//2.2 Aggregate spawning habitat on a vector at obs. locations
+				if (param->habitat_spawning_input_categorical_flag==1){
+					int season = ((t_count - 1) % 12) / 3;
+					for (int k=0; k<mat.seasonal_spawning_habitat_input_vectors[season].size(); k++){
+						Habitat_at_obs(season, k) += Habitat(mat.seasonal_spawning_habitat_input_vectors_i[season][k], mat.seasonal_spawning_habitat_input_vectors_j[season][k]);
+					}
+					ntime_season[season] += 1;
+				}
 			}
 
 			if (param->habitat_run_type>0){
@@ -264,7 +287,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 						}
 					}
 				}		
-			}else{
+			}/*else{
 				// If the habitat input is categorical
 				if (month==3 || month==6 || month==9 || month ==12){
 					for (int i=1; i<=nlon; i++){
@@ -304,9 +327,8 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 						}
 					}		
 				}
-			}
+			}*/
 		}
-
 
 		if (writeoutputfiles){
 			if (!param->gcalc())
@@ -336,6 +358,45 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 		if (qtr != past_qtr) past_qtr = qtr; 
 
 	} // end of simulation loop
+
+	// For fit to seasonal larvae density: calculate likelihood over aggregated spawning habitat
+	if (param->habitat_spawning_input_categorical_flag==1){
+		for (int season=0; season<4; season++){
+			for (int k=0; k<mat.seasonal_spawning_habitat_input_vectors[season].size(); k++){
+				// Compute the average habitat over the period
+				Habitat_at_obs(season, k) /= ntime_season[season];
+
+				// Compute likelihood
+				int N_obs  = mat.seasonal_spawning_habitat_input_vectors[season][k];
+				if (N_obs >= 0){
+					dvariable H_pred = 0.0;
+					H_pred = Habitat_at_obs(season, k);
+					if (param->spawning_likelihood_type==0){
+						// For mixed Gaussian Kernel likelihood
+						dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+						likelihood += lkhd;
+					}else if (param->spawning_likelihood_type==1){
+						// For categorical Poisson likelihood	
+						if (H_pred == 0.0){
+							if (N_obs > 0){
+								likelihood += likelihood_penalty;
+							}
+						}else{
+							dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+							if (std::isinf(value(lkhd))){
+								if (lkhd > 0){
+									lkhd = likelihood_penalty;
+								}else{
+									lkhd = 0;
+								}
+							}
+							likelihood += lkhd;
+						}
+					}
+				}
+			}
+		}
+	}
 
 	param->total_like = value(likelihood);
 	cout << "end of forward run, likelihood: " << value(likelihood)-eFlike<< " " << eFlike <<endl;
@@ -439,6 +500,30 @@ void SeapodymCoupled::ReadHabitat()
 		}
 	}
 	t_count = t_count_init;
+
+	if (param->habitat_spawning_input_categorical_flag==1){
+		// Vector of non-NA observed density
+		for (int season=0; season<4; season++){
+			for (int j=0;j<nlat_input;j++){
+				for (int i=0;i<nlon_input;i++){
+					if (map.carte[i+1][j+1]){
+						if (mat.habitat_input[0][season*3+1][i+1][j+1]>=0){
+							mat.seasonal_spawning_habitat_input_vectors[season].push_back((int)mat.habitat_input[0][season*3+1][i+1][j+1]);
+							mat.seasonal_spawning_habitat_input_vectors_i[season].push_back(i+1);
+							mat.seasonal_spawning_habitat_input_vectors_j[season].push_back(j+1);
+						}
+					}
+				}
+			}
+		}
+
+		/*// to remove
+		int season = 3;
+		for (int k = 0; k<mat.seasonal_spawning_habitat_input_vectors[season].size(); k++){
+			std::cerr << "(season = " << season << ", k = " << k << "): " << mat.seasonal_spawning_habitat_input_vectors_i[season][k] << "," << mat.seasonal_spawning_habitat_input_vectors_j[season][k] << "): Nobs=" << mat.seasonal_spawning_habitat_input_vectors[season][k] << std::endl;
+		}*/
+	}
+
 }
 
 
