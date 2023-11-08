@@ -20,9 +20,6 @@ dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable H_p
     dvariable h = param.dvarsHs_to_larvae[sp];
     dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
     dvariable N_pred = H_pred * h;
-    if ((N_pred <= Npredzero_threshold) && (N_pred >= 0.0)){
-        N_pred = 0.0;
-    }
 
     double lkhd_before_log = 0.0;
     dvariable lkhd = 0.0;
@@ -137,9 +134,6 @@ dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable H_pred, 
     dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
     dvariable h = param.dvarsHs_to_larvae[sp];
     dvariable N_pred = H_pred * h;
-    //if ((N_pred <= Npredzero_threshold) && (N_pred >= 0.0)){
-    //    N_pred = 0.0;
-    //}
 
     dvariable lkhd = 0.0;
     if (N_obs==0.0){
