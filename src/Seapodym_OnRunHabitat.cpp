@@ -375,14 +375,20 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 						// For mixed Gaussian Kernel likelihood
 						dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
 						likelihood += lkhd;
-					}else if (param->spawning_likelihood_type==1){
-						// For categorical Poisson likelihood	
+					}else if (param->spawning_likelihood_type<=2){
+						// For categorical Poisson likelihood (and truncated Poisson)	
 						if (H_pred == 0.0){
 							if (N_obs > 0){
 								likelihood += likelihood_penalty;
 							}
 						}else{
-							dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+							dvariable lkhd;
+							if (param->spawning_likelihood_type==1){
+								lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+							}else{
+								lkhd = NshkwCat.categorical_truncated_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+							}
+							
 							if (std::isinf(value(lkhd))){
 								if (lkhd > 0){
 									lkhd = likelihood_penalty;

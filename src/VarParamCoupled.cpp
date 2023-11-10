@@ -244,6 +244,10 @@ bool VarParamCoupled::read(const string& parfile)
 				larvae_density_categories[c] = doc.getDouble("/larvae_density_categories", c);
 				larvae_density_categories_width[c] = doc.getDouble("/larvae_density_categories_width", c);
 			}
+			if (spawning_likelihood_type==2 && larvae_density_categories[0]==0){
+        		cerr << "Error: larvae_density_categories[0] can't be zero for Truncated Poisson cost function. Change <larvae_density_categories/> in the parameter file (Add 1 to the native categories)." << endl;
+        		std::exit(EXIT_FAILURE);
+			}
 		}
 	}
 
