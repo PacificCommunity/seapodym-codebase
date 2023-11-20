@@ -371,24 +371,27 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				if (N_obs >= 0){
 					dvariable H_pred = 0.0;
 					H_pred = Habitat_at_obs(season, k);
+					dvariable lkhd;
 					if (param->spawning_likelihood_type==0){
 						// For mixed Gaussian Kernel likelihood
-						dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
-						likelihood += lkhd;
+						lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+						/*if (season==0 && k==2290){
+							TTTRACE(N_obs, H_pred, lkhd)
+							TRACE(H_pred*param->Hs_to_larvae)
+							TRACE(param->Hs_to_larvae)
+						}*/
 					}else if (param->spawning_likelihood_type<=2){
 						// For categorical Poisson likelihood (and truncated Poisson)	
 						if (H_pred == 0.0){
 							if (N_obs > 0){
-								likelihood += likelihood_penalty;
+								lkhd = likelihood_penalty;
 							}
 						}else{
-							dvariable lkhd;
 							if (param->spawning_likelihood_type==1){
 								lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
 							}else{
 								lkhd = NshkwCat.categorical_truncated_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
 							}
-							
 							if (std::isinf(value(lkhd))){
 								if (lkhd > 0){
 									lkhd = likelihood_penalty;
@@ -396,9 +399,12 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									lkhd = 0;
 								}
 							}
-							likelihood += lkhd;
 						}
 					}
+					likelihood += lkhd;
+					/*if (season==0){
+						std::cerr << lkhd << " ";
+					}*/
 				}
 			}
 		}
@@ -517,6 +523,8 @@ void SeapodymCoupled::ReadHabitat()
 							mat.seasonal_spawning_habitat_input_vectors[season].push_back((int)mat.habitat_input[0][season*3+1][i+1][j+1]);
 							mat.seasonal_spawning_habitat_input_vectors_i[season].push_back(i+1);
 							mat.seasonal_spawning_habitat_input_vectors_j[season].push_back(j+1);
+							/*if (season==0)
+								std::cerr << i << " ";*/
 						}
 					}
 				}
