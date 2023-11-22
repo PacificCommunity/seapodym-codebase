@@ -327,8 +327,8 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				Habitat_at_obs(season, k) /= ntime_season[season];
 
 				// Compute likelihood
-				int N_obs  = mat.seasonal_spawning_habitat_input_vectors[season][k];
-				if (N_obs >= 0){
+				int L_obs  = mat.seasonal_spawning_habitat_input_vectors[season][k];
+				if (L_obs >= 0){
 					dvariable H_pred = 0.0;
 					H_pred = Habitat_at_obs(season, k);
 					dvariable lkhd;
@@ -336,31 +336,31 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 					int like_type = param->spawning_likelihood_type;
 					switch (like_type){
 						case 0: // Mixed Gaussian Kernel cost function
-							lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+							lkhd = NshkwCat.mixed_gaussian_comp(L_obs, H_pred, weight_Nobszero, *param, 0);
 							break;
 
 						case 1:	// Categorical Poisson cost function
 							if (H_pred == 0.0){
-								if (N_obs > 0){
+								if (L_obs > 0){
 									lkhd = likelihood_penalty;
 								}
 							}else{
-								lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+								lkhd = NshkwCat.categorical_poisson_comp(L_obs, H_pred, weight_Nobszero, *param, 0);
 							}
 							break;
 
 						case 2: // Categorical Truncated Poisson cost function
 							if (H_pred == 0.0){
-								if (N_obs > 0){
+								if (L_obs > 0){
 									lkhd = likelihood_penalty;
 								}
 							}else{
-								lkhd = NshkwCat.categorical_truncated_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+								lkhd = NshkwCat.categorical_truncated_poisson_comp(L_obs, H_pred, weight_Nobszero, *param, 0);
 							}
 							break;
 						
 						case 3: // Zero-Inflated Negative Binomial cost function
-							lkhd = NshkwCat.categorical_zinb_comp(N_obs, H_pred, *param, 0);
+							lkhd = NshkwCat.categorical_zinb_comp(L_obs, H_pred, *param, 0);
 							break;
 					}
 
