@@ -219,6 +219,8 @@ public:
  	DVECTOR b_sst_spawning;		// SST mean for spawning temperature function [sp]
 	DVECTOR Hs_to_larvae;           // scaling factor between spawning habitat index and larvae density, [sp]
 	DVECTOR likelihood_spawning_sigma;		// sigma parameter in Gaussian kernel used for spawning habitat likelihood
+	DVECTOR likelihood_spawning_beta;		// betaf parameter in ZINB used for spawning habitat likelihood
+	DVECTOR likelihood_spawning_probzero;		// pf parameter in ZINB used for spawning habitat likelihood
 	DVECTOR a_sst_larvae;		// a coefficent of the larvae habitat temperature in case uncouple_sst_larvae=1, [sp]
 	DVECTOR b_sst_larvae;		// b coefficent of the larvae habitat temperature in case uncouple_sst_larvae=1, [sp]
 	DVECTOR alpha_hsp_prey;		// previously alpha_spawning became two parameters - one for the prey function

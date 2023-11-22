@@ -355,6 +355,8 @@ bool VarParamCoupled::read(const string& parfile)
 		b_sst_spawning.allocate(0, nb_species - 1);
 		Hs_to_larvae.allocate(0, nb_species - 1);
 		likelihood_spawning_sigma.allocate(0, nb_species - 1);
+		likelihood_spawning_beta.allocate(0, nb_species - 1);
+		likelihood_spawning_probzero.allocate(0, nb_species - 1);
 		a_sst_larvae.allocate(0, nb_species - 1);
 		b_sst_larvae.allocate(0, nb_species - 1);
 		gaussian_thermal_function.allocate(0,nb_species-1);
@@ -428,6 +430,16 @@ bool VarParamCoupled::read(const string& parfile)
 		// sigma parameter in Gaussian kernel used for spawning habitat likelihood
 		if (!doc.get("/likelihood_spawning_sigma",sp_name[sp]).empty()){
 			likelihood_spawning_sigma[sp] = doc.getDouble("/likelihood_spawning_sigma", sp_name[sp]);
+		}
+
+		// betaf parameter in ZINB used for spawning habitat likelihood
+		if (!doc.get("/likelihood_spawning_beta",sp_name[sp]).empty()){
+			likelihood_spawning_beta[sp] = doc.getDouble("/likelihood_spawning_beta", sp_name[sp]);
+		}
+
+		// pf parameter in ZINB used for spawning habitat likelihood
+		if (!doc.get("/likelihood_spawning_probzero",sp_name[sp]).empty()){
+			likelihood_spawning_probzero[sp] = doc.getDouble("/likelihood_spawning_probzero", sp_name[sp]);
 		}
 
 		//standard deviation in Gaussian temperature function for spawning
@@ -1253,6 +1265,8 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);
 	par_read_bounds(Hs_to_larvae,Hs_to_larvae_min,Hs_to_larvae_max,"/Hs_to_larvae",nni);
 	par_read_bounds(likelihood_spawning_sigma,likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",nni);
+	par_read_bounds(likelihood_spawning_beta,likelihood_spawning_beta_min,likelihood_spawning_beta_max,"/likelihood_spawning_beta",nni);
+	par_read_bounds(likelihood_spawning_probzero,likelihood_spawning_probzero_min,likelihood_spawning_probzero_max,"/likelihood_spawning_probzero",nni);
 	par_read_bounds(a_sst_larvae,a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",nni);
 	par_read_bounds(b_sst_larvae,b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",nni);
 	par_read_bounds(alpha_hsp_prey,alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",nni);

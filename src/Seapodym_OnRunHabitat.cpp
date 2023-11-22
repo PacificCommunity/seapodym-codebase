@@ -287,47 +287,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 						}
 					}
 				}		
-			}/*else{
-				// If the habitat input is categorical
-				if (month==3 || month==6 || month==9 || month ==12){
-					for (int i=1; i<=nlon; i++){
-						for (int j=1; j<=nlat; j++){
-							if (map.carte[i][j]){
-								int N_obs  = (int)mat.habitat_input[0][t_count][i][j];
-								if (N_obs >= 0){
-									dvariable H_pred = 0.0;
-									H_pred = Habitat(i,j);
-									
-									if (param->spawning_likelihood_type==0){
-										// For mixed Gaussian Kernel likelihood
-										dvariable lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
-										likelihood += lkhd;
-									}else if (param->spawning_likelihood_type==1){
-										// For categorical Poisson likelihood	
-										if (H_pred == 0.0){
-											nb_Npred_zero += 1;
-											if (N_obs > 0){
-												likelihood += likelihood_penalty;
-											}
-										}else{
-											nb_Npred_notzero += 1;
-											dvariable lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
-											if (std::isinf(value(lkhd))){
-												if (lkhd > 0){
-													lkhd = likelihood_penalty;
-												}else{
-													lkhd = 0;
-												}
-											}
-											likelihood += lkhd;
-										}
-									}
-								}
-							}
-						}
-					}		
-				}
-			}*/
+			}
 		}
 
 		if (writeoutputfiles){
@@ -372,44 +332,50 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 					dvariable H_pred = 0.0;
 					H_pred = Habitat_at_obs(season, k);
 					dvariable lkhd;
-					if (param->spawning_likelihood_type==0){
-						// For mixed Gaussian Kernel likelihood
-						lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
-						/*if (season==0 && k==2290){
-							TTTRACE(N_obs, H_pred, lkhd)
-							TRACE(H_pred*param->Hs_to_larvae)
-							TRACE(param->Hs_to_larvae)
-						}*/
-					}else if (param->spawning_likelihood_type<=2){
-						// For categorical Poisson likelihood (and truncated Poisson)	
-						if (H_pred == 0.0){
-							if (N_obs > 0){
-								lkhd = likelihood_penalty;
-							}
-						}else{
-							if (param->spawning_likelihood_type==1){
+
+					int like_type = param->spawning_likelihood_type;
+					switch (like_type){
+						case 0: // Mixed Gaussian Kernel cost function
+							lkhd = NshkwCat.mixed_gaussian_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+							break;
+
+						case 1:	// Categorical Poisson cost function
+							if (H_pred == 0.0){
+								if (N_obs > 0){
+									lkhd = likelihood_penalty;
+								}
+							}else{
 								lkhd = NshkwCat.categorical_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
+							}
+							break;
+
+						case 2: // Categorical Truncated Poisson cost function
+							if (H_pred == 0.0){
+								if (N_obs > 0){
+									lkhd = likelihood_penalty;
+								}
 							}else{
 								lkhd = NshkwCat.categorical_truncated_poisson_comp(N_obs, H_pred, weight_Nobszero, *param, 0);
 							}
-							if (std::isinf(value(lkhd))){
-								if (lkhd > 0){
-									lkhd = likelihood_penalty;
-								}else{
-									lkhd = 0;
-								}
-							}
+							break;
+						
+						case 3: // Zero-Inflated Negative Binomial cost function
+							lkhd = NshkwCat.categorical_zinb_comp(N_obs, H_pred, *param, 0);
+							break;
+					}
+
+					if (std::isinf(value(lkhd))){
+						if (lkhd > 0){
+							lkhd = likelihood_penalty;
+						}else{
+							lkhd = 0;
 						}
 					}
 					likelihood += lkhd;
-					/*if (season==0){
-						std::cerr << lkhd << " ";
-					}*/
 				}
 			}
 		}
 	}
-
 	param->total_like = value(likelihood);
 	cout << "end of forward run, likelihood: " << value(likelihood)-eFlike<< " " << eFlike <<endl;
 

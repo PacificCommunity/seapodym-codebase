@@ -137,6 +137,14 @@ public:
         double likelihood_spawning_sigma_max;
         dvar_vector dvarsLikelihood_spawning_sigma;
 
+// NishikawaCategories.cpp
+       	double likelihood_spawning_beta_min;
+        double likelihood_spawning_beta_max;
+        dvar_vector dvarsLikelihood_spawning_beta;
+       	double likelihood_spawning_probzero_min;
+        double likelihood_spawning_probzero_max;
+        dvar_vector dvarsLikelihood_spawning_probzero;
+
 //8.1-8.2 dv_spawning_habitat.cpp, dv_juvenile_habitat.cpp:
         double a_sst_larvae_min;
         double a_sst_larvae_max;

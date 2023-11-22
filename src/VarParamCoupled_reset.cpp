@@ -107,6 +107,26 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 		}
 	}
 
+	if (doc.get("/likelihood_spawning_beta/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsLikelihood_spawning_beta[i] = boundp(x[idx], likelihood_spawning_beta_min, likelihood_spawning_beta_max, penalty);
+
+			likelihood_spawning_beta[i] = value(dvarsLikelihood_spawning_beta[i]);
+			dvarpars[idx] = likelihood_spawning_beta[i];
+			++idx;
+		}
+	}
+
+	if (doc.get("/likelihood_spawning_probzero/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsLikelihood_spawning_probzero[i] = boundp(x[idx], likelihood_spawning_probzero_min, likelihood_spawning_probzero_max, penalty);
+
+			likelihood_spawning_probzero[i] = value(dvarsLikelihood_spawning_probzero[i]);
+			dvarpars[idx] = likelihood_spawning_probzero[i];
+			++idx;
+		}
+	}
+
 	if (doc.get("/a_sst_larvae/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {			
 			dvarsA_sst_larvae[i] = boundp(x[idx], a_sst_larvae_min, a_sst_larvae_max, penalty);
