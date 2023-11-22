@@ -18,6 +18,10 @@ void CCalpop::calrec1(const PMap& map, dvar_matrix& uu, const dmatrix& mortality
 	DVECTOR uvec(0, maxn - 1);
 	DVECTOR rhs(0, maxn - 1);
 	DVECTOR gam(0, maxn - 1);
+
+	uu.save_dvar_matrix_value();
+	save_identifier_string2((char*)"One_step_calrec_uu");
+	
 	for (int itr = 1; itr <= iterationNumber; itr++) 
 	{
 		for (int j = map.jmin; j <= map.jmax; j++)
@@ -42,8 +46,6 @@ void CCalpop::calrec1(const PMap& map, dvar_matrix& uu, const dmatrix& mortality
 			for (int i = imin; i <= imax; i++)
 				uuint(i,j) = uvec[i];
 		} 
-		uu.save_dvar_matrix_value();
-		save_identifier_string2((char*)"One_step_calrec_uu");
 		
 		for (int i = map.imin; i <= map.imax; i++)
 		{

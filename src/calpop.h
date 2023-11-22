@@ -51,6 +51,8 @@ public:
 	void Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_matrix& mortality, const int t_count);
 	void Calrec_adult(const PMap& map, dvar_matrix& uu, dvar_matrix& mortality);
 
+	void RecompADI_step_fwd(const PMap& map, d3_array& uu, d3_array& uuint, const dmatrix a, const dmatrix bm, const dmatrix& c, const dmatrix& d, const dmatrix& e, const dmatrix& f, const dmatrix& xbet, const dmatrix& ybet);
+	void RecompADI_step_fwd_with_catch(const PMap& map, CParam& param, d3_array& uu, d3_array& uuint, d3_array& uuint_t, const dmatrix a, const dmatrix bm, const dmatrix& c, const dmatrix& d, const dmatrix& e, const dmatrix& f, const dmatrix& xbet, const dmatrix& ybet, const dmatrix& C);
 
 	void Recomp_abc_coef(const PMap& map, CMatrices& mat, const int t_count, const dmatrix& mortality, dmatrix& aa, dmatrix& bbm, dmatrix& cc);
 	void Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, const int t_count, const int jday, const dmatrix& habitat, dmatrix& dd, dmatrix& ee, dmatrix& ff, dmatrix& advection_x, dmatrix& advection_y, const int sp, const int age, const double MSS, const double c_diff_fish, const double sigma_species);

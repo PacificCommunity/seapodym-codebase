@@ -225,43 +225,33 @@ void dv_calrec_precalrec()
 	//recompute xbet and ybet
 	pop->xbet_comp(*map, xbet, a, bm, c, 2*iterationNumber);
 	pop->ybet_comp(*map, ybet, d, e, f, 2*iterationNumber);
+	
 	const dmatrix_position uuint_pos(pop->uuint);
-	dmatrix uuint(uuint_pos);
+
+	//recompute all 2*N-1 solutions 
+	//(no need to get the last one 
+	//as it is saved on the next time step)
+	d3_array luu, luuint; //local uu and uuint computed from uu(t-1)
+	luu.allocate(0, iterationNumber-1);
+	luuint.allocate(1, iterationNumber);
+	for (int itr = 1; itr <= iterationNumber; itr++){ 
+		luu(itr-1).allocate(map->imin1, map->imax1, map->jinf1, map->jsup1);
+		luuint(itr).allocate(map->imin1, map->imax1, map->jinf1, map->jsup1);
+		luu(itr-1).initialize();
+		luuint(itr).initialize();
+	}
+
+	verify_identifier_string2((char*)"One_step_calrec_uu");
+	luu[0] = restore_dvar_matrix_value(uu_pos);
+	
+	//recompute all intermediate solutions:
+	pop->RecompADI_step_fwd(*map, luu, luuint, a, bm, c, d, e, f, xbet, ybet);
 
 	//ADJOINT FOR CALREC FUNCTION
 	for (int itr = iterationNumber; itr >= 1; itr--){
 
-		verify_identifier_string2((char*)"One_step_calrec_uu");
-		uu = restore_dvar_matrix_value(uu_pos);
-
 		dmatrix dfuuint(uuint_pos);
 		dfuuint.initialize();
-
-		uuint.initialize();
-
-		//first recompute uuint from uu
-		for (int j = map->jmin; j <= map->jmax; j++)
-		{
-			const int imin = map->iinf[j]; 
-			const int imax = map->isup[j];
-
-			for (int i = imin; i <= imax; i++)
-				rhs[i]=-d[i][j]*uu(i,j-1) + (2*iterationNumber-e[i][j])*uu(i,j) - f[i][j]*uu(i,j+1);
-                        
-			//tridag(a[j],xbet[j],c[j],rhs,uvec,gam,imin,imax);
-			gam[imin] = rhs[imin];
-			for (int i=imin+1 ; i<=imax ; i++)
-				gam[i] = rhs[i]-gam[i-1]*a[j][i]*xbet[j][i-1];
-	
-			uvec[imax] = gam[imax]*xbet[j][imax];
-			for (int i=imax-1; i>=imin ; i--)
-				uvec[i] = (gam[i]-c[j][i]*uvec[i+1])*xbet[j][i];
-
-
-			for (int i = imin; i <= imax; i++)
-				uuint(i,j) = uvec[i];
-		} 
-		//end of recomputation
 
 		for (int i = isup; i >= iinf; i--){
 
@@ -271,7 +261,7 @@ void dv_calrec_precalrec()
 			//recomputing rhs(j) 
 			for (int j = jmin; j <= jmax; j++) {
 
-					rhs[j] = -a[j][i]*uuint[i-1][j]+(2*iterationNumber-bm[j][i])*uuint[i][j] - c[j][i]*uuint[i+1][j];			
+				rhs[j] = -a[j][i]*luuint[itr][i-1][j]+(2*iterationNumber-bm[j][i])*luuint[itr][i][j] - c[j][i]*luuint[itr][i+1][j];			
 			}
 			
 			for (int j=jmin; j<=jmax; j++){
@@ -282,14 +272,14 @@ void dv_calrec_precalrec()
 			dftridag1(d(i),ybet(i),f(i),rhs,uvec,gam,dfd(i),dfybet(i),dff(i),dfrhs,dfuvec,dfgam,jmin,jmax);
 			for (int j=jmax; j>=jmin; j--) {
 
-					//rhs[j] = -a[j][i]*uuint[i-1][j]+(2*iterationNumber-bm[j][i])*uuint[i][j] - c[j][i]*uuint[i+1][j];
-					dfa(j,i)      -= uuint(i-1,j)*dfrhs(j);
-					dfuuint(i-1,j)-= a(j,i)*dfrhs(j);
-					dfbm(j,i)     -= uuint(i,j)*dfrhs(j);
-					dfuuint(i,j)  += (2*iterationNumber-bm[j][i])*dfrhs(j);
-					dfc(j,i)      -= uuint(i+1,j)*dfrhs(j);
-					dfuuint(i+1,j)-= c(j,i)*dfrhs(j);
-					dfrhs(j)       = 0.0;
+				//rhs[j] = -a[j][i]*uuint[i-1][j]+(2*iterationNumber-bm[j][i])*uuint[i][j] - c[j][i]*uuint[i+1][j];
+				dfa(j,i)      -= luuint(itr,i-1,j)*dfrhs(j);
+				dfuuint(i-1,j)-= a(j,i)*dfrhs(j);
+				dfbm(j,i)     -= luuint(itr,i,j)*dfrhs(j);
+				dfuuint(i,j)  += (2*iterationNumber-bm[j][i])*dfrhs(j);
+				dfc(j,i)      -= luuint(itr,i+1,j)*dfrhs(j);
+				dfuuint(i+1,j)-= c(j,i)*dfrhs(j);
+				dfrhs(j)       = 0.0;
 			}
 		}
 
@@ -300,7 +290,7 @@ void dv_calrec_precalrec()
 	
 			// recomputing rhs(i)
 			for (int i = imin; i <= imax; i++) {   
-					rhs[i] = -d[i][j]*uu[i][j-1] + (2*iterationNumber-e[i][j])*uu[i][j] - f[i][j]*uu[i][j+1];
+					rhs[i] = -d[i][j]*luu[itr-1][i][j-1] + (2*iterationNumber-e[i][j])*luu[itr-1][i][j] - f[i][j]*luu[itr-1][i][j+1];
 			}
 
 			for (int i = imax; i >= imin; i--){
@@ -313,11 +303,11 @@ void dv_calrec_precalrec()
 			for (int i=imax; i>=imin; i--){
 
 					//rhs[i] = -d[i][j]*uu[i][j-1] + (2*iterationNumber-e[i][j])*uu[i][j] - f[i][j]*uu[i][j+1];
-					dfd(i,j)    -= uu(i,j-1)*dfrhs(i);
+					dfd(i,j)    -= luu(itr-1,i,j-1)*dfrhs(i);
 					dfuu(i,j-1) -= d(i,j)*dfrhs(i);
-					dfe(i,j)    -= uu(i,j)*dfrhs(i);
+					dfe(i,j)    -= luu(itr-1,i,j)*dfrhs(i);
 					dfuu(i,j)   += (2*iterationNumber-e[i][j])*dfrhs(i);
-					dff(i,j)    -= uu(i,j+1)*dfrhs(i);
+					dff(i,j)    -= luu(itr-1,i,j+1)*dfrhs(i);
 					dfuu(i,j+1) -= f(i,j)*dfrhs(i);
 					dfrhs(i)     = 0.0;
 			}
@@ -491,57 +481,37 @@ void dv_calrec_with_catch_precalrec()
 	//recompute xbet and ybet
 	pop->xbet_comp(*map, xbet, a, bm, c, 2*iterationNumber);
 	pop->ybet_comp(*map, ybet, d, e, f, 2*iterationNumber);
-//if (age>25) cout << age << " " << age_adult_habitat << " " << norm(a) << " " << norm(bm) << " " << norm(c) << " " << norm(d) << " " << norm(e) << " " << norm(f) << " " << norm(xbet) << " " << norm(ybet) << endl;
-	const dmatrix_position uuint_pos(pop->uuint);
-	dmatrix uuint(uuint_pos);
 
+	const dmatrix_position uuint_pos(pop->uuint);
+
+	//recompute all 2*N-1 solutions 
+	//(no need to get the last one 
+	//as it is saved on the next time step)
+	d3_array luu, luuint;	//local uu and uuint computed from uu(t-1) 
+	d3_array luuint_t;	//local uuint(t) before catch removal				       
+	luu.allocate(0, iterationNumber-1);
+	luuint.allocate(1, iterationNumber);
+	luuint_t.allocate(1, iterationNumber);
+	for (int itr = 1; itr <= iterationNumber; itr++){ 
+		luu(itr-1).allocate(map->imin1, map->imax1, map->jinf1, map->jsup1);
+		luuint(itr).allocate(map->imin1, map->imax1, map->jinf1, map->jsup1);
+		luuint_t(itr).allocate(map->imin1, map->imax1, map->jinf1, map->jsup1);
+		luu(itr-1).initialize();
+		luuint(itr).initialize();
+		luuint_t(itr).initialize();
+	}
+
+	verify_identifier_string2((char*)"One_step_calrec_uu");
+	luu[0] = restore_dvar_matrix_value(uu_pos);
+
+	//recompute all intermediate solutions:
+	pop->RecompADI_step_fwd_with_catch(*map, *param, luu, luuint, luuint_t, a, bm, c, d, e, f, xbet, ybet, C);
+	
 	//ADJOINT FOR CALREC FUNCTION
 	for (int itr = iterationNumber; itr >= 1; itr--){
 
-		verify_identifier_string2((char*)"One_step_calrec_uu");
-		uu = restore_dvar_matrix_value(uu_pos);
-//		uu = uun[itr];
-		//cout << itr << " " << norm(uu) << endl;
-
 		dmatrix dfuuint(uuint_pos);
 		dfuuint.initialize();
-
-		//uuint_t.initialize();
-
-		//first recompute uuint from uu
-		for (int j = map->jmin; j <= map->jmax; j++)
-		{
-			const int imin = map->iinf[j]; 
-			const int imax = map->isup[j];
-
-			for (int i = imin; i <= imax; i++)
-				rhs[i]=-d[i][j]*uu(i,j-1) + (2*iterationNumber-e[i][j])*uu(i,j) - f[i][j]*uu(i,j+1);
-                        
-			//tridag(a[j],xbet[j],c[j],rhs,uvec,gam,imin,imax);
-			gam[imin] = rhs[imin];
-			for (int i=imin+1 ; i<=imax ; i++)
-				gam[i] = rhs[i]-gam[i-1]*a[j][i]*xbet[j][i-1];
-	
-			uvec[imax] = gam[imax]*xbet[j][imax];
-			for (int i=imax-1; i>=imin ; i--)
-				uvec[i] = (gam[i]-c[j][i]*uvec[i+1])*xbet[j][i];
-
-			for (int i = imin; i <= imax; i++){
-				if (C(i,j)==0)
-					uuint(i,j) = uvec[i];
-				else 
-					uuint(i,j) = uvec[i] - uvec[i] * param->func_limit_one(C(i,j)/(uvec[i]+1e-14)) / iterationNumber;
-
-				//uuint(i,j) = uvec[i];
-				uuint_t(i,j) = uvec[i];
-			}
-
-			//for (int i = imin; i <= imax; i++){
-			//	if (C(i,j)>0)
-			//		uuint(i,j) = uuint(i,j) - uuint(i,j) * param->func_limit_one(C(i,j)/uuint(i,j))/iterationNumber; 
-			//}			
-		} 
-		//end of recomputation
 
 		for (int i = isup; i >= iinf; i--){
 
@@ -551,7 +521,7 @@ void dv_calrec_with_catch_precalrec()
 			//recomputing rhs(j) 
 			for (int j = jmin; j <= jmax; j++) {
 
-					rhs[j] = -a[j][i]*uuint[i-1][j]+(2*iterationNumber-bm[j][i])*uuint[i][j] - c[j][i]*uuint[i+1][j];			
+					rhs[j] = -a[j][i]*luuint[itr][i-1][j]+(2*iterationNumber-bm[j][i])*luuint[itr][i][j] - c[j][i]*luuint[itr][i+1][j];			
 			}
 			
 			for (int j=jmin; j<=jmax; j++){
@@ -563,11 +533,11 @@ void dv_calrec_with_catch_precalrec()
 			for (int j=jmax; j>=jmin; j--) {
 
 					//rhs[j] = -a[j][i]*uuint[i-1][j]+(2*iterationNumber-bm[j][i])*uuint[i][j] - c[j][i]*uuint[i+1][j];
-					dfa(j,i)      -= uuint(i-1,j)*dfrhs(j);
+					dfa(j,i)      -= luuint(itr,i-1,j)*dfrhs(j);
 					dfuuint(i-1,j)-= a(j,i)*dfrhs(j);
-					dfbm(j,i)     -= uuint(i,j)*dfrhs(j);
+					dfbm(j,i)     -= luuint(itr,i,j)*dfrhs(j);
 					dfuuint(i,j)  += (2*iterationNumber-bm[j][i])*dfrhs(j);
-					dfc(j,i)      -= uuint(i+1,j)*dfrhs(j);
+					dfc(j,i)      -= luuint(itr,i+1,j)*dfrhs(j);
 					dfuuint(i+1,j)-= c(j,i)*dfrhs(j);
 					dfrhs(j)       = 0.0;
 			}
@@ -584,7 +554,7 @@ void dv_calrec_with_catch_precalrec()
 	
 			// recomputing rhs(i)
 			for (int i = imin; i <= imax; i++) {   
-					rhs[i] = -d[i][j]*uu[i][j-1] + (2*iterationNumber-e[i][j])*uu[i][j] - f[i][j]*uu[i][j+1];
+					rhs[i] = -d[i][j]*luu[itr-1][i][j-1] + (2*iterationNumber-e[i][j])*luu[itr-1][i][j] - f[i][j]*luu[itr-1][i][j+1];
 			}	
 
 			for (int i = imax; i >= imin; i--){
@@ -594,44 +564,23 @@ void dv_calrec_with_catch_precalrec()
 					dfuuint(i,j)= 0.0;
 				} else {
 					//recompute
-					double arg = C(i,j)/(uuint_t(i,j)+1e-14);
+					double arg = C(i,j)/(luuint_t(itr,i,j)+1e-14);
 					double func   = param->func_limit_one(arg);
 
 					//C_est(i,j) += uvec(i) * func / iterationNumber;
 					dfuvec(i)     += (func / iterationNumber) * dfCest(i,j);
-					double dffunc  = (uuint_t(i,j) / iterationNumber) * dfCest(i,j);
+					double dffunc  = (luuint_t(itr,i,j) / iterationNumber) * dfCest(i,j);
 
 					//uuint(i,j) = uvec(i) - uvec(i) * func / iterationNumber; 
 					dfuvec(i) += (1.0 - func / iterationNumber) * dfuuint(i,j);
-					dffunc    -= (uuint_t(i,j) / iterationNumber) * dfuuint(i,j);
+					dffunc    -= (luuint_t(itr,i,j) / iterationNumber) * dfuuint(i,j);
 					dfuuint(i,j)  = 0.0;
 
 					//double func = param->func_limit_one(C(i,j)/(uvec(i)+1e-14);
 					double dfarg = param->dffunc_limit_one(arg,dffunc);
-					dfuvec(i) -= (arg/(uuint_t(i,j)+1e-14)) * dfarg;
-					dfCobs(i,j) += dfarg /(uuint_t(i,j)+1e-14);
+					dfuvec(i) -= (arg/(luuint_t(itr,i,j)+1e-14)) * dfarg;
+					dfCobs(i,j) += dfarg /(luuint_t(itr,i,j)+1e-14);
 					
-/*					//recompute
-					double arg = C(i,j)/(uuint_t(i,j)+1e-14);
-					double func   = param->func_limit_one(arg);
-
-					//C_est.elem_value(i,j) += C_est_ij_itr;
-					dfCest_pr(i,j) += dfCest(i,j);
-					double dfCest_itr = dfCest(i,j);
-					dfCest(i,j)     = 0.0;
-
-					//uuint(i,j) = uvec[i] - C_est_ij_itr;
-					dfuvec(i)   += dfuuint(i,j);
-					dfCest_itr  -= dfuuint(i,j);
-					dfuuint(i,j) = 0.0;
-					
-					//double C_est_ij_itr = uvec(i) * func / iterationNumber;
-					dfuvec(i)   += (func / iterationNumber) * dfCest_itr;
-					double dffunc=(uuint_t(i,j)/iterationNumber) * dfCest_itr;
-
-					//double func = param->func_limit_one(C(i,j)/(uvec(i)+1e-14);
-					dfuvec(i) -= (arg/(uuint_t(i,j)+1e-14)) * param->dffunc_limit_one(arg,dffunc);
-*/
 				}
 			}
 			dftridag1(a(j),xbet(j),c(j),rhs,uvec,gam,dfa(j),dfxbet(j),dfc(j),dfrhs,dfuvec,dfgam,imin,imax);
@@ -639,11 +588,11 @@ void dv_calrec_with_catch_precalrec()
 			for (int i=imax; i>=imin; i--){
 
 					//rhs[i] = -d[i][j]*uu[i][j-1] + (2*iterationNumber-e[i][j])*uu[i][j] - f[i][j]*uu[i][j+1];
-					dfd(i,j)    -= uu(i,j-1)*dfrhs(i);
+					dfd(i,j)    -= luu(itr-1,i,j-1)*dfrhs(i);
 					dfuu(i,j-1) -= d(i,j)*dfrhs(i);
-					dfe(i,j)    -= uu(i,j)*dfrhs(i);
+					dfe(i,j)    -= luu(itr-1,i,j)*dfrhs(i);
 					dfuu(i,j)   += (2*iterationNumber-e[i][j])*dfrhs(i);
-					dff(i,j)    -= uu(i,j+1)*dfrhs(i);
+					dff(i,j)    -= luu(itr-1,i,j+1)*dfrhs(i);
 					dfuu(i,j+1) -= f(i,j)*dfrhs(i);
 					dfrhs(i)     = 0.0;
 			}
@@ -666,7 +615,6 @@ void dv_calrec_with_catch_precalrec()
 
 		}
 	}
-//cout << age << " " << norm(dfCobs) << " " << norm(dfCest) << " " << norm(dfCest_pr) << " " << norm(dfuu) << endl;
 	dfa.save_dmatrix_derivatives(a_pos); 
 	dfbm.save_dmatrix_derivatives(bm_pos); 
 	dfc.save_dmatrix_derivatives(c_pos); 

@@ -63,9 +63,8 @@ void CCalpop::RecompADI_step_fwd(const PMap& map, d3_array& uu, d3_array& uuint,
 	}
 }
 
-///This function recomputes all intermediate solutions of one forward ADI step with catch removal.
-///Basically, it is the modified 'calrec' routine, with one less iteration in the i-loop as the adjoint code doesn't need this solution.
-void CCalpop::RecompADI_step_fwd_with_catch(const PMap& map, d3_array& uu, d3_array& uuint, const dmatrix a, const dmatrix bm, const dmatrix& c, const dmatrix& d, const dmatrix& e, const dmatrix& f, const dmatrix& xbet, const dmatrix& ybet)
+///This function recomputes all intermediate solutions of one forward ADI step with catch removal. It is analogous to see RecompADI_step_fwd, with additional density uuint_t corresponding to uuint(t) before catch removal, which is needed for the adjoint.
+void CCalpop::RecompADI_step_fwd_with_catch(const PMap& map, CParam& param, d3_array& uu, d3_array& uuint, d3_array& uuint_t, const dmatrix a, const dmatrix bm, const dmatrix& c, const dmatrix& d, const dmatrix& e, const dmatrix& f, const dmatrix& xbet, const dmatrix& ybet, const dmatrix& C)
 {
 
 	dvector uvec(0,maxn-1);
@@ -88,9 +87,14 @@ void CCalpop::RecompADI_step_fwd_with_catch(const PMap& map, d3_array& uu, d3_ar
 						
 			tridag(a[j],xbet[j],c[j],rhs,uvec,gam,imin,imax);
 
-			for (int i = imin; i <= imax; i++)
-				uuint(itr,i,j) = uvec[i];
+			for (int i = imin; i <= imax; i++){
+				if (C(i,j)==0)
+					uuint(itr,i,j) = uvec[i];
+				else 
+					uuint(itr,i,j) = uvec[i] - uvec[i] * param.func_limit_one(C(i,j)/(uvec[i]+1e-14)) / iterationNumber;
 
+				uuint_t(itr,i,j) = uvec[i];
+			}	
 		} 	
 		if (itr < iterationNumber){
 			for (int i = map.imin; i <= map.imax; i++){
