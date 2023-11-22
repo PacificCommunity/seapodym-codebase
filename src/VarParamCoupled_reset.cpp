@@ -87,12 +87,12 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 		}
 	}
 
-	if (doc.get("/Hs_to_larvae/variable", "use") == "true") {
+	if (doc.get("/q_sp_larvae/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {			
-			dvarsHs_to_larvae[i] = boundp(x[idx], Hs_to_larvae_min, Hs_to_larvae_max, penalty);
+			dvarsQ_sp_larvae[i] = boundp(x[idx], q_sp_larvae_min, q_sp_larvae_max, penalty);
 
-			Hs_to_larvae[i] = value(dvarsHs_to_larvae[i]);
-			dvarpars[idx] = Hs_to_larvae[i];
+			q_sp_larvae[i] = value(dvarsQ_sp_larvae[i]);
+			dvarpars[idx] = q_sp_larvae[i];
 			++idx;
 		}
 	}

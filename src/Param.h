@@ -166,8 +166,8 @@ public:
 	int fit_null_larvae; // Whether to fit to null larvae density observation or not
 	double weight_null_larvae; // weight factor to apply to null larvae densities
 	int nb_larvae_cat; // Number of categories for Nishikawa densities observations
-	double	*larvae_density_categories;	// Categories for Nishikawa densities observations
-	double	*larvae_density_categories_width;	// Width of binned categories for Nishikawa densities observations
+	double	*larvae_density_bins;	// Categories for Nishikawa densities observations
+	double	larvae_density_last_bin_width;	// Width of binned categories for Nishikawa densities observations
 	
 ///	IVECTOR sp_nb_age_class_ad;	// number of age classes for each species [sp]
 ///	IVECTOR sp_unit_age_class_ad;	// time step used for the population of the species [sp] (0= pas de calcul de pop; 1=month;2=quarter )
@@ -217,7 +217,7 @@ public:
 	dvector spawning_season_start;  // day/night length ratio defining the beginning of spawning migrations
 	DVECTOR a_sst_spawning;		// coefficient of curvature for spawning temperature function [sp]
  	DVECTOR b_sst_spawning;		// SST mean for spawning temperature function [sp]
-	DVECTOR Hs_to_larvae;           // scaling factor between spawning habitat index and larvae density, [sp]
+	DVECTOR q_sp_larvae;           // scaling factor between spawning habitat index and larvae density, [sp]
 	DVECTOR likelihood_spawning_sigma;		// sigma parameter in Gaussian kernel used for spawning habitat likelihood
 	DVECTOR likelihood_spawning_beta;		// betaf parameter in ZINB used for spawning habitat likelihood
 	DVECTOR likelihood_spawning_probzero;		// pf parameter in ZINB used for spawning habitat likelihood

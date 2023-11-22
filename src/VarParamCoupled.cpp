@@ -238,14 +238,13 @@ bool VarParamCoupled::read(const string& parfile)
 				weight_null_larvae = doc.getDouble("/weight_null_larvae", "value");
 			}
 			nb_larvae_cat =  doc.getInteger("/nb_larvae_cat", "value");
-			larvae_density_categories = Utilities::create1d(larvae_density_categories, nb_larvae_cat);
-			larvae_density_categories_width = Utilities::create1d(larvae_density_categories_width, nb_larvae_cat);
+			larvae_density_bins = Utilities::create1d(larvae_density_bins, nb_larvae_cat);
+			larvae_density_last_bin_width = doc.getDouble("/larvae_density_last_bin_width");
 			for (int c=0;c<nb_larvae_cat;c++){
-				larvae_density_categories[c] = doc.getDouble("/larvae_density_categories", c);
-				larvae_density_categories_width[c] = doc.getDouble("/larvae_density_categories_width", c);
+				larvae_density_bins[c] = doc.getDouble("/larvae_density_bins", c);
 			}
-			if (spawning_likelihood_type==2 && larvae_density_categories[0]==0){
-        		cerr << "Error: larvae_density_categories[0] can't be zero for Truncated Poisson cost function. Change <larvae_density_categories/> in the parameter file (Add 1 to the native categories)." << endl;
+			if (spawning_likelihood_type==2 && larvae_density_bins[0]==0){
+        		cerr << "Error: larvae_density_bins[0] can't be zero for Truncated Poisson cost function. Change <larvae_density_bins/> in the parameter file (Add 1 to the native categories)." << endl;
         		std::exit(EXIT_FAILURE);
 			}
 		}
@@ -353,7 +352,7 @@ bool VarParamCoupled::read(const string& parfile)
 		uncouple_sst_larvae.allocate(0,nb_species-1);
 		a_sst_spawning.allocate(0, nb_species - 1);
 		b_sst_spawning.allocate(0, nb_species - 1);
-		Hs_to_larvae.allocate(0, nb_species - 1);
+		q_sp_larvae.allocate(0, nb_species - 1);
 		likelihood_spawning_sigma.allocate(0, nb_species - 1);
 		likelihood_spawning_beta.allocate(0, nb_species - 1);
 		likelihood_spawning_probzero.allocate(0, nb_species - 1);
@@ -423,8 +422,8 @@ bool VarParamCoupled::read(const string& parfile)
 		}
 
 		// scaling factor between spawning habitat index and larvae density
-		if (!doc.get("/Hs_to_larvae",sp_name[sp]).empty()){
-			Hs_to_larvae[sp] = doc.getDouble("/Hs_to_larvae", sp_name[sp]);
+		if (!doc.get("/q_sp_larvae",sp_name[sp]).empty()){
+			q_sp_larvae[sp] = doc.getDouble("/q_sp_larvae", sp_name[sp]);
 		}
 
 		// sigma parameter in Gaussian kernel used for spawning habitat likelihood
@@ -1263,7 +1262,7 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(M_mean_range,M_mean_range_min,M_mean_range_max,"/M_mean_range",nni);
 	par_read_bounds(a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",nni);
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);
-	par_read_bounds(Hs_to_larvae,Hs_to_larvae_min,Hs_to_larvae_max,"/Hs_to_larvae",nni);
+	par_read_bounds(q_sp_larvae,q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",nni);
 	par_read_bounds(likelihood_spawning_sigma,likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",nni);
 	par_read_bounds(likelihood_spawning_beta,likelihood_spawning_beta_min,likelihood_spawning_beta_max,"/likelihood_spawning_beta",nni);
 	par_read_bounds(likelihood_spawning_probzero,likelihood_spawning_probzero_min,likelihood_spawning_probzero_max,"/likelihood_spawning_probzero",nni);
@@ -1499,7 +1498,7 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(M_mean_range_min,M_mean_range_max,"/M_mean_range",0,100);
 	par_read(a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",0,10);
 	par_read(b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",0,34);
-	par_read(Hs_to_larvae_min,Hs_to_larvae_max,"/Hs_to_larvae",0,10);
+	par_read(q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",0,10);
 	par_read(likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",0,10);
 	par_read(a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",0,10);
 	par_read(b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",0,34);

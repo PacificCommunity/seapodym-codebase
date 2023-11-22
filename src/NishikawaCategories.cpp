@@ -6,18 +6,22 @@
 NishikawaCategories::NishikawaCategories(VarParamCoupled& param): dl(0.1) {
     int nb_cat = param.nb_larvae_cat;
     for (int i = 0; i < nb_cat; i++) {
-        Nobs_cat[i] = param.larvae_density_categories[i];
-        Nobs_diff[i] = param.larvae_density_categories_width[i];
+        Nobs_cat[i] = param.larvae_density_bins[i];
+        if (i < nb_cat-1){
+            Nobs_diff[i] = param.larvae_density_bins[i+1] - param.larvae_density_bins[i];
+        }else{
+            Nobs_diff[i] = param.larvae_density_last_bin_width;
+        }
     }
 }
 
 dvariable NishikawaCategories::categorical_poisson_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
-    // 1 - Compute N_pred from H_pred and Hs_to_larvae
+    // 1 - Compute N_pred from H_pred and q_sp_larvae
     // 2 - Computes the numerical integral of a Poisson distribution function between the two N_obs bounds
     // 3 - applies -log
 
 	const double twopi = 2.0*3.141592654;
-    dvariable h = param.dvarsHs_to_larvae[sp];
+    dvariable h = param.dvarsQ_sp_larvae[sp];
     dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
     dvariable N_pred = H_pred * h;
 
@@ -132,7 +136,7 @@ void dv_categorical_poisson_comp(){
 dvariable NishikawaCategories::mixed_gaussian_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
 
     dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
-    dvariable h = param.dvarsHs_to_larvae[sp];
+    dvariable h = param.dvarsQ_sp_larvae[sp];
     dvariable N_pred = H_pred * h;
 
     dvariable lkhd = 0.0;
@@ -223,7 +227,7 @@ void dv_mixed_gaussian_comp(){
 
 
 dvariable NishikawaCategories::categorical_truncated_poisson_comp(int N_obs, dvariable H_pred, double weight_Nobszero, VarParamCoupled& param, int sp){
-    dvariable h = param.dvarsHs_to_larvae[sp];
+    dvariable h = param.dvarsQ_sp_larvae[sp];
     dvariable N_pred = 1 + H_pred * h;
 
     double lkhd_before_log = 0.0;
@@ -328,11 +332,11 @@ void dv_categorical_truncated_poisson_comp(){
 
 
 dvariable NishikawaCategories::categorical_zinb_comp(int N_obs, dvariable H_pred, VarParamCoupled& param, int sp){
-    // 1 - Compute N_pred from H_pred and Hs_to_larvae
+    // 1 - Compute N_pred from H_pred and q_sp_larvae
     // 2 - Computes the numerical integral of a Zero-Inflated Negative Binomial function between the two N_obs bounds
     // 3 - Apply log
 
-    dvariable h = param.dvarsHs_to_larvae[sp];
+    dvariable h = param.dvarsQ_sp_larvae[sp];
     dvariable beta = param.dvarsLikelihood_spawning_beta[sp];
     dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
     dvariable N_pred = H_pred * h;
