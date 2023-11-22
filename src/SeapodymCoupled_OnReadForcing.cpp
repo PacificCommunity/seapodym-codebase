@@ -26,7 +26,7 @@ void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)
 
 //BUFFER ZONE to avoid biomass accumulation effect in case of artificially closed boundary					
 //Eventually move this buffer zone declaration into preparation of model forcing or topographic index
-if (param->longitudeMin>80 && param->deltaX>=60.0 && param->deltaY>=60.0) //indicate Pacific ocean domain and coarse resolution
+if (param->sp_name[0].find("skj")==0 && param->longitudeMin>80 && param->deltaX>60.0 && param->deltaY>60.0) //indicate Pacific ocean domain and coarse resolution
 //The bloc below is executed only in case of the Pacific ocean domain within the IndoPacific area.
 {					
 // to make the buffer zone in IO part of the Pacific ocean domain. This allows avoiding the problems
