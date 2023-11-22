@@ -287,7 +287,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 	param->total_like = value(likelihood);
-	cout << "end of forward run, likelihood: " << value(likelihood)-eFlike<< " " << eFlike <<endl;
+	cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood)-eFlike<< " " << eFlike <<endl;
 
 	return value(likelihood);
 }
@@ -312,7 +312,7 @@ void SeapodymCoupled::ReadHabitat()
         for (int n=0; n<param->nb_habitat_run_age; n++){
 		mat.habitat_input[n].allocate(1,nbt_total);
 	        for (int t=1; t<=nbt_total; t++){
-			mat.habitat_input[n][t].allocate(0, nlon_input, 0, nlat_input);
+			mat.habitat_input[n][t].allocate(1, nlon_input, 1, nlat_input);
 			mat.habitat_input[n][t].initialize();
 		}
 	}

@@ -355,7 +355,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 	param->total_like = value(likelihood);
-	cout << "end of forward run, likelihood: " << value(likelihood) << endl;
+	cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood) << endl;
 
 	return value(likelihood);
 }
