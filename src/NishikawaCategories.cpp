@@ -469,3 +469,111 @@ dvariable NishikawaCategories::categorical_zinb_comp(int L_obs, dvariable N_pred
     save_double_derivative(dfsigma, sigma_pos);
     save_double_derivative(dfN_pred, N_pred_pos);
 }*/
+
+
+dvariable NishikawaCategories::categorical_zip_comp(int L_obs, dvariable N_pred, VarParamCoupled& param, int sp){
+    // 1 - Compute L_pred from N_pred and q_sp_larvae
+    // 2 - Computes the numerical integral of a ZIPoisson distribution function between the two L_obs bounds
+    // 3 - applies -log
+
+	const double twopi = 2.0*3.141592654;
+    dvariable h = param.dvarsQ_sp_larvae[sp];
+    dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
+    dvariable L_pred = N_pred * h;
+
+    double lkhd_before_log = 0.0;
+    dvariable lkhd = 0.0;
+    if (L_obs==0.0){
+        lkhd = -log(p + (1-p) * exp(-L_pred));
+    }else if (L_obs>0){
+        // Numerical integral
+        int nbl;
+        nbl =  (int)(Lobs_diff[L_obs-1] / dl);
+        for (int il = 1; il <= nbl; il++){
+            double l = Lobs_cat[L_obs-1] + dl * il - dl/2;
+            lkhd += pow(L_pred, l) * exp(-L_pred) / std::tgamma(l+1);
+        }
+        lkhd *= (1-p) * dl;
+        lkhd_before_log = value(lkhd);
+        lkhd = -log(lkhd);
+    }
+
+    save_identifier_string2((char*)"categorical_zip_begin");
+    N_pred.save_prevariable_position();
+    p.save_prevariable_position();
+    h.save_prevariable_position();
+    lkhd.save_prevariable_position();
+    save_double_value(lkhd_before_log);
+    save_double_value(value(L_pred));
+    save_double_value(value(h));
+    save_double_value(value(p));
+    save_double_value(value(N_pred));
+    save_int_value(L_obs);
+    for (int i=nb_cat-1; i>=0; i--){
+        save_double_value(Lobs_cat[i]);
+        save_double_value(Lobs_diff[i]);
+    }
+    save_int_value(nb_cat);
+    save_double_value(dl);
+    save_identifier_string2((char*)"categorical_zip_end");
+    
+    gradient_structure::GRAD_STACK1->set_gradient_stack(dv_categorical_zip_comp);
+
+    return lkhd;
+}
+
+void dv_categorical_zip_comp(){
+    verify_identifier_string2((char*)"categorical_zip_end");
+    double dl = restore_double_value();
+    int nb_cat = restore_int_value();
+    double Lobs_cat[nb_cat];
+    double Lobs_diff[nb_cat];
+    for (int i=0; i<nb_cat; i++){
+        Lobs_diff[i] = restore_double_value();
+        Lobs_cat[i] = restore_double_value();
+    }
+    const int L_obs = restore_int_value();
+    const double N_pred = restore_double_value();
+    const double p = restore_double_value();
+    const double h = restore_double_value();
+    const double L_pred = restore_double_value();
+    const double lkhd_before_log = restore_double_value();
+    const prevariable_position lkhd_pos = restore_prevariable_position();    
+    const prevariable_position h_pos = restore_prevariable_position();    
+    const prevariable_position p_pos = restore_prevariable_position();    
+    const prevariable_position N_pred_pos = restore_prevariable_position();    
+    verify_identifier_string2((char*)"categorical_zip_begin");
+    
+    double dflkhd = restore_prevariable_derivative(lkhd_pos);
+    double dfh = restore_prevariable_derivative(h_pos);
+    double dfp = restore_prevariable_derivative(p_pos);
+    double dfN_pred = restore_prevariable_derivative(N_pred_pos);
+
+    double dfL_pred = 0.0;
+    if (L_obs==0.0){
+        dfp -= dflkhd * (1-exp(-L_pred))/(p + (1-p)*exp(-L_pred));
+        dfL_pred = dflkhd * (1-p) * exp(-L_pred) / (p + (1-p)*exp(-L_pred));
+    }else if (L_obs>0){
+        // lkhd = -log(lkhd)
+        dflkhd = -dflkhd/lkhd_before_log;
+
+        // lkhd *= (1-p)*dl
+        dflkhd *= (1-p)*dl;
+        dfp -= dflkhd*dl;
+
+        int nbl;
+        nbl =  (int)(Lobs_diff[L_obs-1] / dl);
+        for (int il = 1; il <= nbl; il++){
+            double l = Lobs_cat[L_obs-1] + dl * il - dl/2;
+            dfL_pred += dflkhd * exp(-L_pred) * pow(L_pred, l-1) * (l - L_pred) / std::tgamma(l+1);
+        }
+    }
+    dfh += dfL_pred * N_pred;
+    dfN_pred += dfL_pred * h;
+    dflkhd = 0.0;
+
+    save_double_derivative(dflkhd, lkhd_pos);
+    save_double_derivative(dfh, h_pos);
+    save_double_derivative(dfp, p_pos);
+    save_double_derivative(dfN_pred, N_pred_pos);
+}

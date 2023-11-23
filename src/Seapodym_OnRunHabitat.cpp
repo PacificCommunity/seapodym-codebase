@@ -362,6 +362,10 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 						case 3: // Zero-Inflated Negative Binomial cost function
 							lkhd = NshkwCat.categorical_zinb_comp(L_obs, H_pred, *param, 0);
 							break;
+
+						case 4: // Zero-Inflated Poisson cost function
+							lkhd = NshkwCat.categorical_zip_comp(L_obs, H_pred, *param, 0);
+							break;
 					}
 
 					if (std::isinf(value(lkhd))){

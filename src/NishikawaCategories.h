@@ -24,6 +24,8 @@ public:
 
     dvariable categorical_zinb_comp(int L_obs, dvariable N_pred, VarParamCoupled& param, int sp);
 
+    dvariable categorical_zip_comp(int L_obs, dvariable N_pred, VarParamCoupled& param, int sp);
+
 private:
     static const int nb_cat = 4;
     double Lobs_cat[nb_cat];// Bounds of intervals
@@ -35,5 +37,6 @@ void dv_categorical_poisson_comp();// gradient_structure::GRAD_STACK1->set_gradi
 void dv_mixed_gaussian_comp();
 void dv_categorical_truncated_poisson_comp();
 //void dv_categorical_zinb_comp();
+void dv_categorical_zip_comp();
 
 #endif // NISHIKAWACATEGORIES_H
