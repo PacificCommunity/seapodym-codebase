@@ -1,5 +1,5 @@
-#ifndef NISHIKAWACATEGORIES_H
-#define NISHIKAWACATEGORIES_H
+#ifndef NISHIKAWALIKE_H
+#define NISHIKAWALIKE_H
 
 #include <cmath>
 #include <iostream>
@@ -8,8 +8,7 @@
 int save_identifier_string2(char* str);
 void verify_identifier_string2(char* str);
 
-// Class and function to compute the likelihood of a larvae density observed on an interval (raw Nishikawa data).
-// Intervals: 0, [0,1], [1,5], [5,10], >10
+// Class and function to compute the likelihood of a larvae density observed on bins (raw Nishikawa data).
 
 class NishikawaCategories {
 public:
@@ -39,4 +38,16 @@ void dv_categorical_truncated_poisson_comp();
 //void dv_categorical_zinb_comp();
 void dv_categorical_zip_comp();
 
-#endif // NISHIKAWACATEGORIES_H
+
+// Functions to compute the likelihood of a larvae density observed on a continuous scale
+dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp);
+
+dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp);
+
+dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp);
+
+dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp);
+
+dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp);
+
+#endif // NISHIKAWALIKE_H

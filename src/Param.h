@@ -161,7 +161,9 @@ public:
 	int write_all_fisheries_dym;
 	string strdir_larvae;
 	string str_file_larvae;
-	int habitat_spawning_input_categorical_flag;//whether to fit to output/<sp>_spwaning_habitat_input.dym or fit to file_larvae_data
+	int spawning_habitat_input_flag;//whether to fit to output/<sp>_spwaning_habitat_input.dym or fit to file_larvae_data
+	int spawning_habitat_input_categorical_flag;//if file_larvae_data data is categorical
+	int spawning_habitat_input_seasonal_flag;//if file_larvae_data data is seasonal
 	int spawning_likelihood_type; // Likelihood function for larvae densities
 	int fit_null_larvae; // Whether to fit to null larvae density observation or not
 	double weight_null_larvae; // weight factor to apply to null larvae densities

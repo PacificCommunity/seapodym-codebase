@@ -228,24 +228,35 @@ bool VarParamCoupled::read(const string& parfile)
 	}
 	
 	if (habitat_run_type==0){
-		habitat_spawning_input_categorical_flag = doc.getInteger("/habitat_spawning_input_categorical", "flag");
-		if (habitat_spawning_input_categorical_flag==1){
+		if (doc.get("/spawning_habitat_input","flag").empty()){
+			spawning_habitat_input_flag = 0;
+		}else{
+			spawning_habitat_input_flag = doc.getInteger("/spawning_habitat_input", "flag");
+		}
+		if (spawning_habitat_input_flag==0){
+			spawning_habitat_input_categorical_flag = 0;
+			spawning_habitat_input_seasonal_flag = 0;			
+		}else{
+			spawning_habitat_input_categorical_flag = doc.getInteger("/spawning_habitat_input_categorical", "flag");
+			spawning_habitat_input_seasonal_flag = doc.getInteger("/spawning_habitat_input_seasonal", "flag");
 			strdir_larvae = doc.get("/strdir_larvae", "value");
 			str_file_larvae = strdir_larvae + doc.get("/file_larvae_data", "value");
 			spawning_likelihood_type = doc.getInteger("/spawning_likelihood_type", "value");
-			fit_null_larvae = doc.getInteger("/fit_null_larvae", "value");
-			if (fit_null_larvae==1){
-				weight_null_larvae = doc.getDouble("/weight_null_larvae", "value");
-			}
-			nb_larvae_cat =  doc.getInteger("/nb_larvae_cat", "value");
-			larvae_density_bins = Utilities::create1d(larvae_density_bins, nb_larvae_cat);
-			larvae_density_last_bin_width = doc.getDouble("/larvae_density_last_bin_width");
-			for (int c=0;c<nb_larvae_cat;c++){
-				larvae_density_bins[c] = doc.getDouble("/larvae_density_bins", c);
-			}
-			if (spawning_likelihood_type==2 && larvae_density_bins[0]==0){
-        		cerr << "Error: larvae_density_bins[0] can't be zero for Truncated Poisson cost function. Change <larvae_density_bins/> in the parameter file (Add 1 to the native categories)." << endl;
-        		std::exit(EXIT_FAILURE);
+			if (spawning_habitat_input_categorical_flag==1){
+				fit_null_larvae = doc.getInteger("/fit_null_larvae", "value");
+				if (fit_null_larvae==1){
+					weight_null_larvae = doc.getDouble("/weight_null_larvae", "value");
+				}
+				nb_larvae_cat =  doc.getInteger("/nb_larvae_cat", "value");
+				larvae_density_bins = Utilities::create1d(larvae_density_bins, nb_larvae_cat);
+				larvae_density_last_bin_width = doc.getDouble("/larvae_density_last_bin_width");
+				for (int c=0;c<nb_larvae_cat;c++){
+					larvae_density_bins[c] = doc.getDouble("/larvae_density_bins", c);
+				}
+				if (spawning_likelihood_type==2 && larvae_density_bins[0]==0 && spawning_habitat_input_categorical_flag==1){
+					cerr << "Error: larvae_density_bins[0] can't be zero for Truncated Poisson cost function. Change <larvae_density_bins/> in the parameter file (Add 1 to the native categories)." << endl;
+					std::exit(EXIT_FAILURE);
+				}
 			}
 		}
 	}

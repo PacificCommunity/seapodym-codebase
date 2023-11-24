@@ -80,7 +80,7 @@ public:
 	d4_array habitat_input;
 	d3_array density_input;	
 
-	std::vector<int> seasonal_spawning_habitat_input_vectors[4];// Vector of non-NA observed larvae densities
+	std::vector<double> seasonal_spawning_habitat_input_vectors[4];// Vector of non-NA observed larvae densities
 	std::vector<int> seasonal_spawning_habitat_input_vectors_i[4];// Corresponding i indices
 	std::vector<int> seasonal_spawning_habitat_input_vectors_j[4];// Corresponding j indices
 

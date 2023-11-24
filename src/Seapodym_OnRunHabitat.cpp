@@ -1,5 +1,5 @@
 #include "SeapodymCoupled.h"
-#include "NishikawaCategories.h"
+#include "NishikawaLike.h"
 
 ///This is the main loop function for Habitat simulations. It is based on the default
 ///OnRunCoupled function, with modifications to compute either spawning of feeding habitats.
@@ -21,9 +21,9 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 {
 	NishikawaCategories NshkwCat(*param);
 	double likelihood_penalty = 50.0;
-	double weight_Nobszero = 0.0;
+	double weight_Lobszero = 0.0;
 	if (param->fit_null_larvae==1){
-		weight_Nobszero = param->weight_null_larvae;
+		weight_Lobszero = param->weight_null_larvae;
 	}
 
 	t_count = nbt_building+1;
@@ -193,9 +193,9 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				func.Spawning_Habitat(*param, mat, map, Habitat, 1.0, sp, tcur, jday);
 
 				//2.2 Aggregate spawning habitat on a vector at obs. locations
-				if (param->habitat_spawning_input_categorical_flag==1){
+				if (param->spawning_habitat_input_seasonal_flag==1){
 					int season = ((t_count - 1) % 12) / 3;
-					for (int k=0; k<mat.seasonal_spawning_habitat_input_vectors[season].size(); k++){
+					for (auto k=0u; k<mat.seasonal_spawning_habitat_input_vectors[season].size(); k++){
 						Habitat_at_obs(season, k) += Habitat(mat.seasonal_spawning_habitat_input_vectors_i[season][k], mat.seasonal_spawning_habitat_input_vectors_j[season][k]);
 					}
 					ntime_season[season] += 1;
@@ -266,7 +266,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				exit(1);
 			}
 
-			if (param->habitat_spawning_input_categorical_flag==0){
+			if (param->spawning_habitat_input_flag==0){
 				for (int i=1; i<nlon_input; i++){
 					for (int j=1; j<nlat_input; j++){
 						double    H_obs  = mat.habitat_input[0][t_count][i][j];
@@ -320,23 +320,22 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 	// For fit to seasonal larvae density: calculate likelihood over aggregated spawning habitat
-	if (param->habitat_spawning_input_categorical_flag==1){
+	if (param->spawning_habitat_input_seasonal_flag==1){
 		for (int season=0; season<4; season++){
-			for (int k=0; k<mat.seasonal_spawning_habitat_input_vectors[season].size(); k++){
+			for (auto k=0u; k<mat.seasonal_spawning_habitat_input_vectors[season].size(); k++){
 				// Compute the average habitat over the period
 				Habitat_at_obs(season, k) /= ntime_season[season];
 
 				// Compute likelihood
-				int L_obs  = mat.seasonal_spawning_habitat_input_vectors[season][k];
-				if (L_obs >= 0){
-					dvariable H_pred = 0.0;
-					H_pred = Habitat_at_obs(season, k);
-					dvariable lkhd;
-
-					int like_type = param->spawning_likelihood_type;
+				int like_type = param->spawning_likelihood_type;
+				dvariable H_pred = 0.0;
+				H_pred = Habitat_at_obs(season, k);
+				dvariable lkhd;
+				if (param->spawning_habitat_input_categorical_flag==1){
+					int L_obs  = mat.seasonal_spawning_habitat_input_vectors[season][k];
 					switch (like_type){
 						case 0: // Mixed Gaussian Kernel cost function
-							lkhd = NshkwCat.mixed_gaussian_comp(L_obs, H_pred, weight_Nobszero, *param, 0);
+							lkhd = NshkwCat.mixed_gaussian_comp(L_obs, H_pred, weight_Lobszero, *param, 0);
 							break;
 
 						case 1:	// Categorical Poisson cost function
@@ -345,7 +344,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									lkhd = likelihood_penalty;
 								}
 							}else{
-								lkhd = NshkwCat.categorical_poisson_comp(L_obs, H_pred, weight_Nobszero, *param, 0);
+								lkhd = NshkwCat.categorical_poisson_comp(L_obs, H_pred, weight_Lobszero, *param, 0);
 							}
 							break;
 
@@ -355,7 +354,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 									lkhd = likelihood_penalty;
 								}
 							}else{
-								lkhd = NshkwCat.categorical_truncated_poisson_comp(L_obs, H_pred, weight_Nobszero, *param, 0);
+								lkhd = NshkwCat.categorical_truncated_poisson_comp(L_obs, H_pred, weight_Lobszero, *param, 0);
 							}
 							break;
 						
@@ -375,8 +374,44 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 							lkhd = 0;
 						}
 					}
-					likelihood += lkhd;
+				}else{
+					double L_obs  = mat.seasonal_spawning_habitat_input_vectors[season][k];
+					switch (like_type){
+						case 0: // Gaussian cost function
+							lkhd = gaussian_comp(L_obs, H_pred, weight_Lobszero, *param, 0);
+							break;
+
+						case 1:{// Poisson cost function
+							if (H_pred == 0.0){
+								if (L_obs > 0){
+									lkhd = likelihood_penalty;
+								}
+							}else{
+								lkhd = poisson_comp(L_obs, H_pred, weight_Lobszero, *param, 0);
+							}
+							break;
+						}
+
+						case 2: // Truncated Poisson cost function
+							if (H_pred == 0.0){
+								if (L_obs > 0){
+									lkhd = likelihood_penalty;
+								}
+							}else{
+								lkhd = truncated_poisson_comp(L_obs, H_pred, weight_Lobszero, *param, 0);
+							}
+							break;
+						
+						case 3: // Zero-Inflated Negative Binomial cost function
+							lkhd = zinb_comp(L_obs, H_pred, *param, 0);
+							break;
+
+						case 4: // Zero-Inflated Poisson cost function
+							lkhd = NshkwCat.categorical_zip_comp(L_obs, H_pred, *param, 0);
+							break;
+					}
 				}
+				likelihood += lkhd;
 			}
 		}
 	}
@@ -394,12 +429,16 @@ void SeapodymCoupled::ReadHabitat()
 	//mat.createMatHabitat_input(map,param->nb_habitat_run_age,nbt_total);
 	int nlevel = 0;
 	string file_input;
-	if (param->habitat_run_type==0)
-		file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
-	else
+	if (param->habitat_run_type==0){
+		if (param->spawning_habitat_input_flag==0){
+			file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
+		}else{
+			file_input = param->str_file_larvae;
+		}
+	}else{
 		file_input = param->strdir_output + param->sp_name[0] + "_feeding_habitat_input_age1.dym";
-
-        rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
+	}
+    rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
 
 	//equivalent to mat.createMatHabitat_input:
 	mat.habitat_input.allocate(0,param->nb_habitat_run_age-1);
@@ -427,11 +466,6 @@ void SeapodymCoupled::ReadHabitat()
 			//will need to prepare the input habitat that contains the data only for the selected time period
 			int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel + ((nlat_input *nlon_input)* (t_count-1))) * 4;
 			if (param->habitat_run_type==0){
-				if (param->habitat_spawning_input_categorical_flag==0){
-					file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
-				}else if (param->habitat_spawning_input_categorical_flag==1){
-					file_input = param->str_file_larvae;
-				}
 				//rw.rbin_input2d(file_input, map, mat.habitat_input[0][t_count], nlon_input+2, nlat_input+2, nbytetoskip);
 				ifstream litbin(file_input.c_str(), ios::binary | ios::in);
 				if (!litbin){
@@ -439,9 +473,9 @@ void SeapodymCoupled::ReadHabitat()
 					exit(1);
 				}
 
-				if (param->habitat_spawning_input_categorical_flag==0){
+				if (param->spawning_habitat_input_seasonal_flag==0){
 					litbin.seekg(nbytetoskip, ios::cur);
-				}else if (param->habitat_spawning_input_categorical_flag==1){
+				}else{
 					int qtr = ((t_count - 1) % 12) / 3 + 1;
 					int nbytetoskip_seasonalfile = (9 +(3* nlat * nlon) + 4 + ((nlat *nlon)* (qtr-1))) * 4;
 					litbin.seekg(nbytetoskip_seasonalfile, ios::cur);
@@ -483,31 +517,22 @@ void SeapodymCoupled::ReadHabitat()
 	}
 	t_count = t_count_init;
 
-	if (param->habitat_spawning_input_categorical_flag==1){
+	if (param->spawning_habitat_input_flag==1){
 		// Vector of non-NA observed density
 		for (int season=0; season<4; season++){
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
 					if (map.carte[i+1][j+1]){
 						if (mat.habitat_input[0][season*3+1][i+1][j+1]>=0){
-							mat.seasonal_spawning_habitat_input_vectors[season].push_back((int)mat.habitat_input[0][season*3+1][i+1][j+1]);
+							mat.seasonal_spawning_habitat_input_vectors[season].push_back(mat.habitat_input[0][season*3+1][i+1][j+1]);
 							mat.seasonal_spawning_habitat_input_vectors_i[season].push_back(i+1);
 							mat.seasonal_spawning_habitat_input_vectors_j[season].push_back(j+1);
-							/*if (season==0)
-								std::cerr << i << " ";*/
 						}
 					}
 				}
 			}
 		}
-
-		/*// to remove
-		int season = 3;
-		for (int k = 0; k<mat.seasonal_spawning_habitat_input_vectors[season].size(); k++){
-			std::cerr << "(season = " << season << ", k = " << k << "): " << mat.seasonal_spawning_habitat_input_vectors_i[season][k] << "," << mat.seasonal_spawning_habitat_input_vectors_j[season][k] << "): Nobs=" << mat.seasonal_spawning_habitat_input_vectors[season][k] << std::endl;
-		}*/
 	}
-
 }
 
 

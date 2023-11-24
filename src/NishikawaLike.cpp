@@ -1,4 +1,4 @@
-#include "NishikawaCategories.h"
+#include "NishikawaLike.h"
 #include <fvar.hpp>
 
 // Class and function to compute the likelihood of a larvae density observed on an interval (raw Nishikawa data).
@@ -240,7 +240,7 @@ dvariable NishikawaCategories::categorical_truncated_poisson_comp(int L_obs, dva
         nbl =  (int)(Lobs_diff[L_obs-1] / dl);
         for (int il = 1; il <= nbl; il++){
             double l = Lobs_cat[L_obs-1] + dl * il - dl/2;
-            lkhd += pow(L_pred, l) * exp(-L_pred) / std::tgamma(l+1);
+            lkhd += pow(L_pred, l) * exp(-L_pred) / (std::tgamma(l+1)*(1-exp(-L_pred)));
         }
         lkhd *= dl;
         lkhd_before_log = value(lkhd);
@@ -311,6 +311,20 @@ void dv_categorical_truncated_poisson_comp(){
             double l = Lobs_cat[L_obs-1] + dl * il - dl/2;
 
             // w1 = pow(L_pred, l)/std::tgamma(l+1)
+            double dfw1 = dflkhd * exp(-L_pred) / (1-exp(-L_pred));
+
+            // w2 = w3*w4
+            double dfw2 = dflkhd * pow(L_pred, l) / std::tgamma(l+1.0);
+
+            // w3 = exp(-L_pred); w4 = 1/(1-exp(-L_pred))
+            double dfw3 = dfw2 / (1-exp(-L_pred));
+            double dfw4 = dfw2 * exp(-L_pred);
+
+            dfL_pred += dfw1 * l * pow(L_pred, l-1) / std::tgamma(l+1.0);
+            dfL_pred -= dfw3 * exp(-L_pred);
+            dfL_pred -= dfw4 * exp(-L_pred) / pow(1-exp(-L_pred), 2);
+
+            /*// w1 = pow(L_pred, l)/std::tgamma(l+1)
             double dfw1 = dflkhd * exp(-L_pred);
 
             // w2 = exp(-L_pred)
@@ -318,7 +332,7 @@ void dv_categorical_truncated_poisson_comp(){
 
             // w = w1*w2
             dfL_pred += dfw1 * l * pow(L_pred, l-1) / std::tgamma(l+1);
-            dfL_pred += -dfw2 * exp(-L_pred);
+            dfL_pred += -dfw2 * exp(-L_pred);*/
         }
     }
     dfh += dfL_pred * N_pred;
@@ -348,12 +362,6 @@ dvariable NishikawaCategories::categorical_zinb_comp(int L_obs, dvariable N_pred
         pwr = beta*L_pred/(1-p);
         beforelog = p + (1-p) * pow(beta/(1.0+beta), pwr);
         lkhd -= log(beforelog);
-        /*if (std::isnan(value(lkhd))){
-            TTRACE(L_pred, L_obs)
-            TTRACE(beforelog, pwr)
-            TTRACE(beta, p)
-            std::cerr << std::endl;
-        }*/
     }else if (L_obs>0){
         // Numerical integral
         dvariable mu = L_pred/(1-p);
@@ -361,7 +369,6 @@ dvariable NishikawaCategories::categorical_zinb_comp(int L_obs, dvariable N_pred
         nbl =  (int)(Lobs_diff[L_obs-1] / dl);
         for (int il = 1; il <= nbl; il++){
             double l = Lobs_cat[L_obs-1] + dl * il - dl/2;
-            //beforelog += (1-p) * std::tgamma(l + beta*mu) * pow(beta/(1.0+beta), beta*mu) * pow(1/(1.0+beta), l) / (std::tgamma(beta*mu) * std::tgamma(1.0+l));
             beforelog += (1-p) * exp(gammln(l + beta*mu)) * pow(beta/(1.0+beta), beta*mu) * pow(1/(1.0+beta), l) / (exp(gammln(beta*mu)) * exp(gammln(1.0+l)));
         }
         beforelog *= dl;
@@ -476,7 +483,6 @@ dvariable NishikawaCategories::categorical_zip_comp(int L_obs, dvariable N_pred,
     // 2 - Computes the numerical integral of a ZIPoisson distribution function between the two L_obs bounds
     // 3 - applies -log
 
-	const double twopi = 2.0*3.141592654;
     dvariable h = param.dvarsQ_sp_larvae[sp];
     dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
     dvariable L_pred = N_pred * h;
@@ -576,4 +582,76 @@ void dv_categorical_zip_comp(){
     save_double_derivative(dfh, h_pos);
     save_double_derivative(dfp, p_pos);
     save_double_derivative(dfN_pred, N_pred_pos);
+}
+
+
+
+// Functions to compute the likelihood of a larvae density observed on a continuous scale
+
+dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
+    dvariable h = param.dvarsQ_sp_larvae[sp];
+	dvariable L_pred = N_pred * h;
+    dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
+    dvariable lkhd = 0.0;
+    if (L_obs==0.0){
+        lkhd = weight_Lobszero*L_pred*L_pred/(2*pow(sigma, 2)) ;
+    }else{
+        lkhd = pow(L_obs-L_pred, 2)/(2 * pow(sigma, 2));
+    }
+    return lkhd;
+}
+
+dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
+	const double twopi = 2.0*3.141592654;
+    dvariable h = param.dvarsQ_sp_larvae[sp];
+    dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
+    dvariable L_pred = N_pred * h;
+    dvariable lkhd = 0.0;
+    if (L_obs==0){
+        lkhd = weight_Lobszero * (pow(L_pred,2) / (2*pow(sigma, 2)) + log(sigma) + log(twopi)/2);
+    }else{
+        lkhd = L_pred - L_obs * log(L_pred) + gammln(L_obs+1);
+    }
+    return lkhd;
+}
+
+dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
+    dvariable h = param.dvarsQ_sp_larvae[sp];
+    dvariable L_pred = 1 + N_pred * h;
+    dvariable lkhd = 0.0;
+    L_obs += 1;
+    lkhd = L_pred - L_obs * log(L_pred) + gammln(L_obs+1) + log(1-exp(-L_pred));
+    if (L_obs==1.0){
+        lkhd *= weight_Lobszero;
+    }
+    return lkhd;
+}
+
+dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp){
+    dvariable h = param.dvarsQ_sp_larvae[sp];
+    dvariable beta = param.dvarsLikelihood_spawning_beta[sp];
+    dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
+    dvariable L_pred = N_pred * h;
+    dvariable lkhd = 0.0;
+    if (L_obs==0.0){
+        dvariable pwr = beta*L_pred/(1-p);
+        lkhd -= log(p+(1-p)*pow(beta/(1.0+beta),pwr));
+    }else{
+        dvariable mu = L_pred/(1-p);
+        lkhd -= log(1-p) + gammln(beta*mu+L_obs) - gammln(beta*mu) -gammln(L_obs+1.0) + beta*mu*log(beta)-log(beta+1.0)*(beta*mu+L_obs);
+    }
+    return lkhd;
+}
+
+dvariable zip_comp(int L_obs, dvariable N_pred, VarParamCoupled& param, int sp){
+    dvariable h = param.dvarsQ_sp_larvae[sp];
+    dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
+    dvariable L_pred = N_pred * h;
+    dvariable lkhd = 0.0;
+    if (L_obs==0.0){
+        lkhd -= log(p + (1-p) * exp(-L_pred));
+    }else{
+        lkhd -= log(1-p) + L_obs * log(L_pred) - L_pred - gammln(L_obs+1.0);
+    }
+    return lkhd;
 }
