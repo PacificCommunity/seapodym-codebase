@@ -643,7 +643,7 @@ dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int 
     return lkhd;
 }
 
-dvariable zip_comp(int L_obs, dvariable N_pred, VarParamCoupled& param, int sp){
+dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp){
     dvariable h = param.dvarsQ_sp_larvae[sp];
     dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
     dvariable L_pred = N_pred * h;

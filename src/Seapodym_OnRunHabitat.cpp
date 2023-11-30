@@ -407,7 +407,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 							break;
 
 						case 4: // Zero-Inflated Poisson cost function
-							lkhd = NshkwCat.categorical_zip_comp(L_obs, H_pred, *param, 0);
+							lkhd = zip_comp(L_obs, H_pred, *param, 0);
 							break;
 					}
 				}
