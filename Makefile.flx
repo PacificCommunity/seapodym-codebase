@@ -89,6 +89,7 @@ Calpop_InitCalPop.cpp  \
 Calpop_precaldia.cpp  \
 Calpop_precalrec.cpp  \
 Calpop_tridag.cpp \
+hessian.cpp \
 like.cpp
 
 SRCPATH=DOM/src:src

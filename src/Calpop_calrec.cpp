@@ -100,11 +100,6 @@ void CCalpop::calrec_GO(const PMap& map, dvar_matrix& uu)
 	int nti = map.imax+2; 
 	int ntj = map.jmax+2; 
 
-//cout << nti << " " << ntj << endl; //exit(1);
-//for (int j = map.jmin; j <= map.jmax; j++)
-//	cout << j << " " << map.iinf[j] << " "<< map.isup[j] << endl;
-//cout << map.imax << endl; exit(1);
-
 	DVECTOR uvec1(0, nti+2*ncells-3);
 	DVECTOR rhs1( 0, nti+2*ncells-3);
 	DVECTOR gam1( 0, nti+2*ncells-3);
@@ -189,7 +184,7 @@ void CCalpop::calrec_GO(const PMap& map, dvar_matrix& uu)
 
 void CCalpop::calrec_GO_with_catch(const PMap& map, CParam& param, dvar_matrix& uu, const dmatrix& C_obs, dvar_matrix& C_est)
 {
-//cout << __LINE__ << " ADI-solver for GLOBAL domain " << endl;
+//cout << __LINE__ << " ADI-solver with catch for GLOBAL domain " << endl;
 	DVECTOR uvec(0, maxn - 1);
 	DVECTOR rhs(0, maxn - 1);
 	DVECTOR gam(0, maxn - 1);
@@ -197,11 +192,6 @@ void CCalpop::calrec_GO_with_catch(const PMap& map, CParam& param, dvar_matrix& 
 	int ncells = 20;
 	int nti = map.imax+2; 
 	int ntj = map.jmax+2; 
-
-//cout << nti << " " << ntj << endl; //exit(1);
-//for (int j = map.jmin; j <= map.jmax; j++)
-//	cout << j << " " << map.iinf[j] << " "<< map.isup[j] << endl;
-//cout << map.imax << endl; exit(1);
 
 	DVECTOR uvec1(0, nti+2*ncells-3);
 	DVECTOR rhs1( 0, nti+2*ncells-3);

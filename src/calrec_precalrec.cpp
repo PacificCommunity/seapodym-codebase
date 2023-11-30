@@ -18,6 +18,9 @@ void CCalpop::calrec_with_catch(const PMap& map, CParam& param, dvar_matrix& uu,
 	DVECTOR rhs(0, maxn - 1);
 	DVECTOR gam(0, maxn - 1);
 
+	uu.save_dvar_matrix_value();
+	save_identifier_string2((char*)"One_step_calrec_uu");
+
 	for (int itr = 1; itr <= iterationNumber; itr++) 
 	{
 		//cout << itr << " " << norm(value(uu)) << endl;
@@ -54,8 +57,6 @@ void CCalpop::calrec_with_catch(const PMap& map, CParam& param, dvar_matrix& uu,
 				}
 			}
 		} 
-		uu.save_dvar_matrix_value();
-		save_identifier_string2((char*)"One_step_calrec_uu");
 		
 		for (int i = map.imin; i <= map.imax; i++)
 		{

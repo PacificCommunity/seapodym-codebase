@@ -484,8 +484,8 @@ dvariable TruncatedPoisson(PMap& map, const dmatrix data_obs, dvar_matrix& data_
 			if (map.carte[i][j]){
 				dvariable pred = data_est(i,j);
 				const double obs = data_obs(i,j);
-				if (obs>0){
-					if (pred>0)
+				if (obs>1){
+					if (pred>1)
 						likelihood += pred - obs*log(pred) + gammln(obs+1.0)+log(1-exp(-pred));
 				}
 			}

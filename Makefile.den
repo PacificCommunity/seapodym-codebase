@@ -85,7 +85,7 @@ Calpop_InitCalPop.cpp  \
 Calpop_precaldia.cpp  \
 Calpop_precalrec.cpp  \
 Calpop_tridag.cpp \
-Calpop_recompute_coefs.cpp \
+Calpop_recompute.cpp \
 hessian.cpp \
 like.cpp
 

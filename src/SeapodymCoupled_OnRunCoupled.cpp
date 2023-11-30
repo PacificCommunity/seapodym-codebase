@@ -561,7 +561,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	param->total_like = value(likelihood);
 	double clike = value(likelihood)-lflike-taglike-stocklike-eFlike;
 	if (!param->scalc()){ // all but sensitivity analysis
-		cout << "end of forward run, likelihood: " << 
+		cout << "end of forward run, likelihood: " << defaultfloat <<
 		clike << " " << lflike << " " << taglike << " " << stocklike << " " << eFlike << endl;
 		if (clike+lflike && writeoutputfiles)
 			OutputLikelihoodsFishery();

@@ -12,6 +12,113 @@ const double rc = 0.0005;
 const double rho = 0.99;
 
 
+///This function recomputes all intermediate solutions of one forward ADI step, taking the solution from previous step.
+///Basically, it is the modified 'calrec' routine, with one less iteration in the i-loop as the adjoint code doesn't need this solution.
+void CCalpop::RecompADI_step_fwd(const PMap& map, d3_array& uu, d3_array& uuint, const dmatrix a, const dmatrix bm, const dmatrix& c, const dmatrix& d, const dmatrix& e, const dmatrix& f, const dmatrix& xbet, const dmatrix& ybet)
+{
+
+	dvector uvec(0,maxn-1);
+	dvector rhs(0,maxn-1);
+	dvector gam(0,maxn-1);
+	uvec.initialize();
+	rhs.initialize();
+	gam.initialize();
+
+	for (int itr = 1; itr <= iterationNumber; itr++) {
+	
+		for (int j = map.jmin; j <= map.jmax; j++){
+		
+			const int imin = map.iinf[j]; 
+			const int imax = map.isup[j];
+
+			for (int i = imin; i <= imax; i++)
+				if (map.jinf[i] <= j && j <= map.jsup[i])
+					rhs[i]=-d[i][j]*uu[itr-1][i][j-1] + (2*iterationNumber-e[i][j])*uu(itr-1,i,j) - f[i][j]*uu(itr-1,i,j+1);
+						
+			tridag(a[j],xbet[j],c[j],rhs,uvec,gam,imin,imax);
+
+			for (int i = imin; i <= imax; i++)
+				uuint(itr,i,j) = uvec[i];
+
+		} 	
+		if (itr < iterationNumber){
+			for (int i = map.imin; i <= map.imax; i++){
+		
+				DVECTOR& dvUUINTprev = uuint[itr][i-1];
+				DVECTOR& dvUUINT     = uuint[itr][i];
+				DVECTOR& dvUUINTnext = uuint[itr][i+1];
+
+				const int jmin = map.jinf[i];
+	    			const int jmax = map.jsup[i];
+				for (int j = jmin; j <= jmax; j++)
+					if (map.iinf[j] <= i && i <= map.isup[j])
+						rhs[j]=(-a[j][i]*dvUUINTprev[j])+(2*iterationNumber-bm[j][i])*dvUUINT[j] -(c[j][i]*dvUUINTnext[j]);
+				
+				tridag(d[i],ybet[i],f[i],rhs,uvec,gam,jmin,jmax);
+
+				for (int j = jmin; j <= jmax; j++)
+					uu(itr,i,j) = uvec[j];
+			}
+		} 
+	}
+}
+
+///This function recomputes all intermediate solutions of one forward ADI step with catch removal. It is analogous to see RecompADI_step_fwd, with additional density uuint_t corresponding to uuint(t) before catch removal, which is needed for the adjoint.
+void CCalpop::RecompADI_step_fwd_with_catch(const PMap& map, CParam& param, d3_array& uu, d3_array& uuint, d3_array& uuint_t, const dmatrix a, const dmatrix bm, const dmatrix& c, const dmatrix& d, const dmatrix& e, const dmatrix& f, const dmatrix& xbet, const dmatrix& ybet, const dmatrix& C)
+{
+
+	dvector uvec(0,maxn-1);
+	dvector rhs(0,maxn-1);
+	dvector gam(0,maxn-1);
+	uvec.initialize();
+	rhs.initialize();
+	gam.initialize();
+
+	for (int itr = 1; itr <= iterationNumber; itr++) {
+	
+		for (int j = map.jmin; j <= map.jmax; j++){
+		
+			const int imin = map.iinf[j]; 
+			const int imax = map.isup[j];
+
+			for (int i = imin; i <= imax; i++)
+				if (map.jinf[i] <= j && j <= map.jsup[i])
+					rhs[i]=-d[i][j]*uu[itr-1][i][j-1] + (2*iterationNumber-e[i][j])*uu(itr-1,i,j) - f[i][j]*uu(itr-1,i,j+1);
+						
+			tridag(a[j],xbet[j],c[j],rhs,uvec,gam,imin,imax);
+
+			for (int i = imin; i <= imax; i++){
+				if (C(i,j)==0)
+					uuint(itr,i,j) = uvec[i];
+				else 
+					uuint(itr,i,j) = uvec[i] - uvec[i] * param.func_limit_one(C(i,j)/(uvec[i]+1e-14)) / iterationNumber;
+
+				uuint_t(itr,i,j) = uvec[i];
+			}	
+		} 	
+		if (itr < iterationNumber){
+			for (int i = map.imin; i <= map.imax; i++){
+		
+				DVECTOR& dvUUINTprev = uuint[itr][i-1];
+				DVECTOR& dvUUINT     = uuint[itr][i];
+				DVECTOR& dvUUINTnext = uuint[itr][i+1];
+
+				const int jmin = map.jinf[i];
+	    			const int jmax = map.jsup[i];
+				for (int j = jmin; j <= jmax; j++)
+					if (map.iinf[j] <= i && i <= map.isup[j])
+						rhs[j]=(-a[j][i]*dvUUINTprev[j])+(2*iterationNumber-bm[j][i])*dvUUINT[j] -(c[j][i]*dvUUINTnext[j]);
+				
+				tridag(d[i],ybet[i],f[i],rhs,uvec,gam,jmin,jmax);
+
+				for (int j = jmin; j <= jmax; j++)
+					uu(itr,i,j) = uvec[j];
+			}
+		} 
+	}
+}
+
+
 void CCalpop::RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_count, const dmatrix mortality, dmatrix& aa, dmatrix& bbm, dmatrix& cc, dmatrix& dd, dmatrix& ee, dmatrix& ff)
 {
 	dvector lat_correction(map.jmin,map.jmax);

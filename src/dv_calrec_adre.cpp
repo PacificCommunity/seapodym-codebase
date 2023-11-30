@@ -121,40 +121,29 @@ void dv_calrec_adre()
 	pop->xbet_comp(*map, xbet, a, bm, c, 2*iterationNumber);
 	pop->ybet_comp(*map, ybet, d, e, f, 2*iterationNumber);
 
-	
 	const dmatrix_position uuint_pos(pop->uuint);
-	dmatrix uuint(uuint_pos);
 
+	//recompute all 2*N-1 solutions 
+	//(no need to get the last one 
+	//as it is saved on the next time step)
+	d3_array luu, luuint;//local uu and uuint computed from uu(t-1)
+	luu.allocate(0, iterationNumber-1);
+	luuint.allocate(1, iterationNumber);
+	for (int itr = 1; itr <= iterationNumber; itr++){ 
+		luu(itr-1).allocate(map->imin1, map->imax1, map->jinf1, map->jsup1);
+		luuint(itr).allocate(map->imin1, map->imax1, map->jinf1, map->jsup1);
+		luu(itr-1).initialize();
+		luuint(itr).initialize();
+	}
+
+	verify_identifier_string2((char*)"One_step_calrec_uu");
+	luu[0] = restore_dvar_matrix_value(uu_pos);
+
+	//recompute all intermediate solutions:
+	pop->RecompADI_step_fwd(*map, luu, luuint, a, bm, c, d, e, f, xbet, ybet);
+
+	//ADJOINT FOR CALREC FUNCTION
 	for (int itr = iterationNumber; itr >= 1; itr--){
-
-		verify_identifier_string2((char*)"One_step_calrec_uu");
-		dmatrix uu = restore_dvar_matrix_value(uu_pos);
-
-		uuint.initialize();
-		
-		//recompute uuint form uu		
-		for (int j = map->jmin; j <= map->jmax; j++)
-		{
-			const int imin = map->iinf[j]; 
-			const int imax = map->isup[j];
-
-			for (int i = imin; i <= imax; i++)
-				rhs[i]=-d[i][j]*uu(i,j-1) + (2*iterationNumber-e[i][j])*uu(i,j) - f[i][j]*uu(i,j+1);
-                        
-			//tridag(a[j],xbet[j],c[j],rhs,uvec,gam,imin,imax);
-			gam[imin] = rhs[imin];
-			for (int i=imin+1 ; i<=imax ; i++)
-				gam[i] = rhs[i]-gam[i-1]*a[j][i]*xbet[j][i-1];
-	
-			uvec[imax] = gam[imax]*xbet[j][imax];
-			for (int i=imax-1; i>=imin ; i--)
-				uvec[i] = (gam[i]-c[j][i]*uvec[i+1])*xbet[j][i];
-
-
-			for (int i = imin; i <= imax; i++)
-				uuint(i,j) = uvec[i];
-		} 
-		//end of recomputation
 
 		dmatrix dfuuint(uuint_pos);
 		dfuuint.initialize();
@@ -174,15 +163,14 @@ void dv_calrec_adre()
 			dftridag_y(d(i),ybet(i),f(i),dfyrhs,dfuvec,dfygam,jmin,jmax);
 
 			for (int j=jmax; j>=jmin; j--) {
-					//rhs[j] = -a[j][i]*uuint[i-1][j]+(2*iterationNumber-bm[j][i])*uuint[i][j] - c[j][i]*uuint[i+1][j];
-					dfuuint(i-1,j)-= a(j,i)*dfyrhs(j);
-					dfbm(j,i)     -= uuint(i,j)*dfyrhs(j);
-					dfuuint(i,j)  += (2*iterationNumber-bm[j][i])*dfyrhs(j);
-					dfuuint(i+1,j)-= c(j,i)*dfyrhs(j);
-					dfyrhs(j)      = 0.0;
+				//rhs[j] = -a[j][i]*uuint[i-1][j]+(2*iterationNumber-bm[j][i])*uuint[i][j] - c[j][i]*uuint[i+1][j];
+				dfuuint(i-1,j)-= a(j,i)*dfyrhs(j);
+				dfbm(j,i)     -= luuint(itr,i,j)*dfyrhs(j);
+				dfuuint(i,j)  += (2*iterationNumber-bm[j][i])*dfyrhs(j);
+				dfuuint(i+1,j)-= c(j,i)*dfyrhs(j);
+				dfyrhs(j)      = 0.0;
 			}
 		}
-
 
 		for (int j = jsup; j >= jinf; j--){
 			const int imin = map->iinf[j]; 
@@ -191,7 +179,7 @@ void dv_calrec_adre()
 			// recomputing rhs(i)
 			for (int i = imin; i <= imax; i++) {   
 
-					rhs[i] = -d[i][j]*uu[i][j-1] + (2*iterationNumber-e[i][j])*uu[i][j] - f[i][j]*uu[i][j+1];
+					rhs[i] = -d[i][j]*luu[itr-1][i][j-1] + (2*iterationNumber-e[i][j])*luu[itr-1][i][j] - f[i][j]*luu[itr-1][i][j+1];
 				
 			}
 
