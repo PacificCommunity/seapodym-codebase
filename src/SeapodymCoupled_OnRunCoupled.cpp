@@ -100,11 +100,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Habitat.initialize();
 	Mortality.initialize();
 
-	// Read larvae data 
-	if (param->larvae_like[0]){
-		ReadLarvae();
-	}
-
 	// For larvae likelihood at seasonal scale
 	dvar_matrix Larvae_density_at_obs;
 	IVECTOR kinf;
@@ -181,7 +176,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 */
 	for (;t_count <= nbt_total; t_count++)
 	{
-	
 		//----------------------------------------------//
 		//              INITIALISATION                  //
 		//----------------------------------------------//
@@ -244,6 +238,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 				ReadClimatologyOxy(tcur, qtr);
 			}
 		}
+		
 		//----------------------------------------------//
 		//	READING CATCH DATA: C_obs, effort	//
 		//----------------------------------------------//
@@ -302,7 +297,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			//1.2 Food Requirement by population
 			if (param->food_requirement_in_mortality(sp)){
 				FR_pop_comp(FR_pop, sp);
-//				ISR_denom_comp(ISR_denom, sp, tcur);
+			//	ISR_denom_comp(ISR_denom, sp, tcur);
 			}
 			//1.3 precompute local proportions of catch by fishery
 			if (fishing && param->fisheries_no_effort_exist[sp]){
@@ -513,14 +508,15 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 				Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,pop_built,tcur);//checked
 
 			//8. Aggregate larvae density at larvae obs locations
-			if (param->larvae_input_seasonal_flag[0]==1 && param->larvae_like[0]){
-				int season = ((t_count - 1) % 12) / 3;
-				for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
-					Larvae_density_at_obs(season, k) += mat.larvae(sp,mat.seasonal_larvae_input_vectors_i[season][k],mat.seasonal_larvae_input_vectors_j[season][k]);
+			if (t_count > nbt_building+nbstoskip){
+				if (param->larvae_input_seasonal_flag[0]==1 && param->larvae_like[0]){
+					int season = ((t_count - 1) % 12) / 3;
+					for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
+						Larvae_density_at_obs(season, k) += mat.larvae(sp,mat.seasonal_larvae_input_vectors_i[season][k],mat.seasonal_larvae_input_vectors_j[season][k]);
+					}
+					ntime_season[season] += 1;
 				}
-				ntime_season[season] += 1;
 			}
-
 
 		}//end of 'sp' loop
 
@@ -603,7 +599,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	double clike = value(likelihood)-lflike-taglike-stocklike-eFlike;
 	if (!param->scalc()){ // all but sensitivity analysis
 		cout << "end of forward run, likelihood: " << defaultfloat <<
-		clike << " " << lflike << " " << taglike << " " << stocklike << " " << eFlike << endl;
+		clike << " " << lflike << " " << taglike << " " << stocklike << " " << eFlike << " " << larvaelike << endl;
 		if (clike+lflike && writeoutputfiles)
 			OutputLikelihoodsFishery();
 	}
@@ -613,7 +609,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 void SeapodymCoupled::ReadLarvae()
 {
-	cout << "Reading input larvae file... " << endl;
+	cout << endl << "Reading input larvae file... " << endl;
 	int jday = 0;
 	int t_count_init = t_count;
 	int nlevel = 0;
@@ -621,53 +617,39 @@ void SeapodymCoupled::ReadLarvae()
 	file_input = param->str_file_larvae;
     rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
 
-	mat.larvae_input.allocate(1,nbt_total);
-	for (int t=1; t<=nbt_total; t++){
-		mat.larvae_input[t].allocate(0, nlon_input, 0, nlat_input);
-		mat.larvae_input[t].initialize();
-	}
+	if (param->larvae_input_seasonal_flag[0]==1){
+		mat.larvae_input.allocate(0,3);
+		for (int season=0; season<4; season++){
+			mat.larvae_input[season].allocate(1, nlon_input, 1, nlat_input);
+			mat.larvae_input[season].initialize();
+		}
 
-	for (; t_count<=nbt_total; t_count++){
-		getDate(jday);
-		if (t_count > nbt_building) {
-			//TIME SERIES 
-			t_series = t_count - nbt_building + nbt_start_series;
-			int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel + ((nlat_input *nlon_input)* (t_count-1))) * 4;
-
-			ifstream litbin(file_input.c_str(), ios::binary | ios::in);
-			if (!litbin){
-				cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
-				exit(1);
-			}
-
-			if (param->larvae_input_seasonal_flag[0]==0){
-				litbin.seekg(nbytetoskip, ios::cur);
-			}else{
-				int qtr = ((t_count - 1) % 12) / 3 + 1;
-				int nbytetoskip_seasonalfile = (9 +(3* nlat * nlon) + 4 + ((nlat *nlon)* (qtr-1))) * 4;
-				litbin.seekg(nbytetoskip_seasonalfile, ios::cur);
-			}
-			const int sizeofDymInputType = sizeof(float);
-			float buf;
+		ifstream litbin(file_input.c_str(), ios::binary | ios::in);
+		const int sizeofDymInputType = sizeof(float);
+		float buf;
+		if (!litbin){
+			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
+			exit(1);
+		}
+		for (int season=0; season<4; season++){
+			int nbytetoskip_seasonalfile = (9 +(3* nlat * nlon) + 4 + ((nlat *nlon)* season)) * 4;
+			litbin.seekg(nbytetoskip_seasonalfile, ios::cur);
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
 					litbin.read(( char *)&buf,sizeofDymInputType);
-					mat.larvae_input[t_count][i+1][j+1]= buf;
+					mat.larvae_input[season][i+1][j+1]= buf;
 				}
 			}
-			litbin.close();
 		}
-	}
-	t_count = t_count_init;
+		litbin.close();
 
-	if (param->larvae_input_seasonal_flag[0]==1){
 		// Vector of non-NA observed density
 		for (int season=0; season<4; season++){
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
 					if (map.carte[i+1][j+1]){
-						if (mat.larvae_input[0][season*3+1][i+1][j+1]>=0){
-							mat.seasonal_larvae_input_vectors[season].push_back(mat.larvae_input[0][season*3+1][i+1][j+1]);
+						if (mat.larvae_input[season][i+1][j+1]>=0){
+							mat.seasonal_larvae_input_vectors[season].push_back(mat.larvae_input[season][i+1][j+1]);
 							mat.seasonal_larvae_input_vectors_i[season].push_back(i+1);
 							mat.seasonal_larvae_input_vectors_j[season].push_back(j+1);
 						}

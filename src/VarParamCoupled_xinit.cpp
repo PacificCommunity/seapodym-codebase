@@ -15,6 +15,10 @@ void VarParamCoupled::xinit(dvector& x, adstring_array& x_names)
 	par_init(dvarsA_sst_spawning,a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",x,x_names,idx);
 	par_init(dvarsB_sst_spawning,b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",x,x_names,idx);
 	par_init(dvarsA_sst_larvae,a_sst_larvae,a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",x,x_names,idx);
+	par_init(dvarsQ_sp_larvae,q_sp_larvae,q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",x,x_names,idx);
+	par_init(dvarsLikelihood_larvae_sigma,likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",x,x_names,idx);
+	par_init(dvarsLikelihood_larvae_beta,likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",x,x_names,idx);
+	par_init(dvarsLikelihood_larvae_probzero,likelihood_larvae_probzero,likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",x,x_names,idx);
 	par_init(dvarsB_sst_larvae,b_sst_larvae,b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",x,x_names,idx);
 	par_init(dvarsAlpha_hsp_prey,alpha_hsp_prey,alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",x,x_names,idx);
 	par_init(dvarsAlpha_hsp_predator,alpha_hsp_predator,alpha_hsp_predator_min,alpha_hsp_predator_max,"/alpha_hsp_predator",x,x_names,idx);

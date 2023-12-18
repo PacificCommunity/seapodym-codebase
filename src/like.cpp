@@ -124,14 +124,14 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 	double larvaelike  = 0.0;
 	for (int sp=0; sp < nb_species; sp++){
 		if (!param->larvae_like[sp] & !param->scalc()) return 0;
-		if (param->larvae_like[sp]){
+		if (param->larvae_like[sp] && param->larvae_input_seasonal_flag[0]==1){
+			int like_type = param->larvae_likelihood_type[sp];
 			for (int season=0; season<4; season++){
 				for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
 					// Compute the average larvae density over the entire period
 					Larvae_density_at_obs(season, k) /= ntime_season[season];
 
 					// Compute likelihood
-					int like_type = param->larvae_likelihood_type[sp];
 					dvariable N_pred = 0.0;
 					N_pred = Larvae_density_at_obs(season, k);
 					dvariable lkhd;

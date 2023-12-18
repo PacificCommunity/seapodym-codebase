@@ -13,8 +13,6 @@ NishikawaCategories::NishikawaCategories(VarParamCoupled& param): dl(0.1) {
             Lobs_diff[i] = param.larvae_density_last_bin_width[0];
         }
     }
-    std::cerr << "Lobs_cat = " << Lobs_cat[0] << " " << Lobs_cat[1] << " " << Lobs_cat[2] << " " << Lobs_cat[3] << std::endl;
-    std::cerr << "Lobs_diff = " << Lobs_diff[0] << " " << Lobs_diff[1] << " " << Lobs_diff[2] << " " << Lobs_diff[3] << std::endl;
 }
 
 dvariable NishikawaCategories::categorical_poisson_comp(int L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
@@ -24,7 +22,7 @@ dvariable NishikawaCategories::categorical_poisson_comp(int L_obs, dvariable N_p
 
 	const double twopi = 2.0*3.141592654;
     dvariable h = param.dvarsQ_sp_larvae[sp];
-    dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
+    dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
     dvariable L_pred = N_pred * h;
 
     double lkhd_before_log = 0.0;
@@ -137,7 +135,7 @@ void dv_categorical_poisson_comp(){
 
 dvariable NishikawaCategories::mixed_gaussian_comp(int L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
 
-    dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
+    dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
     dvariable h = param.dvarsQ_sp_larvae[sp];
     dvariable L_pred = N_pred * h;
 
@@ -353,8 +351,8 @@ dvariable NishikawaCategories::categorical_zinb_comp(int L_obs, dvariable N_pred
     // 3 - Apply log
 
     dvariable h = param.dvarsQ_sp_larvae[sp];
-    dvariable beta = param.dvarsLikelihood_spawning_beta[sp];
-    dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
+    dvariable beta = param.dvarsLikelihood_larvae_beta[sp];
+    dvariable p = param.dvarsLikelihood_larvae_probzero[sp];
     dvariable L_pred = N_pred * h;
 
     dvariable beforelog = 0.0;
@@ -486,7 +484,7 @@ dvariable NishikawaCategories::categorical_zip_comp(int L_obs, dvariable N_pred,
     // 3 - applies -log
 
     dvariable h = param.dvarsQ_sp_larvae[sp];
-    dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
+    dvariable p = param.dvarsLikelihood_larvae_probzero[sp];
     dvariable L_pred = N_pred * h;
 
     double lkhd_before_log = 0.0;
@@ -593,7 +591,7 @@ void dv_categorical_zip_comp(){
 dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
     dvariable h = param.dvarsQ_sp_larvae[sp];
 	dvariable L_pred = N_pred * h;
-    dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
+    dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
     dvariable lkhd = 0.0;
     if (L_obs==0.0){
         lkhd = weight_Lobszero*L_pred*L_pred/(2*pow(sigma, 2)) ;
@@ -606,7 +604,7 @@ dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, 
 dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
 	const double twopi = 2.0*3.141592654;
     dvariable h = param.dvarsQ_sp_larvae[sp];
-    dvariable sigma = param.dvarsLikelihood_spawning_sigma[sp];
+    dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
     dvariable L_pred = N_pred * h;
     dvariable lkhd = 0.0;
     if (L_obs==0){
@@ -631,8 +629,8 @@ dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_L
 
 dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp){
     dvariable h = param.dvarsQ_sp_larvae[sp];
-    dvariable beta = param.dvarsLikelihood_spawning_beta[sp];
-    dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
+    dvariable beta = param.dvarsLikelihood_larvae_beta[sp];
+    dvariable p = param.dvarsLikelihood_larvae_probzero[sp];
     dvariable L_pred = N_pred * h;
     dvariable lkhd = 0.0;
     if (L_obs==0.0){
@@ -647,7 +645,7 @@ dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int 
 
 dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp){
     dvariable h = param.dvarsQ_sp_larvae[sp];
-    dvariable p = param.dvarsLikelihood_spawning_probzero[sp];
+    dvariable p = param.dvarsLikelihood_larvae_probzero[sp];
     dvariable L_pred = N_pred * h;
     dvariable lkhd = 0.0;
     if (L_obs==0.0){

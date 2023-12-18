@@ -326,6 +326,10 @@ bool VarParamCoupled::read(const string& parfile)
 		uncouple_sst_larvae.allocate(0,nb_species-1);
 		a_sst_spawning.allocate(0, nb_species - 1);
 		b_sst_spawning.allocate(0, nb_species - 1);
+		q_sp_larvae.allocate(0, nb_species - 1);
+		likelihood_larvae_sigma.allocate(0, nb_species - 1);
+		likelihood_larvae_beta.allocate(0, nb_species - 1);
+		likelihood_larvae_probzero.allocate(0, nb_species - 1);
 		a_sst_larvae.allocate(0, nb_species - 1);
 		b_sst_larvae.allocate(0, nb_species - 1);
 		gaussian_thermal_function.allocate(0,nb_species-1);
@@ -390,6 +394,27 @@ bool VarParamCoupled::read(const string& parfile)
 			doc.set("/a_sst_larvae/variable","use","false");		
 			doc.set("/b_sst_larvae/variable","use","false");		
 		}
+
+		// Larvae catachability
+		if (!doc.get("/q_sp_larvae",sp_name[sp]).empty()){
+			q_sp_larvae[sp] = doc.getDouble("/q_sp_larvae", sp_name[sp]);
+		}
+
+		// sigma parameter in Gaussian kernel used for larvae likelihood
+		if (!doc.get("/likelihood_larvae_sigma",sp_name[sp]).empty()){
+			likelihood_larvae_sigma[sp] = doc.getDouble("/likelihood_larvae_sigma", sp_name[sp]);
+		}
+
+		// betaf parameter in ZINB used for larvae likelihood
+		if (!doc.get("/likelihood_larvae_beta",sp_name[sp]).empty()){
+			likelihood_larvae_beta[sp] = doc.getDouble("/likelihood_larvae_beta", sp_name[sp]);
+		}
+
+		// pf parameter in ZINB used for larvae likelihood
+		if (!doc.get("/likelihood_larvae_probzero",sp_name[sp]).empty()){
+			likelihood_larvae_probzero[sp] = doc.getDouble("/likelihood_larvae_probzero", sp_name[sp]);
+		}
+
 
 		//standard deviation in Gaussian temperature function for spawning
                	a_sst_spawning[sp] = doc.getDouble("/a_sst_spawning", sp_name[sp]);
@@ -699,8 +724,22 @@ bool VarParamCoupled::read(const string& parfile)
 	////////////////////////////////////////
 	larvae_like.allocate(0,nb_species-1);
 	larvae_like.initialize();
+	larvae_input_categorical_flag.allocate(0,nb_species-1);
+	larvae_input_categorical_flag.initialize();
+	larvae_input_seasonal_flag.allocate(0,nb_species-1);
+	larvae_input_seasonal_flag.initialize();
+	larvae_likelihood_type.allocate(0,nb_species-1);
+	larvae_likelihood_type.initialize();
+	fit_null_larvae.allocate(0,nb_species-1);
+	fit_null_larvae.initialize();
+	weight_null_larvae.allocate(0,nb_species-1);
+	weight_null_larvae.initialize();
+	nb_larvae_cat.allocate(0,nb_species-1);
+	nb_larvae_cat.initialize();
 	larvae_density_bins.allocate(0,nb_species-1);
 	larvae_density_bins.initialize();
+	larvae_density_last_bin_width.allocate(0,nb_species-1);
+	larvae_density_last_bin_width.initialize();
 	for (int sp=0;sp<nb_species;sp++){
 		if (!doc.get("/larvae_likelihood",sp_name[sp]).empty())
 			larvae_like[sp] = doc.getInteger("/larvae_likelihood",sp_name[sp]);
@@ -716,7 +755,6 @@ bool VarParamCoupled::read(const string& parfile)
 					weight_null_larvae[sp] = doc.getDouble("/weight_null_larvae", sp_name[sp]);
 				}
 				nb_larvae_cat[sp] =  doc.getInteger("/nb_larvae_cat", sp_name[sp]);
-
 				larvae_density_bins[sp].allocate(0,nb_larvae_cat[sp]-1);
 				for (int c=0;c<nb_larvae_cat[sp];c++){
 					larvae_density_bins[sp][c] = doc.getDouble("/larvae_density_bins/"+sp_name[sp], c);
@@ -1256,6 +1294,10 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(M_mean_range,M_mean_range_min,M_mean_range_max,"/M_mean_range",nni);
 	par_read_bounds(a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",nni);
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);
+	par_read_bounds(q_sp_larvae,q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",nni);
+	par_read_bounds(likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",nni);
+	par_read_bounds(likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",nni);
+	par_read_bounds(likelihood_larvae_probzero,likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",nni);
 	par_read_bounds(a_sst_larvae,a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",nni);
 	par_read_bounds(b_sst_larvae,b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",nni);
 	par_read_bounds(alpha_hsp_prey,alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",nni);
@@ -1488,6 +1530,10 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(M_mean_range_min,M_mean_range_max,"/M_mean_range",0,100);
 	par_read(a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",0,10);
 	par_read(b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",0,34);
+	par_read(q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",0,10);
+	par_read(likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",0,10);
+	par_read(likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",0,10);
+	par_read(likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",0,10);
 	par_read(a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",0,10);
 	par_read(b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",0,34);
 	par_read(alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",0,10000);

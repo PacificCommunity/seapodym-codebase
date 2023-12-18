@@ -185,6 +185,9 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 void prerun_model(SeapodymCoupled& sc)
 {
 	sc.OnRunFirstStep();
+	if (sc.param->larvae_like[0]){
+		sc.ReadLarvae();
+	}
 }
 
 
