@@ -4,15 +4,17 @@
 // Class and function to compute the likelihood of a larvae density observed on an interval (raw Nishikawa data).
 
 NishikawaCategories::NishikawaCategories(VarParamCoupled& param): dl(0.1) {
-    int nb_cat = param.nb_larvae_cat;
+    int nb_cat = param.nb_larvae_cat[0];
     for (int i = 0; i < nb_cat; i++) {
-        Lobs_cat[i] = param.larvae_density_bins[i];
+        Lobs_cat[i] = param.larvae_density_bins[0][i];
         if (i < nb_cat-1){
-            Lobs_diff[i] = param.larvae_density_bins[i+1] - param.larvae_density_bins[i];
+            Lobs_diff[i] = param.larvae_density_bins[0][i+1] - param.larvae_density_bins[0][i];
         }else{
-            Lobs_diff[i] = param.larvae_density_last_bin_width;
+            Lobs_diff[i] = param.larvae_density_last_bin_width[0];
         }
     }
+    std::cerr << "Lobs_cat = " << Lobs_cat[0] << " " << Lobs_cat[1] << " " << Lobs_cat[2] << " " << Lobs_cat[3] << std::endl;
+    std::cerr << "Lobs_diff = " << Lobs_diff[0] << " " << Lobs_diff[1] << " " << Lobs_diff[2] << " " << Lobs_diff[3] << std::endl;
 }
 
 dvariable NishikawaCategories::categorical_poisson_comp(int L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){

@@ -159,6 +159,23 @@ public:
 	string strout_tags;
 	int write_all_cohorts_dym;
 	int write_all_fisheries_dym;
+
+	// Larvae likelihood parameters
+	ivector larvae_like; // weither to comute larvae likelihood, [sp]
+	DVECTOR q_sp_larvae;           // Larvae catchability, [sp]
+	DVECTOR likelihood_larvae_sigma;		// sigma parameter in Gaussian kernel used for larvae likelihood
+	DVECTOR likelihood_larvae_beta;		// betaf parameter in ZINB used for larvae likelihood
+	DVECTOR likelihood_larvae_probzero;		// pf parameter in ZINB used for larvae likelihood
+	string strdir_larvae;
+	string str_file_larvae;
+	ivector larvae_input_categorical_flag;//if file_larvae_data data is categorical
+	ivector larvae_input_seasonal_flag;//if file_larvae_data data is seasonal
+	ivector larvae_likelihood_type; // Likelihood function for larvae densities
+	ivector fit_null_larvae; // Whether to fit to null larvae density observation or not
+	DVECTOR weight_null_larvae; // weight factor to apply to null larvae densities
+	ivector nb_larvae_cat; // Number of categories for Nishikawa densities observations
+	dmatrix	larvae_density_bins;	// Categories for Nishikawa densities observations
+	dvector	larvae_density_last_bin_width;	// Width of binned categories for Nishikawa densities observations
 	
 ///	IVECTOR sp_nb_age_class_ad;	// number of age classes for each species [sp]
 ///	IVECTOR sp_unit_age_class_ad;	// time step used for the population of the species [sp] (0= pas de calcul de pop; 1=month;2=quarter )

@@ -40,6 +40,7 @@ friend class tag_release;
 	int EditRunCoupled(const char* parfile);
 	double OnRunCoupled(dvar_vector x, const bool writeoutputfiles = false);
 	void OnSimulationEnd();
+	void ReadLarvae();	
 
 	double OnRunHabitat(dvar_vector x, const bool writeoutputfiles = false);
 	void ReadHabitat();
@@ -101,6 +102,7 @@ private:
 	void get_catch_lf_like(dvariable& likelihood);
 	double get_stock_like(dvariable& total_stock, dvariable& likelihood);
 	double get_tag_like(dvariable& likelihood, bool writeoutputs);
+	double get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_at_obs, int (&ntime_season)[4]);
 	void getDate(int& jday);
 	void SaveDistributions(const int year, const int month);
 	void UpdateTimeVars(int& nbt_total, int& nbt_start_series);

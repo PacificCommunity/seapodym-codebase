@@ -79,7 +79,11 @@ public:
 
 	d4_array habitat_input;
 	d3_array density_input;	
+	d4_array larvae_input;
 
+	std::vector<double> seasonal_larvae_input_vectors[4];// Vector of non-NA observed larvae densities
+	std::vector<int> seasonal_larvae_input_vectors_i[4];// Corresponding i indices
+	std::vector<int> seasonal_larvae_input_vectors_j[4];// Corresponding j indices
 
 	D3_ARRAY total_obs_catch;	
 	D3_ARRAY total_pred_catch;	

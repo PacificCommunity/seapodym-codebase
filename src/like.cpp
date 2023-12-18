@@ -1,4 +1,5 @@
 #include "SeapodymCoupled.h"
+#include "NishikawaLike.h"
 
 void fillmatrices(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dmatrix& data_obs, dvar_matrix& data_est, bool cpue, double cpue_mult, const double catch_scaling_factor);
 dvariable SumSquare(const PMap& map, dvar_matrix& data_est);
@@ -108,6 +109,119 @@ double SeapodymCoupled::get_stock_like(dvariable& total_stock, dvariable& likeli
 		}
 	}
 	return stocklike;
+}
+
+double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_at_obs, int (&ntime_season)[4])
+{//returns double value of larvae likelihood.
+
+	NishikawaCategories NshkwCat(*param);
+	double likelihood_penalty = 50.0;
+	double weight_Lobszero = 0.0;
+	if (param->fit_null_larvae[0]==1){
+		weight_Lobszero = param->weight_null_larvae[0];
+	}
+
+	double larvaelike  = 0.0;
+	for (int sp=0; sp < nb_species; sp++){
+		if (!param->larvae_like[sp] & !param->scalc()) return 0;
+		if (param->larvae_like[sp]){
+			for (int season=0; season<4; season++){
+				for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
+					// Compute the average larvae density over the entire period
+					Larvae_density_at_obs(season, k) /= ntime_season[season];
+
+					// Compute likelihood
+					int like_type = param->larvae_likelihood_type[sp];
+					dvariable N_pred = 0.0;
+					N_pred = Larvae_density_at_obs(season, k);
+					dvariable lkhd;
+					if (param->larvae_input_categorical_flag[sp]==1){
+						int L_obs  = mat.seasonal_larvae_input_vectors[season][k];
+						switch (like_type){
+							case 0: // Mixed Gaussian Kernel cost function
+								lkhd = NshkwCat.mixed_gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+								break;
+
+							case 1:	// Categorical Poisson cost function
+								if (N_pred == 0.0){
+									if (L_obs > 0){
+										lkhd = likelihood_penalty;
+									}
+								}else{
+									lkhd = NshkwCat.categorical_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+								}
+								break;
+
+							case 2: // Categorical Truncated Poisson cost function
+								if (N_pred == 0.0){
+									if (L_obs > 0){
+										lkhd = likelihood_penalty;
+									}
+								}else{
+									lkhd = NshkwCat.categorical_truncated_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+								}
+								break;
+							
+							case 3: // Zero-Inflated Negative Binomial cost function
+								lkhd = NshkwCat.categorical_zinb_comp(L_obs, N_pred, *param, 0);
+								break;
+
+							case 4: // Zero-Inflated Poisson cost function
+								lkhd = NshkwCat.categorical_zip_comp(L_obs, N_pred, *param, 0);
+								break;
+						}
+
+						if (std::isinf(value(lkhd))){
+							if (lkhd > 0){
+								lkhd = likelihood_penalty;
+							}else{
+								lkhd = 0;
+							}
+						}
+					}else{
+						double L_obs  = mat.seasonal_larvae_input_vectors[season][k];
+						switch (like_type){
+							case 0: // Gaussian cost function
+								lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+								break;
+
+							case 1:{// Poisson cost function
+								if (N_pred == 0.0){
+									if (L_obs > 0){
+										lkhd = likelihood_penalty;
+									}
+								}else{
+									lkhd = poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+								}
+								break;
+							}
+
+							case 2: // Truncated Poisson cost function
+								if (N_pred == 0.0){
+									if (L_obs > 0){
+										lkhd = likelihood_penalty;
+									}
+								}else{
+									lkhd = truncated_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+								}
+								break;
+							
+							case 3: // Zero-Inflated Negative Binomial cost function
+								lkhd = zinb_comp(L_obs, N_pred, *param, 0);
+								break;
+
+							case 4: // Zero-Inflated Poisson cost function
+								lkhd = zip_comp(L_obs, N_pred, *param, 0);
+								break;
+						}
+					}
+					likelihood += lkhd;
+					larvaelike += value(lkhd);
+				}
+			}
+		}
+	}
+	return larvaelike;
 }
 
 void SeapodymCoupled::get_catch_lf_like(dvariable& likelihood)

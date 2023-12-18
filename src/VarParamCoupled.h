@@ -92,6 +92,20 @@ public:
 //	dvar_matrix dvarsU;
 //	dvar_matrix dvarsV;
 
+// For larvae likelihood
+	double q_sp_larvae_min;
+	double q_sp_larvae_max;
+	dvar_vector dvarsQ_sp_larvae;
+	double likelihood_spawning_sigma_min;
+	double likelihood_spawning_sigma_max;
+	dvar_vector dvarsLikelihood_spawning_sigma;
+	double likelihood_spawning_beta_min;
+	double likelihood_spawning_beta_max;
+	dvar_vector dvarsLikelihood_spawning_beta;
+	double likelihood_spawning_probzero_min;
+	double likelihood_spawning_probzero_max;
+	dvar_vector dvarsLikelihood_spawning_probzero;
+
 //1. dv_mortality_sp.cpp:
 	double Mp_mean_max_min;
 	double Mp_mean_max_max;
