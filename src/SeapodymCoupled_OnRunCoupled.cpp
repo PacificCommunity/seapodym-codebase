@@ -609,13 +609,12 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 void SeapodymCoupled::ReadLarvae()
 {
-	cout << endl << "Reading input larvae file... " << endl;
-	int jday = 0;
-	int t_count_init = t_count;
+	cout << "Reading input larvae file: " << endl;
 	int nlevel = 0;
 	string file_input;
 	file_input = param->str_file_larvae;
     rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
+	cout << file_input << endl;
 
 	if (param->larvae_input_seasonal_flag[0]==1){
 		mat.larvae_input.allocate(0,3);
@@ -624,15 +623,15 @@ void SeapodymCoupled::ReadLarvae()
 			mat.larvae_input[season].initialize();
 		}
 
-		ifstream litbin(file_input.c_str(), ios::binary | ios::in);
-		const int sizeofDymInputType = sizeof(float);
-		float buf;
-		if (!litbin){
-			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
-			exit(1);
-		}
 		for (int season=0; season<4; season++){
-			int nbytetoskip_seasonalfile = (9 +(3* nlat * nlon) + 4 + ((nlat *nlon)* season)) * 4;
+			ifstream litbin(file_input.c_str(), ios::binary | ios::in);
+			const int sizeofDymInputType = sizeof(float);
+			float buf;
+			if (!litbin){
+				cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
+				exit(1);
+			}
+			int nbytetoskip_seasonalfile = (9 +(3* nlat * nlon) + 4 + (nlat *nlon*season)) * 4;
 			litbin.seekg(nbytetoskip_seasonalfile, ios::cur);
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
@@ -640,22 +639,25 @@ void SeapodymCoupled::ReadLarvae()
 					mat.larvae_input[season][i+1][j+1]= buf;
 				}
 			}
+			litbin.close();
 		}
-		litbin.close();
 
 		// Vector of non-NA observed density
+		int ndata=0;
 		for (int season=0; season<4; season++){
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
-					if (map.carte[i+1][j+1]){
+					//if (map.carte[i+1][j+1]){
 						if (mat.larvae_input[season][i+1][j+1]>=0){
 							mat.seasonal_larvae_input_vectors[season].push_back(mat.larvae_input[season][i+1][j+1]);
 							mat.seasonal_larvae_input_vectors_i[season].push_back(i+1);
 							mat.seasonal_larvae_input_vectors_j[season].push_back(j+1);
+							ndata += 1;
 						}
-					}
+					//}
 				}
 			}
 		}
+		cout << "Number of data points: " << ndata << endl;
 	}
 }
