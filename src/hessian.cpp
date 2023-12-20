@@ -2,6 +2,7 @@
 #include "SeapodymCoupled.h"
 
 //void Hessian_comp(const char* parfile);
+void prerun_model(SeapodymCoupled& sc);
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar);
 
 ///2. Option for computing Hessian matrix
@@ -25,7 +26,7 @@ void Hessian_comp(const char* parfile)
 	dmatrix H(1,nvar,1,nvar); H.initialize();
 
 
-	sc.OnRunFirstStep();
+	prerun_model(sc);
 
 	double likelihood = 0.0;
 
