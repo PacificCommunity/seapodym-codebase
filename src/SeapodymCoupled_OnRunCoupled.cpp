@@ -592,7 +592,9 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		}
 
 		larvaelike += get_larvae_like(likelihood, Larvae_density_at_obs);
-		cout << "Larvae likelihood: " << larvaelike << endl;
+		if (!param->gcalc()){
+			cout << "Larvae likelihood: " << larvaelike << endl;
+		}
 	}
 
 	if (writeoutputfiles) {SaveDistributions(year, month);
