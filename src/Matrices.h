@@ -77,9 +77,9 @@ public:
 	D3_ARRAY total_pop;	// total_pop: biomasse totale = somme de toutes les classes d'ages
 	D3_ARRAY PEB;		// Population Exploitable Biomass: sum of age classes B x average selectivity function 
 
-	d4_array habitat_input;
-	d3_array density_input;	
-	d3_array larvae_input;
+	D4_ARRAY habitat_input;
+	D3_ARRAY density_input;	
+	D3_ARRAY larvae_input;
 
 	std::vector<double> seasonal_larvae_input_vectors[4];// Vector of non-NA observed larvae densities
 	std::vector<int> seasonal_larvae_input_vectors_i[4];// Corresponding i indices

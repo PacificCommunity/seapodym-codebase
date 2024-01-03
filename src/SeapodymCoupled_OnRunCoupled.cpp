@@ -584,10 +584,16 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 	// Compute larvae likelihood
 	if (param->larvae_like[0]){
-		larvaelike += get_larvae_like(likelihood, Larvae_density_at_obs, ntime_season);
+		// Compute the average larvae density over the entire period
+		for (int season=0; season<4; season++){
+			for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
+				Larvae_density_at_obs(season, k) /= ntime_season[season];			
+			}
+		}
+
+		larvaelike += get_larvae_like(likelihood, Larvae_density_at_obs);
 		cout << "Larvae likelihood: " << larvaelike << endl;
 	}
-	
 
 	if (writeoutputfiles) {SaveDistributions(year, month);
 		cout << "total catch in simulation (optimization): " << SUM_CATCH << endl;
@@ -647,14 +653,14 @@ void SeapodymCoupled::ReadLarvae()
 		for (int season=0; season<4; season++){
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
-					//if (map.carte[i+1][j+1]){
+					if (map.carte[i+1][j+1]){
 						if (mat.larvae_input[season][i+1][j+1]>=0){
 							mat.seasonal_larvae_input_vectors[season].push_back(mat.larvae_input[season][i+1][j+1]);
 							mat.seasonal_larvae_input_vectors_i[season].push_back(i+1);
 							mat.seasonal_larvae_input_vectors_j[season].push_back(j+1);
 							ndata += 1;
 						}
-					//}
+					}
 				}
 			}
 		}

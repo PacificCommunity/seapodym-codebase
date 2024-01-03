@@ -111,7 +111,7 @@ double SeapodymCoupled::get_stock_like(dvariable& total_stock, dvariable& likeli
 	return stocklike;
 }
 
-double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_at_obs, int (&ntime_season)[4])
+double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_at_obs)
 {//returns double value of larvae likelihood.
 
 	NishikawaCategories NshkwCat(*param);
@@ -128,9 +128,6 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 			int like_type = param->larvae_likelihood_type[sp];
 			for (int season=0; season<4; season++){
 				for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
-					// Compute the average larvae density over the entire period
-					Larvae_density_at_obs(season, k) /= ntime_season[season];
-
 					// Compute likelihood
 					dvariable N_pred = 0.0;
 					N_pred = Larvae_density_at_obs(season, k);
