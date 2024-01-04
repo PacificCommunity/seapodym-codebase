@@ -242,7 +242,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		//	READING CATCH DATA: C_obs, effort	//
 		//----------------------------------------------//
 		if (!tags_only && (nb_fishery > 0) && sum(param->mask_fishery_sp) && ( t_count > nbt_building) 
-				&& (year>=(int)param->save_first_yr) && (t_count <= nbt_no_forecast) ){
+				&& (year>=(int)param->save_first_yr) && (t_count <= nbt_no_forecast) && sum(param->mask_fishery_sp_like)){
 			mat.catch_est.initialize();
 			rw.get_fishery_data(*param, mat.effort, mat.catch_obs, mat.efflon, mat.efflat, year, month);
 			fishing = true;
