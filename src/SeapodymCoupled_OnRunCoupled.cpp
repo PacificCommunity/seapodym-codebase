@@ -117,7 +117,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		Larvae_density_at_obs.initialize();	
 	}
 
-
 	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
 		func.Vars_at_age_precomp(*param,sp);
@@ -510,9 +509,12 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			//8. Aggregate larvae density at larvae obs locations
 			if (t_count > nbt_building+nbstoskip){
 				if (param->larvae_input_seasonal_flag[0]==1 && param->larvae_like[0]){
+					const int nb_lv = param->sp_nb_cohort_lv[sp];
 					int season = ((t_count - 1) % 12) / 3;
 					for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
-						Larvae_density_at_obs(season, k) += mat.larvae(sp,mat.seasonal_larvae_input_vectors_i[season][k],mat.seasonal_larvae_input_vectors_j[season][k]);
+						for (int age=0; age<nb_lv; age++){
+							Larvae_density_at_obs(season, k) += mat.dvarDensity[sp][age][mat.seasonal_larvae_input_vectors_i[season][k]][mat.seasonal_larvae_input_vectors_j[season][k]];
+						}
 					}
 					ntime_season[season] += 1;
 				}
