@@ -12,7 +12,47 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 	if (!scalc())
 		cout << "total penalty: ";
 
-//Order is important (must be the same as in xinit function)!
+	//Order is important (must be the same as in xinit function)!
+	if (doc.get("/q_sp_larvae/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsQ_sp_larvae[i] = boundp(x[idx], q_sp_larvae_min, q_sp_larvae_max, penalty);
+
+			q_sp_larvae[i] = value(dvarsQ_sp_larvae[i]);
+			dvarpars[idx] = q_sp_larvae[i];
+			++idx;
+		}
+	}
+
+	if (doc.get("/likelihood_larvae_sigma/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsLikelihood_larvae_sigma[i] = boundp(x[idx], likelihood_larvae_sigma_min, likelihood_larvae_sigma_max, penalty);
+
+			likelihood_larvae_sigma[i] = value(dvarsLikelihood_larvae_sigma[i]);
+			dvarpars[idx] = likelihood_larvae_sigma[i];
+			++idx;
+		}
+	}
+
+	if (doc.get("/likelihood_larvae_beta/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsLikelihood_larvae_beta[i] = boundp(x[idx], likelihood_larvae_beta_min, likelihood_larvae_beta_max, penalty);
+
+			likelihood_larvae_beta[i] = value(dvarsLikelihood_larvae_beta[i]);
+			dvarpars[idx] = likelihood_larvae_beta[i];
+			++idx;
+		}
+	}
+	
+	if (doc.get("/likelihood_larvae_probzero/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsLikelihood_larvae_probzero[i] = boundp(x[idx], likelihood_larvae_probzero_min, likelihood_larvae_probzero_max, penalty);
+
+			likelihood_larvae_probzero[i] = value(dvarsLikelihood_larvae_probzero[i]);
+			dvarpars[idx] = likelihood_larvae_probzero[i];
+			++idx;
+		}
+	}
+
 	if (doc.get("/Mp_mean_max/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {
 			dvarsMp_mean_max[i] = boundp(x[idx], Mp_mean_max_min, Mp_mean_max_max, penalty);
