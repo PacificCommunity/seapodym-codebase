@@ -476,7 +476,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 	sc.xinit(x, x_names);
 	cout << "Total number of variables: " << nvar << '\n'<<'\n';
 
-	sc.OnRunFirstStep();
+	prerun_model(sc);	
 
 	dvector s(1, nvar); s.initialize();
 
