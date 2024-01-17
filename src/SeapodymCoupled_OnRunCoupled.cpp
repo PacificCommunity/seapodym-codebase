@@ -101,7 +101,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Mortality.initialize();
 
 	// For larvae likelihood at seasonal scale
-	dvar_matrix Larvae_density_at_obs;
+	dvar_matrix Larvae_density_pred_at_obs;
 	IVECTOR kinf;
 	IVECTOR ksup;
 	int ntime_season[4] = {0,0,0,0};
@@ -113,8 +113,8 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			kinf[k] = 0;
 			ksup[k] = mat.seasonal_larvae_input_vectors[k].size();
 		}
-		Larvae_density_at_obs.allocate(0, 3, kinf, ksup);
-		Larvae_density_at_obs.initialize();	
+		Larvae_density_pred_at_obs.allocate(0, 3, kinf, ksup);
+		Larvae_density_pred_at_obs.initialize();	
 	}
 
 	//precompute thermal habitat parameters
@@ -513,7 +513,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 					int season = ((t_count - 1) % 12) / 3;
 					for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
 						for (int age=0; age<nb_lv; age++){
-							Larvae_density_at_obs(season, k) += mat.dvarDensity[sp][age][mat.seasonal_larvae_input_vectors_i[season][k]][mat.seasonal_larvae_input_vectors_j[season][k]];
+							Larvae_density_pred_at_obs(season, k) += mat.dvarDensity[sp][age][mat.seasonal_larvae_input_vectors_i[season][k]][mat.seasonal_larvae_input_vectors_j[season][k]];
 						}
 					}
 					ntime_season[season] += 1;
@@ -589,11 +589,11 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		// Compute the average larvae density over the entire period
 		for (int season=0; season<4; season++){
 			for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
-				Larvae_density_at_obs(season, k) /= ntime_season[season];			
+				Larvae_density_pred_at_obs(season, k) /= ntime_season[season];			
 			}
 		}
 
-		larvaelike += get_larvae_like(likelihood, Larvae_density_at_obs);
+		larvaelike += get_larvae_like(likelihood, Larvae_density_pred_at_obs);
 		if (!param->gcalc()){
 			cout << "Larvae likelihood: " << larvaelike << endl;
 		}
