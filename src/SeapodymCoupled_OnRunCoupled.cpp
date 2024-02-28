@@ -510,7 +510,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			if (t_count > nbt_building+nbstoskip){
 				if (param->larvae_input_seasonal_flag[0]==1 && param->larvae_like[0]){
 					const int nb_lv = param->sp_nb_cohort_lv[sp];
-					int season = ((t_count - 1) % 12) / 3;
+					int season = ((month - 1) % 12) / 3;
 
 					// Calculate scaling factor between larvae density at 1st time step and larvae density at age_larvae_before_sst_mortality days, based on sst-dependent mortality (if applicable)
 					if (param->larvae_mortality_sst[sp]){
