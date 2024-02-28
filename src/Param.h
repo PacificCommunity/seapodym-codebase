@@ -176,6 +176,10 @@ public:
 	ivector nb_larvae_cat; // Number of categories for Nishikawa densities observations
 	dmatrix	larvae_density_bins;	// Categories for Nishikawa densities observations
 	dvector	larvae_density_last_bin_width;	// Width of binned categories for Nishikawa densities observations
+	ivector larvae_mortality_sst; //if larvae mortality should be impacted by sst
+	DVECTOR inv_M_max;		// first parameter in the sst-dependent larvae mortality during the first time step
+	DVECTOR inv_M_rate;		// second parameter in the sst-dependent larvae mortality during the first time step
+	DVECTOR age_larvae_before_sst_mortality;		// third parameter in the sst-dependent larvae mortality during the first time step
 	
 ///	IVECTOR sp_nb_age_class_ad;	// number of age classes for each species [sp]
 ///	IVECTOR sp_unit_age_class_ad;	// time step used for the population of the species [sp] (0= pas de calcul de pop; 1=month;2=quarter )

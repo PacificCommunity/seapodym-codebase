@@ -52,6 +52,8 @@ public:
 	void Mortality_Sp( VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, dvar_matrix& H, int sp, double mean_age_in_dtau, const int age, const int t_count);
 	void M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double, double, double, double, double, double, const int dtau);
 	void M_PH_juv_comp(VarParamCoupled& param, const PMap& map, CMatrices& mat, dvar_matrix& M, const dmatrix& PH, double mean_age_in_dtau);
+	void Scaling_factor_sstdep_larvae_mortality_comp(const PMap& map, dvar_matrix& Scaling_factor, const dmatrix& sst, dvariable inv_M_max, dvariable inv_M_rate, dvariable age_larvae_before_sst_mortality, int deltaT);
+	void Scaling_factor_sstdep_larvae_mortality(VarParamCoupled& param, const dmatrix& sst, const PMap& map, dvar_matrix& S, const int sp);
 
 	void allocate_dvmatr(const int imin, const int imax, const ivector jinf, const ivector jsup){
 		dvmatr1.allocate(imin,imax,jinf,jsup); dvmatr1.initialize();

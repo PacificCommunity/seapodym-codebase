@@ -3,10 +3,14 @@
 ///Main function with memory control and adjoint functions for: 
 ///mortality rates at age functions. These functions include fixed natural mortality
 ///rate and variable component, depending on habitat indices defined for the life stage
+
+// scaling factor for young larvae before sst-dependent larvae mortality until 1st time step
+
 ///Forward functions are in mortality_sp.cpp
 
 
 void dv_M_sp_comp(void);
+void dv_Scaling_factor_sstdep_larvae_mortality_comp(void);
 void save_long_int_value(unsigned long int x);
 unsigned long int restore_long_int_value(void);
 
@@ -31,11 +35,11 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 
 	M_sp_comp(map, M, value(H), value(Mp_max), value(Ms_max), value(Mp_exp), value(Ms_slope), value(range), mean_age_in_dtau, dtau);
 
-        if (!param.gcalc()){
+    if (!param.gcalc()){
                 // pH option works only in simulation mode
 		if ((age==0) && param.use_ph1)
 			M_PH_juv_comp(param,map,mat,M,mat.ph1[t_count],mean_age_in_dtau);	
-	
+
 		mat.MeanVarMortality(map, value(M),value(Mp_max), value(Ms_max), value(Mp_exp), value(Ms_slope), mean_age_in_dtau, sp, age);
 	}
 
@@ -178,5 +182,86 @@ void dv_M_sp_comp(void)
 	dfRng.save_dmatrix_derivatives(Range_pos);
 	dfH.save_dmatrix_derivatives(Hpos);
 	dfM.save_dmatrix_derivatives(Mpos);
+}
+
+
+void VarSimtunaFunc::Scaling_factor_sstdep_larvae_mortality(VarParamCoupled& param, const dmatrix& sst, const PMap& map, dvar_matrix& S, const int sp)
+{
+	int deltaT = param.deltaT;
+	dvariable inv_M_max = param.dvarsInv_M_max[sp];
+	dvariable inv_M_rate = param.dvarsInv_M_rate[sp];
+	dvariable age_larvae_before_sst_mortality = param.dvarsAge_larvae_before_sst_mortality[sp];
+
+	dvmatr1 = inv_M_max;
+	dvmatr2 = inv_M_rate;
+	dvmatr3 = age_larvae_before_sst_mortality;
+
+	Scaling_factor_sstdep_larvae_mortality_comp(map, S, sst, inv_M_max, inv_M_rate, age_larvae_before_sst_mortality, deltaT);
+
+	unsigned long int pmap   = (unsigned long int)&map;
+	save_identifier_string((char*)"Scaling_factor_sstdep_larvae_mortality_comp_begin");
+	inv_M_rate.save_prevariable_value();
+	inv_M_max.save_prevariable_value();
+	age_larvae_before_sst_mortality.save_prevariable_value();
+	sst.save_dmatrix_value();
+	sst.save_dmatrix_position();
+	S.save_dvar_matrix_position();
+	dvmatr3.save_dvar_matrix_position();
+	dvmatr2.save_dvar_matrix_position();
+	dvmatr1.save_dvar_matrix_position();
+	save_long_int_value(pmap);
+	save_int_value(deltaT);
+	save_identifier_string((char*)"Scaling_factor_sstdep_larvae_mortality_comp_end");
+
+	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_Scaling_factor_sstdep_larvae_mortality_comp);
+}
+
+
+void dv_Scaling_factor_sstdep_larvae_mortality_comp(void)
+{
+	verify_identifier_string((char*)"Scaling_factor_sstdep_larvae_mortality_comp_end");
+	int deltaT = restore_int_value();
+	unsigned long int pos_map  = restore_long_int_value();
+	const dvar_matrix_position inv_M_max_pos  = restore_dvar_matrix_position();
+	const dvar_matrix_position inv_M_rate_pos = restore_dvar_matrix_position();
+	const dvar_matrix_position age_larvae_before_sst_mortality_pos = restore_dvar_matrix_position();
+	const dvar_matrix_position S_pos  = restore_dvar_matrix_position();
+	const dmatrix_position sst_pos  = restore_dmatrix_position();
+	dmatrix sst = restore_dmatrix_value(sst_pos);
+    double age_larvae_before_sst_mortality = restore_prevariable_value();
+	double inv_M_max = restore_prevariable_value();
+    double inv_M_rate = restore_prevariable_value();
+	verify_identifier_string((char*)"Scaling_factor_sstdep_larvae_mortality_comp_begin");
+
+	dmatrix dfInv_M_max = restore_dvar_matrix_derivatives(inv_M_max_pos);
+	dmatrix dfInv_M_rate = restore_dvar_matrix_derivatives(inv_M_rate_pos);
+	dmatrix dfAge_larvae_before_sst_mortality = restore_dvar_matrix_derivatives(age_larvae_before_sst_mortality_pos);
+	dmatrix dfS = restore_dvar_matrix_derivatives(S_pos);
+	PMap* map = (PMap*) pos_map;
+
+	const int imax = map->imax;
+	const int imin = map->imin;
+	for (int i = imax; i >= imin; i--){
+		const int jmin = map->jinf[i];
+		const int jmax = map->jsup[i];
+		for (int j = jmax; j >= jmin; j--){
+			if (map->carte(i,j)){
+				double h = 1 - 1 / (inv_M_max * exp(inv_M_rate * sst(i,j)));
+
+				dfInv_M_max(i,j) += dfS(i,j) * (age_larvae_before_sst_mortality - deltaT) * pow(h, age_larvae_before_sst_mortality - 31) * (1-h) / inv_M_max;
+
+				dfInv_M_rate(i,j) += dfS(i,j) * (age_larvae_before_sst_mortality - deltaT) * pow(h, age_larvae_before_sst_mortality - 31) * sst(i,j) * (1-h);
+
+				dfAge_larvae_before_sst_mortality(i,j) += dfS(i,j) * log(h) * pow(h, age_larvae_before_sst_mortality - deltaT);
+
+				dfS(i,j) = 0.0;
+			}
+		}
+	}
+
+	dfInv_M_max.save_dmatrix_derivatives(inv_M_max_pos);
+	dfInv_M_rate.save_dmatrix_derivatives(inv_M_rate_pos);
+	dfAge_larvae_before_sst_mortality.save_dmatrix_derivatives(age_larvae_before_sst_mortality_pos); 
+	dfS.save_dmatrix_derivatives(S_pos);
 }
 

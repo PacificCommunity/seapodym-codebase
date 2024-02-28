@@ -10,6 +10,9 @@ void VarParamCoupled::xinit(dvector& x, adstring_array& x_names)
 	par_init(dvarsLikelihood_larvae_sigma,likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",x,x_names,idx);
 	par_init(dvarsLikelihood_larvae_beta,likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",x,x_names,idx);
 	par_init(dvarsLikelihood_larvae_probzero,likelihood_larvae_probzero,likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",x,x_names,idx);
+	par_init(dvarsInv_M_max,inv_M_max,inv_M_max_min,inv_M_max_max,"/inv_M_max",x,x_names,idx);
+	par_init(dvarsInv_M_rate,inv_M_rate,inv_M_rate_min,inv_M_rate_max,"/inv_M_rate",x,x_names,idx);
+	par_init(dvarsAge_larvae_before_sst_mortality,age_larvae_before_sst_mortality,age_larvae_before_sst_mortality_min,age_larvae_before_sst_mortality_max,"/age_larvae_before_sst_mortality",x,x_names,idx);
 
 	par_init(dvarsMp_mean_max,Mp_mean_max,Mp_mean_max_min,Mp_mean_max_max,"/Mp_mean_max",x,x_names,idx);
 	par_init(dvarsMp_mean_exp,Mp_mean_exp,Mp_mean_exp_min,Mp_mean_exp_max,"/Mp_mean_exp",x,x_names,idx);

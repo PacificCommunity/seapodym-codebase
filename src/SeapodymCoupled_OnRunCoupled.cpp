@@ -320,9 +320,9 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			for (int n=0; n<param->sp_nb_cohort_lv[sp]; n++){
 				double mean_age = mean_age_cohort[sp][age]; 
 				if (!tags_only){
-				func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
-				pop.Precalrec_juv(map, mat, Mortality, tcur);//checked
-				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur);//checked
+					func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
+					pop.Precalrec_juv(map, mat, Mortality, tcur);//checked
+					pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur);//checked
 				}
 				age++;
 			}
@@ -511,9 +511,20 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 				if (param->larvae_input_seasonal_flag[0]==1 && param->larvae_like[0]){
 					const int nb_lv = param->sp_nb_cohort_lv[sp];
 					int season = ((t_count - 1) % 12) / 3;
+
+					// Calculate scaling factor between larvae density at 1st time step and larvae density at age_larvae_before_sst_mortality days, based on sst-dependent mortality (if applicable)
+					if (param->larvae_mortality_sst[sp]){
+						func.Scaling_factor_sstdep_larvae_mortality(*param, mat.sst[tcur], map, mat.dvarScaling_factor_sstdep_larvae_mortality[sp], sp);
+					}
+
+					// Aggregate larvae density at larvae obs locations
 					for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
-						for (int age=0; age<nb_lv; age++){
-							Larvae_density_pred_at_obs(season, k) += mat.dvarDensity[sp][age][mat.seasonal_larvae_input_vectors_i[season][k]][mat.seasonal_larvae_input_vectors_j[season][k]];
+						if (param->larvae_mortality_sst[sp]){// In this case, it only considers the first age class (even if nb_lv>1)
+							Larvae_density_pred_at_obs(season, k) +=  mat.dvarDensity[sp][0][mat.seasonal_larvae_input_vectors_i[season][k]][mat.seasonal_larvae_input_vectors_j[season][k]] * mat.dvarScaling_factor_sstdep_larvae_mortality[sp][mat.seasonal_larvae_input_vectors_i[season][k]][mat.seasonal_larvae_input_vectors_j[season][k]];
+						}else{
+							for (int age=0; age<nb_lv; age++){
+								Larvae_density_pred_at_obs(season, k) += mat.dvarDensity[sp][0][mat.seasonal_larvae_input_vectors_i[season][k]][mat.seasonal_larvae_input_vectors_j[season][k]];
+							}
 						}
 					}
 					ntime_season[season] += 1;
@@ -589,7 +600,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		// Compute the average larvae density over the entire period
 		for (int season=0; season<4; season++){
 			for (auto k=0u; k<mat.seasonal_larvae_input_vectors[season].size(); k++){
-				Larvae_density_pred_at_obs(season, k) /= ntime_season[season];			
+				Larvae_density_pred_at_obs(season, k) /= ntime_season[season];
 			}
 		}
 
@@ -606,7 +617,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	//	delete_tag_releases();
 	//}
 	param->total_like = value(likelihood);
-	double clike = value(likelihood)-lflike-taglike-stocklike-eFlike;
+	double clike = value(likelihood)-lflike-taglike-stocklike-eFlike-taglike-larvaelike;
 	if (!param->scalc()){ // all but sensitivity analysis
 		cout << "end of forward run, likelihood: " << defaultfloat <<
 		clike << " " << lflike << " " << taglike << " " << stocklike << " " << eFlike << " " << larvaelike << endl;

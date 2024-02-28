@@ -105,6 +105,15 @@ public:
 	double likelihood_larvae_probzero_min;
 	double likelihood_larvae_probzero_max;
 	dvar_vector dvarsLikelihood_larvae_probzero;
+	double inv_M_max_min;
+	double inv_M_max_max;
+	dvar_vector dvarsInv_M_max;
+	double inv_M_rate_min;
+	double inv_M_rate_max;
+	dvar_vector dvarsInv_M_rate;
+	double age_larvae_before_sst_mortality_min;
+	double age_larvae_before_sst_mortality_max;
+	dvar_vector dvarsAge_larvae_before_sst_mortality;
 
 //1. dv_mortality_sp.cpp:
 	double Mp_mean_max_min;

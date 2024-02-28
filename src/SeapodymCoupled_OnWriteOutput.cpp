@@ -62,12 +62,19 @@ void SeapodymCoupled::WriteOutput(int t, bool fishing)
 	//save ascii file with sums
 	rw.SaveSepodymFileTxt(*param, mat, map, sumPP, sumF, sumFprime, sumF_area_pred, sumF_required_by_sp, 
 				mean_omega_sp, day, month, year, t_count,past_qtr, qtr, nbi, nbj);
-        if (param->write_all_cohorts_dym){
-                for (int sp=0; sp< nb_species;sp++){
-                                dvector zlevel; zlevel.allocate(0, nbt_total - 1);
-                                SaveCohortsDym(sp, false, zlevel);
-                }
-        }
+	if (param->write_all_cohorts_dym){
+		for (int sp=0; sp< nb_species;sp++){
+			dvector zlevel; zlevel.allocate(0, nbt_total - 1);
+			SaveCohortsDym(sp, false, zlevel);
+		}
+	}
+
+	for (int sp=0; sp< nb_species;sp++){
+		if (param->larvae_mortality_sst[sp]){
+			dvector zlevel; zlevel.allocate(0, nbt_total - 1);
+			SaveLarvaeBeforeSstMort(sp, false, zlevel);
+		}
+	}
 
 	//For Joe:
 	//dvector zlevel; zlevel.allocate(0, nbt_total - 1);
@@ -86,12 +93,12 @@ void SeapodymCoupled::WriteFluxes()
 void SeapodymCoupled::WriteFileHeaders()
 {
 	dvector zlevel;
-        zlevel.allocate(0, nbt_total - 1);
-        zlevel.initialize();
+	zlevel.allocate(0, nbt_total - 1);
+	zlevel.initialize();
 	for (int n=0; n<nbt_total; n++)
 		zlevel[n] = mat.zlevel[n+nbt_start_series];
 	
-        //Date::zlevel_run(*param,mat.zlevel,nbt_total,zlevel,nbt_start_series);
+    //Date::zlevel_run(*param,mat.zlevel,nbt_total,zlevel,nbt_start_series);
 
 	// Create and initialize (dym) files for saving spatial variables
 	//rewrite dym mask by the mask used in the run, i.e. map.carte:
@@ -102,12 +109,16 @@ void SeapodymCoupled::WriteFileHeaders()
 	}	
 	rw.InitSepodymFileDym(*param, mat, nbt_total, zlevel, mat.mask);
 
-        if (param->write_all_cohorts_dym)
-                for (int sp=0; sp< nb_species;sp++)
-                        SaveCohortsDym(sp, true, zlevel);
+	if (param->write_all_cohorts_dym)
+		for (int sp=0; sp< nb_species;sp++)
+			SaveCohortsDym(sp, true, zlevel);
 
 	//For Joe:
 	//SaveOneCohortDym(0, true, zlevel);
+
+	for (int sp=0; sp< nb_species;sp++)
+		if (param->larvae_mortality_sst[sp])
+			SaveLarvaeBeforeSstMort(sp, true, zlevel);
 
 	// Create and initialize (txt) files for saving aggregated variables
 	rw.InitSepodymFileTxt(*param);
@@ -257,4 +268,35 @@ void SeapodymCoupled::SaveOneCohortDym(int sp, bool WriteHeader, dvector zlevel)
         }
 }
 
+void SeapodymCoupled::SaveLarvaeBeforeSstMort(int sp, bool WriteHeader, dvector zlevel)
+{
+	double minval = min(value(mat.dvarDensity(sp,0)) * value(mat.dvarScaling_factor_sstdep_larvae_mortality(sp)));
+	double maxval = max(value(mat.dvarDensity(sp,0)) * value(mat.dvarScaling_factor_sstdep_larvae_mortality(sp)));
+
+	string fileout = param->strdir_output + param->sp_name[sp] + "_larvae_before_sst_mort.dym";
+	if (WriteHeader){
+		//Write file headers during the first time step
+		rw.wbin_header(fileout, param->idformat, param->idfunc, minval, maxval,
+									param->nlong, param->nlat, nbt_total,
+									zlevel[0], zlevel[nbt_total-1],
+									mat.xlon, mat.ylat, zlevel, mat.mask);
+
+	}
+	else {
+		//Append data for the current date
+		dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
+		mat2d.initialize();
+		for (int i=map.imin; i <= map.imax; i++){
+			for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
+				if (map.carte[i][j]){
+					//Units: Nb/sq.km
+					mat2d(i-1,j-1) = value(mat.dvarDensity(sp,0,i,j)) * value(mat.dvarScaling_factor_sstdep_larvae_mortality(sp,i,j));
+				}
+			}
+		}
+		rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
+		//update min-max values in header
+		rw.rwbin_minmax(fileout, minval, maxval);
+	}
+}
 

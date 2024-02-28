@@ -110,6 +110,7 @@ private:
 	///void SaveAdultCohorts(string fileAdu, int sp, bool FileMode);
 	void SaveCohortsDym(int sp, bool WriteHeader, dvector zlevel);
 	void SaveOneCohortDym(int sp, bool WriteHeader, dvector zlevel);
+	void SaveLarvaeBeforeSstMort(int sp, bool WriteHeader, dvector zlevel);
 	void SaveCohorts(string fileout, int sp, bool FileMode);
 //	void SaveAdultsTuna(string fileAdu, int sp, bool FileMode);
 	void SaveIntermediate(const int sp, const int age);

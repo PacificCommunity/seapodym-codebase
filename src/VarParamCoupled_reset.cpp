@@ -53,6 +53,36 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 		}
 	}
 
+	if (doc.get("/inv_M_max/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {
+			dvarsInv_M_max[i] = boundp(x[idx], inv_M_max_min, inv_M_max_max, penalty);
+
+			inv_M_max[i] = value(dvarsInv_M_max[i]);
+			dvarpars[idx] = inv_M_max[i];
+			++idx;
+		}
+	}
+
+	if (doc.get("/inv_M_rate/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {
+			dvarsInv_M_rate[i] = boundp(x[idx], inv_M_rate_min, inv_M_rate_max, penalty);
+
+			inv_M_rate[i] = value(dvarsInv_M_rate[i]);
+			dvarpars[idx] = inv_M_rate[i];
+			++idx;
+		}
+	}
+
+	if (doc.get("/age_larvae_before_sst_mortality/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsAge_larvae_before_sst_mortality[i] = boundp(x[idx], age_larvae_before_sst_mortality_min, age_larvae_before_sst_mortality_max, penalty);
+
+			age_larvae_before_sst_mortality[i] = value(dvarsAge_larvae_before_sst_mortality[i]);
+			dvarpars[idx] = age_larvae_before_sst_mortality[i];
+			++idx;
+		}
+	}
+
 	if (doc.get("/Mp_mean_max/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {
 			dvarsMp_mean_max[i] = boundp(x[idx], Mp_mean_max_min, Mp_mean_max_max, penalty);

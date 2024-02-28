@@ -25,6 +25,7 @@ void SeapodymCoupled::OnRunFirstStep()
 
 	int nb_pops = nb_species*(1+param->nb_tag_files);
 	mat.CreateMatSpecies(map,t0, nbt, nbi, nbj, nb_pops, a0_adult, param->sp_nb_cohorts);
+	mat.CreateMatScalingFactorLarvae(map, nb_species);
 	mat.CreateMatHabitat(map,nb_species,nb_forage,nb_layer,max(param->sp_nb_cohorts),t0, nbt,nbi,nbj,a0_adult,param->sp_nb_cohorts,param->age_compute_habitat);
 	past_month=0;
 	past_qtr=0;

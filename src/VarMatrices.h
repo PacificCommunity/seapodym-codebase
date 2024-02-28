@@ -162,6 +162,14 @@ public:
 	}
 */
 
+	void CreateMatScalingFactorLarvae(PMap& map, const int nb_species){
+		dvarScaling_factor_sstdep_larvae_mortality.allocate(0, nb_species);
+		for (int sp=0; sp < nb_species; sp++){
+			dvarScaling_factor_sstdep_larvae_mortality(sp).allocate(map.imin,map.imax, map.jmin, map.jmax);
+			dvarScaling_factor_sstdep_larvae_mortality(sp).initialize();
+		}
+	}
+
 public:
 	dvar_matrix dvarsU;
 	dvar_matrix dvarsV;
@@ -184,7 +192,7 @@ public:
 	dvar_matrix dvarsAdvection_y;
 	//dump matrices for computing derivatives:
 //	dvar_matrix dvmatr1, dvmatr2, dvmatr3, dvmatr4;
-
+	dvar3_array dvarScaling_factor_sstdep_larvae_mortality;
 
 };
 #endif

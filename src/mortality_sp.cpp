@@ -26,7 +26,6 @@ void VarSimtunaFunc::M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
 				M.elem_value(i,j) *= pow(1.0+Rage,1-H(i,j)/Hval); //modified old function (Rage was added)
-
 			}
 		}
 	}	
@@ -52,6 +51,19 @@ void VarSimtunaFunc::M_PH_juv_comp(VarParamCoupled& param, const PMap& map, CMat
 				}
 				M.elem_value(i,j) +=  ph_var;
 
+			}
+		}
+	}
+}
+
+void VarSimtunaFunc::Scaling_factor_sstdep_larvae_mortality_comp(const PMap& map, dvar_matrix& Scaling_factor, const dmatrix& sst, dvariable inv_M_max, dvariable inv_M_rate, dvariable age_larvae_before_sst_mortality, int deltaT){
+	for (int i = map.imin; i <= map.imax; i++){
+		const int jmin = map.jinf[i];
+		const int jmax = map.jsup[i];
+		for (int j = jmin; j <= jmax; j++){
+			if (map.carte(i,j)){
+				dvariable M = 1 / (inv_M_max*exp(inv_M_rate*sst(i,j)));
+				Scaling_factor(i,j) = pow(1 - M, age_larvae_before_sst_mortality-deltaT);
 			}
 		}
 	}

@@ -330,6 +330,9 @@ bool VarParamCoupled::read(const string& parfile)
 		likelihood_larvae_sigma.allocate(0, nb_species - 1);
 		likelihood_larvae_beta.allocate(0, nb_species - 1);
 		likelihood_larvae_probzero.allocate(0, nb_species - 1);
+		inv_M_max.allocate(0, nb_species - 1);
+		inv_M_rate.allocate(0, nb_species - 1);
+		age_larvae_before_sst_mortality.allocate(0, nb_species - 1);
 		a_sst_larvae.allocate(0, nb_species - 1);
 		b_sst_larvae.allocate(0, nb_species - 1);
 		gaussian_thermal_function.allocate(0,nb_species-1);
@@ -415,6 +418,20 @@ bool VarParamCoupled::read(const string& parfile)
 			likelihood_larvae_probzero[sp] = doc.getDouble("/likelihood_larvae_probzero", sp_name[sp]);
 		}
 
+		// first parameter in sst-dependent larvae mortality function during first time step
+		if (!doc.get("/inv_M_max",sp_name[sp]).empty()){
+			inv_M_max[sp] = doc.getDouble("/inv_M_max", sp_name[sp]);
+		}
+
+		// second parameter in sst-dependent larvae mortality function during first time step
+		if (!doc.get("/inv_M_rate",sp_name[sp]).empty()){
+			inv_M_rate[sp] = doc.getDouble("/inv_M_rate", sp_name[sp]);
+		}
+
+		// third parameter in sst-dependent larvae mortality function during first time step
+		if (!doc.get("/age_larvae_before_sst_mortality",sp_name[sp]).empty()){
+			age_larvae_before_sst_mortality[sp] = doc.getDouble("/age_larvae_before_sst_mortality", sp_name[sp]);
+		}
 
 		//standard deviation in Gaussian temperature function for spawning
                	a_sst_spawning[sp] = doc.getDouble("/a_sst_spawning", sp_name[sp]);
@@ -740,7 +757,12 @@ bool VarParamCoupled::read(const string& parfile)
 	larvae_density_bins.initialize();
 	larvae_density_last_bin_width.allocate(0,nb_species-1);
 	larvae_density_last_bin_width.initialize();
+	larvae_mortality_sst.allocate(0,nb_species-1);
+	larvae_mortality_sst.initialize();
+
 	for (int sp=0;sp<nb_species;sp++){
+		if (!doc.get("/larvae_mortality_sst",sp_name[sp]).empty())
+			larvae_mortality_sst[sp] = doc.getInteger("/larvae_mortality_sst",sp_name[sp]);
 		if (!doc.get("/larvae_likelihood",sp_name[sp]).empty())
 			larvae_like[sp] = doc.getInteger("/larvae_likelihood",sp_name[sp]);
 		if (larvae_like[sp]){
@@ -1298,6 +1320,9 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",nni);
 	par_read_bounds(likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",nni);
 	par_read_bounds(likelihood_larvae_probzero,likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",nni);
+	par_read_bounds(inv_M_max,inv_M_max_min,inv_M_max_max,"/inv_M_max",nni);
+	par_read_bounds(inv_M_rate,inv_M_rate_min,inv_M_rate_max,"/inv_M_rate",nni);
+	par_read_bounds(age_larvae_before_sst_mortality,age_larvae_before_sst_mortality_min,age_larvae_before_sst_mortality_max,"/age_larvae_before_sst_mortality",nni);
 	par_read_bounds(a_sst_larvae,a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",nni);
 	par_read_bounds(b_sst_larvae,b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",nni);
 	par_read_bounds(alpha_hsp_prey,alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",nni);
@@ -1531,9 +1556,12 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",0,10);
 	par_read(b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",0,34);
 	par_read(q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",0,10);
-	par_read(likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",0,10);
+	par_read(likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",0,20);
 	par_read(likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",0,10);
 	par_read(likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",0,10);
+	par_read(inv_M_max_min,inv_M_max_max,"/inv_M_max",0,1000);
+	par_read(inv_M_rate_min,inv_M_rate_max,"/inv_M_rate",0,1000);
+	par_read(age_larvae_before_sst_mortality_min,age_larvae_before_sst_mortality_max,"/age_larvae_before_sst_mortality",1,30);
 	par_read(a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",0,10);
 	par_read(b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",0,34);
 	par_read(alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",0,10000);
