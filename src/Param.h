@@ -169,7 +169,7 @@ public:
 	string strdir_larvae;
 	string str_file_larvae;
 	ivector larvae_input_categorical_flag;//if file_larvae_data data is categorical
-	ivector larvae_input_seasonal_flag;//if file_larvae_data data is seasonal
+	ivector larvae_input_quarterly_flag;//if file_larvae_data data is quarterly
 	ivector larvae_likelihood_type; // Likelihood function for larvae densities
 	ivector fit_null_larvae; // Whether to fit to null larvae density observation or not
 	DVECTOR weight_null_larvae; // weight factor to apply to null larvae densities

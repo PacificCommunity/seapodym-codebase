@@ -743,8 +743,8 @@ bool VarParamCoupled::read(const string& parfile)
 	larvae_like.initialize();
 	larvae_input_categorical_flag.allocate(0,nb_species-1);
 	larvae_input_categorical_flag.initialize();
-	larvae_input_seasonal_flag.allocate(0,nb_species-1);
-	larvae_input_seasonal_flag.initialize();
+	larvae_input_quarterly_flag.allocate(0,nb_species-1);
+	larvae_input_quarterly_flag.initialize();
 	larvae_likelihood_type.allocate(0,nb_species-1);
 	larvae_likelihood_type.initialize();
 	fit_null_larvae.allocate(0,nb_species-1);
@@ -767,7 +767,7 @@ bool VarParamCoupled::read(const string& parfile)
 			larvae_like[sp] = doc.getInteger("/larvae_likelihood",sp_name[sp]);
 		if (larvae_like[sp]){
 			larvae_input_categorical_flag[sp] = doc.getInteger("/larvae_input_categorical", sp_name[sp]);
-			larvae_input_seasonal_flag[sp] = doc.getInteger("/larvae_input_seasonal", sp_name[sp]);
+			larvae_input_quarterly_flag[sp] = doc.getInteger("/larvae_input_quarterly", sp_name[sp]);
 			strdir_larvae = doc.get("/strdir_larvae", "value");
 			str_file_larvae = strdir_larvae + doc.get("/file_larvae_data", "value");
 			larvae_likelihood_type[sp] = doc.getInteger("/larvae_likelihood_type", sp_name[sp]);
@@ -787,7 +787,7 @@ bool VarParamCoupled::read(const string& parfile)
 					std::exit(EXIT_FAILURE);
 				}
 			}
-			if (larvae_input_seasonal_flag[sp]==0){
+			if (larvae_input_quarterly_flag[sp]==0){
 				cerr << "Error: Computing of larvae likelihood on monthly larvae input is not available yet (to be coded)." << endl;
 				std::exit(EXIT_FAILURE);
 			}

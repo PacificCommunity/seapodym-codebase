@@ -81,9 +81,9 @@ public:
 	D3_ARRAY density_input;	
 	D3_ARRAY larvae_input;
 
-	std::vector<double> seasonal_larvae_input_vectors[4];// Vector of non-NA observed larvae densities
-	std::vector<int> seasonal_larvae_input_vectors_i[4];// Corresponding i indices
-	std::vector<int> seasonal_larvae_input_vectors_j[4];// Corresponding j indices
+	std::vector<double> quarterly_larvae_input_vectors[4];// Vector of non-NA observed larvae densities
+	std::vector<int> quarterly_larvae_input_vectors_i[4];// Corresponding i indices
+	std::vector<int> quarterly_larvae_input_vectors_j[4];// Corresponding j indices
 
 	D3_ARRAY total_obs_catch;	
 	D3_ARRAY total_pred_catch;	
