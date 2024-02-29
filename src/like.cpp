@@ -123,8 +123,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 
 	double larvaelike  = 0.0;
 	for (int sp=0; sp < nb_species; sp++){
-		if (!param->larvae_like[sp] & !param->scalc()) return 0;
-		if (param->larvae_like[sp] && param->larvae_input_quarterly_flag[0]==1){
+		if (param->larvae_input_quarterly_flag[0]==1){
 			int like_type = param->larvae_likelihood_type[sp];
 			for (int quarter=0; quarter<4; quarter++){
 				for (auto k=0u; k<mat.quarterly_larvae_input_vectors[quarter].size(); k++){

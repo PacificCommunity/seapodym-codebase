@@ -227,6 +227,15 @@ bool VarParamCoupled::read(const string& parfile)
 		}
 	}
 
+	if (habitat_run_type==0){
+		if (doc.get("/spawning_habitat_input","flag").empty()){
+			spawning_habitat_input_flag = 0;
+		}else{
+			spawning_habitat_input_flag = doc.getInteger("/spawning_habitat_input", "flag");
+		}
+	}
+
+
 	////////////////////
 	// FORAGE SECTION
 	// int Tr - Time (in days) before recruitment in the forage population

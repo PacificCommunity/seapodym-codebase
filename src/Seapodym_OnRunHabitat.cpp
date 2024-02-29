@@ -58,6 +58,24 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);  
 	Habitat.initialize();
 
+	// Aggregated habitat over the entire period, only at obs. locations
+	dvar_matrix Habitat_pred_at_obs;
+	IVECTOR kinf;
+	IVECTOR ksup;
+	int ntime_quarter[4] = {0,0,0,0};
+	if (param->larvae_input_quarterly_flag[0]==1){
+		// Aggregated spawning habitat over the entire period, only at obs. locations
+		kinf.allocate(0, 3);
+		ksup.allocate(0, 3);
+		for (int k = 0; k < 4; k++){
+			kinf[k] = 0;
+			ksup[k] = mat.quarterly_larvae_input_vectors[k].size();
+		}
+		Habitat_pred_at_obs.allocate(0, 3, kinf, ksup);
+		Habitat_pred_at_obs.initialize();	
+	}
+
+
 	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
 		func.Vars_at_age_precomp(*param,sp);
@@ -168,6 +186,15 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 			if (param->habitat_run_type==0){
 				//2.1 Spawning habitat	
 				func.Spawning_Habitat(*param, mat, map, Habitat, 1.0, sp, tcur, jday);
+
+				//2.2 Aggregate spawning habitat on a vector at obs. locations
+				if (param->larvae_input_quarterly_flag[0]==1){
+					int quarter = ((month - 1) % 12) / 3;
+					for (auto k=0u; k<mat.quarterly_larvae_input_vectors[quarter].size(); k++){
+						Habitat_pred_at_obs(quarter, k) += Habitat(mat.quarterly_larvae_input_vectors_i[quarter][k], mat.quarterly_larvae_input_vectors_j[quarter][k]);
+					}
+					ntime_quarter[quarter] += 1;
+				}
 			}
 
 			if (param->habitat_run_type>0){
@@ -234,26 +261,28 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				exit(1);
 			}
 
-			for (int i=1; i<nlon_input; i++){
-				for (int j=1; j<nlat_input; j++){
-					double    H_obs  = mat.habitat_input[0][t_count][i][j];
-					if (H_obs>0){
-						int ncount = 0;
-						dvariable Hmean_pred = 0.0;
-						for (int ii=0; ii<rr_x; ii++)
-						for (int jj=0; jj<rr_y; jj++){
-							if (map.carte[rr_x*i+ii][rr_y*j+jj]){
-								Hmean_pred += Habitat(rr_x*i+ii,rr_y*j+jj);
-								ncount ++;
+			if (param->spawning_habitat_input_flag==0){
+				for (int i=1; i<nlon_input; i++){
+					for (int j=1; j<nlat_input; j++){
+						double    H_obs  = mat.habitat_input[0][t_count][i][j];
+						if (H_obs>0){
+							int ncount = 0;
+							dvariable Hmean_pred = 0.0;
+							for (int ii=0; ii<rr_x; ii++)
+							for (int jj=0; jj<rr_y; jj++){
+								if (map.carte[rr_x*i+ii][rr_y*j+jj]){
+									Hmean_pred += Habitat(rr_x*i+ii,rr_y*j+jj);
+									ncount ++;
+								}
 							}
+							if (ncount)
+									Hmean_pred /= ncount;
+							//if (Hmean_pred>0)
+							likelihood += (H_obs-Hmean_pred)*(H_obs-Hmean_pred);
 						}
-						if (ncount)
-						       	Hmean_pred /= ncount;
-						//if (Hmean_pred>0)
-						likelihood += (H_obs-Hmean_pred)*(H_obs-Hmean_pred);
 					}
-				}
-	                }		
+				}		
+			}
 		}
 
 
@@ -286,6 +315,19 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 	} // end of simulation loop
 
+	// Compute larvae likelihood
+	if (param->larvae_input_quarterly_flag[0]==1){
+		// Compute the average larvae habitat over the entire period
+		for (int quarter=0; quarter<4; quarter++){
+			for (auto k=0u; k<mat.quarterly_larvae_input_vectors[quarter].size(); k++){
+				Habitat_pred_at_obs(quarter, k) /= ntime_quarter[quarter];
+			}
+		}
+
+		double larvaelike=0;
+		larvaelike += get_larvae_like(likelihood, Habitat_pred_at_obs);
+	}
+
 	param->total_like = value(likelihood);
 	cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood)-eFlike<< " " << eFlike <<endl;
 
@@ -301,17 +343,21 @@ void SeapodymCoupled::ReadHabitat()
 	int nlevel = 0;
 	string file_input;
 	if (param->habitat_run_type==0)
-		file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
+		if (param->spawning_habitat_input_flag==0){
+			file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
+		}else{
+			file_input = param->str_file_larvae;
+		}
 	else
 		file_input = param->strdir_output + param->sp_name[0] + "_feeding_habitat_input_age1.dym";
 
-        rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
+    rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
 
 	//equivalent to mat.createMatHabitat_input:
 	mat.habitat_input.allocate(0,param->nb_habitat_run_age-1);
-        for (int n=0; n<param->nb_habitat_run_age; n++){
+    for (int n=0; n<param->nb_habitat_run_age; n++){
 		mat.habitat_input[n].allocate(1,nbt_total);
-	        for (int t=1; t<=nbt_total; t++){
+	    for (int t=1; t<=nbt_total; t++){
 			mat.habitat_input[n][t].allocate(1, nlon_input, 1, nlat_input);
 			mat.habitat_input[n][t].initialize();
 		}
@@ -333,17 +379,22 @@ void SeapodymCoupled::ReadHabitat()
 			//will need to prepare the input habitat that contains the data only for the selected time period
 			int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel + ((nlat_input *nlon_input)* (t_count-1))) * 4;
 			if (param->habitat_run_type==0){
-				file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
 				//rw.rbin_input2d(file_input, map, mat.habitat_input[0][t_count], nlon_input+2, nlat_input+2, nbytetoskip);
 				ifstream litbin(file_input.c_str(), ios::binary | ios::in);
+				const int sizeofDymInputType = sizeof(float);
+				float buf;
 				if (!litbin){
 					cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
 					exit(1);
 				}
-				litbin.seekg(nbytetoskip, ios::cur);
-				const int sizeofDymInputType = sizeof(float);
-		                       float buf;
-		                       for (int j=0;j<nlat_input;j++){
+				if (param->larvae_input_quarterly_flag[0]==0){
+					litbin.seekg(nbytetoskip, ios::cur);
+				}else{
+					int quarter = ((month - 1) % 12) / 3;
+					int nbytetoskip_quarterlyfile = (9 +(3* nlat * nlon) + 4 + (nlat *nlon*quarter)) * 4;
+					litbin.seekg(nbytetoskip_quarterlyfile, ios::cur);
+				}
+				for (int j=0;j<nlat_input;j++){
 					for (int i=0;i<nlon_input;i++){
 						litbin.read(( char *)&buf,sizeofDymInputType);
 						mat.habitat_input[0][t_count][i+1][j+1]= buf;
@@ -354,7 +405,7 @@ void SeapodymCoupled::ReadHabitat()
 			} else {
 				for (int n=0; n<param->nb_habitat_run_age; n++){
 					std::ostringstream ostr;
-               				ostr << n+1;
+               		ostr << n+1;
 					file_input = param->strdir_output + param->sp_name[0] + 
 						"_feeding_habitat_input_age" + ostr.str() + ".dym";
 					//rw.rbin_input2d(file_input, map, mat.habitat_input[n][t_count], nbi, nbj, nbytetoskip);
@@ -365,8 +416,8 @@ void SeapodymCoupled::ReadHabitat()
 					}
 					litbin.seekg(nbytetoskip, ios::cur);
 					const int sizeofDymInputType = sizeof(float);
-		                        float buf;
-		                        for (int j=0;j<nlat_input;j++){
+		            float buf;
+		            for (int j=0;j<nlat_input;j++){
 						for (int i=0;i<nlon_input;i++){
 							litbin.read(( char *)&buf,sizeofDymInputType);
 							mat.habitat_input[n][t_count][i+1][j+1]= buf;
@@ -378,6 +429,24 @@ void SeapodymCoupled::ReadHabitat()
 		}
 	}
 	t_count = t_count_init;
+
+	if (param->spawning_habitat_input_flag==1 && param->larvae_input_quarterly_flag[0]==1){
+		// Vector of non-NA observed density
+		for (int quarter=0; quarter<4; quarter++){
+			for (int j=0;j<nlat_input;j++){
+				for (int i=0;i<nlon_input;i++){
+					if (map.carte[i+1][j+1]){
+						if (mat.habitat_input[0][quarter*3+1][i+1][j+1]>=0){
+							mat.quarterly_larvae_input_vectors[quarter].push_back(mat.habitat_input[0][quarter*3+1][i+1][j+1]);
+							mat.quarterly_larvae_input_vectors_i[quarter].push_back(i+1);
+							mat.quarterly_larvae_input_vectors_j[quarter].push_back(j+1);
+						}
+					}
+				}
+			}
+		}
+	}
+
 }
 
 
