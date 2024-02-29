@@ -1,5 +1,10 @@
 #include "SeapodymCoupled.h"
 
+void SeapodymCoupled::prerun_model()
+{
+	OnRunFirstStep();
+}
+
 ///This is the main loop function including the calculation of biomass exchange
 ///between regions, based on the one time step simulations with non-zero biomass
 ///only in the donor region and quantification of biomass changes in all.

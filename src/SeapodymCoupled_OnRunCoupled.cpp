@@ -1,5 +1,13 @@
 #include "SeapodymCoupled.h"
 
+void SeapodymCoupled::prerun_model()
+{
+	OnRunFirstStep();
+	if (param->larvae_like[0]){
+		ReadLarvae();
+	}
+}
+
 ///This is the main loop function. It includes the following calls:
 ///1- Initialising population density 
 ///2- Reading all forcing data (once in optimization mode, at every time step in simulation mode) 

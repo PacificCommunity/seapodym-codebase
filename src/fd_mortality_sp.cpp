@@ -28,3 +28,12 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 	}
 }
 
+void VarSimtunaFunc::Scaling_factor_sstdep_larvae_mortality(VarParamCoupled& param, const dmatrix& sst, const PMap& map, dvar_matrix& S, const int sp)
+{
+	int deltaT = param.deltaT;
+	dvariable inv_M_max = param.dvarsInv_M_max[sp];
+	dvariable inv_M_rate = param.dvarsInv_M_rate[sp];
+	dvariable age_larvae_before_sst_mortality = param.dvarsAge_larvae_before_sst_mortality[sp];
+
+	Scaling_factor_sstdep_larvae_mortality_comp(map, S, sst, inv_M_max, inv_M_rate, age_larvae_before_sst_mortality, deltaT);
+}

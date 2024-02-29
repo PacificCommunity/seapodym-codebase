@@ -16,7 +16,8 @@ ctrace.h \
 Utilities.h \
 VarMatrices.h \
 VarParamCoupled.h \
-VarSimtunaFunc.h
+VarSimtunaFunc.h \
+NishikawaLike.h
 
 SRCS= \
 main_simulation.cpp \
@@ -90,7 +91,8 @@ Calpop_precaldia.cpp  \
 Calpop_precalrec.cpp  \
 Calpop_tridag.cpp \
 hessian.cpp \
-like.cpp
+like.cpp \
+NishikawaLike.cpp
 
 SRCPATH=DOM/src:src
 INCPATH=-IDOM/src -Isrc

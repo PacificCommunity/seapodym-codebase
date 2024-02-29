@@ -20,7 +20,7 @@ VarSimtunaFunc.h \
 NishikawaLike.h
 
 SRCS= \
-main_lcltags.cpp \
+main.cpp \
 ad_buffers.cpp \
 XMLDocument2.cpp \
 VarParamCoupled.cpp \

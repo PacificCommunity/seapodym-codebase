@@ -3,7 +3,7 @@
 //#include <functional> // to pass function as an argument 
 
 string get_path(const char* full_path);
-void prerun_model(SeapodymCoupled& sc);
+//void prerun_model(SeapodymCoupled& sc);
 void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x);
 void Sensitivity_analysis(const char* parfile, const int sftype);
 void Hessian_comp(const char* parfile);
@@ -110,7 +110,7 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 	ios::sync_with_stdio();
 
 	//initialization of simulation
-	prerun_model(sc);	
+	sc.prerun_model();	
 
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
@@ -182,13 +182,13 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 	return 0;
 }
 
-void prerun_model(SeapodymCoupled& sc)
+/*void prerun_model(SeapodymCoupled& sc)
 {
 	sc.OnRunFirstStep();
 	if (sc.param->larvae_like[0]){
 		sc.ReadLarvae();
 	}
-}
+}*/
 
 
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
@@ -341,7 +341,7 @@ int seapodym_phases(const char* parfile)
 		ios::sync_with_stdio();
 
 		//initialization of simulation
-		prerun_model(sc);
+		sc.prerun_model();
 
 		time(&time_sec);
 		time_t time1 = time_sec;
@@ -476,7 +476,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 	sc.xinit(x, x_names);
 	cout << "Total number of variables: " << nvar << '\n'<<'\n';
 
-	prerun_model(sc);	
+	sc.prerun_model();	
 
 	dvector s(1, nvar); s.initialize();
 

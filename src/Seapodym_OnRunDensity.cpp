@@ -1,6 +1,12 @@
 #include "SeapodymCoupled.h"
 
 void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood);
+void SeapodymCoupled::prerun_model()
+{
+	OnRunFirstStep();
+	ReadDensity();
+}
+
 ///This is the main loop for the model without fishing and fitting of density. 
 ///Similar to the default function, it includes the following calls:
 ///1- Initialising population density 

@@ -2,7 +2,6 @@
 #include "SeapodymCoupled.h"
 
 string get_path(const char* full_path);
-void prerun_model(SeapodymCoupled& sc);
 void Hessian_comp(const char* parfile);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
@@ -93,7 +92,7 @@ int seapodym_habitats(const char* parfile, int cmp_regime, const bool reset_buff
 	ios::sync_with_stdio();
 
 	//initialization of simulation
-	prerun_model(sc);
+	sc.prerun_model();
 
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
@@ -155,12 +154,6 @@ int seapodym_habitats(const char* parfile, int cmp_regime, const bool reset_buff
 //exit(1);
 
 	return 0;
-}
-
-void prerun_model(SeapodymCoupled& sc)
-{
-	sc.OnRunFirstStep();
-	sc.ReadHabitat();
 }
 
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)

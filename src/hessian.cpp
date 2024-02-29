@@ -26,7 +26,7 @@ void Hessian_comp(const char* parfile)
 	dvector H2(1, nvar); H2.initialize();
 	dmatrix H(1,nvar,1,nvar); H.initialize();
 
-	prerun_model(sc);
+	sc.prerun_model();
 
 	double likelihood = 0.0;
 
