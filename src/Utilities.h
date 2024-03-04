@@ -530,5 +530,66 @@ return "";
 		delete [] mat;
 	}
 
+	static inline int isinVector(int element, vector<int> vec)
+	{
+		for (vector<int>::size_type i=0; i<vec.size(); ++i){
+			if (element == vec[i]){
+				return 1;
+			}
+		}
+		return 0;
+	}
+
+	static inline vector<vector<int>> monthAggregation(vector<int> imonths)
+	{
+		// Returns the aggregating rule for months of the year, used for seasonal, quarterly, monthly (etc.) averaged data.
+		//For instance for input larvae data aggregated on a quaterly basis (imonths = {1, 4, 7, 10}) -> it returns {{1,2,3}, {4,5,6}, {7,8,9},{10,11,12}}
+		vector<int> two_yrs;
+		for (int i=1; i<=12; ++i) {
+			two_yrs.push_back(i);
+		}
+		for (int i=1; i<=12; ++i) {
+			two_yrs.push_back(i);
+		}
+		int index1=999;    
+		for (vector<int>::size_type i = 0; i < two_yrs.size(); ++i) {
+			if (two_yrs[i]==imonths[0]){
+				index1=i;
+				break;
+			}
+		}
+		vector<int> ms;
+		for (int i=0; i<12; ++i){
+			ms.push_back(two_yrs[index1+i]);
+		}  
+		vector<int> cumsum;
+		int c=0;
+		for (vector<int>::size_type i=0; i<ms.size(); ++i){
+			c += isinVector(ms[i], imonths);
+			cumsum.push_back(c);
+		}
+		vector<vector<int>> months;
+		for (vector<int>::size_type i=1; i<=imonths.size(); ++i){
+			std::vector<int> tmp;
+			for (vector<int>::size_type j=0; j<cumsum.size(); ++j){
+				if ((int)i == cumsum[j]){
+					tmp.push_back(ms[j]);
+				}
+			}
+			months.push_back(tmp);
+		}
+		return months;
+	}
+
+	static inline int iTimeOfYear(int month, vector<vector<int>> month_grouping)
+	{
+		// Return the index of the group from <month_grouping> which corresponds to <month>.
+		for (vector<int>::size_type i=0; i<month_grouping.size(); ++i){
+			if (isinVector(month, month_grouping[i])){
+				return i;
+			}
+		}
+		return 999;
+	}
 };
 #endif

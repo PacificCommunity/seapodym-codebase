@@ -122,7 +122,8 @@
 <strdir_larvae value="/home/lucasb/SEAPODYM/data/larvae/"/>
 <file_larvae_data value="nishikawa_yft_1959_2022_seasonal_po.dym"/>
 <larvae_input_categorical yft="1"/><!-- 0 if larvae density is continuous; 1 if larvae density from file_larvae_data, with categorical values, defined in <larvae_density_bins>-->
-<larvae_input_quarterly yft="1"/><!-- 0 if larvae on monthly arrays (from output/<sp>_spwaning_habitat_input.dym); 1 if larvae densities with 4 quarterly arrays (from file_larvae_data-->
+<larvae_input_aggregated yft="1"/><!-- 0 if larvae on monthly arrays (from output/<sp>_spwaning_habitat_input.dym); 1 if larvae densities with 4 quarterly arrays (from file_larvae_data-->
+<larvae_input_aggregation_imonths>1 4 7 10</larvae_input_aggregation_imonths>
 
 <!-- For habitat model -->
 <spawning_habitat_input flag="1"/><!-- 0 if spawning habitat from output/<sp>_spwaning_habitat_input.dym; 1 - if if spawning habitat from file_larvae_data -->

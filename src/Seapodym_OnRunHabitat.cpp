@@ -67,16 +67,20 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	dvar_matrix Habitat_pred_at_obs;
 	IVECTOR kinf;
 	IVECTOR ksup;
-	int ntime_quarter[4] = {0,0,0,0};
-	if (param->larvae_input_quarterly_flag[0]==1){
+	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
+	int ntime_agg[nb_larvae_input_agg_groups];
+    for (int i = 0; i < nb_larvae_input_agg_groups; ++i) {
+        ntime_agg[i] = 0;
+    }	
+	if (param->larvae_input_aggregated_flag[0]==1){
 		// Aggregated spawning habitat over the entire period, only at obs. locations
-		kinf.allocate(0, 3);
-		ksup.allocate(0, 3);
-		for (int k = 0; k < 4; k++){
+		kinf.allocate(0, nb_larvae_input_agg_groups-1);
+		ksup.allocate(0, nb_larvae_input_agg_groups-1);
+		for (int k = 0; k < nb_larvae_input_agg_groups; k++){
 			kinf[k] = 0;
-			ksup[k] = mat.quarterly_larvae_input_vectors[k].size();
+			ksup[k] = mat.aggregated_larvae_input_vectors[k].size();
 		}
-		Habitat_pred_at_obs.allocate(0, 3, kinf, ksup);
+		Habitat_pred_at_obs.allocate(0, nb_larvae_input_agg_groups-1, kinf, ksup);
 		Habitat_pred_at_obs.initialize();	
 	}
 
@@ -193,12 +197,12 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				func.Spawning_Habitat(*param, mat, map, Habitat, 1.0, sp, tcur, jday);
 
 				//2.2 Aggregate spawning habitat on a vector at obs. locations
-				if (param->larvae_input_quarterly_flag[0]==1){
-					int quarter = ((month - 1) % 12) / 3;
-					for (auto k=0u; k<mat.quarterly_larvae_input_vectors[quarter].size(); k++){
-						Habitat_pred_at_obs(quarter, k) += Habitat(mat.quarterly_larvae_input_vectors_i[quarter][k], mat.quarterly_larvae_input_vectors_j[quarter][k]);
+				if (param->larvae_input_aggregated_flag[0]==1){
+					int iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
+					for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
+						Habitat_pred_at_obs(iAgg, k) += Habitat(mat.aggregated_larvae_input_vectors_i[iAgg][k], mat.aggregated_larvae_input_vectors_j[iAgg][k]);
 					}
-					ntime_quarter[quarter] += 1;
+					ntime_agg[iAgg] += 1;
 				}
 			}
 
@@ -321,11 +325,11 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 	// Compute larvae likelihood
-	if (param->larvae_input_quarterly_flag[0]==1){
+	if (param->larvae_input_aggregated_flag[0]==1){
 		// Compute the average larvae habitat over the entire period
-		for (int quarter=0; quarter<4; quarter++){
-			for (auto k=0u; k<mat.quarterly_larvae_input_vectors[quarter].size(); k++){
-				Habitat_pred_at_obs(quarter, k) /= ntime_quarter[quarter];
+		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
+			for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
+				Habitat_pred_at_obs(iAgg, k) /= ntime_agg[iAgg];
 			}
 		}
 
@@ -358,6 +362,13 @@ void SeapodymCoupled::ReadHabitat()
 
     rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
 
+	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
+	if (nlevel != nb_larvae_input_agg_groups && param->larvae_input_aggregated_flag[0]==1){
+		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
+		exit(1);
+
+	}
+
 	//equivalent to mat.createMatHabitat_input:
 	mat.habitat_input.allocate(0,param->nb_habitat_run_age-1);
     for (int n=0; n<param->nb_habitat_run_age; n++){
@@ -368,6 +379,7 @@ void SeapodymCoupled::ReadHabitat()
 		}
 	}
 	
+	int marker_iAggs = 0; vector<int> index_habitat_input;// in order to save the t_count indices corresponding to each of the larvae input aggregation group
 	for (; t_count<=nbt_total; t_count++){
 		getDate(jday);
 		//----------------------------------------------//
@@ -392,12 +404,18 @@ void SeapodymCoupled::ReadHabitat()
 					cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
 					exit(1);
 				}
-				if (param->larvae_input_quarterly_flag[0]==0){
+				if (param->larvae_input_aggregated_flag[0]==0){
 					litbin.seekg(nbytetoskip, ios::cur);
 				}else{
-					int quarter = ((month - 1) % 12) / 3;
-					int nbytetoskip_quarterlyfile = (9 +(3* nlat * nlon) + 4 + (nlat *nlon*quarter)) * 4;
-					litbin.seekg(nbytetoskip_quarterlyfile, ios::cur);
+					int iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
+
+					if (iAgg == marker_iAggs && marker_iAggs < nb_larvae_input_agg_groups){
+						index_habitat_input.push_back(t_count);
+						marker_iAggs+=1;
+					}
+
+					int nbytetoskip_aggregatedfile = (9 +(3* nlat * nlon) + nb_larvae_input_agg_groups + (nlat *nlon*iAgg)) * 4;
+					litbin.seekg(nbytetoskip_aggregatedfile, ios::cur);
 				}
 				for (int j=0;j<nlat_input;j++){
 					for (int i=0;i<nlon_input;i++){
@@ -435,16 +453,19 @@ void SeapodymCoupled::ReadHabitat()
 	}
 	t_count = t_count_init;
 
-	if (param->spawning_habitat_input_flag==1 && param->larvae_input_quarterly_flag[0]==1){
+	if (param->spawning_habitat_input_flag==1 && param->larvae_input_aggregated_flag[0]==1){
 		// Vector of non-NA observed density
-		for (int quarter=0; quarter<4; quarter++){
-			for (int j=0;j<nlat_input;j++){
-				for (int i=0;i<nlon_input;i++){
-					if (map.carte[i+1][j+1]){
-						if (mat.habitat_input[0][quarter*3+1][i+1][j+1]>=0){
-							mat.quarterly_larvae_input_vectors[quarter].push_back(mat.habitat_input[0][quarter*3+1][i+1][j+1]);
-							mat.quarterly_larvae_input_vectors_i[quarter].push_back(i+1);
-							mat.quarterly_larvae_input_vectors_j[quarter].push_back(j+1);
+		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
+			if (iAgg <= (int) index_habitat_input.size()){
+				int index = index_habitat_input[iAgg];
+				for (int j=0;j<nlat_input;j++){
+					for (int i=0;i<nlon_input;i++){
+						if (map.carte[i+1][j+1]){
+							if (mat.habitat_input[0][index][i+1][j+1]>=0){
+								mat.aggregated_larvae_input_vectors[iAgg].push_back(mat.habitat_input[0][index][i+1][j+1]);
+								mat.aggregated_larvae_input_vectors_i[iAgg].push_back(i+1);
+								mat.aggregated_larvae_input_vectors_j[iAgg].push_back(j+1);
+							}
 						}
 					}
 				}

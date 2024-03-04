@@ -123,16 +123,16 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 
 	double larvaelike  = 0.0;
 	for (int sp=0; sp < nb_species; sp++){
-		if (param->larvae_input_quarterly_flag[0]==1){
+		if (param->larvae_input_aggregated_flag[0]==1){
 			int like_type = param->larvae_likelihood_type[sp];
-			for (int quarter=0; quarter<4; quarter++){
-				for (auto k=0u; k<mat.quarterly_larvae_input_vectors[quarter].size(); k++){
+			for (int iAgg=0; iAgg<param->nb_larvae_input_agg_groups; iAgg++){
+				for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
 					// Compute likelihood
 					dvariable N_pred = 0.0;
-					N_pred = Larvae_density_pred_at_obs(quarter, k);
+					N_pred = Larvae_density_pred_at_obs(iAgg, k);
 					dvariable lkhd;
 					if (param->larvae_input_categorical_flag[sp]==1){
-						int L_obs  = mat.quarterly_larvae_input_vectors[quarter][k];
+						int L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
 						switch (like_type){
 							case 0: // Mixed Gaussian Kernel cost function
 								lkhd = NshkwCat.mixed_gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
@@ -175,7 +175,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 							}
 						}
 					}else{
-						double L_obs  = mat.quarterly_larvae_input_vectors[quarter][k];
+						double L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
 						switch (like_type){
 							case 0: // Gaussian cost function
 								lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);

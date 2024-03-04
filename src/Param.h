@@ -159,6 +159,8 @@ public:
 	string strout_tags;
 	int write_all_cohorts_dym;
 	int write_all_fisheries_dym;
+	vector<vector<int>> larvae_input_aggregation;
+	int nb_larvae_input_agg_groups;
 
 	// Larvae likelihood parameters
 	ivector larvae_like; // weither to comute larvae likelihood, [sp]
@@ -170,7 +172,7 @@ public:
 	string str_file_larvae;
 	int spawning_habitat_input_flag;//whether to fit to output/<sp>_spwaning_habitat_input.dym or fit to file_larvae_data
 	ivector larvae_input_categorical_flag;//if file_larvae_data data is categorical
-	ivector larvae_input_quarterly_flag;//if file_larvae_data data is quarterly
+	ivector larvae_input_aggregated_flag;//if file_larvae_data data is aggregated data
 	ivector larvae_likelihood_type; // Likelihood function for larvae densities
 	ivector fit_null_larvae; // Whether to fit to null larvae density observation or not
 	DVECTOR weight_null_larvae; // weight factor to apply to null larvae densities
