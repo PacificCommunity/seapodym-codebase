@@ -805,7 +805,7 @@ bool VarParamCoupled::read(const string& parfile)
 				std::exit(EXIT_FAILURE);
 			}
 			if (larvae_input_aggregated_flag[sp]==0){
-				cerr << "Error: Computing of larvae likelihood on non-aggregated/aggregated larvae input is not available yet (to be coded)." << endl;
+				cerr << "Error: Computing of larvae likelihood on non-aggregated larvae input is not available yet (to be coded)." << endl;
 				std::exit(EXIT_FAILURE);
 			}
 		}
