@@ -770,35 +770,39 @@ bool VarParamCoupled::read(const string& parfile)
 	larvae_mortality_sst.initialize();
 
 	for (int sp=0;sp<nb_species;sp++){
-		if (!doc.get("/larvae_mortality_sst",sp_name[sp]).empty())
-			larvae_mortality_sst[sp] = doc.getInteger("/larvae_mortality_sst",sp_name[sp]);
-		if (!doc.get("/larvae_likelihood",sp_name[sp]).empty())
-			larvae_like[sp] = doc.getInteger("/larvae_likelihood",sp_name[sp]);		
-		if (!doc.get("/larvae_input_categorical",sp_name[sp]).empty())
-			larvae_input_categorical_flag[sp] = doc.getInteger("/larvae_input_categorical", sp_name[sp]);
-		if (!doc.get("/larvae_input_aggregated",sp_name[sp]).empty())
-			larvae_input_aggregated_flag[sp] = doc.getInteger("/larvae_input_aggregated", sp_name[sp]);
-		if (!doc.get("/strdir_larvae","value").empty()){
-			strdir_larvae = doc.get("/strdir_larvae", "value");
-			str_file_larvae = strdir_larvae + doc.get("/file_larvae_data", "value");
-		}
-		if (larvae_input_categorical_flag[sp]==1){
-			fit_null_larvae[sp] = doc.getInteger("/fit_null_larvae", sp_name[sp]);
-			if (fit_null_larvae[sp]==1){
-				weight_null_larvae[sp] = doc.getDouble("/weight_null_larvae", sp_name[sp]);
-			}
-			nb_larvae_cat[sp] =  doc.getInteger("/nb_larvae_cat", sp_name[sp]);
-			larvae_density_bins[sp].allocate(0,nb_larvae_cat[sp]-1);
-			for (int c=0;c<nb_larvae_cat[sp];c++){
-				larvae_density_bins[sp][c] = doc.getDouble("/larvae_density_bins/"+sp_name[sp], c);
-			}
-			larvae_density_last_bin_width[sp] = doc.getDouble("/larvae_density_last_bin_width", sp_name[sp]);
-			if (larvae_likelihood_type[sp]==2 && larvae_density_bins[sp][0]==0 && larvae_input_categorical_flag[sp]==1){
-				cerr << "Error: larvae_density_bins[0] can't be zero for Truncated Poisson cost function. Change <larvae_density_bins/> in the parameter file (Add 1 to the native categories)." << endl;
-				std::exit(EXIT_FAILURE);
-			}
-		}
+		if (!doc.get("/larvae_likelihood",sp_name[sp]).empty()){
+			larvae_like[sp] = doc.getInteger("/larvae_likelihood",sp_name[sp]);
+		}else{
+			larvae_like[sp] = 0;
+		}	
+
 		if (larvae_like[sp]){
+			if (!doc.get("/larvae_mortality_sst",sp_name[sp]).empty())
+				larvae_mortality_sst[sp] = doc.getInteger("/larvae_mortality_sst",sp_name[sp]);
+			if (!doc.get("/larvae_input_categorical",sp_name[sp]).empty())
+				larvae_input_categorical_flag[sp] = doc.getInteger("/larvae_input_categorical", sp_name[sp]);
+			if (!doc.get("/larvae_input_aggregated",sp_name[sp]).empty())
+				larvae_input_aggregated_flag[sp] = doc.getInteger("/larvae_input_aggregated", sp_name[sp]);
+			if (!doc.get("/strdir_larvae","value").empty()){
+				strdir_larvae = doc.get("/strdir_larvae", "value");
+				str_file_larvae = strdir_larvae + doc.get("/file_larvae_data", "value");
+			}
+			if (larvae_input_categorical_flag[sp]==1){
+				fit_null_larvae[sp] = doc.getInteger("/fit_null_larvae", sp_name[sp]);
+				if (fit_null_larvae[sp]==1){
+					weight_null_larvae[sp] = doc.getDouble("/weight_null_larvae", sp_name[sp]);
+				}
+				nb_larvae_cat[sp] =  doc.getInteger("/nb_larvae_cat", sp_name[sp]);
+				larvae_density_bins[sp].allocate(0,nb_larvae_cat[sp]-1);
+				for (int c=0;c<nb_larvae_cat[sp];c++){
+					larvae_density_bins[sp][c] = doc.getDouble("/larvae_density_bins/"+sp_name[sp], c);
+				}
+				larvae_density_last_bin_width[sp] = doc.getDouble("/larvae_density_last_bin_width", sp_name[sp]);
+				if (larvae_likelihood_type[sp]==2 && larvae_density_bins[sp][0]==0 && larvae_input_categorical_flag[sp]==1){
+					cerr << "Error: larvae_density_bins[0] can't be zero for Truncated Poisson cost function. Change <larvae_density_bins/> in the parameter file (Add 1 to the native categories)." << endl;
+					std::exit(EXIT_FAILURE);
+				}
+			}
 			larvae_likelihood_type[sp] = doc.getInteger("/larvae_likelihood_type", sp_name[sp]);
 			if (nb_species>1){
 				cerr << "Error: Larvae likelihood is only available for single species computing (to be coded)." << endl;
@@ -810,7 +814,8 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 		}
 	}
-	if (larvae_input_aggregated_flag[0]==1){
+
+	if (larvae_input_aggregated_flag[0]){
 		if (!doc.get("/larvae_input_aggregation_imonths").empty()){
 			string str_imonths = doc.get("/larvae_input_aggregation_imonths");
 			stringstream ss(str_imonths);
@@ -824,9 +829,6 @@ bool VarParamCoupled::read(const string& parfile)
 			cerr << "Error: <larvae_input_aggregation_imonths> field required in parfile when <larvae_input_aggregated> is 1." << endl;
 			std::exit(EXIT_FAILURE);			
 		}
-		
-
-
 	}
 
 

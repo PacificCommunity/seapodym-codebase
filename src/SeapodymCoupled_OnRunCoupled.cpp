@@ -114,19 +114,21 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	IVECTOR ksup;
 	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
 	int ntime_agg[nb_larvae_input_agg_groups];
-    for (int i = 0; i < nb_larvae_input_agg_groups; ++i) {
-        ntime_agg[i] = 0;
-    }	
-	if (param->larvae_input_aggregated_flag[0]==1 && param->larvae_like[0]){
-		// Aggregated larvae density over the entire period, only at obs. locations
-		kinf.allocate(0, nb_larvae_input_agg_groups-1);
-		ksup.allocate(0, nb_larvae_input_agg_groups-1);
-		for (int k = 0; k < nb_larvae_input_agg_groups; k++){
-			kinf[k] = 0;
-			ksup[k] = mat.aggregated_larvae_input_vectors[k].size();
+	if (param->larvae_like[0]){
+		for (int i = 0; i < nb_larvae_input_agg_groups; ++i) {
+			ntime_agg[i] = 0;
+		}	
+		if (param->larvae_input_aggregated_flag[0]==1 && param->larvae_like[0]){
+			// Aggregated larvae density over the entire period, only at obs. locations
+			kinf.allocate(0, nb_larvae_input_agg_groups-1);
+			ksup.allocate(0, nb_larvae_input_agg_groups-1);
+			for (int k = 0; k < nb_larvae_input_agg_groups; k++){
+				kinf[k] = 0;
+				ksup[k] = mat.aggregated_larvae_input_vectors[k].size();
+			}
+			Larvae_density_pred_at_obs.allocate(0, nb_larvae_input_agg_groups-1, kinf, ksup);
+			Larvae_density_pred_at_obs.initialize();	
 		}
-		Larvae_density_pred_at_obs.allocate(0, nb_larvae_input_agg_groups-1, kinf, ksup);
-		Larvae_density_pred_at_obs.initialize();	
 	}
 
 	//precompute thermal habitat parameters
