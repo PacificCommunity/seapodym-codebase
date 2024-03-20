@@ -104,6 +104,17 @@
     <variable min="0.0" max="100.0" use="true"/>
 </q_sp_larvae>
 
+<larvae_mortality_sst yft="1"/> <!-- 1 - larvae mortality should be dependent on SST, with inv_M_maxi, inv_M_rate and age_larvae_before_sst_mortality functions parameters -->
+<inv_M_max yft="60.0">
+    <variable min="0.0" max="100.0" use="true"/>
+</inv_M_max>
+<inv_M_rate yft="0.06">
+    <variable min="0.0" max="100.0" use="true"/>
+</inv_M_rate>
+<age_larvae_before_sst_mortality yft="10.0">
+    <variable min="1.0" max="30.0" use="true"/>
+</age_larvae_before_sst_mortality>
+
 
 <!--================= -->
 <!--MODEL INPUT-OUTPUT-->
