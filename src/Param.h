@@ -140,6 +140,7 @@ public:
 	string  str_dir_init;
 	string  str_dir_fisheries;
 	string  str_dir_tags;
+	string 	str_dir_tagmasks;
 	string  strfile_pp;
 	string  strfile_sst;
 	string  strfile_vld;
@@ -157,6 +158,7 @@ public:
 	vector<string> strfile_umc,strfile_vmc,strfile_tmc, strfile_oxymc;		// array of string [nb_layer]
 	string strdir_output;
 	string strout_tags;
+	int use_tag_masks; // whether to use individual masks for tag cohorts
 	int write_all_cohorts_dym;
 	int write_all_fisheries_dym;
 	
@@ -279,6 +281,7 @@ public:
 	vector<string>  file_catch_data;
 	vector<string>  file_frq_data;
 	vector<string>  file_tag_data;
+	vector<string>  file_tag_masks;
 	int nb_catch_files, nb_frq_files, nb_tag_files;
 	int tag_gauss_kernel_on;
 	float dx_tags, dy_tags; 	// setup of the grid to aggregate tagging data

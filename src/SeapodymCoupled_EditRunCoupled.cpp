@@ -39,6 +39,13 @@ int SeapodymCoupled::EditRunCoupled(const char* parfile)
 				.5*param->sp_unit_cohort[sp][a-1]+.5*param->sp_unit_cohort[sp][a];
 	}
 	map.lit_map(*param);
+	if (param->tag_like[0] && param->use_tag_masks){
+		for (int tagpop=0; tagpop<nb_tagpops; tagpop++){
+			PMap tagmap;
+			tagmap.lit_tagmap(*param, tagpop);
+			tagmaps.push_back(tagmap);
+		}
+	}
 	pop.InitCalPop(*param, map);
 	//Notice, here param variables will be rewritten, it's better to add the test to check their identity
 	//rw.rbin_headpar(param->strfile_pp, param->nlong, param->nlat, param->nlevel);

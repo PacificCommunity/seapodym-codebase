@@ -432,10 +432,18 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 							if (!tagpop_age_solve(spop-1,t_count-1,age))
 								continue;
 						}
-						pop.Precalrec_Calrec_adult(map,mat,*param,rw,
-							mat.dvarDensity[spop][age],Mortality,
-							tcur,fishing,age,sp,year,month,jday,
-							step_fishery_count,mortality_off);//checked 20150210
+						
+						PMap* map_ptr=nullptr;
+						if (spop>0 && param->use_tag_masks){
+							if ((spop-1) < static_cast<int>(tagmaps.size()))
+								map_ptr = &tagmaps[spop-1]; 
+						}else{
+							map_ptr = &map;
+						}
+						pop.Precalrec_Calrec_adult(*map_ptr,mat,*param,rw,
+						mat.dvarDensity[spop][age],Mortality,
+						tcur,fishing,age,sp,year,month,jday,
+						step_fishery_count,mortality_off);//checked 20150210
 					}
 					if (sum(param->mask_fishery_sp) && !tags_only) fishing = true;
 				}

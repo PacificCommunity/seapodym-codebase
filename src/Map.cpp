@@ -103,6 +103,45 @@ void PMap::lit_map(CParam &param)
 	definit_lim_infsup(nti,ntj); // appel de la fonction
 }
 
+void PMap::lit_tagmap(CParam &param, int tagpop)
+{
+	const int nti=param.get_nbi();
+	const int ntj=param.get_nbj();
+	nbl=param.nb_layer;
+
+// creation des tableaux
+
+	bord_cell.allocate(0, nti - 1, 0, ntj - 1);
+	nbl_bord_cell.allocate(0, nti - 1, 0, ntj - 1);
+	carte.allocate(0, nti - 1, 0, ntj - 1);// carte
+	carte.initialize();
+	
+// lecture du fichier
+	
+	ifstream litcarte(param.file_tag_masks[tagpop].c_str(), ios::in);
+
+	if (!litcarte) {cout<<endl<<"WARNING : Cannot read file: "<< param.str_file_mask.c_str() << endl;}
+	for (int j=1; j<ntj-1; j++)
+	{
+		for (int i=1; i<nti-1; i++)
+		{
+			litcarte >> carte[i][j];
+			if (carte[i][j]>nbl) carte[i][j] = nbl;
+
+		}
+	}
+	litcarte.close();
+
+	//initialize
+	global = 0;//Attn: for optimization no global until fixed!
+	deltaX = param.deltaX;
+	double reso_x = param.deltaX/60.0;
+	domain_type((nti-2)*reso_x);
+//global = 0;//ATTN: put global to zero to be able to run with summy fisheries. Re-set when needed.
+	definit_cell_bords(nti,ntj); // appel de la fonction 
+	definit_lim_infsup(nti,ntj); // appel de la fonction
+}
+
 void PMap::reg_indices(CParam& param)
 {
 	//Regional indices
@@ -138,7 +177,7 @@ char PMap::get_bord_layer_y(const int i, const int j){
 	return pos;	
 }
 */
-void PMap::definit_cell_bords(const int nti, const int ntj) // définition des bords des cellules de la zone
+void PMap::definit_cell_bords(const int nti, const int ntj) // dÃ©finition des bords des cellules de la zone
 {
   CBord bordures; //bordures, objet de la classe Cbords  
 
@@ -160,7 +199,7 @@ void PMap::definit_cell_bords(const int nti, const int ntj) // définition des bo
   }  
   //***********************
   // Cadre de la grille 
-  // Definition des cotés des cellules situées aux bords de la grille
+  // Definition des cotÃ©s des cellules situÃ©es aux bords de la grille
   //***********************
   // bord horizontal haut de la grille, donc ferme a gauche
   i = 1;

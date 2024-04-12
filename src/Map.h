@@ -25,6 +25,7 @@ public:
 
 public:
 	void lit_map(CParam &param);
+	void lit_tagmap(CParam &param, int tagpop);
 	void delete_map(const CParam &param) {/*DoesNothing*/}
 	void reg_indices(CParam &param);
 
@@ -35,8 +36,8 @@ public:
 
 	IMATRIX bord_cell;	// bord des cellules (voir Classe CBord plus loin)
 	IMATRIX nbl_bord_cell;	// border for the cells with all layers being exist
-	IMATRIX carte;		// carte (mettre des zéros quand terre ou ile)
-	DMATRIX itopo;		// carte (mettre des zéros quand terre ou ile)
+	IMATRIX carte;		// carte (mettre des zï¿½ros quand terre ou ile)
+	DMATRIX itopo;		// carte (mettre des zï¿½ros quand terre ou ile)
 	IMATRIX maskEEZ;	// carte des EEZ avec un code par EEZ
 	IMATRIX maskMPA;	// carte des MPA avec un code par MPA
 
@@ -62,9 +63,9 @@ public:
 	ivector regjmax;
 
 private:
-	void definit_cell_bords(const int nti, const int ntj);	// définition des bords des cellules
-	void definit_lim_infsup(const int nti, const int ntj);	// définition des limites inférieures 
-								// et supérieures de la matrice zone pour optimiser le calcul
+	void definit_cell_bords(const int nti, const int ntj);	// dï¿½finition des bords des cellules
+	void definit_lim_infsup(const int nti, const int ntj);	// dï¿½finition des limites infï¿½rieures 
+								// et supï¿½rieures de la matrice zone pour optimiser le calcul
 	void domain_type(const int nlon); 
 };
 

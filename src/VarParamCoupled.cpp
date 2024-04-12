@@ -115,7 +115,8 @@ bool VarParamCoupled::read(const string& parfile)
 	str_dir_tags = str_dir;
 	if (!doc.get("/strdir_tags", "value").empty())
 		str_dir_tags = doc.get("/strdir_tags", "value");
-
+	if (!doc.get("/strdir_tagmasks", "value").empty())
+		str_dir_tagmasks = doc.get("/strdir_tagmasks", "value");
 	strfile_pp = str_dir + doc.get("/strfile_pp", "value");
 
 	use_sst = 0;
@@ -990,6 +991,11 @@ bool VarParamCoupled::read(const string& parfile)
 				lonmin_tags = 180; lonmax_tags = 290;latmin_tags = -50;latmax_tags = 3;
 			}
 			nb_tag_files = 0;
+			if (!doc.get("/use_tag_masks", "flag").empty()){
+				use_tag_masks=doc.getInteger("/use_tag_masks", "flag");
+			}else{
+				use_tag_masks=0;
+			}
 			if (tag_like(sp)){
 				if (!doc.get("/tags_grid").empty()){
 					dx_tags = doc.getDouble(string("/tags_grid/reso"),"dx");
@@ -1016,6 +1022,13 @@ bool VarParamCoupled::read(const string& parfile)
 						std::ostringstream ostr;
 						ostr << "file" << nf+1;
 						file_tag_data.push_back(str_dir_tags+doc.get("/file_tag_data/"+sp_name[sp],ostr.str()));
+						if (use_tag_masks){
+							if (!str_dir_tagmasks.empty()){
+								file_tag_masks.push_back(str_dir_tagmasks+file_tag_data[nf]);
+							}else{
+								cout << "WARNING: no <strdir_tagmasks> field in parameter file" << endl; 
+							}
+						}
 					}
 				} else {
 					cout << "WARNING: TAG DATA ARE ABSENT" << endl; 
