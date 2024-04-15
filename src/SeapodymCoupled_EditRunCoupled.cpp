@@ -39,6 +39,8 @@ int SeapodymCoupled::EditRunCoupled(const char* parfile)
 				.5*param->sp_unit_cohort[sp][a-1]+.5*param->sp_unit_cohort[sp][a];
 	}
 	map.lit_map(*param);
+	nb_tagpops = param->nb_tag_files;
+
 	if (param->tag_like[0] && param->use_tag_masks){
 		for (int tagpop=0; tagpop<nb_tagpops; tagpop++){
 			PMap tagmap;

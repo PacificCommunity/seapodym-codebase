@@ -4,17 +4,26 @@
 ///Forward main and forward functions called in simulation mode only for: 
 ///ageing term discretisation either for all 0..n_a-1 or for A+ age class.
 
-void SeapodymCoupled::Survival(dvar_matrix& N_a, dvar_matrix& N_a_1, const int a, const int sp)
+oid SeapodymCoupled::Survival(dvar_matrix& N_a, dvar_matrix& N_a_1, const int a, const int sp)
 {
 	int nb_cohorts = param->sp_nb_cohorts[sp];
+	PMap* map_ptr=&map;
 
 	if (a<nb_cohorts-1)
-
-		Ageing(N_a, N_a_1);
+		Ageing(N_a, N_a_1, *map_ptr);
 	else 
+		AgePlus(N_a, N_a_1, *map_ptr);
+} 
 
-		AgePlus(N_a, N_a_1);
+void SeapodymCoupled::Survival_tagpop(dvar_matrix& N_a, dvar_matrix& N_a_1, const int a, const int sp, const int tagpop)
+{
+	int nb_cohorts = param->sp_nb_cohorts[sp];
+	PMap* map_ptr = &tagmaps[tagpop];
 
+	if (a<nb_cohorts-1)
+		Ageing(N_a, N_a_1, *map_ptr);
+	else 
+		AgePlus(N_a, N_a_1, *map_ptr);
 } 
 
 void SeapodymCoupled::Ageing(dvar_matrix& N_a, dvar_matrix& N_a_1)

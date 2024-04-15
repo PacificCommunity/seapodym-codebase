@@ -141,6 +141,13 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 
 	int nbtot_tags_files = 0;
 	for (int p=0; p<nb_tagpops; p++){
+		PMap* map_ptr=nullptr;
+		if (param->use_tag_masks){
+			if (p < static_cast<int>(tagmaps.size()))
+				map_ptr = &tagmaps[p];
+		}else{
+			map_ptr = &map;
+		}
 
 		string file_in = param->file_tag_data[p];
 		//date of all recaptures in the cohort will be read from the name of the file
@@ -176,13 +183,6 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 		if (rtxt){
 			int n = 0;
 			for (; n<nbtot_tags; n++){
-				PMap* map_ptr=nullptr;
-				if (param->use_tag_masks){
-					if (n < static_cast<int>(tagmaps.size()))
-						map_ptr = &tagmaps[n];
-				}else{
-					map_ptr = &map;
-				}
 				rtxt >> id >> tag_no >> yy >> mm >> dd >> lat >> lon >> yy_rec >> mm_rec >> dd_rec >> lat_rec >> lon_rec >> len_rel >> len_rec;				
 				int jday_rel, jday_rec;
 				//with default date_mode=3 use 360-days calendar:

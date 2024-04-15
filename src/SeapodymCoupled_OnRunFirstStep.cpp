@@ -24,7 +24,11 @@ void SeapodymCoupled::OnRunFirstStep()
 	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
 
 	int nb_pops = nb_species*(1+param->nb_tag_files);
-	mat.CreateMatSpecies(map,t0, nbt, nbi, nbj, nb_pops, a0_adult, param->sp_nb_cohorts);
+	if (param->use_tag_masks){
+		mat.CreateMatSpecies(map, tagmaps, t0, nbt, nbi, nbj, nb_pops, a0_adult, param->sp_nb_cohorts);
+	}else{
+		mat.CreateMatSpecies(map,t0, nbt, nbi, nbj, nb_pops, a0_adult, param->sp_nb_cohorts);
+	}
 	mat.CreateMatHabitat(map,nb_species,nb_forage,nb_layer,max(param->sp_nb_cohorts),t0, nbt,nbi,nbj,a0_adult,param->sp_nb_cohorts,param->age_compute_habitat);
 	past_month=0;
 	past_qtr=0;
@@ -78,7 +82,6 @@ void SeapodymCoupled::OnRunFirstStep()
 	}
 	func.allocate_dvmatr(map.imin,map.imax,map.jinf,map.jsup);
 	//TAG data reading and allocation section
-	nb_tagpops = param->nb_tag_files;
 
 	if (param->tag_like[0]){
 		nb_rel.allocate(0,nb_tagpops-1);

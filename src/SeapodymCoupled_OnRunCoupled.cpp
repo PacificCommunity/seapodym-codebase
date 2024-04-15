@@ -486,7 +486,11 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 							}
 						}
 						//6.2. Ageing of population density
-						Survival(mat.dvarDensity[spop][a], mat.dvarDensity[spop][a-1] , a, sp);
+						if (spop>0 && param->use_tag_masks){
+							Survival_tagpop(mat.dvarDensity[spop][a], mat.dvarDensity[spop][a-1] , a, sp, spop-1);
+						}else{
+							Survival(mat.dvarDensity[spop][a], mat.dvarDensity[spop][a-1] , a, sp);
+						}
 					}
 				}
 				nt_dtau=0;
@@ -558,7 +562,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		if (qtr != past_qtr) past_qtr = qtr; 
 
 	} // end of simulation loop
-
 
 	if (writeoutputfiles) {SaveDistributions(year, month);
 		cout << "total catch in simulation (optimization): " << SUM_CATCH << endl;

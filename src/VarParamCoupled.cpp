@@ -1021,10 +1021,11 @@ bool VarParamCoupled::read(const string& parfile)
 					for (int nf=0; nf<nb_tag_files; nf++){
 						std::ostringstream ostr;
 						ostr << "file" << nf+1;
-						file_tag_data.push_back(str_dir_tags+doc.get("/file_tag_data/"+sp_name[sp],ostr.str()));
+						string file = doc.get("/file_tag_data/"+sp_name[sp],ostr.str());
+						file_tag_data.push_back(str_dir_tags+file);
 						if (use_tag_masks){
 							if (!str_dir_tagmasks.empty()){
-								file_tag_masks.push_back(str_dir_tagmasks+file_tag_data[nf]);
+								file_tag_masks.push_back(str_dir_tagmasks+file);
 							}else{
 								cout << "WARNING: no <strdir_tagmasks> field in parameter file" << endl; 
 							}
