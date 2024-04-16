@@ -586,6 +586,14 @@ void PMap::definit_lim_infsup(const int nti, const int ntj)
 	while (iinftmp(jmax) > isuptmp(jmax))
 		jmax--;
 
+	for (int j = jmin; j <= jmax; j++)
+	{
+		if (iinftmp[j]>isuptmp[j]){
+			cerr << "Error: There is a vertical hole in the mask" << endl;
+			exit(2);
+		}
+	}
+
 	// cout << "jmin,jmax " << jmin << ' ' << jmax << endl;
 
 	for (int j = jmin; j <= jmax; j++)
@@ -664,6 +672,14 @@ void PMap::definit_lim_infsup(const int nti, const int ntj)
 	// cout << imin << endl;
 	// cout << imax << endl;
 	// exit(1);
+
+	for (int i = imin; i <= imax; i++)
+	{
+		if (jinftmp[i]>jsuptmp[i]){
+			cerr << "Error: There is a horizontal hole in the mask" << endl;
+			exit(2);
+		}
+	}
 
 	jinf.allocate(imin, imax);
 	jsup.allocate(imin, imax);
