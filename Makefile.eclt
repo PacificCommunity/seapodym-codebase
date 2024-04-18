@@ -133,7 +133,7 @@ export CC
 export LL
 ##############################################################
 
-all: init $(BINPATH)/seapodym_lclt
+all: init $(BINPATH)/seapodym_eclt
 
 init:
 	@test -d $(OBJPATH) || mkdir -v $(OBJPATH)
@@ -145,7 +145,7 @@ test: init $(OBJECTS)
 docs: $(SRCS) $(HEADERS)
 	@doxygen
 
-$(BINPATH)/seapodym_lclt : $(OBJECTS)
+$(BINPATH)/seapodym_eclt : $(OBJECTS)
 	$(LL) -o$@ $(DEBUG) $^ $(LFLAGS)
 
 $(OBJPATH)/%.o : %.cpp
@@ -154,8 +154,8 @@ $(OBJPATH)/%.o : %.cpp
 $(OBJECTS) : $(HEADERS)
 
 clean:
-	@rm -vf $(OBJECTS) $(BINPATH)/seapodym_lclt
-	@rm -vf $(OBJECTS) $(BINPATH)/seapodym_lclt.exe
+	@rm -vf $(OBJECTS) $(BINPATH)/seapodym_eclt
+	@rm -vf $(OBJECTS) $(BINPATH)/seapodym_eclt.exe
 	@rm -vf $(OBJECTS) $(BINPATH)/TestSeapodymCoupled
 	@rm -vrf $(OBJPATH)
 	#@rm -vrf docs/code-dox
