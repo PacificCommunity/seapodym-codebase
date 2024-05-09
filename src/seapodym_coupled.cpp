@@ -90,15 +90,6 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 		compute_gradient = 0;
 	}
 
-	//simulation regime to compute 2d projection of likelihood function
-	//over any two variable parameters (should be specified through parfile)
-	if (cmp_regime == 1){
-		//sc.param->set_gradcalc(false);
-		gradient_structure::set_NO_DERIVATIVES();
-		Hyperspace_projection(sc,(dvar_vector)x);
-		return 0;
-	}
-
 	double likelihood = 0;
 	double elapsed_time = 0;
 
@@ -111,6 +102,15 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 
 	//initialization of simulation
 	sc.prerun_model();	
+
+	//simulation regime to compute 2d projection of likelihood function
+	//over any two variable parameters (should be specified through parfile)
+	if (cmp_regime == 1){
+		//sc.param->set_gradcalc(false);
+		gradient_structure::set_NO_DERIVATIVES();
+		Hyperspace_projection(sc,(dvar_vector)x);
+		return 0;
+	}
 
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
