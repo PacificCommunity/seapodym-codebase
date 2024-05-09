@@ -2,6 +2,7 @@
 #include "SeapodymCoupled.h"
 
 string get_path(const char* full_path);
+void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x);
 void Hessian_comp(const char* parfile);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
@@ -93,6 +94,15 @@ int seapodym_habitats(const char* parfile, int cmp_regime, const bool reset_buff
 
 	//initialization of simulation
 	sc.prerun_model();
+
+	//simulation regime to compute 2d projection of likelihood function
+	//over any two variable parameters (should be specified through parfile)
+	if (cmp_regime == 1){
+		//sc.param->set_gradcalc(false);
+		gradient_structure::set_NO_DERIVATIVES();
+		Hyperspace_projection(sc,(dvar_vector)x);
+		return 0;
+	}
 
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
@@ -221,3 +231,61 @@ unsigned long int restore_long_int_value(void)
   return (unsigned long int)tmpout;
 }
 
+///1. Option for computing likelihood projection in 2D parametric space.
+void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x)
+{
+//	sc.param->set_gradcalc(false);
+	const int Npars = sc.param->nb_varproj-1;
+	ivector ix(0,Npars); ix.initialize(); 
+	int n1 = sc.param->varproj_nsteps[0];
+	int n2 = sc.param->varproj_nsteps[1];
+	int nmax = max(n1,n2)-1;  
+	dmatrix xvalues(0,Npars,0,nmax); xvalues.initialize();
+	dmatrix pars(0,Npars,0,nmax); pars.initialize();
+	dmatrix Lproj(0,n1-1,0,n2-1); 
+	Lproj.initialize();
+
+	sc.param->get_param_index(ix, xvalues, pars);
+
+	sc.OnRunFirstStep();
+	clock_t time1 = clock();
+	cout << "\nstarting hyperspace projection computation for ";
+	for (int n=0; n<sc.param->nb_varproj; n++) cout << sc.param->varproj[n] << " ";
+	cout << endl;
+
+	ofstream ofs;
+	const char* filename = "hyperproj.out";
+	ofs.open(filename, ios::out);
+	for (int n=0; n<sc.param->nb_varproj; n++)
+		ofs << sc.param->varproj[n] << " ";
+	ofs << "\n" << n1 << " " << n2 << "\n"; 
+	for (int n=0; n<=Npars; n++){
+		for (int i=0; i<sc.param->varproj_nsteps(n); i++)
+			ofs << pars(n,i)<< " ";
+		ofs << "\n";
+	}
+	ofs.close();
+		
+	for (int i=0; i<n1; i++){
+		for (int j=0; j<n2; j++){
+			cout << j+i*n2+1<< ": ";
+			for (int n=0; n<=Npars; n++){
+				int k;
+				if (n==0)  k = i; 
+				if (n==1)  k = j;
+				x[ix(n)] = xvalues(n,k); cout << pars(n,k) << " "; 
+			}
+			Lproj(i,j) = sc.run_habitat(x);
+		}
+		ofs.open(filename, ios::app);
+		for (int j=0; j<n2; j++)
+			ofs << Lproj(i,j) << " ";
+		ofs << "\n";
+		ofs.close();
+	}
+
+	time_t time2 = clock();
+	double total_elapsed_time = (double)((time2-time1)/CLOCKS_PER_SEC)/60.0;
+	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
+	//cleanup_temporary_files();
+}

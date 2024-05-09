@@ -32,9 +32,9 @@ int main(int argc, char** argv) {
 
 int OptionToCode(char* op) {
 
-	const int N = 8;
-	const char *cmdop[N] = {"-s","-H","-h","-v","--simulation","--hessian","--help","--version"};
-	int cmpCode[N] = {0,2,-3,-2,0,2,-3,-2};
+	const int N = 9;
+	const char *cmdop[N] = {"-s", "-p","-H","-h","-v","--simulation","--hessian","--help","--version"};
+	int cmpCode[N] = {0,1,2,-3,-2,0,2,-3,-2};
 	for (int i=0; i<N; i++)
 		if (strcmp(op,cmdop[i])==0){
 			if (cmpCode[i]==-2) {
