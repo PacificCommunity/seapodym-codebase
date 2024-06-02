@@ -631,7 +631,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	//	delete_tag_releases();
 	//}
 	param->total_like = value(likelihood);
-	double clike = value(likelihood)-lflike-taglike-stocklike-eFlike-taglike-larvaelike;
+	double clike = value(likelihood)-lflike-taglike-stocklike-eFlike-larvaelike;
 	if (!param->scalc()){ // all but sensitivity analysis
 		cout << "end of forward run, likelihood: " << defaultfloat <<
 		clike << " " << lflike << " " << taglike << " " << stocklike << " " << eFlike << " " << larvaelike << endl;
