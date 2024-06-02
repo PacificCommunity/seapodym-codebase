@@ -1589,8 +1589,8 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(Ms_mean_slope_min,Ms_mean_slope_max,"/Ms_mean_slope",0,10);
 	par_read(M_mean_range_min,M_mean_range_max,"/M_mean_range",0,100);
 	par_read(a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",0,10);
-	par_read(b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",0,34);
-	par_read(q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",0,10);
+	par_read(b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",0,40);
+	par_read(q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",0,1000);
 	par_read(likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",0,20);
 	par_read(likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",0,10);
 	par_read(likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",0,10);
@@ -1598,12 +1598,12 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(inv_M_rate_min,inv_M_rate_max,"/inv_M_rate",0,1000);
 	par_read(age_larvae_before_sst_mortality_min,age_larvae_before_sst_mortality_max,"/age_larvae_before_sst_mortality",1,30);
 	par_read(a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",0,10);
-	par_read(b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",0,34);
+	par_read(b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",0,40);
 	par_read(alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",0,10000);
 	par_read(alpha_hsp_predator_min,alpha_hsp_predator_max,"/alpha_hsp_predator",0,10000);
 	par_read(beta_hsp_predator_min,beta_hsp_predator_max,"/beta_hsp_predator",0,10000);
 	par_read(a_sst_habitat_min,a_sst_habitat_max,"/a_sst_habitat",0,10);
-	par_read(b_sst_habitat_min,b_sst_habitat_max,"/b_sst_habitat",0,34);
+	par_read(b_sst_habitat_min,b_sst_habitat_max,"/b_sst_habitat",0,40);
 	par_read(T_age_size_slope_min,T_age_size_slope_max,"/T_age_size_slope",0,10);
 	for (int n=0; n<3; n++){
 		std::ostringstream ostr;
@@ -1621,7 +1621,7 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(sigma_species_min,sigma_species_max,"/sigma_species",0,1);
 	par_read(MSS_species_min,MSS_species_max,"/MSS_species",0,100);
 	par_read(MSS_size_slope_min,MSS_size_slope_max,"/MSS_size_slope",0.1,2);
-	par_read(c_diff_fish_min,c_diff_fish_max,"/c_diff_fish",0,1);
+	par_read(c_diff_fish_min,c_diff_fish_max,"/c_diff_fish",0,2);
 	par_read(nb_recruitment_min,nb_recruitment_max,"/nb_recruitment",0,100);
 	par_read(a_adults_spawning_min,a_adults_spawning_max,"/a_adults_spawning",0,1000);
 	par_read(spawning_season_peak_min,spawning_season_peak_max,"/spawning_season_peak",0,366);
