@@ -256,7 +256,14 @@ void SeapodymCoupled::CalcSums()
 							double total_tags = 0.0;
 							for (int pop=1; pop<=param->nb_tag_files;pop++){
 
-								if (!param->use_tag_masks | (i > tagmaps[pop-1].imin1 && i < tagmaps[pop-1].imax1 && j > tagmaps[pop-1].jinf[i] && j < tagmaps[pop-1].jsup[i])){
+								int add_to_total_tags = 0;
+								if (!param->use_tag_masks){
+									add_to_total_tags = 1;
+								}else if ((i > tagmaps[pop-1].imin1 && i < tagmaps[pop-1].imax1 && j > tagmaps[pop-1].jinf[i] && j < tagmaps[pop-1].jsup[i]))
+								{
+									add_to_total_tags = 1;
+								}
+								if (add_to_total_tags){
 									total_tags += value(mat.dvarDensity(pop,aa,i,j));
 
 									if (pop==1 && value(mat.dvarDensity(pop,aa,i,j))<0)  cerr << "NEGATIVE BIOMASS for " << aa << " "  << value(mat.dvarDensity(pop,aa,i,j)) << endl;
