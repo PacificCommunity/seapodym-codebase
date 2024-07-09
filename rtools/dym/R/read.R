@@ -33,7 +33,7 @@
     read.dims.dym<-function(file.in){
 
 	#1-reading
-        message("Reading file ",file.in,"...")	    
+        message("Reading dimensions from file ",file.in)	    
 	con<-file(file.in,"rb") 
 	file.type<-readChar(con,4)
 	grid.id<-readBin(con,integer(),size=4)
@@ -46,11 +46,18 @@
 	return(list(nt=nlevel,nx=nlon,ny=nlat))
     }
 
-    #Only if need to get the default txy
-    read.txy.dym<-function(file.in){
+    #' Reads dimensional vectors from the DYM file
+    #'
+    #' @param file.in the name of the DYM file.
+    #' @return A list with t, x and y, where time vector returned in decimal format, as written in the DYM file, x and y are the longitudinal and latitudinal vectors respectively.
+    #' @examples 
+    #' dym <- read.txy.dym("skj_adult.dym");
+    #' summary(dym)
+    #' @export
+    read.txy.dym<-function(file.in,verbose=FALSE){
 
 	#1-reading
-        message("Reading file ",file.in,"...")	    
+	if (verbose) message("Reading dimensional vectors from ",file.in)	    
 	con<-file(file.in,"rb") 
 	file.type<-readChar(con,4)
 	grid.id<-readBin(con,integer(),size=4)
@@ -80,10 +87,11 @@
     #Attn: need to get the date range before reading data, to avoid reading the whole array when it is not necessary!!!
     #' Reading DYM file
     #'
-    #' Reads DYM file and returns the list of variables
-    #' @param file.in is the DYM file accessible with provided path
-    #' @param t0.user is the date provided as c(year,month,day) to be used the first date for extraction. If not specified, start from the first time step written in the DYM file.
-    #' @param tfin.user is the date provided as c(year,month,day) to be used the last date for extraction. If not specified, stop at last time step written in the DYM file.
+    #' Reads 3d variable from the DYM file, which has dimensions (time,longitude,latitude), and returns the list with time vector, coordinates, land mask and variable data.
+    #' @param file.in the DYM file accessible with provided path
+    #' @param t0.user the date provided as c(year,month,day) to be used the first date for extraction. If not specified, start from the first time step written in the DYM file.
+    #' @param tfin.user the date provided as c(year,month,day) to be used the last date for extraction. If not specified, stop at last time step written in the DYM file.
+    #' @param region the set of four values c(x1,x2,y1,y2) defining east-west and south-north coordinates respectively.
     #' @param verbose flag (default value is TRUE) controlling the prompt for the nominal function execution.
     #' @return The list of variables written in the DYM file, that is a vector of longitudes, x, latitudes, y, time steps, t, the land mask matrix, landmask and the data 3d matrices, var[t,x,y]. 
     #' @examples 
@@ -132,7 +140,7 @@
 		dates<-get.date.sea(t0.file)+seq(0,(nlevel-1)*dt,dt)
         }
 	if (!is.null(t0.user)){ # extract sub-time vector
-            if ((length(t0.user)==2 | length(tfin.user)==2) & dt==30){
+            if ((length(t0.user)==2 | length(tfin.user)==2) & dt==30){#day not specified
 	        t0.user<-c(t0.user[1:2],15)
 	        tfin.user<-c(tfin.user[1:2],15)
 	    }
@@ -147,14 +155,14 @@
 	    }
 	    t0.user.date<-as.Date(paste(t0.user,collapse="-"))
 	    tfin.user.date<-as.Date(paste(tfin.user,collapse="-"))
-	    if (dt==30)
-		dates<-gen.monthly.dates(year.month.sea(t0.file),year.month.sea(tfin.file))
-	        
+	    if (dt==30){
+		    dates<-gen.monthly.dates(year.month.sea(t0.file),year.month.sea(tfin.file))
+	    }
 	    if (dt!=30)
 		dates<-get.date.sea(t0.file)+seq(0,(nlevel-1)*dt,dt)
 	    
-	    ind<-which(dates>=t0.user.date & dates<=tfin.user.date)
-
+	    ind<-which(dates>=t0.user.date-.2*dt & dates<=tfin.user.date+.2*dt)
+	    
 	    if (length(ind)==0 | any(is.na(ind))){
 	       message("Problem with dates! Quit now.")
 	       print(ind)
@@ -169,14 +177,13 @@
 	      nlevel<-length(tvect)
 	    }
 	}
-	
 	if (bytestoskip>0){
 	  if (verbose)
 	    message("Skipping ",bytestoskip/(nlon*nlat*4)," matrices...")		
           pos<-seek(con,bytestoskip,"current")
 	}
 	
-	data<-array(0,c(nlevel,nlat,nlon))
+	data<-array(0,c(nlevel+1,nlat,nlon))#'+1' to keep first dimension >1
   	for(ti in 1:nlevel){
 	    for(i in 1:nlat){
 		data[ti,i,]<-readBin(con,numeric(),n=nlon,size=4)
@@ -205,34 +212,33 @@
 	    if (verbose)
 	      message("Extracting data from ",xlon[1,i1]," to ",xlon[1,i2]," and from ",ylat[j2,1]," to ",ylat[j1,1])
 	    mask<-mask[j1:j2,i1:i2]
-#	    if (length(tvect)>1) 
-		    data<-data[,j1:j2,i1:i2]
-#	    if (length(tvect)==1) data<-data[j1:j2,i1:i2]
+	    data<-data[,j1:j2,i1:i2]
 	    xlon<-xlon[j1:j2,i1:i2]
 	    ylat<-ylat[j1:j2,i1:i2]; 
 	}
 	nlat<-nrow(ylat)
 	#3-apply mask, flip and transpose
 	landmask.na<-ifelse(mask==0,NA,1)
-	if (length(tvect)>1){
-            if (apply.mask){		
-	      #couldn't find how make 3d array from landmask.na to multiply data on. 
-	      for (n in 1:length(dates)) data[n,,]<-data[n,,]*landmask.na 
-	    }
-	    data<-data[,nlat:1,]
-	    if (length(tvect)>1) data<-apply(data,3:2,t) 
-	    if (length(tvect)==1) data<-t(data[nlat:1,]) 
+        if (apply.mask){		
+	    #couldn't find how make 3d array from landmask.na to multiply data on. 
+	    for (n in 1:length(dates)) data[n,,]<-data[n,,]*landmask.na 
 	}
-	if (length(tvect)==1){
-	    data<-data*landmask.na	 
-	    data<-data[nlat:1,]
-	    data<-t(data) 
-	}
+	data<-data[,nlat:1,]
+	data<-apply(data,3:2,t)
 
+	data <- data[1:nlevel,,]
+	
 	return(list(x=xlon[1,],y=rev(ylat[,1]),t=dates,var=data,landmask=mask))
     }
 
-
+    #' Reads restart DYM file
+    #'
+    #' Reads DYM file with population density initial conditions
+    #' @param file.in the name of the DYM file.
+    #' @examples 
+    #' dym <- read.restart.dym("skj_cohorts.dym");
+    #' summary(dym)
+    #' @export
     read.restart.dym<-function(file.in){
 
 	#1-reading
