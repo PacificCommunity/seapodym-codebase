@@ -785,7 +785,7 @@ bool VarParamCoupled::read(const string& parfile)
 				larvae_input_aggregated_flag[sp] = doc.getInteger("/larvae_input_aggregated", sp_name[sp]);
 			if (!doc.get("/strdir_larvae","value").empty()){
 				strdir_larvae = doc.get("/strdir_larvae", "value");
-				str_file_larvae = strdir_larvae + doc.get("/file_larvae_data", "value");
+				strfile_larvae = strdir_larvae + doc.get("/file_larvae_data", "value");
 			}
 			if (larvae_input_categorical_flag[sp]==1){
 				fit_null_larvae[sp] = doc.getInteger("/fit_null_larvae", sp_name[sp]);
@@ -806,10 +806,6 @@ bool VarParamCoupled::read(const string& parfile)
 			larvae_likelihood_type[sp] = doc.getInteger("/larvae_likelihood_type", sp_name[sp]);
 			if (nb_species>1){
 				cerr << "Error: Larvae likelihood is only available for single species computing (to be coded)." << endl;
-				std::exit(EXIT_FAILURE);
-			}
-			if (larvae_input_aggregated_flag[sp]==0){
-				cerr << "Error: Computing of larvae likelihood on non-aggregated larvae input is not available yet (to be coded)." << endl;
 				std::exit(EXIT_FAILURE);
 			}
 		}

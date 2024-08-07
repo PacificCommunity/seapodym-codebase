@@ -14,14 +14,16 @@ void SeapodymCoupled::OnRunFirstStep()
 	month = 0;
 	Date::idatymd(param->ndatini, year, month, day);
 	param->set_nbt(nbt_total);
-        nbt_building = nbt_spinup_tuna;
-        t_count = nbt_building+1;
+    nbt_building = nbt_spinup_tuna;
+    t_count = nbt_building+1;
 	//Create time-dependent forcing matrices here:
 	int t0  = t_count;
 	int nbt = nbt_total;
 	if (!param->gcalc()) nbt = t_count;
 	mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
 	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
+	if (!param->larvae_input_aggregated_flag[0])
+		mat.createMatLarvae(map, t0, nbt, nbi, nbj, deltaT);
 
 	int nb_pops = nb_species*(1+param->nb_tag_files);
 	mat.CreateMatSpecies(map,t0, nbt, nbi, nbj, nb_pops, a0_adult, param->sp_nb_cohorts);

@@ -108,8 +108,9 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Habitat.initialize();
 	Mortality.initialize();
 
-	// For aggregated larvae likelihood
-	dvar_matrix Larvae_density_pred_at_obs;
+	// For larvae density predictions
+	dvar_matrix Larvae_density_pred;
+	dvar_matrix Agg_larvae_density_pred_at_obs;
 	IVECTOR kinf;
 	IVECTOR ksup;
 	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
@@ -118,7 +119,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		for (int i = 0; i < nb_larvae_input_agg_groups; ++i) {
 			ntime_agg[i] = 0;
 		}	
-		if (param->larvae_input_aggregated_flag[0]==1 && param->larvae_like[0]){
+		if (param->larvae_input_aggregated_flag[0]){
 			// Aggregated larvae density over the entire period, only at obs. locations
 			kinf.allocate(0, nb_larvae_input_agg_groups-1);
 			ksup.allocate(0, nb_larvae_input_agg_groups-1);
@@ -126,8 +127,11 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 				kinf[k] = 0;
 				ksup[k] = mat.aggregated_larvae_input_vectors[k].size();
 			}
-			Larvae_density_pred_at_obs.allocate(0, nb_larvae_input_agg_groups-1, kinf, ksup);
-			Larvae_density_pred_at_obs.initialize();	
+			Agg_larvae_density_pred_at_obs.allocate(0, nb_larvae_input_agg_groups-1, kinf, ksup);
+			Agg_larvae_density_pred_at_obs.initialize();	
+		}else{
+			Larvae_density_pred.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+			Larvae_density_pred.initialize();
 		}
 	}
 
@@ -520,31 +524,45 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			if (!tags_only)
 				Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,pop_built,tcur);//checked
 
-			//8. Aggregate larvae density at larvae obs locations
+			//8. Extract larvae density
 			if (t_count > nbt_building+nbstoskip){
-				if (param->larvae_input_aggregated_flag[0]==1 && param->larvae_like[0]){
-					const int nb_lv = param->sp_nb_cohort_lv[sp];
-					int iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
-
-					// Calculate scaling factor between larvae density at 1st time step and larvae density at age_larvae_before_sst_mortality days, based on sst-dependent mortality (if applicable)
+				const int nb_lv = param->sp_nb_cohort_lv[sp];
+				if (param->larvae_like[0]){
 					if (param->larvae_mortality_sst[sp]){
 						func.Scaling_factor_sstdep_larvae_mortality(*param, mat.sst[tcur], map, mat.dvarScaling_factor_sstdep_larvae_mortality[sp], sp);
 					}
-
-					// Aggregate larvae density at larvae obs locations
-					for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
-						if (param->larvae_mortality_sst[sp]){// In this case, it only considers the first age class (even if nb_lv>1)
-							Larvae_density_pred_at_obs(iAgg, k) +=  mat.dvarDensity[sp][0][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]] * mat.dvarScaling_factor_sstdep_larvae_mortality[sp][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]];
-						}else{
-							for (int age=0; age<nb_lv; age++){
-								Larvae_density_pred_at_obs(iAgg, k) += mat.dvarDensity[sp][0][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]];
+					if (param->larvae_input_aggregated_flag[0]){
+						int iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
+						for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
+							if (param->larvae_mortality_sst[sp]){// In this case, it only considers the first age class (even if nb_lv>1)
+								Agg_larvae_density_pred_at_obs(iAgg, k) +=  mat.dvarDensity[sp][0][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]] * mat.dvarScaling_factor_sstdep_larvae_mortality[sp][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]];
+							}else{
+								for (int age=0; age<nb_lv; age++){
+									Agg_larvae_density_pred_at_obs(iAgg, k) += mat.dvarDensity[sp][0][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]];
+								}
 							}
 						}
+						ntime_agg[iAgg] += 1;
+					}else{
+						Larvae_density_pred = mat.dvarDensity[sp][0];
+						if (param->larvae_mortality_sst[sp]){// In this case, it only considers the first age class (even if nb_lv>1)
+							for (int i = map.imin; i <= map.imax; i++){	
+								const int jmin = map.jinf[i];
+								const int jmax = map.jsup[i];
+								for (int j = jmin; j <= jmax; j++){
+									Larvae_density_pred[i][j] *= mat.dvarScaling_factor_sstdep_larvae_mortality[sp][i][j];
+								}
+							}
+						}else{
+							if (nb_lv>1){
+								for (int age=1; age<nb_lv; age++){
+									Larvae_density_pred += mat.dvarDensity[sp][age];
+								}
+							}				
+						}
 					}
-					ntime_agg[iAgg] += 1;
 				}
 			}
-
 		}//end of 'sp' loop
 
 		//------------------------------------------------------//
@@ -562,6 +580,14 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		if ((fishing) && (t_count > nbt_building+nbstoskip) && (t_count <= nbt_no_forecast))
 			get_catch_lf_like(likelihood);
 
+		// IV. Larvae likelihood
+		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0]){
+			// Read larvae input data
+			int nbytetoskip = (9 +(3* nlat * nlon) + (nbt_total - nbt_building-nbstoskip) + ((nlat *nlon)* (t_count-nbt_building-nbstoskip-1))) * 4;
+			rw.rbin_input2d(param->strfile_larvae, map, mat.larvae_input[tcur], nbi, nbj, nbytetoskip);
+			// Compute likelihood
+			larvaelike += get_larvae_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur);
+		}
 		//------------------------------------------------------//
 		//		COUPLAGE THON -FORAGE			//
 		//------------------------------------------------------//
@@ -609,19 +635,17 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 	} // end of simulation loop
 
-	// Compute larvae likelihood
-	if (param->larvae_like[0]){
-		// Compute the average larvae density over the entire period
+	// Compute larvae likelihood on aggregated larvae density
+	if (param->larvae_like[0] && param->larvae_input_aggregated_flag[0]){
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
 			for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
-				Larvae_density_pred_at_obs(iAgg, k) /= ntime_agg[iAgg];
+				Agg_larvae_density_pred_at_obs(iAgg, k) /= ntime_agg[iAgg];
 			}
 		}
-
-		larvaelike += get_larvae_like(likelihood, Larvae_density_pred_at_obs);
-		if (!param->gcalc()){
-			cout << "Larvae likelihood: " << larvaelike << endl;
-		}
+		larvaelike += get_larvae_like(likelihood, Agg_larvae_density_pred_at_obs);
+	}
+	if (!param->gcalc()){
+		cout << "Larvae likelihood: " << larvaelike << endl;
 	}
 
 	if (writeoutputfiles) {SaveDistributions(year, month);
@@ -644,20 +668,17 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 void SeapodymCoupled::ReadLarvae()
 {
-	cout << "Reading input larvae file: " << endl;
 	int nlevel = 0;
 	string file_input;
-	file_input = param->str_file_larvae;
-    rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
-	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
-	if (nlevel != nb_larvae_input_agg_groups){
-		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
-		exit(1);
-
-	}
-	cout << file_input << endl;
-
-	if (param->larvae_input_aggregated_flag[0]==1){
+	file_input = param->strfile_larvae;
+	cout << "Reading input larvae file: "<< file_input << endl;
+	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
+	if (param->larvae_input_aggregated_flag[0]){
+		int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
+		if (nlevel != nb_larvae_input_agg_groups){
+			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
+			exit(1);
+		}
 		mat.larvae_input.allocate(0,nb_larvae_input_agg_groups-1);
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
 			mat.larvae_input[iAgg].allocate(1, nlon_input, 1, nlat_input);
@@ -700,5 +721,12 @@ void SeapodymCoupled::ReadLarvae()
 			}
 		}
 		cout << "Number of data points: " << ndata << endl;
+	}else{
+		int needed_nlevels = nbt_total-nbt_building-param->nbsteptoskip;
+		if (nlevel != needed_nlevels){
+			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " (" << nlevel << ") does not match the necessary number of time steps (" << needed_nlevels << ").\"\n";
+			exit(1);
+
+		}
 	}
 }

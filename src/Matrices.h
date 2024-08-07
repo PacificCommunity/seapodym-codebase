@@ -115,6 +115,7 @@ public:
 	void createMatHeader(const CParam& param);
 	//void createMatHeader(const CParam& int nlong, int nlat, int nlevel);
 	void createMatOcean(const PMap& map, int t0, int nbt, int nbi, int nbj, int nb_layer, int dt);
+	void createMatLarvae(const PMap& map, int t0, int nbt, int nbi, int nbj, int dt);
 	void createMatTransport(const PMap& map);//, int nbi, int nbj);
 
 	void createMatFluxes(const int nb_region, const int nb_cohort);

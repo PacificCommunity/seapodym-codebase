@@ -111,7 +111,7 @@ double SeapodymCoupled::get_stock_like(dvariable& total_stock, dvariable& likeli
 	return stocklike;
 }
 
-double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_pred_at_obs)
+double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_larvae_density_pred_at_obs)
 {//returns double value of larvae likelihood.
 
 	NishikawaCategories NshkwCat(*param);
@@ -123,93 +123,64 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 
 	double larvaelike  = 0.0;
 	for (int sp=0; sp < nb_species; sp++){
-		if (param->larvae_input_aggregated_flag[0]==1){
-			int like_type = param->larvae_likelihood_type[sp];
-			for (int iAgg=0; iAgg<param->nb_larvae_input_agg_groups; iAgg++){
-				for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
+		int like_type = param->larvae_likelihood_type[sp];
+		for (int iAgg=0; iAgg<param->nb_larvae_input_agg_groups; iAgg++){
+			for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
+				// Compute likelihood
+				dvariable N_pred = 0.0;
+				N_pred = Agg_larvae_density_pred_at_obs(iAgg, k);
+				dvariable lkhd;
+				if (param->larvae_input_categorical_flag[sp]){
+					int L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
+					lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
+
+				}else{
+					double L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
+					lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
+
+				}
+				likelihood += lkhd;
+				larvaelike += value(lkhd);
+			}
+		}
+	}
+	return larvaelike;
+}
+
+double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_pred, D3_ARRAY larvae_input, int t)
+{//returns double value of larvae likelihood.
+
+	NishikawaCategories NshkwCat(*param);
+	double likelihood_penalty = 50.0;
+	double weight_Lobszero = 0.0;
+	if (param->fit_null_larvae[0]==1){
+		weight_Lobszero = param->weight_null_larvae[0];
+	}
+
+	double larvaelike  = 0.0;
+	for (int sp=0; sp < nb_species; sp++){
+		int like_type = param->larvae_likelihood_type[sp];
+		const int imin = map.imin; 
+		const int imax = map.imax; 
+		for (int i = imin; i <= imax; i++){
+			const int jmin = map.jinf[i];
+			const int jmax = map.jsup[i];
+			for (int j = jmin ; j <= jmax; j++){
+				if (map.carte[i][j]){
 					// Compute likelihood
-					dvariable N_pred = 0.0;
-					N_pred = Larvae_density_pred_at_obs(iAgg, k);
+					dvariable N_pred = Larvae_density_pred(i,j);
 					dvariable lkhd;
-					if (param->larvae_input_categorical_flag[sp]==1){
-						int L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
-						switch (like_type){
-							case 0: // Mixed Gaussian Kernel cost function
-								lkhd = NshkwCat.mixed_gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
-								break;
+					if (param->larvae_input_categorical_flag[sp]){
+						int L_obs  = mat.larvae_input(t,i,j);
+						lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
 
-							case 1:	// Categorical Poisson cost function
-								if (N_pred == 0.0){
-									if (L_obs > 0){
-										lkhd = likelihood_penalty;
-									}
-								}else{
-									lkhd = NshkwCat.categorical_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
-								}
-								break;
-
-							case 2: // Categorical Truncated Poisson cost function
-								if (N_pred == 0.0){
-									if (L_obs > 0){
-										lkhd = likelihood_penalty;
-									}
-								}else{
-									lkhd = NshkwCat.categorical_truncated_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
-								}
-								break;
-							
-							case 3: // Zero-Inflated Negative Binomial cost function
-								lkhd = NshkwCat.categorical_zinb_comp(L_obs, N_pred, *param, 0);
-								break;
-
-							case 4: // Zero-Inflated Poisson cost function
-								lkhd = NshkwCat.categorical_zip_comp(L_obs, N_pred, *param, 0);
-								break;
-						}
-
-						if (std::isinf(value(lkhd))){
-							if (lkhd > 0){
-								lkhd = likelihood_penalty;
-							}else{
-								lkhd = 0;
-							}
-						}
 					}else{
-						double L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
-						switch (like_type){
-							case 0: // Gaussian cost function
-								lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
-								break;
-
-							case 1:{// Poisson cost function
-								if (N_pred == 0.0){
-									if (L_obs > 0){
-										lkhd = likelihood_penalty;
-									}
-								}else{
-									lkhd = poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
-								}
-								break;
-							}
-
-							case 2: // Truncated Poisson cost function
-								if (N_pred == 0.0){
-									if (L_obs > 0){
-										lkhd = likelihood_penalty;
-									}
-								}else{
-									lkhd = truncated_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
-								}
-								break;
-							
-							case 3: // Zero-Inflated Negative Binomial cost function
-								lkhd = zinb_comp(L_obs, N_pred, *param, 0);
-								break;
-
-							case 4: // Zero-Inflated Poisson cost function
-								lkhd = zip_comp(L_obs, N_pred, *param, 0);
-								break;
-						}
+						double L_obs  = mat.larvae_input(t,i,j);
+						lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
+						/*if (t_count==1 && i == 1){
+							TTTRACE(t_count, L_obs, N_pred)
+							TRACE(lkhd)
+						}*/
 					}
 					likelihood += lkhd;
 					larvaelike += value(lkhd);
@@ -219,6 +190,94 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 	}
 	return larvaelike;
 }
+
+
+dvariable SeapodymCoupled::larvae_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
+	dvariable lkhd = 0.0; 
+	switch (like_type){
+		case 0: // Mixed Gaussian Kernel cost function
+			lkhd = NshkwCat.mixed_gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+			break;
+
+		case 1:	// Categorical Poisson cost function
+			if (N_pred == 0.0){
+				if (L_obs > 0){
+					lkhd = likelihood_penalty;
+				}
+			}else{
+				lkhd = NshkwCat.categorical_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+			}
+			break;
+
+		case 2: // Categorical Truncated Poisson cost function
+			if (N_pred == 0.0){
+				if (L_obs > 0){
+					lkhd = likelihood_penalty;
+				}
+			}else{
+				lkhd = NshkwCat.categorical_truncated_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+			}
+			break;
+		
+		case 3: // Zero-Inflated Negative Binomial cost function
+			lkhd = NshkwCat.categorical_zinb_comp(L_obs, N_pred, *param, 0);
+			break;
+
+		case 4: // Zero-Inflated Poisson cost function
+			lkhd = NshkwCat.categorical_zip_comp(L_obs, N_pred, *param, 0);
+			break;
+	}
+
+	if (std::isinf(value(lkhd))){
+		if (lkhd > 0){
+			lkhd = likelihood_penalty;
+		}else{
+			lkhd = 0;
+		}
+	}
+
+	return(lkhd);
+}
+
+dvariable SeapodymCoupled::larvae_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
+	dvariable lkhd = 0.0;
+	switch (like_type){
+		case 0: // Gaussian cost function
+			lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+			break;
+
+		case 1:{// Poisson cost function
+			if (N_pred == 0.0){
+				if (L_obs > 0){
+					lkhd = likelihood_penalty;
+				}
+			}else{
+				lkhd = poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+			}
+			break;
+		}
+
+		case 2: // Truncated Poisson cost function
+			if (N_pred == 0.0){
+				if (L_obs > 0){
+					lkhd = likelihood_penalty;
+				}
+			}else{
+				lkhd = truncated_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+			}
+			break;
+		
+		case 3: // Zero-Inflated Negative Binomial cost function
+			lkhd = zinb_comp(L_obs, N_pred, *param, 0);
+			break;
+
+		case 4: // Zero-Inflated Poisson cost function
+			lkhd = zip_comp(L_obs, N_pred, *param, 0);
+			break;
+	}
+	return(lkhd);
+}
+
 
 void SeapodymCoupled::get_catch_lf_like(dvariable& likelihood)
 {//returns double value of catch likelihood. Value of LF likelihood is stored in lflike.

@@ -72,7 +72,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
     for (int i = 0; i < nb_larvae_input_agg_groups; ++i) {
         ntime_agg[i] = 0;
     }	
-	if (param->larvae_input_aggregated_flag[0]==1){
+	if (param->larvae_input_aggregated_flag[0]){
 		// Aggregated spawning habitat over the entire period, only at obs. locations
 		kinf.allocate(0, nb_larvae_input_agg_groups-1);
 		ksup.allocate(0, nb_larvae_input_agg_groups-1);
@@ -197,7 +197,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				func.Spawning_Habitat(*param, mat, map, Habitat, 1.0, sp, tcur, jday);
 
 				//2.2 Aggregate spawning habitat on a vector at obs. locations
-				if (param->larvae_input_aggregated_flag[0]==1){
+				if (param->larvae_input_aggregated_flag[0]){
 					int iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
 					for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
 						Habitat_pred_at_obs(iAgg, k) += Habitat(mat.aggregated_larvae_input_vectors_i[iAgg][k], mat.aggregated_larvae_input_vectors_j[iAgg][k]);
@@ -325,7 +325,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 	// Compute larvae likelihood
-	if (param->larvae_input_aggregated_flag[0]==1){
+	if (param->larvae_input_aggregated_flag[0]){
 		// Compute the average larvae habitat over the entire period
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
 			for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
@@ -355,7 +355,7 @@ void SeapodymCoupled::ReadHabitat()
 		if (param->spawning_habitat_input_flag==0){
 			file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
 		}else{
-			file_input = param->str_file_larvae;
+			file_input = param->strfile_larvae;
 		}
 	else
 		file_input = param->strdir_output + param->sp_name[0] + "_feeding_habitat_input_age1.dym";
@@ -363,7 +363,7 @@ void SeapodymCoupled::ReadHabitat()
     rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
 
 	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
-	if (nlevel != nb_larvae_input_agg_groups && param->larvae_input_aggregated_flag[0]==1){
+	if (nlevel != nb_larvae_input_agg_groups && param->larvae_input_aggregated_flag[0]){
 		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
 		exit(1);
 
@@ -382,9 +382,6 @@ void SeapodymCoupled::ReadHabitat()
 	int marker_iAggs = 0; vector<int> index_habitat_input;// in order to save the t_count indices corresponding to each of the larvae input aggregation group
 	for (; t_count<=nbt_total; t_count++){
 		getDate(jday);
-		//----------------------------------------------//
-		//	DATA READING SECTION: U,V,T,O2,PP	//
-		//----------------------------------------------//
 		if (t_count > nbt_building) {
 			//TIME SERIES 
 			t_series = t_count - nbt_building + nbt_start_series;
@@ -404,7 +401,7 @@ void SeapodymCoupled::ReadHabitat()
 					cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
 					exit(1);
 				}
-				if (param->larvae_input_aggregated_flag[0]==0){
+				if (!param->larvae_input_aggregated_flag[0]){
 					litbin.seekg(nbytetoskip, ios::cur);
 				}else{
 					int iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
@@ -453,7 +450,7 @@ void SeapodymCoupled::ReadHabitat()
 	}
 	t_count = t_count_init;
 
-	if (param->spawning_habitat_input_flag==1 && param->larvae_input_aggregated_flag[0]==1){
+	if (param->spawning_habitat_input_flag==1 && param->larvae_input_aggregated_flag[0]){
 		// Vector of non-NA observed density
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
 			if (iAgg <= (int) index_habitat_input.size()){

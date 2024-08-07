@@ -3,6 +3,7 @@
 
 #include "SeapodymDocConsole.h"
 #include "Date.h"
+#include "NishikawaLike.h"
 
 /*!
 \brief The main simulation class
@@ -103,7 +104,10 @@ private:
 	void get_catch_lf_like(dvariable& likelihood);
 	double get_stock_like(dvariable& total_stock, dvariable& likelihood);
 	double get_tag_like(dvariable& likelihood, bool writeoutputs);
-	double get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_at_obs);
+	double get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_larvae_density_pred_at_obs);
+	double get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_pred, D3_ARRAY larvae_input, int t);
+	dvariable larvae_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat);	
+	dvariable larvae_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat);
 	void getDate(int& jday);
 	void SaveDistributions(const int year, const int month);
 	void UpdateTimeVars(int& nbt_total, int& nbt_start_series);
