@@ -21,8 +21,8 @@
 <!--===================-->
 <!--0 - spawning_habitat, 1 - feeding habitat (give age in months)-->
 <habitat_run type="0" nb_ages="1"/>
-<!--If spawning_habitat run, ages are ignored-->
-<habitat_run_ages>2 3</habitat_run_ages>
+<habitat_run_ages>2 3</habitat_run_ages><!--If spawning_habitat run, ages are ignored-->
+<fit_spawning_habitat_raw flag="0"/><!-- 1 - fit to output/<sp>_spwaning_habitat_input.dym; 0 - fit to file_larvae_data, using q_sp_larvae -->
 
 <!--==================== -->
 <!--LIKELIHOOD PARAMETERS--> 
@@ -40,6 +40,32 @@
 <likelihood_types>
 	<msp>3</msp>
 </likelihood_types>
+
+<!-- Larvae likelihood-->
+<larvae_likelihood msp="1"/>
+<larvae_likelihood_type msp="0"/><!-- Early life stage likelihood: 0 - (Mixed) Gaussian Kernel, 1 - (Categorical) Poisson, 2 - (Categorical) Truncated Poisson, 3 - (Categorical) Zero-Inf Neg. Bin., 4 - (Categorical) Zero-Inf Poisson-->
+<fit_null_larvae msp="1"/>
+<weight_null_larvae msp="0.0379394"/> <!-- weigth to apply to null larvae density observations in likelihood calculation. Here, 0.0379394 = 422/11123  -->
+<nb_larvae_cat msp="4"/>
+<larvae_density_bins>
+		<msp>0 0.5 1 5</msp>
+</larvae_density_bins>
+<larvae_density_last_bin_width msp="25"/>
+<likelihood_larvae_sigma msp="1"> <!-- sigma parameter in gaussian kernel and categorical poisson (Nobs=0 case)  -->
+	<variable min="0.0" max="10.0" use="false"/>
+</likelihood_larvae_sigma>
+<likelihood_larvae_beta msp="0.5"> <!-- betaf parameter in zero-inflated negative binomial cost function  -->
+	<variable min="0.0" max="1.0" use="false"/>
+</likelihood_larvae_beta>
+<likelihood_larvae_probzero msp="0.5"> <!-- pf parameter in zero-inflated negative binomial cost function  -->
+	<variable min="0.0" max="1.0" use="false"/>
+</likelihood_larvae_probzero>
+<q_sp_larvae msp="0.05">
+    <variable min="0.0" max="100.0" use="true"/>
+</q_sp_larvae>
+
+
+
 
 <!--==================== -->
 <!--FISHERIES DEFINITIONS--> 
@@ -82,6 +108,14 @@
 
 <!--Micronekton Files Sub-folder in Forcing Directory-->
 <strdir_forage value="forage/"/>
+
+<!--Early life stage data-->
+<strdir_larvae value="/${SEAPODYM_HOME}/data/larvae/"/>
+<file_larvae_data value="larvae_input.dym"/>
+<larvae_input_categorical msp="1"/><!-- 0 if larvae density is continuous; 1 if larvae density from file_larvae_data, with categorical values, defined in <larvae_density_bins>-->
+<larvae_input_aggregated msp="1"/><!-- 0 if larvae on monthly arrays (from output/<sp>_spwaning_habitat_input.dym); 1 if larvae densities with 4 quarterly arrays (from file_larvae_data-->
+<larvae_input_aggregation_imonths>1 4 7 10</larvae_input_aggregation_imonths>
+
 
 <!--Forcing variables and file names-->
 <strfile_pp value="tpo_2x30d_pp.dym"/>
