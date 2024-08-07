@@ -170,7 +170,7 @@ public:
 	DVECTOR likelihood_larvae_probzero;		// pf parameter in ZINB used for larvae likelihood
 	string strdir_larvae;
 	string strfile_larvae;
-	int spawning_habitat_input_flag;//whether to fit to output/<sp>_spwaning_habitat_input.dym or fit to file_larvae_data
+	int fit_spawning_habitat_raw;// whether to fit to output/<sp>_spwaning_habitat_input.dym or fit to file_larvae_data (using coeff q_sp_larvae, with possibility to fit to aggregated data)
 	ivector larvae_input_categorical_flag;//if file_larvae_data data is categorical
 	ivector larvae_input_aggregated_flag;//if file_larvae_data data is aggregated data
 	ivector larvae_likelihood_type; // Likelihood function for larvae densities

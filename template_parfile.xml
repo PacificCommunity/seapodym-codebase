@@ -83,7 +83,7 @@
 
 <!-- Larvae likelihood-->
 <larvae_likelihood yft="1"/>
-<larvae_likelihood_type yft="0"/><!-- Spawning Habitat likelihood: 0 - (Mixed) Gaussian Kernel, 1 - (Categorical) Poisson, 2 - (Categorical) Truncated Poisson, 3 - (Categorical) Zero-Inf Neg. Bin., 4 - (Categorical) Zero-Inf Poisson-->
+<larvae_likelihood_type yft="0"/><!-- Early life stage likelihood: 0 - (Mixed) Gaussian Kernel, 1 - (Categorical) Poisson, 2 - (Categorical) Truncated Poisson, 3 - (Categorical) Zero-Inf Neg. Bin., 4 - (Categorical) Zero-Inf Poisson-->
 <fit_null_larvae yft="1"/>
 <weight_null_larvae yft="0.0379394"/> <!-- weigth to apply to null larvae density observations in likelihood calculation. Here, 0.0379394 = 422/11123  -->
 <nb_larvae_cat yft="4"/>
@@ -137,7 +137,7 @@
 <larvae_input_aggregation_imonths>1 4 7 10</larvae_input_aggregation_imonths>
 
 <!-- For habitat model -->
-<spawning_habitat_input flag="1"/><!-- 0 if spawning habitat from output/<sp>_spwaning_habitat_input.dym; 1 - if if spawning habitat from file_larvae_data -->
+<fit_spawning_habitat_raw flag="0"/><!-- 1 - fit to output/<sp>_spwaning_habitat_input.dym; 0 - fit to file_larvae_data, using q_sp_larvae -->
 <habitat_run type="0"/>
 
 

@@ -171,16 +171,11 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 					dvariable N_pred = Larvae_density_pred(i,j);
 					dvariable lkhd;
 					if (param->larvae_input_categorical_flag[sp]){
-						int L_obs  = mat.larvae_input(t,i,j);
+						int L_obs  = larvae_input(t,i,j);
 						lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
-
 					}else{
-						double L_obs  = mat.larvae_input(t,i,j);
+						double L_obs  = larvae_input(t,i,j);
 						lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
-						/*if (t_count==1 && i == 1){
-							TTTRACE(t_count, L_obs, N_pred)
-							TRACE(lkhd)
-						}*/
 					}
 					likelihood += lkhd;
 					larvaelike += value(lkhd);

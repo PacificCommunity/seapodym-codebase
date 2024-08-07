@@ -53,6 +53,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 			ReadClimatologyOxy(1, qtr);
 	}
 	dvariable likelihood = 0.0;
+	double larvaelike = 0.0;
 	reset(x);
 	//----------------------------------------------//
 	// 	LOCAL MATRICES ALLOCATION SECTION       //
@@ -260,40 +261,43 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 		//------------------------------------------------------//
 		//	     LIKELIHOOD FOR SPAWNING HABITAT		//
 		//------------------------------------------------------//
-		if (param->habitat_run_type==0){
-
-	                int rr_x = (int)nlon/nlon_input;
-        	        int rr_y = (int)nlat/nlat_input;
+		if (!param->habitat_run_type){
+			int rr_x = (int)nlon/nlon_input;
+        	int rr_y = (int)nlat/nlat_input;
 			if (rr_x<1 || rr_y<1){ 
 				cerr << "Model resolution should be divisible without remainder by the resolution of input density field." << 
 				         endl<< "Currenly nlon/nlon_input = " << rr_x << ", and nlat/nlat_input = " << rr_y << endl << "Will exit now...";
 				exit(1);
 			}
 
-			if (param->spawning_habitat_input_flag==0){
+			if (param->fit_spawning_habitat_raw){
 				for (int i=1; i<nlon_input; i++){
 					for (int j=1; j<nlat_input; j++){
-						double    H_obs  = mat.habitat_input[0][t_count][i][j];
+						double H_obs = mat.habitat_input[0][t_count][i][j];
 						if (H_obs>0){
 							int ncount = 0;
 							dvariable Hmean_pred = 0.0;
-							for (int ii=0; ii<rr_x; ii++)
-							for (int jj=0; jj<rr_y; jj++){
-								if (map.carte[rr_x*i+ii][rr_y*j+jj]){
-									Hmean_pred += Habitat(rr_x*i+ii,rr_y*j+jj);
-									ncount ++;
+							for (int ii=0; ii<rr_x; ii++){
+								for (int jj=0; jj<rr_y; jj++){
+									if (map.carte[rr_x*i+ii][rr_y*j+jj]){
+										Hmean_pred += Habitat(rr_x*i+ii,rr_y*j+jj);
+										ncount ++;
+									}
 								}
 							}
 							if (ncount)
-									Hmean_pred /= ncount;
+								Hmean_pred /= ncount;
 							//if (Hmean_pred>0)
 							likelihood += (H_obs-Hmean_pred)*(H_obs-Hmean_pred);
 						}
 					}
 				}		
+			}else{
+				if (!param->larvae_input_aggregated_flag[0]){
+					larvaelike += get_larvae_like(likelihood, Habitat, mat.habitat_input[0], t_count-nbt_building);
+				}
 			}
 		}
-
 
 		if (writeoutputfiles){
 			if (!param->gcalc())
@@ -301,19 +305,19 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 			//write model habitat into a DYM file
  			dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
-                        mat2d.initialize();
-                        for (int i=map.imin; i <= map.imax; i++){
-                                for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
-                                        if (map.carte[i][j]){
-                                                //mat2d(i-1,j-1) = mat.habitat_input(t_count,i,j);
-                                                mat2d(i-1,j-1) = value(Habitat(i,j));//if multiple, always the last habitat is written!
-                                        }
-                                }
-                        }
+			mat2d.initialize();
+			for (int i=map.imin; i <= map.imax; i++){
+					for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
+							if (map.carte[i][j]){
+									//mat2d(i-1,j-1) = mat.habitat_input(t_count,i,j);
+									mat2d(i-1,j-1) = value(Habitat(i,j));//if multiple, always the last habitat is written!
+							}
+					}
+			}
 			double minval=0.0;
 			double maxval=1.0;
 
-                        rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
+            rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
 			//update min-max values in header
 			rw.rwbin_minmax(fileout, minval, maxval);
 
@@ -324,16 +328,14 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 	} // end of simulation loop
 
-	// Compute larvae likelihood
-	if (param->larvae_input_aggregated_flag[0]){
+	// Compute larvae likelihood on aggregated habitat
+	if (!param->fit_spawning_habitat_raw && param->larvae_input_aggregated_flag[0]){
 		// Compute the average larvae habitat over the entire period
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
 			for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
 				Habitat_pred_at_obs(iAgg, k) /= ntime_agg[iAgg];
 			}
 		}
-
-		double larvaelike=0;
 		larvaelike += get_larvae_like(likelihood, Habitat_pred_at_obs);
 	}
 
@@ -351,22 +353,27 @@ void SeapodymCoupled::ReadHabitat()
 	//mat.createMatHabitat_input(map,param->nb_habitat_run_age,nbt_total);
 	int nlevel = 0;
 	string file_input;
-	if (param->habitat_run_type==0)
-		if (param->spawning_habitat_input_flag==0){
+	if (param->habitat_run_type==0){
+		if (param->fit_spawning_habitat_raw){
 			file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
 		}else{
 			file_input = param->strfile_larvae;
 		}
-	else
+	}else{
 		file_input = param->strdir_output + param->sp_name[0] + "_feeding_habitat_input_age1.dym";
-
+	}
     rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
 
 	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
 	if (nlevel != nb_larvae_input_agg_groups && param->larvae_input_aggregated_flag[0]){
-		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
+		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file." << endl;
 		exit(1);
-
+	}
+	if (!param->fit_spawning_habitat_raw){
+		if (nlon!=nlon_input || nlat != nlat_input){
+			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Spatial resolution of \"" << file_input << " does not match the model resolution. Coarser resolution of <file_larvae_data> habitat input is not implemented yet. Use either <fit_spawning_habitat_raw> = \"1\" or <file_larvae_data> that match model resolution." << endl;
+			exit(1);			
+		}
 	}
 
 	//equivalent to mat.createMatHabitat_input:
@@ -450,7 +457,7 @@ void SeapodymCoupled::ReadHabitat()
 	}
 	t_count = t_count_init;
 
-	if (param->spawning_habitat_input_flag==1 && param->larvae_input_aggregated_flag[0]){
+	if (!param->fit_spawning_habitat_raw && param->larvae_input_aggregated_flag[0]){
 		// Vector of non-NA observed density
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
 			if (iAgg <= (int) index_habitat_input.size()){

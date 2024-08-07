@@ -228,13 +228,15 @@ bool VarParamCoupled::read(const string& parfile)
 	}
 
 	if (habitat_run_type==0){
-		if (doc.get("/spawning_habitat_input","flag").empty()){
-			spawning_habitat_input_flag = 0;
+		if (doc.get("/fit_spawning_habitat_raw","flag").empty()){
+			fit_spawning_habitat_raw = 1;
 		}else{
-			spawning_habitat_input_flag = doc.getInteger("/spawning_habitat_input", "flag");
+			fit_spawning_habitat_raw = doc.getInteger("/fit_spawning_habitat_raw", "flag");
+			if (doc.get("/strdir_larvae", "value").empty() || doc.get("/file_larvae_data", "value").empty()){
+				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <strdir_larvae> and <file_larvae_data> fields." << endl; exit(1);
+			}
 		}
 	}
-
 
 	////////////////////
 	// FORAGE SECTION
@@ -410,6 +412,10 @@ bool VarParamCoupled::read(const string& parfile)
 		// Larvae catachability
 		if (!doc.get("/q_sp_larvae",sp_name[sp]).empty()){
 			q_sp_larvae[sp] = doc.getDouble("/q_sp_larvae", sp_name[sp]);
+		}else{
+			if (!fit_spawning_habitat_raw){
+				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <q_sp_larvae> fields." << endl; exit(1);
+			}
 		}
 
 		// sigma parameter in Gaussian kernel used for larvae likelihood
