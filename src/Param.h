@@ -163,7 +163,7 @@ public:
 	int nb_larvae_input_agg_groups;
 
 	// Larvae likelihood parameters
-	ivector larvae_like; // weither to comute larvae likelihood, [sp]
+	ivector larvae_like; // weither to compute larvae likelihood, [sp]
 	DVECTOR q_sp_larvae;           // Larvae catchability, [sp]
 	DVECTOR likelihood_larvae_sigma;		// sigma parameter in Gaussian kernel used for larvae likelihood
 	DVECTOR likelihood_larvae_beta;		// betaf parameter in ZINB used for larvae likelihood
