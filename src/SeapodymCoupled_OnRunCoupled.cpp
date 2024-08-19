@@ -525,7 +525,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 				Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,pop_built,tcur);//checked
 
 			//8. Extract larvae density
-			if (t_count > nbt_building+nbstoskip){
+			if ((t_count > nbt_building+nbstoskip) && (t_count <= nbt_no_forecast)){
 				const int nb_lv = param->sp_nb_cohort_lv[sp];
 				if (param->larvae_like[0]){
 					if (param->larvae_mortality_sst[sp]){
@@ -581,7 +581,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			get_catch_lf_like(likelihood);
 
 		// IV. Larvae likelihood
-		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0]){
+		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0] && (t_count > nbt_building+nbstoskip) && (t_count <= nbt_no_forecast)){
 			// Read larvae input data
 			int nbytetoskip = (9 +(3* nlat * nlon) + (nbt_total - nbt_building-nbstoskip) + ((nlat *nlon)* (t_count-nbt_building-nbstoskip-1))) * 4;
 			rw.rbin_input2d(param->strfile_larvae, map, mat.larvae_input[tcur], nbi, nbj, nbytetoskip);
