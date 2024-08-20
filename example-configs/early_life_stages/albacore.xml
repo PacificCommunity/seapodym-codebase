@@ -80,6 +80,17 @@
     <variable min="0.0" max="100.0" use="true"/>
 </q_sp_larvae>
 
+<larvae_mortality_sst alb="1"/> <!-- 1 - larvae mortality should be dependent on SST, with inv_M_maxi, inv_M_rate and age_larvae_before_sst_mortality functions parameters -->
+<inv_M_max alb="60.0">
+    <variable min="0.0" max="100.0" use="true"/>
+</inv_M_max>
+<inv_M_rate alb="0.06">
+    <variable min="0.0" max="100.0" use="true"/>
+</inv_M_rate>
+<age_larvae_before_sst_mortality alb="10.0">
+    <variable min="1.0" max="30.0" use="true"/>
+</age_larvae_before_sst_mortality>
+
 
 <!--Likelihood functions: 1 - concentrated, 2 - log-normal, 3 - poisson, 4 - negative binomial, 5 - zero-inflated negbin, 6 - truncated poisson -->
 <!--can be different for each fishery (see below the fishery codes) -->
