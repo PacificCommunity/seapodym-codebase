@@ -144,6 +144,8 @@
         <nb_files skj="22"/>
         <skj file1="skj-pop-tags_20090115.txt" file2="skj-pop-tags_20090215.txt" file3="skj-pop-tags_20090315.txt" file4="skj-pop-tags_20090415.txt" file5="skj-pop-tags_20090515.txt" file6="skj-pop-tags_20090615.txt" file7="skj-pop-tags_20090815.txt" file8="skj-pop-tags_20091015.txt" file9="skj-pop-tags_20091115.txt" file10="skj-pop-tags_20091215.txt" file11="skj-pop-tags_20100115.txt" file12="skj-pop-tags_20100215.txt" file13="skj-pop-tags_20100315.txt" file14="skj-pop-tags_20100415.txt" file15="skj-pop-tags_20100515.txt" file16="skj-pop-tags_20100615.txt" file17="skj-pop-tags_20100715.txt" file18="skj-pop-tags_20100815.txt" file19="skj-pop-tags_20100915.txt" file20="skj-pop-tags_20101015.txt" file21="skj-pop-tags_20101115.txt" file22="skj-pop-tags_20101215.txt"/>
 </file_tag_data>
+<use_tag_masks flag="0"/>
+<strdir_tagmasks value="/home/lucasb/SEAPODYM/data/tagging/skj/ds2016/tagmasks/run-interim_2x30d_po/biomass5pcts/0.5knots/"/>
 
 <!-- Output Directory and writing flags-->
 <strdir_output value="output/"/>
