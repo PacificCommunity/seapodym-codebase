@@ -232,7 +232,7 @@ bool VarParamCoupled::read(const string& parfile)
 			fit_spawning_habitat_raw = 1;
 		}else{
 			fit_spawning_habitat_raw = doc.getInteger("/fit_spawning_habitat_raw", "flag");
-			if (doc.get("/strdir_larvae", "value").empty() || doc.get("/file_larvae_data", "value").empty()){
+			if (!fit_spawning_habitat_raw && (doc.get("/strdir_larvae", "value").empty() || doc.get("/file_larvae_data", "value").empty())){
 				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <strdir_larvae> and <file_larvae_data> fields." << endl; exit(1);
 			}
 		}
@@ -413,7 +413,7 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/q_sp_larvae",sp_name[sp]).empty()){
 			q_sp_larvae[sp] = doc.getDouble("/q_sp_larvae", sp_name[sp]);
 		}else{
-			if (!fit_spawning_habitat_raw){
+			if (!fit_spawning_habitat_raw && habitat_run_type==0){
 				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <q_sp_larvae> fields." << endl; exit(1);
 			}
 		}
