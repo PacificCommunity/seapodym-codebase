@@ -63,6 +63,7 @@ public:
 	DMATRIX Ha;
 	DMATRIX mat2d_NoBorder;
 	D3_ARRAY mortality;
+	dmatrix mortality_range_age;
 	
 	ivector nb_age_built;	// counter for the cohort 'built' during spinup
         dmatrix mean_speed;     // weigthed (by cohort distribution) average of cohort speed

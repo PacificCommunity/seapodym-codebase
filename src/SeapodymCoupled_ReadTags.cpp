@@ -122,7 +122,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 
 	tag_release ***rel_rtxt;
 
-	int ntags_max = 2000; //in one file
+	int ntags_max = 1500; //in one file
 	rel_rtxt = new tag_release** [nb_tagpops];
 	for (int p=0; p<nb_tagpops; p++){
 		rel_rtxt[p] = new tag_release* [nbt_total];
@@ -141,7 +141,6 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 
 	int nbtot_tags_files = 0;
 	for (int p=0; p<nb_tagpops; p++){
-
 		string file_in = param->file_tag_data[p];
 		//date of all recaptures in the cohort will be read from the name of the file
 		int date_rec = get_date_recaptures(file_in);	
@@ -169,7 +168,6 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 		float lon,lat,lon_rec,lat_rec;//,len_rel,len_rec;
 		string id,tag_no,len_rel,len_rec;//,dd_rec;
 		//string id,tag_no;
-
 		int i_mod = 0;
 		int j_mod = 0;
 		int age_mod = 0;
@@ -192,7 +190,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 				//time at liberty
 				int days_liberty = jday_rec-jday_rel;
 				float dtlib = (float)days_liberty/deltaT;
-
+if (dtlib>3) continue;
 				//2. tag length to model's age index
 				age_mod = 0;
 				//for (int a=0; a<param->sp_nb_cohorts[0]; a++){

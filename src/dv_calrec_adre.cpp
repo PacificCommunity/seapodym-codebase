@@ -17,7 +17,7 @@ void save_long_int_value(unsigned long int x);
 unsigned long int restore_long_int_value(void);
 
 
-void CCalpop::Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_matrix& mortality, const int t_count)
+void CCalpop::Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_matrix& mortality, const int t_count, const double move_dtmod)
 {
 	bm = value(dvarsBM);
 	xbet = value(Xbet);
@@ -29,6 +29,7 @@ void CCalpop::Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_
 	dvarsBM.save_dvar_matrix_position();
 	Xbet.save_dvar_matrix_position();
 	save_int_value(t_count);
+	save_double_value(move_dtmod);
 	mortality.save_dvar_matrix_value();
 	mortality.save_dvar_matrix_position();
 	unsigned long int pop   = (unsigned long int)this;
@@ -52,6 +53,7 @@ void dv_calrec_adre()
 	unsigned long int pos_pop = restore_long_int_value();
 	const dvar_matrix_position m_pos = restore_dvar_matrix_position();
 	const dmatrix mort = restore_dvar_matrix_value(m_pos);
+	const double move_dtmod = restore_double_value();
 	const int t_count = restore_int_value();
 	const dvar_matrix_position xbet_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position bm_pos   = restore_dvar_matrix_position();
@@ -110,7 +112,7 @@ void dv_calrec_adre()
 	e.initialize();
 	f.initialize();
 	
-	pop->RecompDiagCoef_juv(*map, *mat, t_count, mort, a, bm, c, d, e, f);
+	pop->RecompDiagCoef_juv(*map, *mat, t_count, mort, a, bm, c, d, e, f, move_dtmod);
 
 	//recompute xbet and ybet
 	dmatrix xbet, ybet;
@@ -179,7 +181,7 @@ void dv_calrec_adre()
 			// recomputing rhs(i)
 			for (int i = imin; i <= imax; i++) {   
 
-					rhs[i] = -d[i][j]*luu[itr-1][i][j-1] + (2*iterationNumber-e[i][j])*luu[itr-1][i][j] - f[i][j]*luu[itr-1][i][j+1];
+				rhs[i] = -d[i][j]*luu[itr-1][i][j-1] + (2*iterationNumber-e[i][j])*luu[itr-1][i][j] - f[i][j]*luu[itr-1][i][j+1];
 				
 			}
 

@@ -19,7 +19,7 @@ double log_factorial(const double x);
 
 dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const int nobs)
 {
-        double catch_mult = 1.0; // need to make it a vector of length nb_fishery 
+        double catch_mult = 0.25; // need to make it a vector of length nb_fishery 
 				 // and assign values outside of this routine
 
 	dvariable likelihood = 0.0;
@@ -31,7 +31,7 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 
 	bool cpue = param->cpue;
 	int like_type = param->like_types[sp][k];
-	const double sigma_2 = pow(3.0,-2);  
+	const double sigma_2 = pow(5.0,-2);  
 
 	fillmatrices(map, mat.effort(f), mat.catch_obs(sp,k), mat.dvarCatch_est(sp,k), 
 		     data_obs, data_est, cpue, param->cpue_mult(f),catch_mult);
@@ -73,6 +73,7 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 			 break;
 
         }
+	likelihood = 0.05*likelihood;
 	clike_fishery[f] += value(likelihood);
 
 	//length frequency likelihood
@@ -100,12 +101,14 @@ double SeapodymCoupled::get_stock_like(dvariable& total_stock, dvariable& likeli
 
 	double stocklike  = 0.0;
 	for (int sp=0; sp < nb_species; sp++){
-		if (!param->stock_like[sp] & !param->scalc()) return 0;
-		if (param->stock_like[sp]){
-			cout << "stock size: " << total_stock << endl;
+		if (!param->stock_like[sp]) return 0;
+		else {
+			if (!param->scalc()) cout << "stock size: " << total_stock << endl;
 			double mean_total_stock_obs = param->mean_stock_obs[sp];  
-			likelihood += (total_stock-mean_total_stock_obs)*(total_stock-mean_total_stock_obs);
-			stocklike += value((total_stock-mean_total_stock_obs)*(total_stock-mean_total_stock_obs));
+			if (total_stock > mean_total_stock_obs){
+			    likelihood += 0.5*(total_stock-mean_total_stock_obs)*(total_stock-mean_total_stock_obs);
+			    stocklike += 0.5*value((total_stock-mean_total_stock_obs)*(total_stock-mean_total_stock_obs));
+			}
 		}
 	}
 	return stocklike;
@@ -179,6 +182,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 						switch (like_type){
 							case 0: // Gaussian cost function
 								lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+								//lkhd = .5*(L_obs-N_pred)*(L_obs-N_pred);
 								break;
 
 							case 1:{// Poisson cost function
@@ -300,10 +304,10 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 				tagpop_age_solve(p,t_count).initialize();
 
 				//append to the aggregated predictions and observations
-				//rec_obs_like  += elem_prod(rec_obs(p),tlib_obs(p));
-				//rec_pred_like += elem_prod(rec_pred(p),tlib_obs(p));
-				rec_obs_like  += rec_obs(p);
-				rec_pred_like += rec_pred(p);
+				rec_obs_like  += elem_prod(rec_obs(p),tlib_obs(p));
+				rec_pred_like += elem_prod(rec_pred(p),tlib_obs(p));
+				//rec_obs_like  += rec_obs(p);
+				//rec_pred_like += rec_pred(p);
 				//cout << norm(tlib_obs(p)) << " " << sum(rec_obs_like)<< " " << sum(value(rec_pred_like)) << endl;
 /*		
 				//1. Concentrated
@@ -349,7 +353,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					if (month>9) ostr << month <<15;
 					else
 						ostr << 0 << month <<15;
-					string file_out = "./" + param->sp_name[0] + "_tags_pred_"  + ostr.str() + ".txt";
+					string file_out = "./tags/" + param->sp_name[0] + "_tags_pred_"  + ostr.str() + ".txt";
 					wtxt.open(file_out.c_str(), ios::out);
 					
 					if (wtxt){
@@ -359,7 +363,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					}
 					wtxt.close();
 			
-					file_out = "./" + param->sp_name[0] + "_tags_obs_"  + ostr.str() + ".txt";
+					file_out = "./tags/" + param->sp_name[0] + "_tags_obs_"  + ostr.str() + ".txt";
 					//file_out = "./" + param->sp_name[0] + "_releases_obs_"  + ostr.str() + ".txt";
 					wtxt.open(file_out.c_str(), ios::out);
 					if (wtxt){
@@ -378,7 +382,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		//spatial 2d
 		//* Note, the comments denoted '//*' is the code of SKJ taglike (verion J)
 		//int nb_obs = sum(rec_obs_like);
-		const float ww = 1.0; //use it if TL weight are off, but need to make it species-specific
+		//const float ww = 1.0; //use it if TL weight are off, but need to make it species-specific
 		//const float ww = 5e-5;//20201215: increasing weight to 5e-4 for CLT experiments
 		//double sf = 1.0;
 		//double sf = ww*(1.0-nb_obs/(5.0+nb_obs));
@@ -392,14 +396,35 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		//1d (by lontigude and by latitude)
 		/// comment this for e2
 		
-		dvector obs_lon = rowsum(rec_obs_like);
+/*		dvector obs_lon = rowsum(rec_obs_like);
 		dvector obs_lat = colsum(rec_obs_like);
 		dvar_vector pred_lon = rowsum(rec_pred_like);
 		dvar_vector pred_lat = colsum(rec_pred_like);	
 		taglike += ww*(value(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat)));
 		likelihood += ww*(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat));
-		//taglike += (value(norm2(log(obs_lon+1)-log(pred_lon+1))+norm2(log(obs_lat+1)-log(pred_lat+1))));
+*/		//taglike += (value(norm2(log(obs_lon+1)-log(pred_lon+1))+norm2(log(obs_lat+1)-log(pred_lat+1))));
 		//likelihood += (norm2(log(obs_lon+1)-log(pred_lon+1))+norm2(log(obs_lat+1)-log(pred_lat+1)));
+		//int nb_obs = sum(rec_obs_like);
+		const double ww = 0.0001;
+		//const float ww = 1.0; //if no tlib as weights
+//		double sf = ww*(1.0-nb_obs/(5.0+nb_obs));
+//		taglike += sf*value(norm2(log(rec_obs_like+1e-1)-log(rec_pred_like+1e-1)));
+		//cout << sf << " " << log(rec_obs_like+1e-1) << " "<< log(rec_pred_like+1e-1)<<" " << taglike << endl;
+//		likelihood += sf*norm2(log(rec_obs_like+1e-1)-log(rec_pred_like+1e-1));
+
+		taglike += ww*value(norm2(rec_obs_like-rec_pred_like));
+		likelihood += ww*norm2(rec_obs_like-rec_pred_like);
+
+		//1d (by lontigude and by latitude)	
+		dvector obs_lon = rowsum(rec_obs_like);
+		dvector obs_lat = colsum(rec_obs_like);
+		dvar_vector pred_lon = rowsum(rec_pred_like);
+		dvar_vector pred_lat = colsum(rec_pred_like);	
+		taglike += 0.5*ww*(value(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat)));
+		likelihood += 0.5*ww*(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat));
+		//taglike += 0.15*ww*(value(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat)));
+		//likelihood += 0.15*ww*(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat));
+		
 	}
 
 	return taglike;
@@ -433,8 +458,8 @@ dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, cons
 			double tau = PL/sum_lf_obs;
 			I = Nobs; inv_I = 1.0/I;
 			likelihood += I*log(PLconst*tau);
-			//for (int a=a0; a<nb_ages; a++){
-			for (int a=a0; a<nb_ages-1; a++){//not taking the last A+ cohort in the likelihood to avoid bias!
+			for (int a=a0; a<nb_ages; a++){
+			//for (int a=a0; a<nb_ages-1; a++){//not taking the last A+ cohort in the likelihood to avoid bias!
 				lf_obs(a) /= sum_lf_obs;
 				lf_est(a) /= sum_lf_est;
 				double ksi = lf_obs(a)*(1.0-lf_obs(a));
@@ -445,6 +470,7 @@ dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, cons
 			}
 		}
 	}
+	likelihood = 0.2*likelihood;		
 	alike += value(likelihood);
 
 	return(likelihood);

@@ -40,9 +40,9 @@ int main(int argc, char** argv) {
 
 int OptionToCode(char* op, int &sub_option) {
 
-	const int N = 22;
-	const char *cmdop[N] = {"-ph","-s","-p","-H","-sa","-t","-h","-v","--phases","--simulation","--likelihood-projection","--hessian","--sensitivity-analysis","--twin-experiment","--help","--version","-t=0","-sa=0","-t=1","-sa=1","-sa=2","-sa=3"};
-	int cmpCode[N] = {-11,0,1,2,3,4,-3,-2,-11,0,1,2,3,4,-3,-2,4,3,4,3,3,3};
+	const int N = 20;
+	const char *cmdop[N] = {"-ph","-s","-p","-H","-sa","-t","-h","-v","--phases","--simulation","--likelihood-projection","--hessian","--sensitivity-analysis","--taylor-test","--help","--version","-sa=0","-sa=1","-sa=2","-sa=3"};
+	int cmpCode[N] = {-11,0,1,2,3,4,-3,-2,-11,0,1,2,3,4,-3,-2,3,3,3,3};
 	for (int i=0; i<N; i++)
 		if (strcmp(op,cmdop[i])==0){
 			if (i>=N-4) sub_option = 1;
@@ -71,8 +71,7 @@ void help(char* argv0) {
 	cout << "   --sensitivity-analysis[=FLAG] If FLAG=1 the sensitivity function takes both predictions and observations.\n";
 	cout << "   --sensitivity-analysis[=FLAG] If FLAG=2 ONE-AT-A-TIME sensitivity analysis.\n";
 	cout << "   --sensitivity-analysis[=FLAG] If FLAG=3 ALL-AT-A-TIME sensitivity analysis.\n";
-	cout << "  -t[=FLAG]   \t\t\t Perform identical (by default, or FLAG=0) twin experiment.\n";
-	cout << "   --twin-experiment=[FLAG] \t If FLAG=1 the noise will be added to the artificial data.\n";
+	cout << "  -t, --taylor-test   \t\t Perform Taylor derivative test with central differencing.\n";
 	cout << "  -v, --version \t\t Print version number and exit.\n";
 	exit(0);
 }

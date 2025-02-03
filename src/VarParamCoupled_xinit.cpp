@@ -18,6 +18,7 @@ void VarParamCoupled::xinit(dvector& x, adstring_array& x_names)
 	par_init(dvarsMp_mean_exp,Mp_mean_exp,Mp_mean_exp_min,Mp_mean_exp_max,"/Mp_mean_exp",x,x_names,idx);
 	par_init(dvarsMs_mean_max,Ms_mean_max,Ms_mean_max_min,Ms_mean_max_max,"/Ms_mean_max",x,x_names,idx);
 	par_init(dvarsMs_mean_slope,Ms_mean_slope,Ms_mean_slope_min,Ms_mean_slope_max,"/Ms_mean_slope",x,x_names,idx);
+	par_init(dvarsM_larvae_range,M_larvae_range,M_larvae_range_min,M_larvae_range_max,"/M_larvae_range",x,x_names,idx);
 	par_init(dvarsM_mean_range,M_mean_range,M_mean_range_min,M_mean_range_max,"/M_mean_range",x,x_names,idx);
 
 	par_init(dvarsA_sst_spawning,a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",x,x_names,idx);

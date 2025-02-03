@@ -216,8 +216,8 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 			for (int n=0; n<param->sp_nb_cohort_lv[sp]; n++){
 				double mean_age = mean_age_cohort[sp][age]; 
 				func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
-				pop.Precalrec_juv(map, mat, Mortality, tcur);//checked
-				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur);//checked
+				pop.Precalrec_juv(map, mat, Mortality, tcur, 1);//checked
+				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur, 1);//checked
 				age++;
 			}
 			//2.3. Juvenile habitat	
@@ -232,8 +232,8 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				double mean_age = mean_age_cohort[sp][age];
 
 				func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);
-				pop.Precalrec_juv(map,  mat, Mortality, tcur);
-				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur);
+				pop.Precalrec_juv(map,  mat, Mortality, tcur, 1);
+				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur, 1);
 				age++;
 			}
 			
@@ -323,7 +323,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				nt_dtau=0;
 			}
 			//7. Spawning
-			Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,pop_built,tcur);//checked
+			Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
 		}//end of 'sp' loop
 
 		//------------------------------------------------------//

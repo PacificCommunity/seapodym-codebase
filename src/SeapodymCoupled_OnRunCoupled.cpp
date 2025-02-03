@@ -89,7 +89,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	dvar_matrix ISR_denom; 
 	dvar_matrix FR_pop;
 	dvar_matrix Mortality; 
-
+			
 	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
@@ -109,27 +109,8 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Mortality.initialize();
 
 	// For aggregated larvae likelihood
-	dvar_matrix Larvae_density_pred_at_obs;
-	IVECTOR kinf;
-	IVECTOR ksup;
-	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
-	int ntime_agg[nb_larvae_input_agg_groups];
-	if (param->larvae_like[0]){
-		for (int i = 0; i < nb_larvae_input_agg_groups; ++i) {
-			ntime_agg[i] = 0;
-		}	
-		if (param->larvae_input_aggregated_flag[0]==1 && param->larvae_like[0]){
-			// Aggregated larvae density over the entire period, only at obs. locations
-			kinf.allocate(0, nb_larvae_input_agg_groups-1);
-			ksup.allocate(0, nb_larvae_input_agg_groups-1);
-			for (int k = 0; k < nb_larvae_input_agg_groups; k++){
-				kinf[k] = 0;
-				ksup[k] = mat.aggregated_larvae_input_vectors[k].size();
-			}
-			Larvae_density_pred_at_obs.allocate(0, nb_larvae_input_agg_groups-1, kinf, ksup);
-			Larvae_density_pred_at_obs.initialize();	
-		}
-	}
+	if (param->larvae_like[0])
+		create_init_larvae_vars();		
 
 	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
@@ -178,15 +159,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////
 
-	//Add penalty function to the likelihood for sum(eF_habitat)<eF_sum
-	//Not used currently
-	double eFlike = 0.0;
-/*	if (param->tag_like[0]){
-		dvariable dvarEF_sum = sum(param->dvarsEF_habitat);
-		likelihood -= 1e1*log(eF_sum-dvarEF_sum);
-		eFlike -= 1e1*log(eF_sum - value(dvarEF_sum));
-	}
-*/
+
 	for (;t_count <= nbt_total; t_count++)
 	{
 		//----------------------------------------------//
@@ -256,7 +229,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		//	READING CATCH DATA: C_obs, effort	//
 		//----------------------------------------------//
 		if (!tags_only && (nb_fishery > 0) && sum(param->mask_fishery_sp) && ( t_count > nbt_building) 
-				&& (year>=(int)param->save_first_yr) && (t_count <= nbt_no_forecast) && sum(param->mask_fishery_sp_like)){
+				&& (year>=(int)param->save_first_yr) && (t_count <= nbt_no_forecast)){// && sum(param->mask_fishery_sp_like)){
 			mat.catch_est.initialize();
 			rw.get_fishery_data(*param, mat.effort, mat.catch_obs, mat.efflon, mat.efflat, year, month);
 			fishing = true;
@@ -293,16 +266,29 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//
 		//------------------------------------------------------------------------------//
 		//------------------------------------------------------------------------------//
-		mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
-		//Precompute diagonal coefficients for larvae and juvenile ADREs
-		pop.precaldia(*param, map, mat);
-		pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+
 		for (int sp=0; sp < nb_species; sp++){
+		
+			int elarvae_model = param->elarvae_model[sp];
+			//if !elarvae_model, elarvae_dt = 0 as elarvae_age = 0
+			elarvae_dt = param->elarvae_age[sp]/deltaT; 
+			double sigma_fcte_save = param->sigma_fcte;
+
+			//Precompute diagonal coefficients for larvae and juvenile ADREs
+			if (!elarvae_model){
+				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+				pop.precaldia(*param, map, mat);
+				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+			}
+
 			//store fish density before transport
 			for (int a=a0_adult(sp); a<aN_adult(sp); a++)
 				mat.density_before(sp,tcur,a) = value(mat.dvarDensity(sp,a));
 
 			//1. Precompute some variables outside of age loop
+			
+			//1.0 Forage scaling
+			func.Forage_Scaling(*param, mat, map, sp, tcur);
 
 			//1.1 Accessibility by adults (all cohorts)
  			func.Faccessibility(*param, mat, map, sp, jday, tcur, pop_built, tags_only, tags_age_habitat);//checked
@@ -324,24 +310,54 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			if (connectivity_comp)
 				Set_density_region_age_zero(sp);
 
+			//1.6 Precompute Mortality range at age function
+			func.mortality_range_age_comp(*param,mat,sp);
+
 			//2. IMPLICIT AGE LOOP: increment age while moving through life stages 
 			int age = 0;	
 
-			//2.1 Spawning habitat	
+			//2.0 If activated, the Early Larvae Model (ELM) solved over elarvae_age
+			if (elarvae_model){
+				//Do the time-splitting for the first age class: 
+				//1- early (just a few days after yolk stage) and 
+				//2- late (up to one month of age) larvae
+		
+				bool time_getpred = false;
+				if (year>=param->larvae_like_firstyear
+						&& year<=param->larvae_like_lastyear 
+						&& t_count > nbt_building+nbstoskip)
+					time_getpred = true;
+
+				elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+			}
+
+			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 
+			//2.1.1 Spawning habitat 	
 			if (!tags_only)
 				func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
-			//2.2 Transport and mortality of larvae (always one age class)	
+
+			//2.1.2 Transport and mortality of larvae (always one age class)	
 			for (int n=0; n<param->sp_nb_cohort_lv[sp]; n++){
 				double mean_age = mean_age_cohort[sp][age]; 
+Mortality.initialize();
 				if (!tags_only){
 					func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
-					pop.Precalrec_juv(map, mat, Mortality, tcur);//checked
-					pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur);//checked
+					pop.Precalrec_juv(map, mat, Mortality, tcur,(1-elarvae_dt));//checked
+					pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur,(1-elarvae_dt));//checked
 				}
 				age++;
 			}
-			///if (t_count > nbt_spinup_forage + nt_jv){ SPINUP TO BE FIXED OR REMOVED!!!
-			//2.3. Juvenile habitat	
+
+			//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
+			if (elarvae_model){
+				param->sigma_fcte = sigma_fcte_save;
+				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+				//Precompute diagonal coefficients for juvenile ADREs
+				pop.precaldia(*param, map, mat);
+				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+			}
+			
+			//2.2.1 Juvenile habitat	
 			if (!tags_only){
 				if (param->cannibalism[sp]){
 					Total_Pop_comp(Total_pop,sp,jday,tcur); //adjoint
@@ -350,17 +366,16 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 					func.Juvenile_Habitat(*param, mat, map, Habitat, sp, tcur);
 			}
 
-			//2.4. Transport and mortality of juvenile age classes	
+			//2.2.2 Transport and mortality of juvenile age classes	
 			for (int n=0; n<param->sp_nb_cohort_jv[sp]; n++){			
 				double mean_age = mean_age_cohort[sp][age];
 				if (!tags_only){
 					func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);
-					pop.Precalrec_juv(map,  mat, Mortality, tcur);
-					pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur);
+					pop.Precalrec_juv(map,  mat, Mortality, tcur,1);
+					pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur,1);
 				}
 				age++;
 			}
-			///} 
 			
 			//----------------------------------------------//
 			//	Fishing with effort data available	//
@@ -389,8 +404,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 				pop.Total_exploited_biomass_comp(map,*param,mat,sp,tcur);
 
 			//4. Transport and mortality of adult cohort
-			///if (t_count > nbt_spinup_forage + nt_yn){ TO BE FIXED!!!
-			///for (int age=0; age<=nb_age_built[sp]; age++){///TO BE FIXED!!!	
 			for (int n=0; n<param->sp_nb_cohort_ad[sp]; n++){
 
 				if (fishing && param->fisheries_no_effort_exist(sp))
@@ -518,32 +531,17 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			}
 			//7. Spawning
 			if (!tags_only)
-				Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,pop_built,tcur);//checked
+				Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
 
 			//8. Aggregate larvae density at larvae obs locations
-			if (t_count > nbt_building+nbstoskip){
-				if (param->larvae_input_aggregated_flag[0]==1 && param->larvae_like[0]){
-					const int nb_lv = param->sp_nb_cohort_lv[sp];
-					int iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
-
-					// Calculate scaling factor between larvae density at 1st time step and larvae density at age_larvae_before_sst_mortality days, based on sst-dependent mortality (if applicable)
-					if (param->larvae_mortality_sst[sp]){
-						func.Scaling_factor_sstdep_larvae_mortality(*param, mat.sst[tcur], map, mat.dvarScaling_factor_sstdep_larvae_mortality[sp], sp);
-					}
-
-					// Aggregate larvae density at larvae obs locations
-					for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
-						if (param->larvae_mortality_sst[sp]){// In this case, it only considers the first age class (even if nb_lv>1)
-							Larvae_density_pred_at_obs(iAgg, k) +=  mat.dvarDensity[sp][0][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]] * mat.dvarScaling_factor_sstdep_larvae_mortality[sp][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]];
-						}else{
-							for (int age=0; age<nb_lv; age++){
-								Larvae_density_pred_at_obs(iAgg, k) += mat.dvarDensity[sp][0][mat.aggregated_larvae_input_vectors_i[iAgg][k]][mat.aggregated_larvae_input_vectors_j[iAgg][k]];
-							}
-						}
-					}
-					ntime_agg[iAgg] += 1;
+			if (!elarvae_model){
+				if (year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
+				//if (t_count > nbt_building+nbstoskip){
+					if (param->larvae_input_aggregated_flag[0]==1 && param->larvae_like[0])
+						put_larvae_at_obs(sp,tcur);
 				}
 			}
+
 
 		}//end of 'sp' loop
 
@@ -551,14 +549,26 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		//		LIKELIHOOD SECTION			//
 		//------------------------------------------------------//
 		//I. Total abundance likelihood: augmented only if param->stock_like = true
-		if (t_count == nbt_total)
+		//II.  Early-life data likelihood: only once at last time step
+		if (t_count == nbt_total){
+
 			stocklike += get_stock_like(total_stock, likelihood);
+
+			//II. Early-life data likelihood: only once at last time step
+			if (param->larvae_like[0]){
+
+				get_larvae_at_obs();
+
+				larvaelike += get_larvae_like(likelihood, Larvae_density_pred_at_obs);
+			}
+			
+		}
 	
-		//II. Tag data likelihood
+		//III. Tag data likelihood
 		if (param->tag_like[0])
 			taglike += get_tag_like(likelihood, writeoutputfiles);
 
-		//III. Fishing data likelihoods
+		//IV-V. Fishing data likelihoods
 		if ((fishing) && (t_count > nbt_building+nbstoskip) && (t_count <= nbt_no_forecast))
 			get_catch_lf_like(likelihood);
 
@@ -597,10 +607,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 			WriteOutput(tcur, fishing);
 
-			if (tuna_spinup && t_count == nbt_building + 60){//temporal: the nb to skip can be set through parfile
-				//cout << date_str << "Saving initial distributions for simulation skipping spinup" << endl;
-				SaveDistributions(year, month);
-			}
 		}
 		nt_dtau++;
 		past_month=month;
@@ -609,32 +615,16 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 	} // end of simulation loop
 
-	// Compute larvae likelihood
-	if (param->larvae_like[0]){
-		// Compute the average larvae density over the entire period
-		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
-			for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
-				Larvae_density_pred_at_obs(iAgg, k) /= ntime_agg[iAgg];
-			}
-		}
-
-		larvaelike += get_larvae_like(likelihood, Larvae_density_pred_at_obs);
-		if (!param->gcalc()){
-			cout << "Larvae likelihood: " << larvaelike << endl;
-		}
-	}
-
 	if (writeoutputfiles) {SaveDistributions(year, month);
 		cout << "total catch in simulation (optimization): " << SUM_CATCH << endl;
 	}
-	//if (param->tag_like[0]){
-	//	delete_tag_releases();
-	//}
 	param->total_like = value(likelihood);
-	double clike = value(likelihood)-lflike-taglike-stocklike-eFlike-taglike-larvaelike;
+	double clike = value(likelihood)-lflike-taglike-stocklike-larvaelike;
 	if (!param->scalc()){ // all but sensitivity analysis
-		cout << "end of forward run, likelihood: " << defaultfloat <<
-		clike << " " << lflike << " " << taglike << " " << stocklike << " " << eFlike << " " << larvaelike << endl;
+
+		cout << "end of forward run, likelihood: " << defaultfloat << clike << " " << 
+			lflike << " " << taglike << " " << stocklike << " " << larvaelike << endl;
+
 		if (clike+lflike && writeoutputfiles)
 			OutputLikelihoodsFishery();
 	}
@@ -642,63 +632,4 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	return value(likelihood);
 }
 
-void SeapodymCoupled::ReadLarvae()
-{
-	cout << "Reading input larvae file: " << endl;
-	int nlevel = 0;
-	string file_input;
-	file_input = param->str_file_larvae;
-    rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
-	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
-	if (nlevel != nb_larvae_input_agg_groups){
-		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
-		exit(1);
 
-	}
-	cout << file_input << endl;
-
-	if (param->larvae_input_aggregated_flag[0]==1){
-		mat.larvae_input.allocate(0,nb_larvae_input_agg_groups-1);
-		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
-			mat.larvae_input[iAgg].allocate(1, nlon_input, 1, nlat_input);
-			mat.larvae_input[iAgg].initialize();
-		}
-
-		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
-			ifstream litbin(file_input.c_str(), ios::binary | ios::in);
-			const int sizeofDymInputType = sizeof(float);
-			float buf;
-			if (!litbin){
-				cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
-				exit(1);
-			}
-			int nbytetoskip_aggregatedfile = (9 +(3* nlat * nlon) + nb_larvae_input_agg_groups + (nlat *nlon*iAgg)) * 4;
-			litbin.seekg(nbytetoskip_aggregatedfile, ios::cur);
-			for (int j=0;j<nlat_input;j++){
-				for (int i=0;i<nlon_input;i++){
-					litbin.read(( char *)&buf,sizeofDymInputType);
-					mat.larvae_input[iAgg][i+1][j+1]= buf;
-				}
-			}
-			litbin.close();
-		}
-
-		// Vector of non-NA observed density
-		int ndata=0;
-		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
-			for (int j=0;j<nlat_input;j++){
-				for (int i=0;i<nlon_input;i++){
-					if (map.carte[i+1][j+1]){
-						if (mat.larvae_input[iAgg][i+1][j+1]>=0){
-							mat.aggregated_larvae_input_vectors[iAgg].push_back(mat.larvae_input[iAgg][i+1][j+1]);
-							mat.aggregated_larvae_input_vectors_i[iAgg].push_back(i+1);
-							mat.aggregated_larvae_input_vectors_j[iAgg].push_back(j+1);
-							ndata += 1;
-						}
-					}
-				}
-			}
-		}
-		cout << "Number of data points: " << ndata << endl;
-	}
-}

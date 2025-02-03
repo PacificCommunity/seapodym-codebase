@@ -73,8 +73,8 @@ private:
 	ivector a0_adult, aN_adult; //indices of adult cohorts
 	dmatrix mean_age_cohort;
 	dmatrix swa; //average selectivities
+	dmatrix qmld;
 
-	double eF_sum;
 	//Fluxes comp
 	int fluxes_dt_qtr;
 	int fluxes_between_polygons;
@@ -94,6 +94,12 @@ private:
 	imatrix nb_rel;
 	ivector t_count_rec;
 	i3_array tagpop_age_solve;
+
+	//larvae
+	dvar_matrix Larvae_density_pred_at_obs;
+	ivector kinf, ksup;
+	ivector ntime_agg;
+	double elarvae_dt;
 	
 
 	double lflike; // double value of lf_like
@@ -104,6 +110,11 @@ private:
 	double get_stock_like(dvariable& total_stock, dvariable& likelihood);
 	double get_tag_like(dvariable& likelihood, bool writeoutputs);
 	double get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_at_obs);
+	void create_init_larvae_vars();
+	void put_larvae_at_obs(const int sp, const int tcur);
+	void get_larvae_at_obs();
+	void elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles);
+	void write_elarvae_dym(const int sp);
 	void getDate(int& jday);
 	void SaveDistributions(const int year, const int month);
 	void UpdateTimeVars(int& nbt_total, int& nbt_start_series);
@@ -112,6 +123,7 @@ private:
 	void SaveCohortsDym(int sp, bool WriteHeader, dvector zlevel);
 	void SaveOneCohortDym(int sp, bool WriteHeader, dvector zlevel);
 	void SaveLarvaeBeforeSstMort(int sp, bool WriteHeader, dvector zlevel);
+	void WriteAVariableDym(const dmatrix var, string filename, bool WriteHeader);
 	void SaveCohorts(string fileout, int sp, bool FileMode);
 //	void SaveAdultsTuna(string fileAdu, int sp, bool FileMode);
 	void SaveIntermediate(const int sp, const int age);
@@ -169,9 +181,9 @@ private:
 	void Ageing(dvar_matrix& N_a, dvar_matrix& N_a_1);
         void AgePlus(dvar_matrix& N_a, dvar_matrix& N_a_1);
 
-	void Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& N_a, const int jday, const int sp, const int pop_built, const int t_count);
-	void spawning_spinup_comp(dmatrix& J, dmatrix& Hs, dmatrix& SST, double nb_recruitment, double Tmin);
-	void spawning_built_comp(dmatrix& J, dmatrix& Hs, const dmatrix  N, double nb_recruitment, double a_adults_spawning);
+	void Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& N_a, const int jday, const int sp, const int t_count);
+	void spawning_adult_func_comp(dmatrix& J, const dmatrix  N, double nb_recruitment, double a_adults_spawning);
+	void spawning_in_hs_comp(dmatrix& J, dmatrix& Hs, const dmatrix  N, double nb_recruitment, double a_adults_spawning);
 	double tetafunc(const double teta, const double arg);
 	int get_nt(const int a, const int sp, const bool adult);
 	//dvariable tetafunc(dvariable arg);

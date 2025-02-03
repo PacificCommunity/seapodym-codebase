@@ -2,6 +2,7 @@
 #include "SeapodymCoupled.h"
 
 string get_path(const char* full_path);
+void Taylor_derivative_test(const char* parfile);
 void Hessian_comp(const char* parfile);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
@@ -30,7 +31,7 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
 	long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
 	bool grad_calc = false;
-	if (cmp_regime==-1 || cmp_regime==2) grad_calc = true;
+	if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
 	buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
 	if (reset_buffers)
 		buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
@@ -46,9 +47,12 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 
 	cout << "\nstarting time: " << ctime(&time_sec) << endl;
 
-	//if mode 2, redirecting to Hessian routine and exit.
+	//if mode 2 or 4, redirecting to respective routine and exit.
 	if (cmp_regime == 2){
 		Hessian_comp(parfile);
+		return 0;
+	} else if (cmp_regime == 4){
+		Taylor_derivative_test(parfile);
 		return 0;
 	}
 
@@ -171,6 +175,18 @@ double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 	gradcalc(nvar,g); 
 	return like;
 }
+
+double run_sim(SeapodymCoupled& sc, dvar_vector x)
+{
+	double like = 0.0;
+	like = sc.run_density((dvar_vector)x);
+	if (like==0){
+		cerr << "No data in the likelihood - gradient will not be calculated, exiting now!" << endl;
+		exit(1);
+	}
+	return like;
+}
+
 
 void verify_identifier_string2(char* str1) //ASSUME str1 is not null
 {

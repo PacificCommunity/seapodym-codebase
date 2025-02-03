@@ -17,7 +17,7 @@ void save_long_int_value(unsigned long int x);
 unsigned long int restore_long_int_value(void);
 
 
-void CCalpop::Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortality, const int t_count)
+void CCalpop::Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortality, const int t_count,const double move_dtmod)
 {
 	dmatrix M_c    = value(mortality);
 	dmatrix bm_c   = value(dvarsBM);
@@ -51,14 +51,17 @@ void CCalpop::Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortal
 	unsigned long int cmat = (unsigned long int)&mat;
 	save_long_int_value(cmat);
 	save_int_value(t_count);
+	save_double_value(move_dtmod);
 	save_identifier_string2((char*)"Precalrec_juv_end");
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_precalrec_juv_comp);
+//}
 }
 
 void dv_precalrec_juv_comp(void)
 {
 	verify_identifier_string2((char*)"Precalrec_juv_end");
+	const double move_dtmod  = restore_double_value();
 	unsigned t_count   = restore_int_value();
 	unsigned long int pos_mat   = restore_long_int_value();
 	unsigned long int pos_pop   = restore_long_int_value();
@@ -93,7 +96,7 @@ void dv_precalrec_juv_comp(void)
 	bm.initialize();
 	c.initialize();
 
-	pop->Recomp_abc_coef(*map, *mat, t_count, mort, a, bm, c);
+	pop->Recomp_abc_coef(*map, *mat, t_count, mort, a, bm, c, move_dtmod);
 
 	//xbet_comp(map,dt);
 	dfxbet_juv_comp(dfbm,dfxbet,dfw,a,bm,c,pos_map,maxn,dt);
@@ -103,15 +106,20 @@ void dv_precalrec_juv_comp(void)
 		const int imax = map->isup(j);
 		for (int i = imax; i >= imin; i--){
 			//bm[j][i] = b(j,i)+mort[i][j];
-			dfM(i,j) += dfbm(j,i);
-			dfbm(j,i) = 0.0;
+
+				dfM(i,j) += dfbm(j,i);
+				dfbm(j,i) = 0.0;
 
 		}
 	}
+
 	dfbm.save_dmatrix_derivatives(bm_pos);
 	dfxbet.save_dmatrix_derivatives(xbet_pos); 
 	dfw.save_dmatrix_derivatives(w_pos);
-	dfM.save_dmatrix_derivatives(M_pos);
+//keep it temporally, until mortality of early larvae remains fixed	
+//this condition will work for all elarvae_dt <= 14 days
+	if (move_dtmod>.5)
+		dfM.save_dmatrix_derivatives(M_pos);
 
 }
 

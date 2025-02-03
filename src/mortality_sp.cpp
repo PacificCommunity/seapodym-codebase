@@ -3,21 +3,47 @@
 ///Forward functions for: 
 ///mortality rates at age. These functions include fixed natural mortality
 ///rate and variable component, depending on habitat indices defined for the life stage
+double sigmoid1(const double tau, const double delta);
 
+double sigmoid1(const double tau, const double delta)
+{
+        double f = 1.0/(1.0+pow(tau,delta));
+        return(f);
+}
 
-void VarSimtunaFunc::M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double Mp_max, double Ms_max, double Mp_exp, double Ms_slope, double range, double mean_age_in_dtau, const int dtau)
+void VarSimtunaFunc::M_early_sp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const dmatrix& sst, const dmatrix& pp, const int sp)
+{
+	double mort_min = param.elarvae_mortality_min[sp];
+	double mort_inc = param.elarvae_mortality_inc[sp];
+	double sst_low  = param.elarvae_sst_low[sp];
+	double sst_high = param.elarvae_sst_high[sp];
+	double slp_low  = param.elarvae_slope_low[sp];
+	double slp_high = param.elarvae_slope_high[sp];
+
+	for (int i = map.imin; i <= map.imax; i++){
+		const int jmin = map.jinf[i];
+		const int jmax = map.jsup[i];
+		for (int j = jmin; j <= jmax; j++){
+			if (map.carte(i,j)){
+				//1. eggs survival function derived from observations
+				double f_sst  = sigmoid1(slp_low,sst(i,j)-sst_low) + sigmoid1(slp_high,sst_high-sst(i,j))-1;
+				//2. early larvae mortality due to thermal factor as in Hs
+				//To be added with variable parameters if proven necessary (Nov2024)   
+				double f_sst2 = exp(-pow(sst(i,j)-35.0,2.0)/(2.0*40.3225));
+
+				//3. other factors influencing early larvae survival
+				double f_prey = 1.0;//no other factors
+
+				M.elem_value(i,j) = mort_min + mort_inc*(1-f_prey*f_sst*f_sst2);
+			}
+		}
+	}
+}
+
+void VarSimtunaFunc::M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double Mp_max, double Ms_max, double Mp_exp, double Ms_slope, double range, const double Rage, const double mean_age_in_dtau)
 {
 	const double Mp = Mp_max * exp(- Mp_exp * mean_age_in_dtau);
 	const double Ms = Ms_max * pow(mean_age_in_dtau,Ms_slope);
-
-	//to preserve variability of mortality for juvenile classes
-	//will add nonlinear increment Rage, since for many cases (essic bet, skj, ncep/era40 alb) 
-	//range=0 is estimated, which results in zero variation of mortality for juveniles
-	double mean_age_in_month = mean_age_in_dtau*dtau/30.0;
-	double	Rage = 1.0/(mean_age_in_month+2.5) + range; 
- 	//this function gives +- 33%, 25% and 18%
-
-	double Hval = 0.5;
 
 	M = Mp + Ms;
 	for (int i = map.imin; i <= map.imax; i++){
@@ -25,10 +51,11 @@ void VarSimtunaFunc::M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H
 		const int jmax = map.jsup[i];
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
-				M.elem_value(i,j) *= pow(1.0+Rage,1-H(i,j)/Hval); //modified old function (Rage was added)
+
+				M.elem_value(i,j) *= pow(1.0+Rage+range,1.0-H(i,j)); 
 			}
 		}
-	}	
+	}
 }
 
 void VarSimtunaFunc::M_PH_juv_comp(VarParamCoupled& param, const PMap& map, CMatrices& mat, dvar_matrix& M, const dmatrix& PH, double mean_age_in_dtau)

@@ -14,50 +14,9 @@ void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)
 
 	}
 	UnitConversions(t);
-	if (param->use_sst){
+	if (param->use_sst)
 		rw.rbin_input2d(param->strfile_sst, map, mat.sst[t], nbi, nbj, nbytetoskip);
-		const int imin = map.imin; 
-		const int imax = map.imax; 
-		for (int i = imin; i <= imax; i++){
-			const int jmin = map.jinf[i];
-			const int jmax = map.jsup[i];
-			for (int j = jmin ; j <= jmax; j++){
-				if (map.carte[i][j]){
-
-//BUFFER ZONE to avoid biomass accumulation effect in case of artificially closed boundary					
-//Eventually move this buffer zone declaration into preparation of model forcing or topographic index
-if (param->sp_name[0].find("skj")==0 && param->longitudeMin>80 && param->deltaX>60.0 && param->deltaY>60.0) //indicate Pacific ocean domain and coarse resolution
-//The bloc below is executed only in case of the Pacific ocean domain within the IndoPacific area.
-{					
-// to make the buffer zone in IO part of the Pacific ocean domain. This allows avoiding the problems
-// of high densities in shallow waters and complex current system of Indonesian region
-// which is not resolved on coarse resolutions
-
-					if (i<param->lontoi(118) && j<=param->lattoj(-3)) {
-						if (mat.sst(t,i,j) > 22)  mat.sst(t,i,j) = 22.0;
-						if (mat.tempn(t,0,i,j)>20.0) mat.tempn(t,0,i,j) = 20.0;
-						if (mat.tempn(t,1,i,j)>15.0) mat.tempn(t,1,i,j) = 15.0;
-					}
-					if (i<param->lontoi(130) && j>param->lattoj(3)){
-					       	if (mat.sst(t,i,j) > 24)  mat.sst(t,i,j) = 24.0;
-					}
-					
-					if (i<param->lontoi(140) && j>=param->lattoj(-3)){
-						if (mat.sst(t,i,j) > 24)  mat.sst(t,i,j) = 24.0;
-						if (mat.tempn(t,0,i,j)>20.0) mat.tempn(t,0,i,j) = 20.0;
-						if (mat.tempn(t,1,i,j)>15.0) mat.tempn(t,1,i,j) = 15.0;
-					}
-					if (i<param->lontoi(146) && j>=param->lattoj(-8)){
-						if (mat.sst(t,i,j) > 22)  mat.sst(t,i,j) = 22.0;
-						if (mat.tempn(t,0,i,j)>18.0) mat.tempn(t,0,i,j) = 18.0;
-						if (mat.tempn(t,1,i,j)>15.0) mat.tempn(t,1,i,j) = 15.0;
-					}
-					
-}				
-				}
-			}
-		}
-	} else 
+	else 
 		mat.sst[t] = mat.tempn[t][0];
 
 	if (param->use_vld){
@@ -66,25 +25,6 @@ if (param->sp_name[0].find("skj")==0 && param->longitudeMin>80 && param->deltaX>
 	} else 
 		mat.vld[t] = 1.0; //wont be used
 
-//correct the T_epi temperature by the vertical gradieng magnitude
-if (param->sp_name[0].find("skj")==0 && param->use_vld && param->use_sst){
-	const int imin = map.imin; 
-	const int imax = map.imax; 
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
-		for (int j = jmin ; j <= jmax; j++){
-			if (map.carte[i][j]){
-				double dTdz = 2.0*(mat.sst(t,i,j) - mat.tempn(t,0,i,j))/(1000.0*mat.vld(t,i,j));
-				if (dTdz<0.0) dTdz = 0.0;
-				if (dTdz>0.2) dTdz = 0.2;
-				mat.tempn(t,0,i,j) = mat.tempn(t,0,i,j)+4.0*dTdz*(mat.sst(t,i,j)-mat.tempn(t,0,i,j));
- 				
-				mat.Hj(i,j) = mat.tempn(t,0,i,j);
-			}
-		}
-	}
-}
 	if (!param->flag_coupling){
 		for (int n=0; n<nb_forage; n++){
 			rw.rbin_input2d(param->strfile_F[n], map, mat.forage[t][n], nbi, nbj, nbytetoskip);

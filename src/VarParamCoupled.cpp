@@ -49,8 +49,8 @@ bool VarParamCoupled::read(const string& parfile)
 //cout << x << endl;
 
         iterationNumber = doc.getInteger("/iterationNumber", "value");
-	//Disactivate spinup here
-        tuna_spinup = 0;//doc.getInteger("/tuna_spinup", "value");
+	//Disactivate spinup here - no more spinup in the model code!!!
+        tuna_spinup = 0;
         if (!doc.get("/save_first_date","year").empty()){
 		int year = doc.getInteger("/save_first_date","year");
 		int month = doc.getInteger("/save_first_date","month");
@@ -313,6 +313,7 @@ bool VarParamCoupled::read(const string& parfile)
 		weight.allocate(0, nb_species - 1);
 		age_mature.allocate(0, nb_species - 1);
 		maturity_age.allocate(0, nb_species - 1);
+		spawning_adult_func_only.allocate(0, nb_species - 1);
 		age_autonomous.allocate(0, nb_species - 1);
 		age_recruit.allocate(0, nb_species - 1);
 		age_compute_habitat.allocate(0, nb_species - 1);
@@ -330,6 +331,9 @@ bool VarParamCoupled::read(const string& parfile)
 		Ms_mean_max.allocate(0, nb_species - 1);
 		Ms_mean_slope.allocate(0, nb_species - 1);
 		M_mean_range.allocate(0, nb_species - 1);
+		M_larvae_range.allocate(0, nb_species - 1);
+		M_range_age_max.allocate(0, nb_species - 1);
+		M_range_age_slope.allocate(0, nb_species - 1);
 		food_requirement_in_mortality.allocate(0,nb_species-1);
 		residual_competition.allocate(0,nb_species-1);
 		uncouple_sst_larvae.allocate(0,nb_species-1);
@@ -367,13 +371,13 @@ bool VarParamCoupled::read(const string& parfile)
 
 		sigma_ha.allocate(0, nb_species - 1);
 		temp_age.allocate(0, nb_species - 1);
+		rmax_currents.allocate(0, nb_species - 1);
 	}
-	////////////////
-	//  HABITATS  //   
-	////////////////
 
-	// 1. Spawning habitat
 	for (int sp=0;sp<nb_species;sp++){
+		////////////////
+		//  OPTIONS  //   
+		////////////////
 		//flag that determines whether the seasonality will be taken
 		//into account in migrations of adult population
 		seasonal_migrations[sp] = 0;
@@ -382,6 +386,9 @@ bool VarParamCoupled::read(const string& parfile)
 		if (seasonal_migrations[sp])
 			if (gcalc() && latitudeMax>65) cout<< "ATTN: Make sure the latitudes above 65N/S are masked " << 
 				       				 "to avoid NANs in the gradient of Season_peak"<< endl;	
+		spawning_adult_func_only[sp] = 0;
+		if (!doc.get("/spawning_in_hs",sp_name[sp]).empty())
+			spawning_adult_func_only[sp] = !doc.getInteger("/spawning_in_hs", sp_name[sp]);
 	
 
 		//old parameter files:
@@ -407,41 +414,12 @@ bool VarParamCoupled::read(const string& parfile)
 			doc.set("/b_sst_larvae/variable","use","false");		
 		}
 
-		// Larvae catachability
-		if (!doc.get("/q_sp_larvae",sp_name[sp]).empty()){
-			q_sp_larvae[sp] = doc.getDouble("/q_sp_larvae", sp_name[sp]);
-		}
 
-		// sigma parameter in Gaussian kernel used for larvae likelihood
-		if (!doc.get("/likelihood_larvae_sigma",sp_name[sp]).empty()){
-			likelihood_larvae_sigma[sp] = doc.getDouble("/likelihood_larvae_sigma", sp_name[sp]);
-		}
-
-		// betaf parameter in ZINB used for larvae likelihood
-		if (!doc.get("/likelihood_larvae_beta",sp_name[sp]).empty()){
-			likelihood_larvae_beta[sp] = doc.getDouble("/likelihood_larvae_beta", sp_name[sp]);
-		}
-
-		// pf parameter in ZINB used for larvae likelihood
-		if (!doc.get("/likelihood_larvae_probzero",sp_name[sp]).empty()){
-			likelihood_larvae_probzero[sp] = doc.getDouble("/likelihood_larvae_probzero", sp_name[sp]);
-		}
-
-		// first parameter in sst-dependent larvae mortality function during first time step
-		if (!doc.get("/inv_M_max",sp_name[sp]).empty()){
-			inv_M_max[sp] = doc.getDouble("/inv_M_max", sp_name[sp]);
-		}
-
-		// second parameter in sst-dependent larvae mortality function during first time step
-		if (!doc.get("/inv_M_rate",sp_name[sp]).empty()){
-			inv_M_rate[sp] = doc.getDouble("/inv_M_rate", sp_name[sp]);
-		}
-
-		// third parameter in sst-dependent larvae mortality function during first time step
-		if (!doc.get("/age_larvae_before_sst_mortality",sp_name[sp]).empty()){
-			age_larvae_before_sst_mortality[sp] = doc.getDouble("/age_larvae_before_sst_mortality", sp_name[sp]);
-		}
-
+		////////////////
+		//  HABITATS  //   
+		////////////////
+	
+		// 1. Spawning habitat
 		//standard deviation in Gaussian temperature function for spawning
                	a_sst_spawning[sp] = doc.getDouble("/a_sst_spawning", sp_name[sp]);
 	
@@ -459,10 +437,9 @@ bool VarParamCoupled::read(const string& parfile)
 		
 		//slope coefficient in Beverton-Holt function
                	a_adults_spawning[sp] = doc.getDouble("/a_adults_spawning", sp_name[sp]);
-	}
 
-	// 2. Juvenile habitat
-	for (int sp=0;sp<nb_species;sp++){	
+
+		// 2. Juvenile habitat
 		cannibalism[sp] = 0;
 		hp_cannibalism[sp] = 0;
 		if (!doc.get("/cannibalism_juv",sp_name[sp]).empty())
@@ -473,11 +450,7 @@ bool VarParamCoupled::read(const string& parfile)
 		// slope coefficient of the habitat cannibalism function
 	     	hp_cannibalism[sp] = doc.getDouble("/hp_cannibalism", sp_name[sp]);
 		
-	}
-
-	// 3. Feeding habitat
-	for (int sp=0;sp<nb_species;sp++){
-
+		// 3. Feeding habitat
 		gaussian_thermal_function[sp] = 1; //default value
 		if (!doc.get("/gaussian_thermal_function",sp_name[sp]).empty()){
 			gaussian_thermal_function[sp] = doc.getInteger("/gaussian_thermal_function", sp_name[sp]);
@@ -524,8 +497,8 @@ bool VarParamCoupled::read(const string& parfile)
 	///////////////
 	// MOVEMENT  //   
 	/////////////// 
-
 	vert_movement.allocate(0,nb_species-1);
+	scale_forage_ave_currents.allocate(0,nb_species-1);
 	for (int sp=0;sp<nb_species;sp++){
 
 		//flag to aggregate currents through vertical layers accessible to fish
@@ -533,23 +506,30 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/vertical_movement",sp_name[sp]).empty())
 			vert_movement[sp] = doc.getInteger("/vertical_movement", sp_name[sp]);
 
+		//flag to use eF scaler when computing the time spent in the layer
+		scale_forage_ave_currents[sp] = 0;
+		if (!doc.get("/scale_forage_ave_currents",sp_name[sp]).empty())
+			scale_forage_ave_currents[sp] = doc.getInteger("/scale_forage_ave_currents", sp_name[sp]);
+
 		//multiplier to maximal diffusion coefficient which is linked to fish size
-               	sigma_species[sp] = doc.getDouble("/sigma_species", sp_name[sp]);
+		sigma_species[sp] = doc.getDouble("/sigma_species", sp_name[sp]);
 
 		//curvature coefficient in the function of habitat to compute local diffusion rate
-                c_diff_fish[sp] = doc.getDouble("/c_diff_fish", sp_name[sp]);
+		c_diff_fish[sp] = doc.getDouble("/c_diff_fish", sp_name[sp]);
 
 		//maximal sustainable speed in the units 'body length'/sec
-                MSS_species[sp] = doc.getDouble("/MSS_species", sp_name[sp]);
+		MSS_species[sp] = doc.getDouble("/MSS_species", sp_name[sp]);
 
 		//scaling exponent in power low giving the species sustainable speed
 		//in m/sec, i.e. V_mss = MSS_species * pow(L,MSS_size_slope)
-                MSS_size_slope[sp] = doc.getDouble("/MSS_size_slope", sp_name[sp]);
+		MSS_size_slope[sp] = doc.getDouble("/MSS_size_slope", sp_name[sp]);
+	
+		//Adding rmax to the parfile as a fixed parameter. 
+		//Note, if not present in the parfile, then set to default value:
+		rmax_currents[sp] = 0.99; //0.99 was used in SKJ and ALB INTERIM ref models
+		if (!doc.get("/reduce_currents_coef",sp_name[sp]).empty())
+			rmax_currents[sp] = doc.getDouble("/reduce_currents_coef", sp_name[sp]);
 	}
-	//Adding rmax to the parfile as fixed parameter. Make it par[sp] once it's proven necessary 
-	rmax_currents = 0.99; //0.99 was used in SKJ and ALB INTERIM ref models
-	if (!doc.get("/reduce_currents_coef","value").empty())
-	rmax_currents = doc.getDouble("/reduce_currents_coef", "value");
 
 	///////////////////////////////////////////
 	// Fixed parameters of population structure
@@ -683,7 +663,6 @@ bool VarParamCoupled::read(const string& parfile)
 	///////////////////
 	//NATURAL MORTALITY 
 	///////////////////
-
 	food_requirement_in_mortality.initialize();
 	residual_competition = 1.0;
 	for (int sp=0;sp<nb_species;sp++){
@@ -699,8 +678,19 @@ bool VarParamCoupled::read(const string& parfile)
         	Ms_mean_max[sp]  = doc.getDouble("/Ms_mean_max",  sp_name[sp]);
 		//slope coefficient in senescence mortality function
         	Ms_mean_slope[sp]= doc.getDouble("/Ms_mean_slope",sp_name[sp]);
+		//variability of larval mortality rate due to habitat index
+        	M_larvae_range[sp] = doc.getDouble("/M_larvae_range", sp_name[sp]);
 		//variability of mortality rate locally due to habitat index
         	M_mean_range[sp] = doc.getDouble("/M_mean_range", sp_name[sp]);
+
+		//Variable range as a function of age (old Rage)
+		M_range_age_max[sp] = 3.0/(1+pow(0.5,3));//value in the SKJ REF
+		M_range_age_slope[sp] = 3.0;			
+		if (!doc.get("/M_max_range_age",sp_name[sp]).empty())
+			M_range_age_max[sp] = doc.getDouble("/Mvar_range_age_max", sp_name[sp]);
+		if (!doc.get("/M_max_range_slope",sp_name[sp]).empty())
+			M_range_age_slope[sp] = doc.getDouble("/Mvar_range_age_slope", sp_name[sp]);
+
 
 		//flag for optional mortality penalizing according to food requirement
 		if (!doc.get("/food_requirement_in_mortality",sp_name[sp]).empty()){
@@ -710,23 +700,6 @@ bool VarParamCoupled::read(const string& parfile)
 		}
 	}
 
-	////////////////////////////
-	// COUPLING-FORAGING
-	// uncoupled mode by default 
-	////////////////////////////
-	flag_coupling = false;
-	if (!doc.get("/coupling","flag").empty()){
-		int flag = doc.getInteger("/coupling", "flag");
-		if (flag) flag_coupling = true;
-	}
-	//mean daily ration (weight forage/weight fish) for each species
-	for (int sp=0;sp<nb_species;sp++) {
-        	forage_ration[sp] = doc.getDouble("/forage_ration", sp_name[sp]);
-	}
-
-	/////////////////////////
-	// END OF SPECIES SECTION  
-	////////////////////////
 	
 	/////////////////////
 	//TAGEST model flags
@@ -745,9 +718,9 @@ bool VarParamCoupled::read(const string& parfile)
 		}
 	}
 
-	////////////////////////////////////////
-	//Larvae likelihood flags and parameters
-	////////////////////////////////////////
+	/////////////////////////////////////////////
+	//Early-life data flags and static parameters
+	/////////////////////////////////////////////
 	larvae_like.allocate(0,nb_species-1);
 	larvae_like.initialize();
 	larvae_input_categorical_flag.allocate(0,nb_species-1);
@@ -769,14 +742,65 @@ bool VarParamCoupled::read(const string& parfile)
 	larvae_mortality_sst.allocate(0,nb_species-1);
 	larvae_mortality_sst.initialize();
 
+	elarvae_model.allocate(0,nb_species-1);
+	elarvae_model.initialize();
+	elarvae_age.allocate(0,nb_species-1);
+	elarvae_age.initialize();
+	elarvae_mortality_min.allocate(0,nb_species-1);
+	elarvae_mortality_inc.allocate(0,nb_species-1);
+	elarvae_mortality_min.initialize();
+	elarvae_mortality_inc.initialize();
+	elarvae_slope_low.allocate(0,nb_species-1);
+	elarvae_slope_high.allocate(0,nb_species-1);
+	elarvae_slope_low.initialize();
+	elarvae_slope_high.initialize();
+	elarvae_sst_low.allocate(0,nb_species-1);
+	elarvae_sst_high.allocate(0,nb_species-1);
+	elarvae_sst_low.initialize();
+	elarvae_sst_high.initialize();
+
+	//non-species specific parameters
+	//Does plankton net catchability depend on MLD?
+	q_mld_larvae = 0; //default value is 0
+	if (!doc.get("/q_mld_larvae","flag").empty())
+		q_mld_larvae = doc.getInteger("/q_mld_larvae","flag");
 	for (int sp=0;sp<nb_species;sp++){
+		//Early-life mortality (early post-hatching phase)
+		string str = "/early_larvae_model/"+sp_name[sp];
+		if (!doc.get(str).empty()){
+			elarvae_model[sp] = doc.getInteger(str+string("/activate"),"flag");
+			if (elarvae_model[sp]){
+				string vstr = str + "/mean_observed_age";
+				elarvae_age[sp] = doc.getDouble(vstr, "value");
+				if (elarvae_age[sp]<1) {
+					elarvae_age[sp] = 1;
+					cout << endl << "WARNING!!! Mean observed age of larvae cannot be less than 1 day! Re-set to 1" << endl<< endl;
+				}
+				if (elarvae_age[sp]>14){
+					elarvae_age[sp] = 14;
+					cout << endl << "WARNING!!! Re-set mean observed age of larvae to 14 days - a maximal supported value" << endl<< endl;
+				}
+				vstr = str + "/mortality_rate";
+				elarvae_mortality_min[sp] = doc.getDouble(vstr, "min");
+				elarvae_mortality_inc[sp] = doc.getDouble(vstr, "inc");
+				vstr = str + "/sst_func_coefs";
+				elarvae_slope_low[sp] = doc.getDouble(vstr, "slope_low");
+				elarvae_sst_low[sp] = doc.getDouble(vstr, "sst_low");
+				elarvae_slope_high[sp] = doc.getDouble(vstr, "slope_high");
+				elarvae_sst_high[sp] = doc.getDouble(vstr, "sst_high");
+			}
+		} 
 		if (!doc.get("/larvae_likelihood",sp_name[sp]).empty()){
 			larvae_like[sp] = doc.getInteger("/larvae_likelihood",sp_name[sp]);
 		}else{
 			larvae_like[sp] = 0;
 		}	
-
 		if (larvae_like[sp]){
+			if (!doc.get("/larvae_likelihood_years","first_year").empty())
+				larvae_like_firstyear = doc.getInteger("/larvae_likelihood_years","first_year");
+			if (!doc.get("/larvae_likelihood_years","last_year").empty())
+				larvae_like_lastyear = doc.getInteger("/larvae_likelihood_years","last_year");
+
 			if (!doc.get("/larvae_mortality_sst",sp_name[sp]).empty())
 				larvae_mortality_sst[sp] = doc.getInteger("/larvae_mortality_sst",sp_name[sp]);
 			if (!doc.get("/larvae_input_categorical",sp_name[sp]).empty())
@@ -810,7 +834,7 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 			if (larvae_input_aggregated_flag[sp]==0){
 				cerr << "Error: Computing of larvae likelihood on non-aggregated larvae input is not available yet (to be coded)." << endl;
-				std::exit(EXIT_FAILURE);
+				//std::exit(EXIT_FAILURE);
 			}
 		}
 	}
@@ -830,12 +854,68 @@ bool VarParamCoupled::read(const string& parfile)
 			std::exit(EXIT_FAILURE);			
 		}
 	}
+	///////////////////////////////////////////////////
+	//Variable parameters of early-life data likelihood
+	///////////////////////////////////////////////////
+	for (int sp=0;sp<nb_species;sp++){
+		// Larvae catachability
+		if (!doc.get("/q_sp_larvae",sp_name[sp]).empty()){
+			q_sp_larvae[sp] = doc.getDouble("/q_sp_larvae", sp_name[sp]);
+		}
+
+		// sigma parameter in Gaussian kernel used for larvae likelihood
+		if (!doc.get("/likelihood_larvae_sigma",sp_name[sp]).empty()){
+			likelihood_larvae_sigma[sp] = doc.getDouble("/likelihood_larvae_sigma", sp_name[sp]);
+		}
+
+		// betaf parameter in ZINB used for larvae likelihood
+		if (!doc.get("/likelihood_larvae_beta",sp_name[sp]).empty()){
+			likelihood_larvae_beta[sp] = doc.getDouble("/likelihood_larvae_beta", sp_name[sp]);
+		}
+
+		// pf parameter in ZINB used for larvae likelihood
+		if (!doc.get("/likelihood_larvae_probzero",sp_name[sp]).empty()){
+			likelihood_larvae_probzero[sp] = doc.getDouble("/likelihood_larvae_probzero", sp_name[sp]);
+		}
+
+		// first parameter in sst-dependent larvae mortality function during first time step
+		if (!doc.get("/inv_M_max",sp_name[sp]).empty()){
+			inv_M_max[sp] = doc.getDouble("/inv_M_max", sp_name[sp]);
+		}
+
+		// second parameter in sst-dependent larvae mortality function during first time step
+		if (!doc.get("/inv_M_rate",sp_name[sp]).empty()){
+			inv_M_rate[sp] = doc.getDouble("/inv_M_rate", sp_name[sp]);
+		}
+
+		// third parameter in sst-dependent larvae mortality function during first time step
+		if (!doc.get("/age_larvae_before_sst_mortality",sp_name[sp]).empty()){
+			age_larvae_before_sst_mortality[sp] = doc.getDouble("/age_larvae_before_sst_mortality", sp_name[sp]);
+		}
+	}
+
+	////////////////////////////
+	// COUPLING-FORAGING
+	// uncoupled mode by default 
+	////////////////////////////
+	flag_coupling = false;
+	if (!doc.get("/coupling","flag").empty()){
+		int flag = doc.getInteger("/coupling", "flag");
+		if (flag) flag_coupling = true;
+	}
+	//mean daily ration (weight forage/weight fish) for each species
+	for (int sp=0;sp<nb_species;sp++) {
+        	forage_ration[sp] = doc.getDouble("/forage_ration", sp_name[sp]);
+	}
+
+	////////////////////////////
+	// END OF SPECIES SECTION //  
+	////////////////////////////
 
 
-
-	/////////////////////
-	// FISHERIES SECTION    
-	/////////////////////
+	///////////////////////
+	// FISHERIES SECTION //   
+	///////////////////////
 	if ( (nb_species != 0)&& (sp_nb_cohort_ad[0]!=0) ) 
                 nb_fishery = doc.getInteger("/nb_fishery", "value");
 	if (nb_fishery) {
@@ -1348,6 +1428,7 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(Mp_mean_exp,Mp_mean_exp_min,Mp_mean_exp_max,"/Mp_mean_exp",nni);
 	par_read_bounds(Ms_mean_max,Ms_mean_max_min,Ms_mean_max_max,"/Ms_mean_max",nni);
 	par_read_bounds(Ms_mean_slope,Ms_mean_slope_min,Ms_mean_slope_max,"/Ms_mean_slope",nni);
+	par_read_bounds(M_larvae_range,M_larvae_range_min,M_larvae_range_max,"/M_larvae_range",nni);
 	par_read_bounds(M_mean_range,M_mean_range_min,M_mean_range_max,"/M_mean_range",nni);
 	par_read_bounds(a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",nni);
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);

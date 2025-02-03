@@ -17,6 +17,7 @@ void save_long_int_value(unsigned long int x);
 unsigned long int restore_long_int_value(void);
 double normal(const double x, const double mu, const double sigma);
 double lognormal(const double x, const double mu, const double sigma);
+double sigmoid1(const double tau, const double delta);
 
 void VarSimtunaFunc::Spawning_Habitat(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, const double sigma_sp_var, int sp, const int t_count, const int jday)
 {
@@ -156,18 +157,19 @@ void dfspawning_habitat_O2(double& dfa, double& dfb, double& dfc, double& dfd, d
 {
         double f_sst  = normal(SST,b,a*ssv);
 	double f_prey = preys*preys/(c+preys*preys);
+	double f_prey_norm = f_prey * (1.0 + c);
 	//double f_pred = normal(predators,d,e);
 	//if lognormal, comment f_pred above and uncomment the following:
 	double f_pred = exp(d-0.5*e*e-pow(log(predators)-d,2.0)/(2.0*e*e))/predators;//lognormal
 	double f_oxy  = (1.0/(1.0+pow(0.01,O2_l2-0.1)));
-	double Hs     = f_sst * f_prey * f_pred * f_oxy;
+	double Hs     = f_sst * f_prey_norm * f_pred * f_oxy;
 
 	double logp = log(predators);
 
         //Hs = f_sst * f_prey * f_pred * f_oxy;
         dfa += (pow(SST-b,2.0) / pow(a*ssv,3.0)) * ssv * Hs * dfH;
         dfb += ((SST-b) / (a*a*ssv*ssv))* Hs * dfH;
-        dfc -= (f_prey / (c+preys*preys)) * f_sst * f_pred * f_oxy * dfH;
+	dfc += (f_prey-1.0/(c+preys*preys)) * (Hs / (1.0 + c)) * dfH;
         //dfd += ((predators-d)/(e*e)) * Hs * dfH;
         //dfe += (pow(predators-d,2.0) / pow(e,3.0)) * Hs * dfH;
 	//if lognormal, comment dfd and dfe above and uncomment the following:

@@ -136,21 +136,26 @@ public:
 	dvar_vector dvarsMs_mean_slope;
 
 //5. dv_mortality_sp.cpp:
+	double M_larvae_range_min;
+	double M_larvae_range_max;
+	dvar_vector dvarsM_larvae_range;
+
+//6. dv_mortality_sp.cpp:
 	double M_mean_range_min;
 	double M_mean_range_max;
 	dvar_vector dvarsM_mean_range;
 
-//6. dv_spawning_habitat.cpp, dv_feeding_habitat.cpp, dv_juvenile_habitat.cpp:
+//7. dv_spawning_habitat.cpp, dv_feeding_habitat.cpp, dv_juvenile_habitat.cpp:
         double a_sst_spawning_min;
         double a_sst_spawning_max;
         dvar_vector dvarsA_sst_spawning;
 
-//7. dv_spawning_habitat.cpp, dv_feeding_habitat.cpp, dv_juvenile_habitat.cpp:
+//8. dv_spawning_habitat.cpp, dv_feeding_habitat.cpp, dv_juvenile_habitat.cpp:
         double b_sst_spawning_min;
         double b_sst_spawning_max;
         dvar_vector dvarsB_sst_spawning;
 
-//8.1-8.2 dv_spawning_habitat.cpp, dv_juvenile_habitat.cpp:
+//9-10. dv_spawning_habitat.cpp, dv_juvenile_habitat.cpp:
         double a_sst_larvae_min;
         double a_sst_larvae_max;
         dvar_vector dvarsA_sst_larvae;
@@ -159,7 +164,7 @@ public:
         double b_sst_larvae_max;
         dvar_vector dvarsB_sst_larvae;
 
-//9-11. dv_spawning_habitat.cpp, dv_feeding_habitat.cpp:
+//11-13. dv_spawning_habitat.cpp, dv_feeding_habitat.cpp:
         double alpha_hsp_prey_min;
         double alpha_hsp_prey_max;
         dvar_vector dvarsAlpha_hsp_prey;
@@ -172,92 +177,92 @@ public:
         double beta_hsp_predator_max;
         dvar_vector dvarsBeta_hsp_predator;
 
-//12. dv_accessibility.cpp:
+//14. dv_accessibility.cpp:
         double a_sst_habitat_min;
         double a_sst_habitat_max;
         dvar_vector dvarsA_sst_habitat;
 
-//13. dv_accessibility.cpp:
+//15. dv_accessibility.cpp:
         double b_sst_habitat_min;
         double b_sst_habitat_max;
         dvar_vector dvarsB_sst_habitat;
 
-//14. dv_accessibility.cpp:
+//16. dv_accessibility.cpp:
         double T_age_size_slope_min;
         double T_age_size_slope_max;
         dvar_vector dvarsT_age_size_slope;
 
-//15-17.dv_accessibility.cpp	
+//17-19.dv_accessibility.cpp	
         dvector thermal_func_delta_min;
         dvector thermal_func_delta_max;
         dvar_matrix dvarsThermal_func_delta;
 
-//18. dv_feeding_habitat.cpp:
+//20. dv_feeding_habitat.cpp:
         double a_oxy_habitat_min;
         double a_oxy_habitat_max;
         dvar_vector dvarsA_oxy_habitat;
 
-//19. dv_feeding_habitat.cpp:
+//21. dv_feeding_habitat.cpp:
         double b_oxy_habitat_min;
         double b_oxy_habitat_max;
         dvar_vector dvarsB_oxy_habitat;
 
-//20-25. dv_feeding habitat.cpp:
+//22-27. dv_feeding habitat.cpp:
         dvector eF_habitat_min;
         dvector eF_habitat_max;
         dvar_matrix dvarsEF_habitat;
 
-//26. dv_juvenile_habitat.cpp:
+//28. dv_juvenile_habitat.cpp:
         double hp_cannibalism_min;
         double hp_cannibalism_max;
         dvar_vector dvarsHp_cannibalism;
 
-//27. dv_caldia.cpp:
+//29. dv_caldia.cpp:
         double sigma_species_min;
         double sigma_species_max;
         dvar_vector dvarsSigma_species;
                                                                                
-//28. dv_caldia.cpp:
+//30. dv_caldia.cpp:
         double MSS_species_min;
         double MSS_species_max;
         dvar_vector dvarsMSS_species;
 
-//29. dv_caldia.cpp:
+//31. dv_caldia.cpp:
         double MSS_size_slope_min;
         double MSS_size_slope_max;
         dvar_vector dvarsMSS_size_slope;
 
-//30. dv_caldia.cpp:
+//32. dv_caldia.cpp:
         double c_diff_fish_min;
         double c_diff_fish_max;
         dvar_vector dvarsC_diff_fish;
 
-//31. dv_spawning.cpp:
+//33. dv_spawning.cpp:
         double nb_recruitment_min;
         double nb_recruitment_max;
         dvar_vector dvarsNb_recruitment;
 
-//32. dv_spawning.cpp
+//34. dv_spawning.cpp
         double a_adults_spawning_min;
         double a_adults_spawning_max;
         dvar_vector dvarsA_adults_spawning;
 
-//33. dv_feeding_habitat.cpp
+//35. dv_feeding_habitat.cpp
         double spawning_season_peak_min;
         double spawning_season_peak_max;
         dvar_vector dvarsSpawning_season_peak;
 
-//34. dv_feeding_habitat.cpp
+//36. dv_feeding_habitat.cpp
         double spawning_season_start_min;
         double spawning_season_start_max;
         dvar_vector dvarsSpawning_season_start;
 
-//35-. dv_predicted_catch.cpp, dv_calrec_precalrec.cpp:
+//37+. dv_predicted_catch.cpp, dv_calrec_precalrec.cpp:
 	dmatrix q_sp_fishery_min;
 	dmatrix q_sp_fishery_max;
 	dvar_matrix dvarsQ_sp_fishery;
 
-//33-. dv_predicted_catch.cpp, dv_calrec_precalrec.cpp:
+//... dv_predicted_catch.cpp, dv_calrec_precalrec.cpp:
 	dmatrix s_slope_sp_fishery_min;
 	dmatrix s_slope_sp_fishery_max;
 	dmatrix s_asympt_sp_fishery_min; 

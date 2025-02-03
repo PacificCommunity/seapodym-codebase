@@ -31,9 +31,9 @@ void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, con
 	const double CHI_x   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dx;
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;//fixed, given in 'body length' units
-	const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
-	const double rmax    = param.rmax_currents;
+	const double rmax    = param.rmax_currents[sp];
 	double rho_x = 0.0;
 	double rho_y = 0.0;
 	double v_x = 0.0;

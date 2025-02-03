@@ -164,15 +164,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////
 
-	//Add penalty function to the likelihood for sum(eF_habitat)<eF_sum
-	//Not used currently
-	double eFlike = 0.0;
-/*	if (param->tag_like[0]){
-		dvariable dvarEF_sum = sum(param->dvarsEF_habitat);
-		likelihood -= 1e1*log(eF_sum-dvarEF_sum);
-		eFlike -= 1e1*log(eF_sum - value(dvarEF_sum));
-	}
-*/
 	for (;t_count <= nbt_total; t_count++)
 	{
 	
@@ -576,10 +567,10 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		cout << "total catch in simulation: " << SUM_CATCH << endl;
 	}
 	param->total_like = value(likelihood);
-	double clike = value(likelihood)-lflike-taglike-stocklike-eFlike;
+	double clike = value(likelihood)-lflike-taglike-stocklike;
 	if (!param->scalc()) // all but sensitivity analysis
 		cout << "end of forward run, likelihood: " << defaultfloat <<
-		clike << " " << lflike << " " << taglike << " " << stocklike << " " << eFlike << endl;
+		clike << " " << lflike << " " << taglike << " " << stocklike << endl;
 
 	return value(likelihood);
 }

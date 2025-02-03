@@ -118,15 +118,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	////------------------------------------------------------------/////
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////
-	//Add penalty function to the likelihood for sum(eF_habitat)<eF_sum
-	//Not used currently, but can be useful to constrain eF parameters in habitat recalibration
-	double eFlike = 0.0;
-/*	if (param->tag_like[0]){
-		dvariable dvarEF_sum = sum(param->dvarsEF_habitat);
-		likelihood -= 1e1*log(eF_sum-dvarEF_sum);
-		eFlike -= 1e1*log(eF_sum - value(dvarEF_sum));
-	}
-*/
+
 	for (;t_count <= nbt_total; t_count++)
 	{
 		//----------------------------------------------//
@@ -305,7 +297,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
                         for (int i=map.imin; i <= map.imax; i++){
                                 for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
                                         if (map.carte[i][j]){
-                                                //mat2d(i-1,j-1) = mat.habitat_input(t_count,i,j);
+                                                //mat2d(i-1,j-1) = mat.habitat_input(0,t_count,i,j);
                                                 mat2d(i-1,j-1) = value(Habitat(i,j));//if multiple, always the last habitat is written!
                                         }
                                 }
@@ -338,7 +330,8 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	}
 
 	param->total_like = value(likelihood);
-	cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood)-eFlike<< " " << eFlike <<endl;
+	if (!param->scalc())
+		cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood) << endl;
 
 	return value(likelihood);
 }
@@ -420,7 +413,11 @@ void SeapodymCoupled::ReadHabitat()
 				for (int j=0;j<nlat_input;j++){
 					for (int i=0;i<nlon_input;i++){
 						litbin.read(( char *)&buf,sizeofDymInputType);
-						mat.habitat_input[0][t_count][i+1][j+1]= buf;
+						double val = buf;
+						if (val<=-99)
+						    val = 0;
+
+						mat.habitat_input[0][t_count][i+1][j+1]= val;
 					}
 				}
 				litbin.close();
@@ -452,7 +449,6 @@ void SeapodymCoupled::ReadHabitat()
 		}
 	}
 	t_count = t_count_init;
-
 	if (param->spawning_habitat_input_flag==1 && param->larvae_input_aggregated_flag[0]==1){
 		// Vector of non-NA observed density
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){

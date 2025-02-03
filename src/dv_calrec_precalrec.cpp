@@ -192,8 +192,8 @@ void dv_calrec_precalrec()
 
 	if (!no_mort){
 		//assuming all cohorts except the last one have the same age unit:
-		double mean_age = age * param->sp_unit_cohort[sp][age-1] + 0.5*param->sp_unit_cohort[sp][age];
-		pop->RecompM_sp(*map, *param, mortality, mat->adult_habitat(sp,t_count,ind_adult_habitat), mean_age, sp);
+		double mean_age_in_dtau = age * param->sp_unit_cohort[sp][age-1] + 0.5*param->sp_unit_cohort[sp][age];
+		pop->RecompM_sp(*map, *param, mortality, mat->adult_habitat(sp,t_count,ind_adult_habitat), mat->mortality_range_age[sp][age], mean_age_in_dtau, age, sp);
 		pop->Recomp_total_mortality_comp(*map,*param,*mat,*rw,mortality,age,sp,year,month,step_count);
 	}
 	if (!vert_move)
@@ -446,8 +446,8 @@ void dv_calrec_with_catch_precalrec()
         }
 	if (!no_mort){
 		//assuming all cohorts except the last one have the same age unit:
-		double mean_age = age * param->sp_unit_cohort[sp][age-1] + 0.5*param->sp_unit_cohort[sp][age];
-		pop->RecompM_sp(*map, *param, mortality, mat->adult_habitat(sp,t_count,ind_adult_habitat), mean_age, sp);
+		double mean_age_in_dtau = age * param->sp_unit_cohort[sp][age-1] + 0.5*param->sp_unit_cohort[sp][age];
+		pop->RecompM_sp(*map, *param, mortality, mat->adult_habitat(sp,t_count,ind_adult_habitat), mat->mortality_range_age[sp][age], mean_age_in_dtau, age, sp);
 		pop->Recomp_total_mortality_comp(*map,*param,*mat,*rw,mortality,age,sp,year,month,step_count);
 	}
 //cout << age << " "<<  norm(mat->adult_habitat(sp,t_count,ind_adult_habitat)) << " " << norm(mortality) << endl;

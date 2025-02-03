@@ -11,6 +11,7 @@
 ///Forward functions are in feeding_habitat.cpp
 
 
+void dv_F_scaling_comp(void);
 void dv_Ha_comp(void);
 void dv_Hf_comp(void);
 double f_accessibility_layer(const double O, const double T,double twosigsq, double temp_mean, double oxy_teta, double oxy_cr);
@@ -31,26 +32,17 @@ void VarSimtunaFunc::Feeding_Habitat_Index(VarParamCoupled& param, VarMatrices& 
 	Hf.initialize();
 	const int nb_forage = param.get_nbforage();
 
-	dvmatr1 = param.dvarsEF_habitat[0][sp];
-	dvmatr3 = param.dvarsEF_habitat[1][sp];
-	dvmatr5 = param.dvarsEF_habitat[2][sp];
-	dvmatr6 = param.dvarsEF_habitat[3][sp];
-	dvmatr7 = param.dvarsEF_habitat[4][sp];
-	dvmatr8 = param.dvarsEF_habitat[5][sp];
+	for (int n=0; n<nb_forage; n++)
+	    dvfmat[n] = param.dvarsEF_habitat[n][sp];
 
 	Hf_comp(param,mat,map,Hf,sp,age,jday,t_count);
 
 	save_identifier_string2((char*)"Hf_comp_begin");
-	dvmatr1.save_dvar_matrix_position();
-	dvmatr3.save_dvar_matrix_position();
-	dvmatr5.save_dvar_matrix_position();
-	dvmatr6.save_dvar_matrix_position();
-	dvmatr7.save_dvar_matrix_position();
-	dvmatr8.save_dvar_matrix_position();	
 	Hf.save_dvar_matrix_position();
-	for (int n=0; n<nb_forage; n++){
-		mat.dvarF_access[n][age].save_dvar_matrix_position();
-	}
+	for (int n=0; n<nb_forage; n++)
+		mat.dvarForage[n].save_dvar_matrix_position();
+	for (int n=0; n<nb_forage; n++)
+		mat.dvarF_access[n][age].save_dvar_matrix_position();	
 	unsigned long int cmat   = (unsigned long int)&mat;
 	save_long_int_value(cmat);
 	unsigned long int cparam = (unsigned long int)&param;
@@ -65,6 +57,37 @@ void VarSimtunaFunc::Feeding_Habitat_Index(VarParamCoupled& param, VarMatrices& 
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_Hf_comp);
 }
+
+void VarSimtunaFunc::Forage_Scaling(VarParamCoupled& param, VarMatrices& mat, const PMap& map,  int sp, const int t_count){
+	
+	mat.dvarForage.initialize();
+	const int nb_forage = param.get_nbforage();
+//	for (int n=0; n<nb_forage; n++)
+//		mat.dvarForage[n] = mat.forage[t_count][n];
+
+//	if (!param.scale_forage_ave_currents[sp]) return;
+	for (int n=0; n<nb_forage; n++)
+	    dvfmat[n] = param.dvarsEF_habitat[n][sp];
+
+	F_scaling_comp(param,mat,map,sp,t_count);
+
+	save_identifier_string2((char*)"F_scaling_comp_begin");
+	for (int n=0; n<nb_forage; n++)
+	    dvfmat[n].save_dvar_matrix_position();
+	for (int n=0; n<nb_forage; n++)
+	    mat.dvarForage[n].save_dvar_matrix_position();
+	unsigned long int cmat   = (unsigned long int)&mat;
+	save_long_int_value(cmat);
+	unsigned long int cparam = (unsigned long int)&param;
+	save_long_int_value(cparam);
+	unsigned long int pmap   = (unsigned long int)&map;
+	save_long_int_value(pmap);
+	save_int_value(t_count);
+	save_identifier_string2((char*)"F_scaling_comp_end");
+
+	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_F_scaling_comp);
+}
+
 
 //Generalized habitat index with seasonal migration between spawning and feeding habitats
 void VarSimtunaFunc::Seasonal_Habitat_Index(VarParamCoupled& param, VarMatrices& mat, const PMap& map, dvar_matrix& Hs, dvar_matrix& Ha, int sp, int age, const int jday, const int t_count){
@@ -90,8 +113,82 @@ void VarSimtunaFunc::Seasonal_Habitat_Index(VarParamCoupled& param, VarMatrices&
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_Ha_comp);
 }
 
+void dv_F_scaling_comp(void){
+	dvar_matrix_position **Fpos;
+	dvar_matrix_position **Epos;
+	verify_identifier_string2((char*)"F_scaling_comp_end");
+	unsigned t_count   = restore_int_value();
+	unsigned long int pos_map   = restore_long_int_value();
+	unsigned long int pos_param = restore_long_int_value();
+	unsigned long int pos_mat   = restore_long_int_value();
+
+	CParam* param = (CParam*) pos_param;
+	const int nbf = param->get_nbforage();
+	Fpos = new dvar_matrix_position*[nbf];
+	for (int n=nbf-1; n>=0; n--)		
+	    Fpos[n] = new dvar_matrix_position(restore_dvar_matrix_position());
+	Epos = new dvar_matrix_position*[nbf];
+	for (int n=nbf-1; n>=0; n--)		
+	    Epos[n] = new dvar_matrix_position(restore_dvar_matrix_position());
+	verify_identifier_string2((char*)"F_scaling_comp_begin");
+
+	PMap* map = (PMap*) pos_map;
+	CMatrices* mat = (CMatrices*) pos_mat;
+
+	const int imax = map->imax;
+	const int imin = map->imin;
+
+	d3_array dfF, dfEF, forage;
+	dfF.allocate(0,nbf-1);
+	dfEF.allocate(0,nbf-1);
+	forage.allocate(0,nbf-1);
+	for (int n=0; n<nbf; n++){
+		dfF[n].allocate(imin, imax, map->jinf, map->jsup);
+		dfF[n].initialize();
+		dfEF[n].allocate(imin, imax, map->jinf, map->jsup);
+		dfEF[n].initialize();
+
+		forage(n).allocate(imin, imax, map->jinf, map->jsup);
+		forage(n) = mat->forage(t_count,n);
+	}
+	for (int n=0; n<nbf; n++){
+	    dfF[n]  = restore_dvar_matrix_derivatives(*Fpos[n]);
+	    dfEF[n] = restore_dvar_matrix_derivatives(*Epos[n]);
+	}
+
+	for (int i = imax; i >= imin; i--){
+		const int jmin = map->jinf[i];
+		const int jmax = map->jsup[i];
+		for (int j = jmax; j >= jmin; j--){
+			const int nlayer = map->carte(i,j);
+				if (nlayer>0){	
+
+				for (int n=nbf-1; n>=0; n--){		
+					//dvarF(n,i,j) = eF[n] * forage(n,i,j);
+					dfEF(n,i,j)  += forage(n,i,j) * dfF(n,i,j);
+					dfF(n,i,j) = 0.0;
+				}
+			}	
+		}
+	}
+	for (int n=0; n<nbf; n++){
+		dfF[n].save_dmatrix_derivatives(*Fpos[n]);
+		dfEF[n].save_dmatrix_derivatives(*Epos[n]);
+	}
+	for (int n=0; n<nbf; n++){
+	   delete Fpos[n];
+	   delete Epos[n];
+	}
+	delete [] Fpos;	       
+	delete [] Epos;	       
+	
+}
+
 void dv_Hf_comp(void)
 {
+	dvar_matrix_position **Fpos;
+	dvar_matrix_position **Fapos;
+    
 	verify_identifier_string2((char*)"Hf_comp_end");
 	const int age      = restore_int_value();
 	const int sp       = restore_int_value();
@@ -100,24 +197,20 @@ void dv_Hf_comp(void)
 	unsigned long int pos_map   = restore_long_int_value();
 	unsigned long int pos_param = restore_long_int_value();
 	unsigned long int pos_mat   = restore_long_int_value();
-	const dvar_matrix_position Fpos5  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos4  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos3  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos2  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos1  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos0  = restore_dvar_matrix_position();
+
+	CParam* param = (CParam*) pos_param;
+	const int nbf = param->get_nbforage();
+	Fapos = new dvar_matrix_position*[nbf];
+	for (int n=nbf-1; n>=0; n--)		
+	    Fapos[n] = new dvar_matrix_position(restore_dvar_matrix_position());
+	Fpos = new dvar_matrix_position*[nbf];
+	for (int n=nbf-1; n>=0; n--)		
+	    Fpos[n] = new dvar_matrix_position(restore_dvar_matrix_position());
 	const dvar_matrix_position Ha_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position E5_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position E4_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position E3_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position E2_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position E1_pos = restore_dvar_matrix_position();
-	const dvar_matrix_position E0_pos = restore_dvar_matrix_position();		
 	verify_identifier_string2((char*)"Hf_comp_begin");
 
 	dmatrix dfHa 	   = restore_dvar_matrix_derivatives(Ha_pos);
 
-	CParam* param = (CParam*) pos_param;
 	PMap* map = (PMap*) pos_map;
 	CMatrices* mat = (CMatrices*) pos_mat;
 
@@ -136,33 +229,20 @@ void dv_Hf_comp(void)
 	const int imax = map->imax;
 	const int imin = map->imin;
 
-	const int nbf = param->get_nbforage();
-	d3_array dfF_access;
+	d3_array dfF, dfF_access;
+	dfF.allocate(0,nbf-1);
 	dfF_access.allocate(0,nbf-1);
 	for (int n=0; n<nbf; n++){
+		dfF[n].allocate(imin, imax, map->jinf, map->jsup);
+		dfF[n].initialize();
 		dfF_access[n].allocate(imin, imax, map->jinf, map->jsup);
 		dfF_access[n].initialize();
 	}
-	dfF_access[0]  = restore_dvar_matrix_derivatives(Fpos0);
-	dfF_access[1]  = restore_dvar_matrix_derivatives(Fpos1);
-	dfF_access[2]  = restore_dvar_matrix_derivatives(Fpos2);
-	dfF_access[3]  = restore_dvar_matrix_derivatives(Fpos3);
-	dfF_access[4]  = restore_dvar_matrix_derivatives(Fpos4);
-	dfF_access[5]  = restore_dvar_matrix_derivatives(Fpos5);
 
-	d3_array dfEF;
-	dfEF.allocate(0,nbf-1);
 	for (int n=0; n<nbf; n++){
-		dfEF[n].allocate(imin, imax, map->jinf, map->jsup);
-		dfEF[n].initialize();
-	}	
-	dfEF[0]  = restore_dvar_matrix_derivatives(E0_pos);
-	dfEF[1]  = restore_dvar_matrix_derivatives(E1_pos);
-	dfEF[2]  = restore_dvar_matrix_derivatives(E2_pos);
-	dfEF[3]  = restore_dvar_matrix_derivatives(E3_pos);
-	dfEF[4]  = restore_dvar_matrix_derivatives(E4_pos);
-	dfEF[5]  = restore_dvar_matrix_derivatives(E5_pos);
-
+	    dfF[n]  = restore_dvar_matrix_derivatives(*Fpos[n]);
+	    dfF_access[n] = restore_dvar_matrix_derivatives(*Fapos[n]);
+	}
 	const int nbl = param->nb_layer;
 	ivector day_layer(0,nbf-1); day_layer = param->day_layer;
 	ivector night_layer(0,nbf-1); night_layer = param->night_layer;
@@ -176,19 +256,13 @@ void dv_Hf_comp(void)
 		tempn(k) = mat->tempn(t_count,k);
 		oxygen(k) = mat->oxygen(t_count,k);
 	}
-
 	forage.allocate(0,nbf-1);
-	for (int f=0; f<nbf; f++){
-		forage(f).allocate(imin, imax, map->jinf, map->jsup);
-		forage(f) = mat->forage(t_count,f);
-	}
-
-	dvector eF;
-	eF.allocate(0,nbf-1);
-	eF.initialize();
 	for (int n=0; n<nbf; n++){
-		eF[n] = param->eF_habitat[n][sp];
-	}	
+		double eF = param->eF_habitat[n][sp];
+
+		forage(n).allocate(imin, imax, map->jinf, map->jsup);
+		forage(n) = eF * mat->forage(t_count,n);
+	}
 
 	dvector T(0,nbl-1);   T.initialize();
 	for (int i = imax; i >= imin; i--){
@@ -229,7 +303,6 @@ void dv_Hf_comp(void)
 						f_access = l_access[day_layer[n]]*DL + l_access[night_layer[n]]*(1-DL);
 
 					double F = forage(n,i,j);
-					F = eF[n] * F;
 					Hf += f_access * F; 
 				}
 			
@@ -251,28 +324,26 @@ void dv_Hf_comp(void)
 
 						double F = forage(n,i,j);
 
-						//Hf += f_access * eF[n] * forage[n][i][j]; 
-						dfF_access(n,i,j) += eF[n] * F * dfHf;
-						dfEF(n,i,j)  += f_access * F * dfHf;
+						//Hf += f_access * forage[n][i][j]; 
+						dfF_access(n,i,j) += F * dfHf;
+						dfF(n,i,j)  += f_access * dfHf;
 					}
 				}
 			}	
 		}
 	}
-//cout << age << " " << norm(dfF_access(0)) << " " << norm(dfF_access(1)) << " " << norm(dfF_access(2)) << " " << norm(dfF_access(3)) << " " << norm(dfF_access(4)) << " " << norm(dfF_access(5)) << " " << norm(dfEF(0)) << " " << norm(dfEF(0)) <<" " << norm(dfEF(1)) <<" " << norm(dfEF(2)) <<" " << norm(dfEF(3)) <<" " << norm(dfEF(4)) <<" " << norm(dfEF(5)) <<" " << norm(dfHa) <<endl;
 	dfHa.save_dmatrix_derivatives(Ha_pos); 
-	dfF_access[0].save_dmatrix_derivatives(Fpos0);
-	dfF_access[1].save_dmatrix_derivatives(Fpos1);
-	dfF_access[2].save_dmatrix_derivatives(Fpos2);
-	dfF_access[3].save_dmatrix_derivatives(Fpos3);
-	dfF_access[4].save_dmatrix_derivatives(Fpos4);
-	dfF_access[5].save_dmatrix_derivatives(Fpos5);
-	dfEF[0].save_dmatrix_derivatives(E0_pos);
-	dfEF[1].save_dmatrix_derivatives(E1_pos);
-	dfEF[2].save_dmatrix_derivatives(E2_pos);
-	dfEF[3].save_dmatrix_derivatives(E3_pos);
-	dfEF[4].save_dmatrix_derivatives(E4_pos);
-	dfEF[5].save_dmatrix_derivatives(E5_pos);		
+
+	for (int n=0; n<nbf; n++){
+		dfF_access[n].save_dmatrix_derivatives(*Fapos[n]);
+		dfF[n].save_dmatrix_derivatives(*Fpos[n]);
+	}
+	for (int n=0; n<nbf; n++){
+	   delete Fpos[n];
+	   delete Fapos[n];
+	}
+	delete [] Fpos;	       
+	delete [] Fapos;	 	
 	
 }
 //Inna 01/13: derivative code for the new function - sigma varying as a function of season peak

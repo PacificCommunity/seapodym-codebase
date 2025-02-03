@@ -4,7 +4,7 @@
 ///precalrec for larval and juvenile life stages. 
 ///See precalrec_juv.cpp
 
-void CCalpop::Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortality, const int t_count)
+void CCalpop::Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortality, const int t_count, const double move_dtmod)
 {
 	dmatrix M_c    = value(mortality);
 	dmatrix bm_c   = value(dvarsBM);

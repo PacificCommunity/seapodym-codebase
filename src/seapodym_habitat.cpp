@@ -2,7 +2,9 @@
 #include "SeapodymCoupled.h"
 
 string get_path(const char* full_path);
+//void prerun_model(SeapodymCoupled& sc);
 void Hessian_comp(const char* parfile);
+void Taylor_derivative_test(const char* parfile);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
@@ -46,7 +48,11 @@ int seapodym_habitats(const char* parfile, int cmp_regime, const bool reset_buff
 	if (cmp_regime == 2){
 		Hessian_comp(parfile);
 		return 0;
+	} else if (cmp_regime == 4){
+		Taylor_derivative_test(parfile);
+		return 0;
 	}
+
 
 	//read parfile
 	SeapodymCoupled sc(parfile);
@@ -156,6 +162,12 @@ int seapodym_habitats(const char* parfile, int cmp_regime, const bool reset_buff
 	return 0;
 }
 
+/*void prerun_model(SeapodymCoupled& sc)
+{
+	sc.OnRunFirstStep();
+	sc.ReadHabitat();
+}*/
+
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 {
 	double like = 0.0;
@@ -168,6 +180,16 @@ double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 	return like;
 }
 
+double run_sim(SeapodymCoupled& sc, dvar_vector x)
+{
+	double like = 0.0;
+	like = sc.run_habitat((dvar_vector)x);
+	if (like==0){
+		cerr << "No data in the likelihood - gradient will not be calculated, exiting now!" << endl;
+		exit(1);
+	}
+	return like;
+}
 
 void verify_identifier_string2(char* str1) //ASSUME str1 is not null
 {

@@ -124,6 +124,14 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 			++idx;
 		}
 	}
+	if (doc.get("/M_larvae_range/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {
+			dvarsM_larvae_range[i] = boundp(x[idx], M_larvae_range_min, M_larvae_range_max, penalty);
+			M_larvae_range[i] = value(dvarsM_larvae_range[i]);
+			dvarpars[idx] = M_larvae_range[i];
+			++idx;
+		}
+	}
 
 	if (doc.get("/M_mean_range/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {

@@ -31,7 +31,7 @@ public:
 
 	void starvation_penalty(const PMap& map,VarParamCoupled& param, VarMatrices& mat, dvar_matrix& mortality, dvar_matrix& total_pop,dvar3_array& nF_ratio, dvar_matrix& uu, const int sp, const int age);
 	void precalrec(PMap& map, const dmatrix& mortality);
-	void Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortality, const int t_count);
+	void Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortality, const int t_count,const double mult);
 	void precalrec_juv_comp(const PMap& map, dmatrix& bm, const dmatrix& mortality);
 	//void Precalrec_total_mortality_comp(const PMap& map, VarParamCoupled& param, const CMatrices& mat, CReadWrite& rw, dvar_matrix& mortality, const int age, const int sp, const int year, const int month, const int step_count);
 	void Precalrec_total_mortality_comp(const PMap& map, VarParamCoupled& param, VarMatrices& mat, CReadWrite& rw, dvar_matrix& mortality, const int age, const int sp, const int t_count, const int year, const int month, const int step_count);
@@ -48,19 +48,19 @@ public:
 
 	void calrec_GO(const PMap& map, dvar_matrix& uu);
 	void calrec_GO_with_catch(const PMap& map, CParam& param, dvar_matrix& uu, const dmatrix& C_obs, dvar_matrix& C_est);
-	void Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_matrix& mortality, const int t_count);
+	void Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_matrix& mortality, const int t_count, const double mult);
 	void Calrec_adult(const PMap& map, dvar_matrix& uu, dvar_matrix& mortality);
 
 	void RecompADI_step_fwd(const PMap& map, d3_array& uu, d3_array& uuint, const dmatrix a, const dmatrix bm, const dmatrix& c, const dmatrix& d, const dmatrix& e, const dmatrix& f, const dmatrix& xbet, const dmatrix& ybet);
 	void RecompADI_step_fwd_with_catch(const PMap& map, CParam& param, d3_array& uu, d3_array& uuint, d3_array& uuint_t, const dmatrix a, const dmatrix bm, const dmatrix& c, const dmatrix& d, const dmatrix& e, const dmatrix& f, const dmatrix& xbet, const dmatrix& ybet, const dmatrix& C);
 
-	void Recomp_abc_coef(const PMap& map, CMatrices& mat, const int t_count, const dmatrix& mortality, dmatrix& aa, dmatrix& bbm, dmatrix& cc);
+	void Recomp_abc_coef(const PMap& map, CMatrices& mat, const int t_count, const dmatrix& mortality, dmatrix& aa, dmatrix& bbm, dmatrix& cc,const double mult);
 	void Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, const int t_count, const int jday, const dmatrix& habitat, dmatrix& dd, dmatrix& ee, dmatrix& ff, dmatrix& advection_x, dmatrix& advection_y, const int sp, const int age, const double MSS, const double c_diff_fish, const double sigma_species);
 	void Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat, dmatrix& u, dmatrix& v, const dmatrix& habitat, dmatrix& dd, dmatrix& ee, dmatrix& ff, dmatrix& advection_x, dmatrix& advection_y, const int sp, const int age, const double MSS, const double c_diff_fish, const double sigma_species, const int jday);
-	void RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_count, const dmatrix mortality, dmatrix& a, dmatrix& bm, dmatrix& c, dmatrix& d, dmatrix& e, dmatrix& f);
+	void RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_count, const dmatrix mortality, dmatrix& a, dmatrix& bm, dmatrix& c, dmatrix& d, dmatrix& e, dmatrix& f,const double mult);
 	void RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& mat, const int t_count, const int jday, const dmatrix& mortality, const dmatrix& habitat, dmatrix& aa, dmatrix& bbm, dmatrix& cc, dmatrix& dd, dmatrix& ee, dmatrix& ff, const int sp, const int age, const double MSS, const double c_diff_fish, const double sigma_species);
 	void RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices& mat, const int t_count, const int jday, const dmatrix& mortality, const dmatrix& habitat, dmatrix& aa, dmatrix& bbm, dmatrix& cc, dmatrix& dd, dmatrix& ee, dmatrix& ff, const int sp, const int age, const double MSS, const double c_diff_fish, const double sigma_species);
-	void RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const dmatrix& H, const double age, const int sp);
+	void RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const dmatrix& H, const double Rage, const double mean_age_in_dtau, const int age, const int sp);
 
 	void Predicted_Catch_Fishery(const PMap& map, VarParamCoupled& param, VarMatrices& mat, CReadWrite& rw, const int sp, const int f, const int k, const int year, const int month, const int t_count, const int step_count);
 	void predicted_catch_fishery_comp(const PMap& map, CParam& param, VarMatrices& mat, const int f, const int k, const int sp, const int age, const dmatrix& uu, const int step_count);

@@ -11,6 +11,8 @@ double pred_surface_comp(dvector forage, const double DL, const int nb_forage, i
 double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double e, const double ssv);
 double normal(const double x, const double mu, const double sigma);
 double lognormal(const double x, const double mu, const double sigma);
+double sigmoid1(const double x, const double tau, const double delta);
+
 
 const double pi = 3.1415926536;
 
@@ -49,7 +51,14 @@ double VarSimtunaFunc::Hs_comp_elem(CMatrices& mat, dvector F, const double pp_t
 	double predators = pred_surface_comp(F,DL,nb_forage,day_layer,night_layer);
 
 	//larvae preys - should be both phyto and zoo as a food of larvae. At the moment phyto only
-	double preys = pp * pp_transform; 
+	double preys = pp * pp_transform;
+	//Note, preys should be normalized between 0 and 1 to enable normalization
+        //of f_prey function. If PP file is unmodified, then pp value
+        //111.2713 mmolC/m2/day gives: 111.2713*30*0.0948*0.00316 = 1, and f_prey
+        //function, which assumes max_preys=1 for normalization can become > 1 at
+        //higher PP values. To avoid this, limit the PP in the forcing file by
+        //this or lower maximal value. In the latter case, modify c_pp parameter
+        //so that pp * pp_transform varies between 0 and 1.
 
 	//oxygen function - for the moment static species-wise parameters
 	double f_oxy = 1.0/(1.0+pow(0.01,O2_l2-0.1)); 
@@ -92,10 +101,10 @@ double hs_comp(double SST, double preys, double predators, const double a, const
 	//SST function
 	double f_sst = normal(SST,b,a*ssv);
 	//Holling type II
-	double f_prey = (preys*preys)/(c+preys*preys);
+	double f_prey = preys*preys*(1.0+c)/(c+preys*preys);
 	//Optional - normal or log-normal: to do later
 	//double f_pred = normal(predators,d,e);//YFT INTERIM
-	//if (log-normal), devide by the value of function in the 
+	//if (log-normal), divide by the value of function in the 
 	//mode = exp(d-e*e) to scale it between 0 and 1 =>
 	//f_pred = lognormal(predators,d,e)/lognormal(exp(d-e*e),d,e) which is:
 	double f_pred = exp(d-0.5*e*e-pow(log(predators)-d,2.0)/(2.0*e*e))/predators;

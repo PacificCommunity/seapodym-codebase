@@ -45,6 +45,7 @@ SeapodymCoupled_OnRunFirstStep.cpp \
 SeapodymCoupled_OnReadForcing.cpp \
 SeapodymCoupled_OnWriteOutput.cpp \
 SeapodymCoupled_ReadTags.cpp \
+SeapodymCoupled_EarlyLife.cpp \
 SeapodymDocConsole_UpdateDisplay.cpp \
 spawning_habitat.cpp \
 juvenile_habitat.cpp \

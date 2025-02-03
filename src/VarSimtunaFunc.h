@@ -33,6 +33,7 @@ public:
 	void Juvenile_Habitat_cannibalism(VarParamCoupled& param,CMatrices& mat,const PMap& map,dvar_matrix& Hs, dvar_matrix& total_pop, int sp, const int t_count);
 	void Hj_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hj, double a, double b, const int t);
 	void Hj_cannibalism_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hj, const dmatrix& total_pop, double a, double b, double c, const int t);
+	void Forage_Scaling(VarParamCoupled& param, VarMatrices& mat, const PMap& map,  int sp, const int t_count);
 	void Faccessibility(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, const int jday, const int t_count, const int pop_built, const int tags_only, const ivector tags_age_solve);
 	void Vars_at_age_precomp(CParam& param, const int sp);
 	double Topt_at_age_comp(CParam& param, const double teta_min, const double teta_max, const int sp, const int age);
@@ -41,6 +42,7 @@ public:
 	void Average_currents_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int age, const int t);
 	double Tmean_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, const int age, const int t);
 	void Feeding_Habitat(VarParamCoupled& param, VarMatrices& mat, const PMap& map, dvar_matrix& Ha, int sp, int age, const int jday, const int t_count, const int migration_flag);
+	void F_scaling_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, const int t);
 	void Hf_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, dvar_matrix& Hf, const int sp, const int age, const int jday, const int t);
 	void Feeding_Habitat_Index(VarParamCoupled& param, VarMatrices& mat, const PMap& map, dvar_matrix& Ha, int sp, int age, const int jday, const int t_count);
 	void Seasonal_Habitat_Index(VarParamCoupled& param, VarMatrices& mat, const PMap& map, dvar_matrix& Hs, dvar_matrix& Ha, int sp, int age, const int jday, const int t_count);
@@ -50,7 +52,9 @@ public:
 	void Seasonal_switch_year_precomp(CParam& param, CMatrices& mat, const PMap& map, double season_peak, double season_start,const int sp);
 
 	void Mortality_Sp( VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, dvar_matrix& H, int sp, double mean_age_in_dtau, const int age, const int t_count);
-	void M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double, double, double, double, double, double, const int dtau);
+	void M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double, double, double, double, double, const double,double);
+	void M_early_sp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const dmatrix& sst, const dmatrix& pp, const int sp);
+
 	void M_PH_juv_comp(VarParamCoupled& param, const PMap& map, CMatrices& mat, dvar_matrix& M, const dmatrix& PH, double mean_age_in_dtau);
 	void Scaling_factor_sstdep_larvae_mortality_comp(const PMap& map, dvar_matrix& Scaling_factor, const dmatrix& sst, dvariable inv_M_max, dvariable inv_M_rate, dvariable age_larvae_before_sst_mortality, int deltaT);
 	void Scaling_factor_sstdep_larvae_mortality(VarParamCoupled& param, const dmatrix& sst, const PMap& map, dvar_matrix& S, const int sp);
@@ -64,6 +68,12 @@ public:
 		dvmatr6.allocate(imin,imax,jinf,jsup); dvmatr6.initialize();
 		dvmatr7.allocate(imin,imax,jinf,jsup); dvmatr7.initialize();
 		dvmatr8.allocate(imin,imax,jinf,jsup); dvmatr8.initialize();
+
+		int nbf = 6; //temporal, to pass nb_forage here or there
+		dvfmat.allocate(0,nbf-1);
+		for (int n=0; n<nbf; n++){
+		    dvfmat[n].allocate(imin,imax,jinf,jsup); dvfmat.initialize();
+		}
 	}
 	dvariable adv_diff(const double H, dvariable& c)
 	{
@@ -76,6 +86,7 @@ public:
 
 private:
 	dvar_matrix dvmatr1, dvmatr2, dvmatr3, dvmatr4, dvmatr5, dvmatr6, dvmatr7, dvmatr8;
+	dvar3_array dvfmat;
 
 };
 #endif

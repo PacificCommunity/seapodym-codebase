@@ -35,6 +35,7 @@ Param.cpp \
 Date.cpp \
 SaveTimeArea.cpp \
 SimtunaFunc.cpp \
+NishikawaLike.cpp \
 VarParamCoupled_xinit.cpp \
 VarParamCoupled_reset.cpp \
 SeapodymCoupled_EditRunCoupled.cpp \
@@ -59,8 +60,7 @@ dv_feeding_habitat.cpp \
 dv_seasonal_switch.cpp \
 Calpop_InitCalPop.cpp  \
 hessian.cpp \
-like.cpp \
-NishikawaLike.cpp
+like.cpp 
 
 SRCPATH=DOM/src:src
 INCPATH=-IDOM/src -Isrc

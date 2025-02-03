@@ -28,7 +28,8 @@ int SeapodymCoupled::EditRunCoupled(const char* parfile)
 
 	a0_adult.allocate(0,nb_species-1);
 	aN_adult.allocate(0,nb_species-1);
-	mean_age_cohort.allocate(0,nb_species-1);		
+	mean_age_cohort.allocate(0,nb_species-1);
+	//Here still initializing mean_age_in_dtau as if dtau could be variable
 	for (int sp=0; sp<nb_species; sp++){
 		a0_adult[sp] = param->sp_a0_adult[sp];
 		aN_adult[sp] = param->sp_nb_cohorts[sp];

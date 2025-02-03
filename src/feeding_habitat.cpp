@@ -36,6 +36,31 @@ void VarSimtunaFunc::Feeding_Habitat(VarParamCoupled& param, VarMatrices& mat, c
 	}
 }
 
+void VarSimtunaFunc::F_scaling_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, const int t)
+{
+
+	const int nb_forage = param.get_nbforage();
+	const int nb_layer = param.nb_layer;
+
+	for (int i = map.imin; i <= map.imax; i++){	
+		const int jmin = map.jinf[i];
+		const int jmax = map.jsup[i];
+		for (int j = jmin; j <= jmax; j++){
+			int nl = map.carte(i,j);
+			if (nl>0 && nl<=nb_layer){
+		
+				for (int n=0; n<nb_forage; n++){
+					//mat.dvarForage[n].elem_value(i,j) *= param.eF_habitat[n][sp];
+					double eF = param.eF_habitat[n][sp];
+					mat.dvarForage[n].elem_value(i,j) = eF*mat.forage(t,n,i,j);
+				}
+			}
+		}
+	}
+}
+
+
+
 void VarSimtunaFunc::Hf_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, dvar_matrix& Ha, const int sp, const int age, const int jday, const int t)
 {
 
@@ -53,15 +78,11 @@ void VarSimtunaFunc::Hf_comp(VarParamCoupled& param, VarMatrices& mat, const PMa
 				double func_Hf = 0.0;
 				double topo = map.itopo(i,j);
 		
-				double F = 0.0;
-				double sF = 0.0;
-
 				for (int n=0; n<nb_forage; n++){
-					F = mat.forage(t,n,i,j);
+					double F = value(mat.dvarForage(n,i,j));
 
-					sF = param.eF_habitat[n][sp] * F;
 					//accessible forage:
-					func_Hf += value(mat.dvarF_access(n,age,i,j))*sF; 
+					func_Hf += value(mat.dvarF_access(n,age,i,j))*F; 
 				}
 
 				//Habitat between 0 and 1

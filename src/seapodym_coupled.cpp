@@ -5,6 +5,7 @@
 string get_path(const char* full_path);
 //void prerun_model(SeapodymCoupled& sc);
 void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x);
+void Taylor_derivative_test(const char* parfile);
 void Sensitivity_analysis(const char* parfile, const int sftype);
 void Hessian_comp(const char* parfile);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
@@ -28,12 +29,11 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 	time_t time_sec;
 	time(&time_sec);
 	const time_t time0 = time_sec;
-
 	//-----Memory stack sizes for dvariables and derivatives storage------
 	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
 	long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
 	bool grad_calc = false;
-	if (cmp_regime==-1 || cmp_regime==2) grad_calc = true;
+	if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
 	buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
 	if (reset_buffers)
 		buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
@@ -51,6 +51,9 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 		return 0;
 	} else if (cmp_regime == 3){
 		Sensitivity_analysis(parfile,FLAG);
+		return 0;
+	} else if (cmp_regime == 4){
+		Taylor_derivative_test(parfile);
 		return 0;
 	}
 
@@ -147,7 +150,7 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 			if (fmc.ireturn > 0) {
 				likelihood = sc.run_coupled((dvar_vector)x);
 				gradcalc(nvar,g);
-				cout << "function evaluation " << idx++ << endl;
+				cout << "function evaluation " << idx++ << endl;		
 			}
 		}
 		//test: write the optimisation stats on exit with final values of like and parameters
@@ -202,6 +205,18 @@ double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 	gradcalc(nvar,g); 
 	return like;
 }
+
+double run_sim(SeapodymCoupled& sc, dvar_vector x)
+{
+	double like = 0.0;
+	like = sc.run_coupled((dvar_vector)x);
+	if (like==0){
+		cerr << "No data in the likelihood - gradient will not be calculated, exiting now!" << endl;
+		exit(1);
+	}
+	return like;
+}
+
 
 int seapodym_phases(const char* parfile)
 {
@@ -592,6 +607,8 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 	double total_elapsed_time = (double)((time2-time1)/CLOCKS_PER_SEC)/60.0;
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
 }
+
+
 
 void verify_identifier_string2(char* str1) //ASSUME str1 is not null
 {

@@ -120,6 +120,10 @@ void SeapodymCoupled::WriteFileHeaders()
 		if (param->larvae_mortality_sst[sp])
 			SaveLarvaeBeforeSstMort(sp, true, zlevel);
 
+	for (int sp=0; sp< nb_species;sp++){
+		WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_early_larvae.dym", true);
+		WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_early_mortality.dym", true);
+	}
 	// Create and initialize (txt) files for saving aggregated variables
 	rw.InitSepodymFileTxt(*param);
 
@@ -298,5 +302,39 @@ void SeapodymCoupled::SaveLarvaeBeforeSstMort(int sp, bool WriteHeader, dvector 
 		//update min-max values in header
 		rw.rwbin_minmax(fileout, minval, maxval);
 	}
+}
+
+void SeapodymCoupled::WriteAVariableDym(const dmatrix var, string filename, bool WriteHeader)
+{
+        double minval = min(var);
+        double maxval = max(var);
+
+        string fileout = param->strdir_output + filename;
+        if (WriteHeader){
+		dvector zlevel; zlevel.allocate(0, nbt_total - 1);
+		for (int n=0; n<nbt_total; n++)
+			zlevel[n] = mat.zlevel[n+nbt_start_series];
+                //Write file headers during the first time step
+                rw.wbin_header(fileout, param->idformat, param->idfunc, minval, maxval,
+                                                                        param->nlong, param->nlat, nbt_total,
+                                                                        zlevel[0], zlevel[nbt_total-1],
+                                                                        mat.xlon, mat.ylat, zlevel, mat.mask);
+
+        }
+        else {
+                //Append data for the current date
+                dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
+                mat2d.initialize();
+                for (int i=map.imin; i <= map.imax; i++){
+                        for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
+                                if (map.carte[i][j]){
+                                        mat2d(i-1,j-1) = var(i,j);
+                                }
+                        }
+                }
+                rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
+                //update min-max values in header
+                rw.rwbin_minmax(fileout, minval, maxval);
+        }
 }
 

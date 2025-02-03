@@ -247,7 +247,8 @@ void dv_caldia()
 	const double unit_x = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dx;
 	const double unit_y = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dy;
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
-	const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
+	//const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
+	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dmax   = sigma_species*Dinf;
 
 	const int imax = map->imax;
@@ -565,8 +566,13 @@ void dv_caldia_UV()
 				lf_access.initialize();
 				O2.initialize();
 				T.initialize();
-				for (int n=0; n<nb_forage; n++)
-					F(n) = mat->forage(t_count,n,i,j);
+				for (int n=0; n<nb_forage; n++){
+					if (param->scale_forage_ave_currents[sp]){
+						double eF = param->eF_habitat[n][sp];
+						F(n) = eF * mat->forage(t_count,n,i,j);
+					}else
+						F(n) = mat->forage(t_count,n,i,j);
+				}
 				//for (int l=0; l<nl; l++){
 				for (int l=0; l<nb_layer; l++){
 					O2(l) = mat->oxygen(t_count,l,i,j);
@@ -656,9 +662,10 @@ void dv_caldia_UV()
 	const double unit_x = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dx;
 	const double unit_y = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dy;
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
-	const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
+	//const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
+	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dmax   = sigma_species*Dinf;
-	const double rmax   = param->rmax_currents;
+	const double rmax   = param->rmax_currents[sp];
 
 	const int imax = map->imax;
 	const int imin = map->imin;

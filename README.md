@@ -1,16 +1,49 @@
-# SEAPODYM project
+# SEAPODYM project: branch DEV-SKJ
 
-Source code of the SEAPODYM numerical modelling framework and analyses tools, OFP-FEMA. C++, R, Linux.
+Branch **dev-skjmodel** is the SEAPODYM source code branch used for the SKJ reference model revision under JRA55 forcing. 
 
-*Version 4.1*
+*Pre-version 5.x*
 
-*Pre-released January 21, 2023*
+*Evolved, merged and revised April 2024 -January, 2025*
 
 ## About
 
-SEAPODYM (Spatial Ecosystem And POpulation DYnamics Model) has been initiated in the mid 1990s by the Oceanic Fisheries Programme of the Pacific Community (SPC), and its developments were continuously conducted since then at the University of Hawaii (2004-2007), at Collecte Localisation Satellites in Toulouse (2006-2020) and at SPC (2020-now). The objective of this project is to propose a new scientific tool for biomass estimation at spatial scales smaller than operating stock assessment models, while having quantitative skill of predicting fish stocks spatiotemporal dynamics under the influence of both fishing and environmental variability. 
+Branch **dev-skjmodel** is the evolution of **master** branch and **dev_larvae_dynpop** branch, the latter being the significant enhancement of **master** branch via integrating the larval and other early life data into parameter estimation with the MLE approach. Compared to the **master** and **dev_larvae_dynpop**, **dev-skjmodel** includes the following **major** (either significantly impacting model solutions and/or involving substantial changes of adjoint functions) changes and improvements:
 
-The codebase implements the SEAPODYM modelling framework, which includes several models and tools, allowing running the full fish population dynamics model with pre-configured parameters, estimating this model parameters by integrating geo-referenced fisheries and tagging data, computing and estimating parameters of spawning and feeding habitats, simulating movement dynamics of tagged fish, and evaluating biomass flow rates between designed regions. The model can be parametrised through integration of the commercial fisheries data and the scientific tagging data, and solving optimization problem formulated using the maximum likelihood estimation approach. To ensure the optimization algorithm efficiency, implementation of the model adjoint code allows an exact, analytical evaluation of the likelihood gradient. Additional tools integrated within C++ code include local and global sensitivity analysis, and Hessian approximation. The offline R tools, developed for various model analyses and the IO files manipulations, are included in the repository to facilitate the use of the model.
+1) Normalization of *f_prey* function of the spawning habitat, ensuring estimation of the functional relationship in (0,1) range. This change improves estimation of recruitment parameters and isn't optional. Besides, the old models cannot be reparameterized so to provide exactly the same output with the new function. For further details, see functions *Hs_comp_elem* and *Hs_comp* in *spawning_habitat.cpp*.   
+
+2) Enabling arbitrary number of forage groups in optimization mode (previously working only in simulation mode).
+
+3) Stock likelihood term in the form of penalty, allowing setting the maximal stock size (previously it was the best value) which cannot be exceeded.  
+
+4) Model of early larvae (ELM), with time splitting of the first month of fish life and different processes influencing mortality rate during each time-age interval - SST-driven mortality during egg, yolk-sac and early development stage and HS-driven mortality for the rest of the larval stage. Early larvae are then used in the likelihood with larval sampling data. To activate this model, added a set of new parameters in the block *early_larvae_model*. Also, to be able to use it, it is necessary to enter parameters of empirical egg survival function depending on SST. For further details, see function *M_early_larvae* in *mortality_sp.cpp*. The ELM is optional, so in case, if this model is unnecessary, e.g., no larval data available, it can be desactivated.
+
+5) Changes in mortality function: i) new parameter *M_larvae_range* added with the same role as *M_mean_range*, but for the second larval stage only, ii) Rage term that allows variable response to environmental conditions expressed as Hj or Ha has parameters in the parfile (parameters *M_max_range_age* and *M_max_range_slope*), and iii) removing arbitrary value Hval = 0.5 for mortality variability, instead only the maximal value H = 1 will not modify mortality, and all values below 1 will gradually increase the fixed M-at-age values, giving maximal mortality rates in H = 0. 
+
+6) Changes in recruitment function: now it can be set up to get the number of newborns depending on adult function only. Set new parameter *spawning_in_hs = 0* to swith to this option. This is a necessary part of the new ELM, in which case this parameter is ignored, however it can be useful for all models in general. Currently, the double effect of HS on larval abundance (at spawning and through the variable mortality, which in addition can both increase and decrease mortality through *M_mean_range*), although at different time steps, likely makes the estimation of demographic parameters more difficult.   
+
+7) Added eF scalers to averaging ocean currents according to the time spent in the layer, function *Average_currents*. This is optional and can be set up via flag *scale_forage_ave_currents*. 
+
+Other **minor** changes include: 
+
+1) In the larval data predictions, additional multiplier term linking plankton net catchability to mixed-layer depth can be used. Flag *q_mld_larvae* activates its use. For the moment, the function is hard-coded with parameters empirically derived through statistical analysis and optimizations with the SKJ model, see *put_larvae_at_obs* in *SeapodymCoupled_EarlyLife.cpp*. 
+
+2) Small change in Dinf (maximal theoretical diffusion) definition - instead of using linear relationship with size given by line $y=Dspeed(1.25-.25 L(age))$ for the smallest to largest tuna, the allometric function analogous to the one used for advection rates is now used. For the moment, there still remain hard-coded parameters, so further revisions will be necessary (at least taking out parameters to the parfile), but the results of optimizations has shown some improvements in estimation of habitats yielding lower diffusion rates for largest tunas. See *precaldia_comp* function in *caldia.cpp*.
+
+3) Fixed a minor bug in the Taglike function, due to which the first group of tags was never used in the likelihood.
+
+4) Taylor test was added and essentially replaces the Autodif's derivative check. Current implementation has hard-coded number of 16 points for finite difference calculations, although it can be envisaged to enter user specified number and pass it as an argument to the function, see *Taylor_derivative_test* in hessian.cpp.
+
+5) Small correction of degraded cells in fisheries data for a closer match with the model grid, as well restriction of the LF data sample sized at smaller smax, see *Readwrite_fisheries.cpp*. 
+
+6) Fixes in command line options for *seapodym_habitats* and *seapodym_densities*.
+
+7) Small bug fix in *Hessian_comp* function, see hessian.cpp.
+
+8) Removed all forcing data changes in the code.
+
+9) Some code cleaning.
+
 
 ## Prerequisites 
 
@@ -132,8 +165,8 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   Example #2. **Skipjack**
 
-  This is a more comprehensive full model example, the pre-configured model of skipjack tuna, based on the [parameter estimation approach with fisheries and tagging data](https://cdnsciencepub.com/doi/full/10.1139/cjfas-2018-0470). To run this model, the corresponding forcing directory needs to be downloaded from the public [data repository](https://osf.io/h8u93) on the OSF platform. 
-
+  This branch will include the configuration for revised skipjack model with JRA55 forcing. Once the forcings are uploaded to the OSF data repository, the parfile will be updated... 
+  
   Once downloaded, unzip and place the forcing files into a local directory without modifying the folder structure.
 
   Now open the skipjack\_F0.xml parfile in the preferred text editor and replace the ${SEAPODYM\_HOME} by the full absolute path to the unzipped *data* folder.  
@@ -170,23 +203,6 @@ SEAPODYM runs on a 64-bit computer and on Linux operating system only. As all hi
 
   and compare the screen outputs with _opt.out_, and parameter estimates with those in _skipjack\_F0.xml_ parfile, which were used to produce pseudo-observations.  
   
-
-  Example #3. **Albacore**
-
-  Similarly to skipjack example, this is the pre-configured example to run the albacore tuna model, [parameterized and validated with fisheries data](https://www.sciencedirect.com/science/article/pii/S0967064519301511). The configuration file will allow running the population dynamics model of the south Pacific stock. To run this model, download the forcing directory from the [OSF data repository](https://osf.io/j53hc).
-
-  Unzip and place the forcing files into a local directory without modifying the folder structure.
-
-  Open the albacore\_F0.xml parfile and modify the ${SEAPODYM\_HOME}, so to provide the full absolute path to the unzipped *data* folder. 
-    
-    [~]$ cd example-configs/albacore/
-    
-  and run 
-
-    [~/seapodym/example-configs/albacore/]$ seapodym -s albacore_F0.xml
-    
-  The simulation log can be compared with the one provided in sim\_F0.out file. Note that running this simulation with fishing requires fisheries data, which are not public. To inquire for the access to the data, please email <ofpdatarequest@spc.int>. Your request will be examined based on the eligibility of your organisation and your project. Then, the simulation with fishing can be run with the XML configuration file albacore.xml, and the screen log compared with provided sim.out file.
-
      
 ## Documentation
 For further information on how to use SEAPODYM for simulation studies and model developments see the [Model Reference Manual](docs/manual/Seapodym_user_manual.pdf). Doxygen generated [Code Documentation](docs/code-dox/codedoc_seapodym.pdf) can be consulted for a quick overview of the C++ numerical model code. 

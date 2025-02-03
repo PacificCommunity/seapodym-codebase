@@ -28,10 +28,13 @@ public:
 			dvarSigmaSeason(sp).initialize();
 		}
 
+		dvarForage.allocate(0, nforage - 1);
 		dvarF_access.allocate(0, nforage - 1, 0, nb_ages-1);
 		dvarZ_access.allocate(0, nblayer - 1, 0, nb_ages-1);
 		for (int a=0; a<nb_ages; a++){
 			for (int n=0; n<nforage; n++){
+				dvarForage(n).allocate(map.imin, map.imax, map.jinf, map.jsup);
+				dvarForage(n).initialize();
 				dvarF_access(n,a).allocate(map.imin, map.imax, map.jinf, map.jsup);
 				dvarF_access(n,a).initialize();
 			}
@@ -176,6 +179,7 @@ public:
 
 //	DVAR3_ARRAY dvarDensity_age;
 
+	DVAR3_ARRAY dvarForage;
 	DVAR4_ARRAY dvarF_access;
 	DVAR4_ARRAY dvarZ_access;
 	DVAR4_ARRAY dvarDensity;

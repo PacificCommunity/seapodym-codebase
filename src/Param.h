@@ -56,7 +56,11 @@ public:
 	int maxfn;
 	double crit;
 	
-	ivector vert_movement;
+	//Flags for alternative model mechanisms:
+	ivector vert_movement;		   //average currents through vertical layers accessible to fish
+	ivector scale_forage_ave_currents; //use eF scaler when computing the time spent in the layer
+	ivector seasonal_migrations;	   //activate seasonal spawning migrations
+	ivector spawning_adult_func_only;  //use stock-recruitment function only at spawning, ignoring Hs
 	ivector food_requirement_in_mortality;
 	ivector uncouple_sst_larvae;	
 	ivector gaussian_thermal_function;	
@@ -109,6 +113,8 @@ public:
 	int	nbytetoskip;
 	double	save_first_yr;	// first year from which predictions are recorded
 	double	save_last_yr;
+	int larvae_like_firstyear;
+	int larvae_like_lastyear;
 	int first_recruitment_date;
 	int	nb_yr_forecast;
 	int 	nbsteptoskip;
@@ -163,6 +169,7 @@ public:
 	int nb_larvae_input_agg_groups;
 
 	// Larvae likelihood parameters
+	int q_mld_larvae;
 	ivector larvae_like; // weither to comute larvae likelihood, [sp]
 	DVECTOR q_sp_larvae;           // Larvae catchability, [sp]
 	DVECTOR likelihood_larvae_sigma;		// sigma parameter in Gaussian kernel used for larvae likelihood
@@ -183,6 +190,11 @@ public:
 	DVECTOR inv_M_max;		// first parameter in the sst-dependent larvae mortality during the first time step
 	DVECTOR inv_M_rate;		// second parameter in the sst-dependent larvae mortality during the first time step
 	DVECTOR age_larvae_before_sst_mortality;		// third parameter in the sst-dependent larvae mortality during the first time step
+
+	ivector elarvae_model;        // flag to activate/desactivate early larvae model
+	dvector elarvae_age;
+	dvector elarvae_mortality_min, elarvae_mortality_inc;
+	dvector elarvae_slope_low, elarvae_slope_high, elarvae_sst_low, elarvae_sst_high;
 	
 ///	IVECTOR sp_nb_age_class_ad;	// number of age classes for each species [sp]
 ///	IVECTOR sp_unit_age_class_ad;	// time step used for the population of the species [sp] (0= pas de calcul de pop; 1=month;2=quarter )
@@ -212,6 +224,8 @@ public:
 	DVECTOR Ms_mean_slope;		// natural mortality: slope coeff of the "senescence" increasing sigmoid function
 	DVECTOR Ms_mean_max;		// natural mortality: max coeff of the "senescence" increasing sigmoid function
 	DVECTOR M_mean_range;		// range of the variability of natural mortality around M in relation with the habitat
+	DVECTOR M_larvae_range;		// range of the variability of natural mortality around M in relation with the habitat
+	dvector M_range_age_max, M_range_age_slope;
 	dvector residual_competition;	// constant (temp) parameter accounting for competition with species, which are not in the model
 
 	int habitat_run_type;		// these two parameters are needed to pass the info to OnRunHabitat on which 
@@ -226,7 +240,6 @@ public:
 	imatrix age_compute_habitat;	// ages to compute habitat index, by default it is computed for all adult cohorts
 	DVECTOR nb_recruitment;		// nb of fish recruited by cell [sp]
 	DVECTOR a_adults_spawning;	// coefficient controlling dependence of number of spawns from number of mature fish of species [sp]
-	ivector seasonal_migrations;	// flag for seasonal migrations [sp]
 	dvector spawning_season_peak;	// peak of the seasonal cycle in julian day (in the North Hemisphere)
 	dvector spawning_season_start;  // day/night length ratio defining the beginning of spawning migrations
 	DVECTOR a_sst_spawning;		// coefficient of curvature for spawning temperature function [sp]
@@ -259,7 +272,7 @@ public:
 	DVECTOR MSS_species;		// max ustained speed for each species in FL/mo [sp]
 	DVECTOR MSS_size_slope;		// scaling exponent of the power low to compute sustainable speed MSS*L^slope
 	DVECTOR c_diff_fish;		// coefficient for the diffusion-Habitat function [sp]
-	double rmax_currents;		// maximal reduction of current velocity due to vertical migrations effect, rmax = 0.0 - no reduction
+	dvector rmax_currents;		// maximal reduction of current velocity due to vertical migrations effect, rmax = 0.0 - no reduction
 
 	dmatrix sigma_ha;		//Gaussian std in adult habitat by sp and age
 	dmatrix temp_age;		//optimal temperature by sp and age

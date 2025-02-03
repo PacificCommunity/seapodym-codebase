@@ -18,7 +18,7 @@ public:
 	virtual ~CSimtunaFunc() {/*DoNothing*/};
 
 public:
- 
+	void mortality_range_age_comp(CParam& param, CMatrices& mat, const int sp);
 	double function_lambda(CParam& param, CMatrices& mat, int n, int i, int j);
 	double daylength(double lat, int jday);
 	double daylength_twilight(double lat, int jday, const double p);

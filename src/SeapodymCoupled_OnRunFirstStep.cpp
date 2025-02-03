@@ -106,11 +106,6 @@ void SeapodymCoupled::OnRunFirstStep()
 	}
 	//END of TAG data reading and allocation section
 	
-
-	//to constrain the eF parameters: their sum should hold constant
-	eF_sum = 6.0;//sum(param->eF_habitat);
-        //cout << "Just a WARNING: the sum of eF parameters = " << eF_sum << " will be used in the optimization" << endl;
-
 	pop.time_reading_init();
 	func.time_reading_init();
 	param->time_reading_init();

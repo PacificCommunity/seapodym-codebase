@@ -170,6 +170,7 @@ void CMatrices::createMatMortality(int nforage, int nbi, int nbj)
 {
 	mortality.allocate(0, nforage - 1, 0, nbi - 1, 0, nbj - 1);
 	mortality.initialize();
+
 }
 
 void CMatrices::createMatNoBorder(int nbi, int nbj)
@@ -283,6 +284,11 @@ void CMatrices::createMatSpecies(const PMap& map, int t0, int nbt, int nbi, int 
 	}
 	density_after.initialize();
 
+	mortality_range_age.allocate(0,nb_species-1);
+	for (int sp = 0; sp < nb_species; sp++){
+		mortality_range_age[sp].allocate(0,sp_nb_age_class[sp]-1);
+		mortality_range_age[sp].initialize();
+	}
 
 /*
 	pop_species.allocate(0, nb_species - 1);

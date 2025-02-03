@@ -4,7 +4,7 @@
 ///calrec for larval and juvenile life stages, i.e. with passive drift only. 
 ///See calrec_adre.cpp
 
-void CCalpop::Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_matrix& mortality, const int t_count)
+void CCalpop::Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_matrix& mortality, const int t_count, const double move_dtmod)
 {
 	bm = value(dvarsBM);
 	xbet = value(Xbet);

@@ -8,16 +8,17 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 {
 	M.initialize();
 
+	double Rage = mat.mortality_range_age[sp][age];
+
 	dvariable Mp_max   = param.dvarsMp_mean_max[sp];
 	dvariable Mp_exp   = param.dvarsMp_mean_exp[sp];
 	dvariable Ms_slope = param.dvarsMs_mean_slope[sp];
 	dvariable Ms_max   = param.dvarsMs_mean_max[sp];
-	dvariable range    = param.dvarsM_mean_range[sp]; 
-
-	//Note, the index '0' here assumes that all age classes except A+ have the same size.
-	int dtau = param.sp_unit_cohort[sp][0]*param.deltaT; 
-
-	M_sp_comp(map, M, value(H), value(Mp_max), value(Ms_max), value(Mp_exp), value(Ms_slope), value(range), mean_age_in_dtau, dtau);
+        dvariable range    = param.dvarsM_mean_range[sp];
+        if (age==0)
+                range = param.dvarsM_larvae_range[sp];
+	
+	M_sp_comp(map, M, value(H), value(Mp_max), value(Ms_max), value(Mp_exp), value(Ms_slope), value(range), Rage, mean_age_in_dtau);
 
         if (!param.gcalc()){
                 // pH option works only in simulation mode

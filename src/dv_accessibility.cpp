@@ -10,6 +10,7 @@
 ///Forward functions are in accessibility.cpp
 
 void dv_accessibility_comp(void);
+void dv_accessibility_noeFcurrents_comp(void);
 void dv_accessibility_ftype2_comp(void);
 void dv_average_currents_comp(void);
 
@@ -82,6 +83,10 @@ void VarSimtunaFunc::Faccessibility(VarParamCoupled& param, VarMatrices& mat, co
 			if (!param.gaussian_thermal_function[sp]){
 				dvmatr8.save_dvar_matrix_position();
 			}
+			if (param.scale_forage_ave_currents[sp]){
+				for (int n=0; n<nb_forage; n++)
+					mat.dvarForage(n).save_dvar_matrix_position();
+			}
 			for (int n=0; n<nb_forage; n++)
 				mat.dvarF_access(n,age).save_dvar_matrix_position();
 			for (int l=0; l<nb_layer; l++)
@@ -99,7 +104,10 @@ void VarSimtunaFunc::Faccessibility(VarParamCoupled& param, VarMatrices& mat, co
 			save_int_value(age);
 			save_identifier_string2((char*)"Faccessibility_comp_end");
 			if (param.gaussian_thermal_function[sp]){
-				gradient_structure::GRAD_STACK1->set_gradient_stack(dv_accessibility_comp);
+				if (param.scale_forage_ave_currents[sp])
+					gradient_structure::GRAD_STACK1->set_gradient_stack(dv_accessibility_comp);
+				else 
+					gradient_structure::GRAD_STACK1->set_gradient_stack(dv_accessibility_noeFcurrents_comp);
 			} else 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_accessibility_ftype2_comp);
 		}
 	    }
@@ -302,7 +310,9 @@ void dff_accessibility_layer(double dff_access, double& dftemp_age, double& dfte
 
 
 void dv_accessibility_comp(void)
-{
+{	dvar_matrix_position **Fpos;
+	dvar_matrix_position **Fapos;
+
 	verify_identifier_string2((char*)"Faccessibility_comp_end");
 	const int age      = restore_int_value();
 	const int sp       = restore_int_value();
@@ -315,12 +325,14 @@ void dv_accessibility_comp(void)
 	const dvar_matrix_position Zpos2  = restore_dvar_matrix_position();
 	const dvar_matrix_position Zpos1  = restore_dvar_matrix_position();
 	const dvar_matrix_position Zpos0  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos5  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos4  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos3  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos2  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos1  = restore_dvar_matrix_position();
-	const dvar_matrix_position Fpos0  = restore_dvar_matrix_position();
+	CParam* param = (CParam*) pos_param;
+	const int nbf = param->get_nbforage();
+	Fapos = new dvar_matrix_position*[nbf];
+	for (int n=nbf-1; n>=0; n--)		
+	    Fapos[n] = new dvar_matrix_position(restore_dvar_matrix_position());
+	Fpos = new dvar_matrix_position*[nbf];
+	for (int n=nbf-1; n>=0; n--)		
+	    Fpos[n] = new dvar_matrix_position(restore_dvar_matrix_position());
 	const dvar_matrix_position Sigma_hs_pos  = restore_dvar_matrix_position();
 	const dvar_matrix_position Temp_age_slope_pos    = restore_dvar_matrix_position();
 	double temp_age_slope				 = restore_prevariable_value();
@@ -344,9 +356,7 @@ void dv_accessibility_comp(void)
 	dmatrix dfOxy_teta = restore_dvar_matrix_derivatives(Oxy_teta_pos);
 	dmatrix dfTemp_age_slope = restore_dvar_matrix_derivatives(Temp_age_slope_pos);
 
-	CParam* param = (CParam*) pos_param;
 
-	const int nbf = param->get_nbforage();
 	const int nbl = param->nb_layer;
 	ivector day_layer(0,nbf-1); day_layer = param->day_layer;
 	ivector night_layer(0,nbf-1); night_layer = param->night_layer;
@@ -356,24 +366,268 @@ void dv_accessibility_comp(void)
 
 	const int imax = map->imax;
 	const int imin = map->imin;
-	d3_array dfF_access, dfZ_access;
-	dfF_access.allocate(0,nbf-1);
+
+	d3_array dfF, dfF_access, dfZ_access;
 	dfZ_access.allocate(0,nbl-1);
-	for (int n=0; n<nbf; n++){
-		dfF_access[n].allocate(imin, imax, map->jinf, map->jsup);
-		dfF_access[n].initialize();
-	}
 	for (int l=0; l<nbl; l++){
 		dfZ_access[l].allocate(imin, imax, map->jinf, map->jsup);
 		dfZ_access[l].initialize();
 	}
+	
+	dfF.allocate(0,nbf-1);
+	dfF_access.allocate(0,nbf-1);
+	for (int n=0; n<nbf; n++){
+		dfF[n].allocate(imin, imax, map->jinf, map->jsup);
+		dfF[n].initialize();
+		dfF_access[n].allocate(imin, imax, map->jinf, map->jsup);
+		dfF_access[n].initialize();
+	}
 
-	dfF_access[0]  = restore_dvar_matrix_derivatives(Fpos0);
-	dfF_access[1]  = restore_dvar_matrix_derivatives(Fpos1);
-	dfF_access[2]  = restore_dvar_matrix_derivatives(Fpos2);
-	dfF_access[3]  = restore_dvar_matrix_derivatives(Fpos3);
-	dfF_access[4]  = restore_dvar_matrix_derivatives(Fpos4);
-	dfF_access[5]  = restore_dvar_matrix_derivatives(Fpos5);
+	for (int n=0; n<nbf; n++){
+	    dfF[n]  = restore_dvar_matrix_derivatives(*Fpos[n]);
+	    dfF_access[n] = restore_dvar_matrix_derivatives(*Fapos[n]);
+	}
+
+	dfZ_access[0]  = restore_dvar_matrix_derivatives(Zpos0);
+	dfZ_access[1]  = restore_dvar_matrix_derivatives(Zpos1);
+	dfZ_access[2]  = restore_dvar_matrix_derivatives(Zpos2);
+
+	dmatrix vld(imin, imax, map->jinf, map->jsup);
+	vld = mat->vld(t_count);
+	d3_array tempn,oxygen,forage;
+	tempn.allocate(0,nbl-1);
+	oxygen.allocate(0,nbl-1);
+	for (int k=0; k<nbl;k++){
+		tempn(k).allocate(imin, imax, map->jinf, map->jsup);
+		oxygen(k).allocate(imin, imax, map->jinf, map->jsup);
+		tempn(k) = mat->tempn(t_count,k);
+		oxygen(k) = mat->oxygen(t_count,k);	
+	}
+
+	forage.allocate(0,nbf-1);
+	for (int f=0; f<nbf; f++){
+		forage(f).allocate(imin, imax, map->jinf, map->jsup);
+		forage(f) = param->eF_habitat[f][sp] * mat->forage(t_count,f);
+	}
+
+	const double L_max = param->length[sp][param->sp_nb_cohorts[sp]-1];
+	const double L_age = param->length[sp][age];
+	const double R     = pow(L_age/L_max,temp_age_slope);
+
+	const double W_max = param->weight[sp][param->sp_nb_cohorts[sp]-1];
+	const double W_age = param->weight[sp][age];
+	const double RW    = W_age/W_max;
+	//const double RW    = L_age/L_max;
+
+	const double sigma_ha = param->sigma_ha[sp][age];
+	const double temp_age = param->temp_age[sp][age];
+	const double sigsq = sigma_ha*sigma_ha;
+	const double sigcb = sigsq*sigma_ha;
+	const double twosigsq = 2.0*sigsq;
+	for (int i = imax; i >= imin; i--){
+		const int jmin = map->jinf[i];
+		const int jmax = map->jsup[i];
+		for (int j = jmax; j >= jmin; j--){
+			const int nlayer = map->carte(i,j);
+			//if (nlayer>0){	
+			if (nlayer>0 && nlayer<=nbl){
+
+				const double DL = mat->daylength(jday,j)/24.0;
+
+				double dftemp_age = 0.0;
+
+                                //recompute lf_access and sumL
+				dvector lf_access(0,nbl-1);
+				lf_access.initialize();
+				double sumL = 0.0;
+				dvector l_access(0,nbl-1);
+				l_access.initialize();
+				//for (int l=0; l<nlayer; l++){
+				for (int l=0; l<nbl; l++){
+					l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,temp_age,oxy_teta,oxy_cr);
+					// weighted by the Forage biomass
+					for (int n=0;n<nbf;n++){
+						if (day_layer[n]==l)   lf_access(l) += l_access(l)*forage(n,i,j)*DL; 
+						if (night_layer[n]==l) lf_access(l) += l_access(l)*forage(n,i,j)*(1.0-DL);
+					}	
+					sumL += lf_access(l);			
+				}
+				//end of recomputation section	
+	
+				dvector dfl_access(0,nbl-1);
+				dvector dflf_access(0,nbl-1);
+				dvector dflf_access_rel(0,nbl-1);
+				dfl_access.initialize();
+				dflf_access.initialize();
+				dflf_access_rel.initialize();
+
+				for (int n=nbf-1; n>=0; n--){		
+	
+					const int dl = day_layer[n];
+					const int nl = night_layer[n];
+
+					if (dl < nlayer){
+						//F_access = (l_access[dl]*DL + l_access[nl]*(1-DL));
+						dfl_access(dl) += DL * dfF_access(n,i,j); 
+						dfl_access(nl) += (1.0-DL) * dfF_access(n,i,j); 
+						dfF_access(n,i,j) = 0.0;
+					}
+					dfF_access(n,i,j) = 0.0;
+				}
+
+				double expr1 = sumL;
+				double dfsumL = 0.0;
+				for (int l=nbl-1;l>=0;l--){	
+
+					//Z_access(l) = lf_access(l)/(sumL);
+					dfsumL -= lf_access(l)*dfZ_access(l,i,j)/(expr1*expr1);
+					dflf_access(l) += dfZ_access(l,i,j)/expr1;
+					dfZ_access(l,i,j) = 0.0;
+				}
+
+				double dfR = 0.0;
+				double dfsigma_ha = 0.0;
+				for (int l=nbl-1;l>=0;l--){
+
+					//sumL += lf_access[l];
+					dflf_access(l) += dfsumL;
+
+					for (int n=nbf-1;n>=0;n--){
+						if (night_layer[n]==l){	
+							//lf_access[l]+= l_access(l) * mat.forage[n][i][j]*(1-DL);
+							dfl_access(l) += forage(n,i,j) * (1.0-DL) * dflf_access(l);
+							dfF(n,i,j) += l_access(l) * (1.0-DL) * dflf_access(l);
+						}
+						if (day_layer[n]==l){
+							//lf_access[l]+= l_access(l) * mat.forage[n][i][j]*DL; 
+							dfl_access(l) += forage(n,i,j) * DL * dflf_access(l);
+							dfF(n,i,j) += l_access(l) * DL * dflf_access(l);
+						}
+					}
+
+					//l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,teta,oxy_teta,oxy_cr);
+					//dff_accessibility_layer(dfl_access(l),dftemp_age,dfSigma_ha(i,j),dfOxy_teta(i,j),dfOxy_cr(i,j),
+					dff_accessibility_layer(dfl_access(l),dftemp_age,dfsigma_ha,dfOxy_teta(i,j),dfOxy_cr(i,j),
+								tempn(l,i,j),oxygen(l,i,j),sigma_ha,temp_age,oxy_teta,oxy_cr,sigsq,sigcb);
+								
+					dfl_access(l) = 0.0;
+
+					//double sigma_ha = RW * (sigma_max-sigma_min)+sigma_min;
+					dfSigma_ha(i,j) += RW * dfsigma_ha;
+					dfSigma_hs(i,j) -= (RW-1) * dfsigma_ha;
+					dfsigma_ha = 0.0;
+
+
+					//double temp_sp_age = R * (temp_min-temp_max) + temp_max;
+					dfTemp_max(i,j) -= (R-1) * dftemp_age;
+					dfTemp_min(i,j) += R * dftemp_age;
+					dfR 		+= (temp_min-temp_max)* dftemp_age;
+					dftemp_age 	 = 0.0;
+
+					//double R = pow(L_age/L_max,temp_age_slope);
+					dfTemp_age_slope(i,j) += R * log(L_age/L_max) * dfR;
+					dfR = 0.0;
+				}				
+			}	
+		}
+	}
+	dfTemp_age_slope.save_dmatrix_derivatives(Temp_age_slope_pos);
+	dfOxy_cr.save_dmatrix_derivatives(Oxy_cr_pos);
+	dfTemp_min.save_dmatrix_derivatives(Temp_min_pos); 
+	dfTemp_max.save_dmatrix_derivatives(Temp_max_pos);
+	dfSigma_ha.save_dmatrix_derivatives(Sigma_ha_pos);
+	dfSigma_hs.save_dmatrix_derivatives(Sigma_hs_pos);
+	dfOxy_teta.save_dmatrix_derivatives(Oxy_teta_pos);
+	dfZ_access[0].save_dmatrix_derivatives(Zpos0);
+	dfZ_access[1].save_dmatrix_derivatives(Zpos1);
+	dfZ_access[2].save_dmatrix_derivatives(Zpos2);
+	for (int n=0; n<nbf; n++){
+		dfF_access[n].save_dmatrix_derivatives(*Fapos[n]);
+		dfF[n].save_dmatrix_derivatives(*Fpos[n]);
+	}
+	for (int n=0; n<nbf; n++){
+	   delete Fpos[n];
+	   delete Fapos[n];
+	}
+	delete [] Fpos;	       
+	delete [] Fapos;		
+}
+
+void dv_accessibility_noeFcurrents_comp(void)
+{
+	dvar_matrix_position **Fapos;
+
+	verify_identifier_string2((char*)"Faccessibility_comp_end");
+	const int age      = restore_int_value();
+	const int sp       = restore_int_value();
+	//unsigned flag      = restore_int_value();
+	unsigned t_count   = restore_int_value();
+	unsigned jday      = restore_int_value();
+	unsigned long int pos_map   = restore_long_int_value();
+	unsigned long int pos_param = restore_long_int_value();
+	unsigned long int pos_mat   = restore_long_int_value();
+	const dvar_matrix_position Zpos2  = restore_dvar_matrix_position();
+	const dvar_matrix_position Zpos1  = restore_dvar_matrix_position();
+	const dvar_matrix_position Zpos0  = restore_dvar_matrix_position();
+	CParam* param = (CParam*) pos_param;
+	const int nbf = param->get_nbforage();
+	Fapos = new dvar_matrix_position*[nbf];
+	for (int n=nbf-1; n>=0; n--)		
+	    Fapos[n] = new dvar_matrix_position(restore_dvar_matrix_position());
+	const dvar_matrix_position Sigma_hs_pos  = restore_dvar_matrix_position();
+	const dvar_matrix_position Temp_age_slope_pos    = restore_dvar_matrix_position();
+	double temp_age_slope				 = restore_prevariable_value();
+	const dvar_matrix_position Oxy_cr_pos    = restore_dvar_matrix_position();
+	double oxy_cr 				 = restore_prevariable_value();
+	const dvar_matrix_position Oxy_teta_pos  = restore_dvar_matrix_position();
+	double oxy_teta 			 = restore_prevariable_value();
+	const dvar_matrix_position Sigma_ha_pos  = restore_dvar_matrix_position();
+	const dvar_matrix_position Temp_min_pos  = restore_dvar_matrix_position();
+	double temp_min 			 = restore_prevariable_value();
+	const dvar_matrix_position Temp_max_pos  = restore_dvar_matrix_position();
+	double temp_max 			 = restore_prevariable_value();
+	verify_identifier_string2((char*)"Faccessibility_comp_begin");
+
+
+	dmatrix dfOxy_cr   = restore_dvar_matrix_derivatives(Oxy_cr_pos);
+	dmatrix dfTemp_min = restore_dvar_matrix_derivatives(Temp_min_pos);
+	dmatrix dfTemp_max = restore_dvar_matrix_derivatives(Temp_max_pos);
+	dmatrix dfSigma_ha = restore_dvar_matrix_derivatives(Sigma_ha_pos);
+	dmatrix dfSigma_hs = restore_dvar_matrix_derivatives(Sigma_hs_pos);
+	dmatrix dfOxy_teta = restore_dvar_matrix_derivatives(Oxy_teta_pos);
+	dmatrix dfTemp_age_slope = restore_dvar_matrix_derivatives(Temp_age_slope_pos);
+
+
+	const int nbl = param->nb_layer;
+	ivector day_layer(0,nbf-1); day_layer = param->day_layer;
+	ivector night_layer(0,nbf-1); night_layer = param->night_layer;
+	
+	PMap* map = (PMap*) pos_map;
+	CMatrices* mat = (CMatrices*) pos_mat;
+
+	const int imax = map->imax;
+	const int imin = map->imin;
+
+	d3_array dfF, dfF_access, dfZ_access;
+	dfZ_access.allocate(0,nbl-1);
+	for (int l=0; l<nbl; l++){
+		dfZ_access[l].allocate(imin, imax, map->jinf, map->jsup);
+		dfZ_access[l].initialize();
+	}
+	
+	dfF.allocate(0,nbf-1);
+	dfF_access.allocate(0,nbf-1);
+	for (int n=0; n<nbf; n++){
+		dfF[n].allocate(imin, imax, map->jinf, map->jsup);
+		dfF[n].initialize();
+		dfF_access[n].allocate(imin, imax, map->jinf, map->jsup);
+		dfF_access[n].initialize();
+	}
+
+	for (int n=0; n<nbf; n++){
+	    dfF_access[n] = restore_dvar_matrix_derivatives(*Fapos[n]);
+	}
+
 	dfZ_access[0]  = restore_dvar_matrix_derivatives(Zpos0);
 	dfZ_access[1]  = restore_dvar_matrix_derivatives(Zpos1);
 	dfZ_access[2]  = restore_dvar_matrix_derivatives(Zpos2);
@@ -398,7 +652,7 @@ void dv_accessibility_comp(void)
 
 	const double L_max = param->length[sp][param->sp_nb_cohorts[sp]-1];
 	const double L_age = param->length[sp][age];
-	const double  R    = pow(L_age/L_max,temp_age_slope);
+	const double R     = pow(L_age/L_max,temp_age_slope);
 
 	const double W_max = param->weight[sp][param->sp_nb_cohorts[sp]-1];
 	const double W_age = param->weight[sp][age];
@@ -522,19 +776,20 @@ void dv_accessibility_comp(void)
 	dfSigma_ha.save_dmatrix_derivatives(Sigma_ha_pos);
 	dfSigma_hs.save_dmatrix_derivatives(Sigma_hs_pos);
 	dfOxy_teta.save_dmatrix_derivatives(Oxy_teta_pos);
-	dfF_access[0].save_dmatrix_derivatives(Fpos0);
-	dfF_access[1].save_dmatrix_derivatives(Fpos1);
-	dfF_access[2].save_dmatrix_derivatives(Fpos2);
-	dfF_access[3].save_dmatrix_derivatives(Fpos3);
-	dfF_access[4].save_dmatrix_derivatives(Fpos4);
-	dfF_access[5].save_dmatrix_derivatives(Fpos5);
 	dfZ_access[0].save_dmatrix_derivatives(Zpos0);
 	dfZ_access[1].save_dmatrix_derivatives(Zpos1);
 	dfZ_access[2].save_dmatrix_derivatives(Zpos2);
+	for (int n=0; n<nbf; n++){
+		dfF_access[n].save_dmatrix_derivatives(*Fapos[n]);
+	}
+	for (int n=0; n<nbf; n++){
+	   delete Fapos[n];
+	}
+	delete [] Fapos;		
 }
 
 void dv_accessibility_ftype2_comp(void)
-{
+{//IS 20241126: left it out for now. This function type is the candidate for deletion
 	verify_identifier_string2((char*)"Faccessibility_comp_end");
 	const int age      = restore_int_value();
 	const int sp       = restore_int_value();

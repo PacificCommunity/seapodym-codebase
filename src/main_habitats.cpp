@@ -32,9 +32,9 @@ int main(int argc, char** argv) {
 
 int OptionToCode(char* op) {
 
-	const int N = 8;
-	const char *cmdop[N] = {"-s","-H","-h","-v","--simulation","--hessian","--help","--version"};
-	int cmpCode[N] = {0,2,-3,-2,0,2,-3,-2};
+	const int N = 10;
+	const char *cmdop[N] = {"-s","-H","-t","-h","-v","--simulation","--hessian","--taylor-test","--help","--version"};
+	int cmpCode[N] = {0,2,4,-3,-2,0,2,4,-3,-2};
 	for (int i=0; i<N; i++)
 		if (strcmp(op,cmdop[i])==0){
 			if (cmpCode[i]==-2) {
@@ -55,6 +55,7 @@ void help(char* argv0) {
 	cout << "Options: \n";
 	cout << "  -h, --help \t\t\t Print this message and exit.\n";
 	cout << "  -H, --hessian \t\t Compute Hessian matrix.\n";
+	cout << "  -t, --taylor-test   \t\t Perform Taylor derivative test with central differencing.\n";
 	cout << "  -s, --simulation \t\t Run simulation without optimization.\n";
 	cout << "  -v, --version \t\t Print version number and exit.\n";
 	exit(0);

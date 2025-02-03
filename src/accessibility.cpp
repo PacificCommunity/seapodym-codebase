@@ -86,9 +86,12 @@ void VarSimtunaFunc::Faccessibility_comp(VarParamCoupled& param, VarMatrices& ma
 				lf_access.initialize();
 				O2.initialize();
 				T.initialize();
-				for (int n=0; n<nb_forage; n++)
-					F(n) = mat.forage(t,n,i,j);
-
+				for (int n=0; n<nb_forage; n++){
+					if (param.scale_forage_ave_currents[sp])
+						F(n) =  value(mat.dvarForage(n,i,j));
+					else						
+						F(n) =  mat.forage(t,n,i,j);
+				}
 
 				for (int l=0; l<nb_layer; l++){
 					O2(l) = mat.oxygen(t,l,i,j);
@@ -114,6 +117,7 @@ void VarSimtunaFunc::Faccessibility_comp(VarParamCoupled& param, VarMatrices& ma
 			}
 		}
 	}
+//TRACE(norm(mat.dvarZ_access(0,10)))			
 }
 
 void VarSimtunaFunc::Average_currents_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int age, const int t)

@@ -119,7 +119,7 @@ void CCalpop::RecompADI_step_fwd_with_catch(const PMap& map, CParam& param, d3_a
 }
 
 
-void CCalpop::RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_count, const dmatrix mortality, dmatrix& aa, dmatrix& bbm, dmatrix& cc, dmatrix& dd, dmatrix& ee, dmatrix& ff)
+void CCalpop::RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_count, const dmatrix mortality, dmatrix& aa, dmatrix& bbm, dmatrix& cc, dmatrix& dd, dmatrix& ee, dmatrix& ff,const double move_dtmod)
 {
 	dvector lat_correction(map.jmin,map.jmax);
 	lat_correction.initialize();
@@ -135,8 +135,8 @@ void CCalpop::RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_co
 	advection_x.initialize();
 	advection_y.initialize();
 
-	u = mat.un[t_count][0];
-	v = mat.vn[t_count][0];
+	u = move_dtmod * mat.un[t_count][0];
+	v = move_dtmod * mat.vn[t_count][0];
 	lat_correction = mat.lat_correction;
 
 	for (int i = map.imin; i <= map.imax; i++){	
@@ -144,8 +144,8 @@ void CCalpop::RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_co
 		const int jmax = map.jsup[i];
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
-				diffusion_x[i][j] = sigma_fcte * lat_correction[j];
-				diffusion_y[i][j] = sigma_fcte ;
+				diffusion_x[i][j] = move_dtmod * sigma_fcte * lat_correction[j];
+				diffusion_y[i][j] = move_dtmod * sigma_fcte ;
 		
 				advection_x[i][j] = u(i,j);
 				advection_y[i][j] = v(i,j);
@@ -203,7 +203,7 @@ void CCalpop::RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_co
 	}
 }
 
-void CCalpop::Recomp_abc_coef(const PMap& map, CMatrices& mat, const int t_count, const dmatrix& mortality, dmatrix& aa, dmatrix& bbm, dmatrix& cc)
+void CCalpop::Recomp_abc_coef(const PMap& map, CMatrices& mat, const int t_count, const dmatrix& mortality, dmatrix& aa, dmatrix& bbm, dmatrix& cc,const double move_dtmod)
 {
 	DVECTOR lat_correction(map.jmin,map.jmax);
 	lat_correction.initialize();
@@ -214,7 +214,7 @@ void CCalpop::Recomp_abc_coef(const PMap& map, CMatrices& mat, const int t_count
 	diffusion_x.initialize();
 	advection_x.initialize();
 
-	u = mat.un[t_count][0];
+	u = move_dtmod * mat.un[t_count][0];
 	lat_correction = mat.lat_correction;
 
 	//Precaldia part
@@ -223,7 +223,7 @@ void CCalpop::Recomp_abc_coef(const PMap& map, CMatrices& mat, const int t_count
 		const int jmax = map.jsup[i];
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
-				diffusion_x[i][j] = sigma_fcte * lat_correction[j];
+				diffusion_x[i][j] = move_dtmod * sigma_fcte * lat_correction[j];
 				advection_x[i][j] = u[i][j];
 			}
 		}
@@ -275,11 +275,12 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 	const double CHI_x   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dx;
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
-	const double Dinf   = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	//const double Dinf   = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
 
 
 	const double Dmax    = sigma_species*Dinf;
-	const double rmax    = param.rmax_currents;
+	const double rmax    = param.rmax_currents[sp];
 	
 
 	const double nb_layer = param.nb_layer;
@@ -395,10 +396,11 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 	const double CHI_x   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dx;
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
-	const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
 
 	const double Dmax    = sigma_species*Dinf;
-	const double rmax    = param.rmax_currents;
+	const double rmax    = param.rmax_currents[sp];
 
 	const double nb_layer = param.nb_layer;
 
@@ -515,9 +517,10 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 	const double CHI_x   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dx;
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
-	const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
-	const double rmax    = param.rmax_currents;
+	const double rmax    = param.rmax_currents[sp];
 
 	const double nb_layer = param.nb_layer;
 
@@ -686,9 +689,10 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
-	const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
-	const double rmax    = param.rmax_currents;
+	const double rmax    = param.rmax_currents[sp];
 
 	CBord bord;	
 
@@ -742,8 +746,13 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 				lf_access.initialize();
 				O2.initialize();
 				T.initialize();
-				for (int n=0; n<nb_forage; n++)
-					F(n) = mat.forage(t_count,n,i,j);
+				for (int n=0; n<nb_forage; n++){
+					if (param.scale_forage_ave_currents[sp]){
+						double eF = param.eF_habitat[n][sp];
+						F(n) = eF * mat.forage(t_count,n,i,j);
+					} else						
+						F(n) = mat.forage(t_count,n,i,j);
+				}
 				//for (int l=0; l<nl; l++){
 				for (int l=0; l<nb_layer; l++){
 					O2(l) = mat.oxygen(t_count,l,i,j);
@@ -847,22 +856,19 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	}
 }
 
-void CCalpop::RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const dmatrix& H, const double age, const int sp)
+void CCalpop::RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const dmatrix& H, const double Rage, const double mean_age_in_dtau, const int age, const int sp)
 {
 	double Mp_max   = param.Mp_mean_max[sp];
 	double Mp_exp   = param.Mp_mean_exp[sp];
 	double Ms_slope = param.Ms_mean_slope[sp];
 	double Ms_max   = param.Ms_mean_max[sp];
 	double range    = param.M_mean_range[sp]; 
+        if (age==0)//keep it in case if this function will be used for early ages as well
+                range = param.M_larvae_range[sp];
 	
 	//const double Mp = (Ms_max+Mp_max) * exp(- Mp_exp * age);
-	const double Mp = Mp_max * exp(- Mp_exp * age);
-	const double Ms = Ms_max * pow(age,Ms_slope);
-
-	double	Rage = 1.0/(age+2.5) + range; 
- 	//this function gives +- 33%, 25% and 18%
-
-	double Hval = 0.5;
+	const double Mp = Mp_max * exp(- Mp_exp * mean_age_in_dtau);
+	const double Ms = Ms_max * pow(mean_age_in_dtau,Ms_slope);
 
 	M = Mp + Ms;
 	for (int i = map.imin; i <= map.imax; i++){
@@ -870,7 +876,7 @@ void CCalpop::RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const
 		const int jmax = map.jsup[i];
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
-				M(i,j) *= pow(1.0+Rage,1-H(i,j)/Hval); 
+				M(i,j) *= pow(1.0+Rage+range,1.0-H(i,j)); 
 			}
 		}
 	}

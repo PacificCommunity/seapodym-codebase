@@ -245,8 +245,10 @@ void CReadWrite::degrade_fishery_reso(CParam& param, PMap& map, const int nbt, c
 	int nflat = (int) ((param.latitudeMax - param.latitudeMin + deltaY)/creso+.5);
 	flon.allocate(0,nflon-1); flon.initialize();
 	flat.allocate(0,nflat-1); flat.initialize();
-	float cwest = param.longitudeMin+0.5*deltaX+0.5;
-	float cnorth= param.latitudeMax-0.5*deltaY+0.5;
+	float cwest = creso * (int)(param.longitudeMin/creso);
+	float cnorth= creso * (int)(param.latitudeMax/creso);
+	if (cwest < param.longitudeMin) cwest = cwest + creso;
+	if (cnorth > param.latitudeMax) cnorth = cnorth - creso;
 	for (int i=0; i<nflon; i++) flon[i] = cwest + creso*(i+0.5);
 	for (int j=0; j<nflat; j++) flat[j] = cnorth - creso*(j+0.5); 
 
@@ -276,8 +278,10 @@ void CReadWrite::degrade_fishery_reso(CParam& param, PMap& map, const int nbt, c
 							double lon = frec[p].get_efflon();
 							double lat = frec[p].get_efflat();
 				
-							int fi = (int)((lon-(cwest+0.5*creso))/creso);
-							int fj = (int)((cnorth-0.5*creso-lat)/creso);
+							//int fi = (int)((lon-(cwest+0.5*creso))/creso);
+							//int fj = (int)((cnorth-0.5*creso-lat)/creso);
+							int fi = (int)((lon-cwest)/creso);
+							int fj = (int)((cnorth-lat)/creso);
 							int i = param.lontoi(flon[fi]);
 							int j = param.lattoj(flat[fj]);
 
@@ -1608,12 +1612,16 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 					exit(1);
 				}
 
-				//!!!TEST here: constrain the sample size by 1000 if S>1000 (see robust LF likelihood)
-				//must be taken out to pre-processing
-				double smax = 1000.0; //do not allow samples greater 1000
+				//Constrain the sample size by smax (see robust LF likelihood)
+				//Should be done in pre-processing. Issue warning if found here
+				double smax = 500.0; 
 				double sumQ = sum(frq(f,reg-1,y,qtr-1));
-				if (sumQ>smax){
-					//put warning message HERE
+				if (sumQ>smax+1e-3){
+					cerr << "Large sample in the LF data! Sample size is "<< sumQ <<
+						" in fishery " << fishery << ", region " << 
+						reg << ", year " << year << " and quarter " << qtr <<
+						", LF sample size will be reduced to " << smax << endl;
+					cout << "Amend data to avoid these messages..." << endl;
 					for (int a=a0; a<nb_ages; a++)
 						frq(f,reg-1,y,qtr-1,a) *= smax/sumQ;
 				}
