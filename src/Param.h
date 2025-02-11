@@ -170,6 +170,7 @@ public:
 
 	// Larvae likelihood parameters
 	int q_mld_larvae;
+	double q_mld_slope, q_mld_depth;
 	ivector larvae_like; // weither to comute larvae likelihood, [sp]
 	DVECTOR q_sp_larvae;           // Larvae catchability, [sp]
 	DVECTOR likelihood_larvae_sigma;		// sigma parameter in Gaussian kernel used for larvae likelihood
@@ -320,6 +321,7 @@ public:
 	int tag_gauss_kernel_on;
 	float dx_tags, dy_tags; 	// setup of the grid to aggregate tagging data
 	float lonmin_tags,lonmax_tags, latmin_tags, latmax_tags;
+	float tags_tlib_min, tags_tlib_max;// range of time at liberty (in days) of tags to use
 	bool tags_only;			// flag to deactivate all likelihood terms except tag_like
 	bool flag_no_fishing;		// flag for 'no fishing' simulation				
 

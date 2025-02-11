@@ -762,8 +762,12 @@ bool VarParamCoupled::read(const string& parfile)
 	//non-species specific parameters
 	//Does plankton net catchability depend on MLD?
 	q_mld_larvae = 0; //default value is 0
-	if (!doc.get("/q_mld_larvae","flag").empty())
+	q_mld_slope = 100; q_mld_depth = 100;
+	if (!doc.get("/q_mld_larvae","flag").empty()){
 		q_mld_larvae = doc.getInteger("/q_mld_larvae","flag");
+		q_mld_slope  = doc.getDouble("/q_mld_larvae","coef_slope");
+		q_mld_depth  = doc.getDouble("/q_mld_larvae","meter_depth");
+	}
 	for (int sp=0;sp<nb_species;sp++){
 		//Early-life mortality (early post-hatching phase)
 		string str = "/early_larvae_model/"+sp_name[sp];
@@ -1210,6 +1214,16 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 			nb_tag_files = 0;
 			if (tag_like(sp)){
+				float tlib_limit = 10;//days
+				tags_tlib_min = tlib_limit;
+				tags_tlib_max = 1e5;
+				if (!doc.get("/tags_tlib").empty()){
+					tags_tlib_min = doc.getDouble(string("/tags_tlib/"),"min");
+					if (tags_tlib_min < tlib_limit)
+						tags_tlib_min = tlib_limit;
+					tags_tlib_max = doc.getDouble(string("/tags_tlib/"),"max");
+				}
+
 				if (!doc.get("/tags_grid").empty()){
 					dx_tags = doc.getDouble(string("/tags_grid/reso"),"dx");
 					dy_tags = doc.getDouble(string("/tags_grid/reso"),"dy");

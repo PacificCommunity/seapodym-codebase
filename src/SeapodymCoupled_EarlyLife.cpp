@@ -87,12 +87,14 @@ void SeapodymCoupled::put_larvae_at_obs(const int sp, const int tcur)
 {//Autodif function for the moment. Need to write adjoint!!!
 
 	if (param->q_mld_larvae && sp == 0){ //only once as it is species independent
+		double slope = param->q_mld_slope;
+		double depth = param->q_mld_depth/1000.0; //vld units is km 
 		for (int i = map.imin; i <= map.imax; i++){	
 			const int jmin = map.jinf[i];
 			const int jmax = map.jsup[i];
 			for (int j = jmin; j <= jmax; j++){
 
-			    qmld(i,j) = 1.0/(1.0+exp(100.0*(mat.vld[tcur][i][j]-0.1)));
+			    qmld(i,j) = 1.0/(1.0+exp(slope*(mat.vld[tcur][i][j]-depth)));
 			}
 		}
 	}
@@ -194,7 +196,7 @@ void SeapodymCoupled::get_larvae_at_obs()
 
 void SeapodymCoupled::write_elarvae_dym(const int sp)
 {
-				
+	mat.larvae(sp).initialize();			
 	for (int i = map.imin; i <= map.imax; i++){	
 		const int jmin = map.jinf[i];
 		const int jmax = map.jsup[i];
