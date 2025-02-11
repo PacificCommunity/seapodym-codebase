@@ -45,6 +45,10 @@ void SeapodymCoupled::WriteOutput(int t, bool fishing)
 		}*/
 		//save binary files with population distributions
 		rw.SaveSepodymFileDym(*param, map, mat);
+		for (int sp=0; sp< nb_species;sp++){
+			if (param->tag_like[sp])
+				WriteAVariableDym(mat.total_tags(sp),param->sp_name[sp] + "_tagged.dym",false);
+		}
 
 		if (!param->flag_no_fishing){
 			if (qtr != past_qtr)
@@ -116,13 +120,20 @@ void SeapodymCoupled::WriteFileHeaders()
 	//For Joe:
 	//SaveOneCohortDym(0, true, zlevel);
 
-	for (int sp=0; sp< nb_species;sp++)
+	for (int sp=0; sp< nb_species;sp++){
 		if (param->larvae_mortality_sst[sp])
 			SaveLarvaeBeforeSstMort(sp, true, zlevel);
 
-	for (int sp=0; sp< nb_species;sp++){
-		WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_early_larvae.dym", true);
-		WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_early_mortality.dym", true);
+		if (param->elarvae_model[sp]){
+			//write a header
+			WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_early_larvae.dym", true);
+			//Uncomment only for debug
+			//WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_early_mortality.dym", true);
+		}
+		if (param->tag_like[sp]){
+			//write a header
+			WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_tagged.dym", true);
+		}
 	}
 	// Create and initialize (txt) files for saving aggregated variables
 	rw.InitSepodymFileTxt(*param);

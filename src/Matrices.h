@@ -76,6 +76,7 @@ public:
 	D3_ARRAY recruit;	// recruit: biomasse des recrues (age recruit)
 	D3_ARRAY adult;		// adult: biomasse des adultes (age mature-> max age class)
 	D3_ARRAY total_pop;	// total_pop: biomasse totale = somme de toutes les classes d'ages
+	D3_ARRAY total_tags;	// total_tags: density of tagged tuna
 	D3_ARRAY PEB;		// Population Exploitable Biomass: sum of age classes B x average selectivity function 
 
 	D4_ARRAY habitat_input;

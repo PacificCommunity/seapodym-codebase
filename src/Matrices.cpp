@@ -290,32 +290,6 @@ void CMatrices::createMatSpecies(const PMap& map, int t0, int nbt, int nbi, int 
 		mortality_range_age[sp].initialize();
 	}
 
-/*
-	pop_species.allocate(0, nb_species - 1);
-	for (int sp = 0; sp < nb_species; sp++){
-		const int agemax = sp_nb_age_class(sp);
-		pop_species(sp).allocate(0, agemax - 1);
-		pop_species(sp).initialize();
-
-		for (int age = 0; age < agemax; age++){
-			pop_species(sp,age).allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-			pop_species(sp, age).initialize();
-		}
-	}
-
-	// juveniles - 3 first months
-	juv_species.allocate(0, nb_species - 1);
-	for (int sp = 0; sp < nb_species; sp++){
-		const int agemax = 3;
-		juv_species(sp).allocate(0, agemax - 1);
-		juv_species(sp).initialize();
-
-		for (int age = 0; age < agemax; age++){
-			juv_species(sp,age).allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-			juv_species(sp, age).initialize();
-		}
-	}
-*/
 	nb_age_built.allocate(0, nb_species - 1); 
 	nb_age_built.initialize();
 	
@@ -336,6 +310,7 @@ void CMatrices::createMatSpecies(const PMap& map, int t0, int nbt, int nbi, int 
 	recruit.allocate(0, nb_species - 1);
 	adult.allocate(0, nb_species - 1);
 	total_pop.allocate(0, nb_species - 1);
+	total_tags.allocate(0, nb_species - 1);
 	for (int sp = 0; sp < nb_species; sp++){
 		larvae(sp).allocate(map.imin, map.imax, map.jinf, map.jsup);
 		juvenile(sp).allocate(map.imin, map.imax, map.jinf, map.jsup);
@@ -343,6 +318,7 @@ void CMatrices::createMatSpecies(const PMap& map, int t0, int nbt, int nbi, int 
 		recruit(sp).allocate(map.imin, map.imax, map.jinf, map.jsup);
 		adult(sp).allocate(map.imin, map.imax, map.jinf, map.jsup);
 		total_pop(sp).allocate(map.imin, map.imax, map.jinf, map.jsup);
+		total_tags(sp).allocate(map.imin, map.imax, map.jinf, map.jsup);
 		
 		larvae(sp).initialize();
 		juvenile(sp).initialize();
@@ -350,6 +326,7 @@ void CMatrices::createMatSpecies(const PMap& map, int t0, int nbt, int nbi, int 
 		recruit(sp).initialize();
 		adult(sp).initialize();
 		total_pop(sp).initialize();
+		total_tags(sp).initialize();
 	}
 	// 1D
 	// total de la biomasse des larves (0-1 mois)

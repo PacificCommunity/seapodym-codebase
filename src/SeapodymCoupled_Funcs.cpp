@@ -180,6 +180,7 @@ void SeapodymCoupled::CalcSums()
 	mat.recruit.initialize();
 	mat.adult.initialize();
 	mat.total_pop.initialize();
+	mat.total_tags.initialize();
 	mat.total_pred_catch.initialize();
 	if (!param->tags_only){
 		mat.total_obs_catch.initialize();
@@ -193,6 +194,13 @@ void SeapodymCoupled::CalcSums()
 
 	//total catch per time step
 	double sum_total_catch = 0;
+
+	int nb_active_groups = 0;
+	for (int p=0; p<nb_tagpops; p++){
+		if (t_count>=t_count_rec(p)){
+			nb_active_groups++;
+		}
+	}
 	
 	//------------------------------------------------------------------
 	//Note, All population stages will be stored in the units of density:
@@ -239,30 +247,16 @@ void SeapodymCoupled::CalcSums()
 						//mat.juvenile[sp][i][j] += value(mat.dvarJuv_species[sp][age][i][j]) * param->juv_weight[sp][age];
 					//mat.sum_B_juv[sp] += mat.juvenile[sp][i][j]*area/mat.lat_correction[j];
 					//-----------------------------------------------------------
-					// recruit = age  at recruitment
+					// recruit = age at recruitment, for diagnostics only
 					// biomass = sum n*weight by age class 
 					// numbers per sq.km per month 
 					// UNITS = (Nb/km^2) * W(mt) = tonnes/km^2, UNITS of sum = TONNES over entire domain
 					//------------------------------------------------------------
-					if (!param->tag_like[sp]){
-						for (int age= age_recruits-1; age<= age_recruits+1; age++){//MFCL qtr class
-							mat.recruit[sp][i][j] += value(mat.dvarDensity[sp][age][i][j]); //in numbers/sq.km
-							//for SumDym write weight
-							mat.sum_B_recruit[sp] += value(mat.dvarDensity[sp][age][i][j])*W_mt(age)*lat_corrected_area;//total number
-						}
+					for (int age= age_recruits-1; age<= age_recruits+1; age++){//MFCL qtr class
+						mat.recruit[sp][i][j] += value(mat.dvarDensity[sp][age][i][j]); //in numbers/sq.km
+						//for SumDym write weight
+						mat.sum_B_recruit[sp] += value(mat.dvarDensity[sp][age][i][j])*W_mt(age)*lat_corrected_area;//total number
 					}
-					if (param->tag_like[sp]){
-						for (int aa=a0_adult[sp]; aa<aN_adult[sp]; aa++){
-							double total_tags = 0.0;
-							for (int pop=1; pop<=param->nb_tag_files;pop++)
-								total_tags += value(mat.dvarDensity(pop,aa,i,j));
-
-							mat.recruit[0][i][j] += total_tags; 
-							if (value(mat.dvarDensity(1,aa,i,j))<0) cerr << "NEGATIVE BIOMASS for " << aa << " " 
-												     << value(mat.dvarDensity(1,aa,i,j)) << endl;
-						}
-					}
-					//mat.sum_B_recruit[sp] += value(mat.dvarDensity[sp][age_recruits][i][j])*W_mt(age_recruits)*lat_corrected_area;
 					//-----------------------------------------------------------
 					// (Young) = age  autonomous to age mature
 					// ADULT TUNA = tuna biomass from age of maturity
@@ -287,6 +281,22 @@ void SeapodymCoupled::CalcSums()
 					//----------------------------------------------------------
 					mat.total_pop[sp][i][j] = mat.young[sp][i][j] + mat.adult[sp][i][j];
 					mat.sum_total_pop[sp] += mat.total_pop[sp][i][j] * lat_corrected_area;
+
+					// TOTAL density of tagged fish
+					if (param->tag_like[sp]){
+						for (int aa=a0_adult[sp]; aa<aN_adult[sp]; aa++){
+							double density_tags = 0.0;
+							for (int spop=1; spop<=nb_active_groups; spop++){
+								density_tags += value(mat.dvarDensity(spop,aa,i,j));
+							}
+
+							mat.total_tags[sp][i][j] += density_tags; 
+							if (value(mat.dvarDensity(1,aa,i,j))<0) 
+								cerr << "NEGATIVE BIOMASS for " << aa << " " 
+									<< value(mat.dvarDensity(1,aa,i,j)) << endl;
+						}
+					}
+
 
 					//----------------------------------------------------------
 					// TOTAL OBSERVED AND PREDICTED CATCH FOR SPECIES
