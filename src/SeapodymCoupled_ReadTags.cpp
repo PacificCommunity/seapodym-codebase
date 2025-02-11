@@ -139,6 +139,10 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
         if (param->date_mode<3) 
 		jday_ini = Date::julday(ddini,mmini,yyini);
 
+	float dtlib_min = param->tags_tlib_min/deltaT;
+	float dtlib_max = param->tags_tlib_max/deltaT;
+
+	int shortlived = 0;		
 	int nbtot_tags_files = 0;
 	for (int p=0; p<nb_tagpops; p++){
 		string file_in = param->file_tag_data[p];
@@ -174,7 +178,9 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 		if (rtxt){
 			int n = 0;
 			for (; n<nbtot_tags; n++){
-				rtxt >> id >> tag_no >> yy >> mm >> dd >> lat >> lon >> yy_rec >> mm_rec >> dd_rec >> lat_rec >> lon_rec >> len_rel >> len_rec;				
+				rtxt >> id >> tag_no >> yy >> mm >> dd >> lat >> lon >> yy_rec >> mm_rec >> dd_rec >> lat_rec >> lon_rec >> len_rel >> len_rec;			
+				//because of 30-days calendar the date 31st must be reset
+				if (dd==31) dd=30;
 				int jday_rel, jday_rec;
 				//with default date_mode=3 use 360-days calendar:
 				jday_rel = Date::clmjulday(dd,mm,yy);
@@ -190,7 +196,14 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 				//time at liberty
 				int days_liberty = jday_rec-jday_rel;
 				float dtlib = (float)days_liberty/deltaT;
-if (dtlib>3) continue;
+
+				if (dtlib<dtlib_min) shortlived ++;				
+				
+				if (dtlib<dtlib_min || dtlib>dtlib_max){
+//cout << "tag in group " << p << " released " << yy << " " << mm << " " << dd << "; recaptured " << yy_rec << " "<< mm_rec << " " << dd_rec << " " << dtlib << "; and the release is assigned to time step " << tt << endl;
+					continue;
+				}
+
 				//2. tag length to model's age index
 				age_mod = 0;
 				//for (int a=0; a<param->sp_nb_cohorts[0]; a++){
@@ -336,7 +349,6 @@ if (dtlib>3) continue;
 			rtxt.close();
 		} else 	cout<<endl<<"WARNING : Cannot read file "<<file_in<<endl;	
 	}
-
 	int nbtot_tags_used = 0;
 	rel = new tag_release** [nb_tagpops];
 	for (int p=0; p<nb_tagpops; p++){
@@ -349,6 +361,7 @@ if (dtlib>3) continue;
 	}
         if (!param->gcalc()){
 		cout << "Number of tag releases being read in files: "<< nbtot_tags_files << endl;
+		cout << "Number of short-lived tags being removed: "<< shortlived << ", i.e., " << 100*shortlived/(nbtot_tags_files) << "%" << endl;
 		cout << "Number of tag releases being used in the model: "<< nbtot_tags_used << endl;
 		if (gauss_kernel!=0)
 			cout << "TOTAL number of tag recaptures after Gaussian kernel transform: " << sum(rec_obs) << endl;
@@ -367,7 +380,7 @@ if (dtlib>3) continue;
 			delete [] rel_rtxt[p][n];
 		delete [] rel_rtxt[p];
 	}
-	delete [] rel_rtxt;
+	delete [] rel_rtxt;	
 }
 
 double SeapodymCoupled::lon_distance(const double lon_rel, const double lon_rec, const double lat_rel, const double lat_rec){

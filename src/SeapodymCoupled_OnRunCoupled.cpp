@@ -560,10 +560,9 @@ Mortality.initialize();
 				get_larvae_at_obs();
 
 				larvaelike += get_larvae_like(likelihood, Larvae_density_pred_at_obs);
-			}
-			
+			}		
 		}
-	
+
 		//III. Tag data likelihood
 		if (param->tag_like[0])
 			taglike += get_tag_like(likelihood, writeoutputfiles);

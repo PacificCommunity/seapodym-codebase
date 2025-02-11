@@ -254,6 +254,8 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		mat.total_pred_catch.initialize();
 	}
 	for (int p=0; p<nb_tagpops; p++){
+//if (sum(mat.dvarDensity(p+1))>0)		
+//TTRACE(p+1,sum(mat.dvarDensity(p+1)))		
 		//int nb_obs = 0;
 		if (t_count==t_count_rec(p)){
 
@@ -299,7 +301,6 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					}
 				}
 				
-				//TTTRACE(sum(rec_obs(p)),sum(value(rec_pred(p))),sum(mat.total_pred_catch(0)))
 				mat.dvarDensity(p+1).initialize();
 				tagpop_age_solve(p,t_count).initialize();
 
@@ -308,7 +309,6 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 				rec_pred_like += elem_prod(rec_pred(p),tlib_obs(p));
 				//rec_obs_like  += rec_obs(p);
 				//rec_pred_like += rec_pred(p);
-				//cout << norm(tlib_obs(p)) << " " << sum(rec_obs_like)<< " " << sum(value(rec_pred_like)) << endl;
 /*		
 				//1. Concentrated
 				taglike += value(norm2(rec_obs(p)-rec_pred(p)));
@@ -335,13 +335,6 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 				taglike += sf*value(norm2(log(rec_obs(p)+1e-1)-log(rec_pred(p)+1e-1)));
 				likelihood += sf*norm2(log(rec_obs(p)+1e-1)-log(rec_pred(p)+1e-1));
 */				//1d (by lontigude and by latitude)
-/*				dvector obs_lon = rowsum(rec_obs(p));
-				dvector obs_lat = colsum(rec_obs(p));
-				dvar_vector pred_lon = rowsum(rec_pred(p));
-				dvar_vector pred_lat = colsum(rec_pred(p));
-		                taglike += 0.5*ww*(value(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat)));
-		        	likelihood += 0.5*ww*(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat));
-*/
 		
 				if (writeoutputs){
 					//Writing only in simulation mode
@@ -380,37 +373,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 
 	if ((t_count>t_count_rec[0]) && (month==3 || month==6 || month==9 || month==12)){
 		//spatial 2d
-		//* Note, the comments denoted '//*' is the code of SKJ taglike (verion J)
-		//int nb_obs = sum(rec_obs_like);
-		//const float ww = 1.0; //use it if TL weight are off, but need to make it species-specific
-		//const float ww = 5e-5;//20201215: increasing weight to 5e-4 for CLT experiments
-		//double sf = 1.0;
-		//double sf = ww*(1.0-nb_obs/(5.0+nb_obs));
-		//taglike += sf*value(norm2(log(rec_obs_like+1e-4)-log(rec_pred_like+1e-4)));
-//*		taglike += ww*value(norm2(rec_obs_like-rec_pred_like));
-		//taglike += sf*value(norm2(log(rec_obs_like+1.0)-log(rec_pred_like+1.0)));
-		//cout << sf << " " << log(rec_obs_like+1e-1) << " "<< log(rec_pred_like+1e-1)<<" " << taglike << endl;
-		//likelihood += sf*norm2(log(rec_obs_like+1e-4)-log(rec_pred_like+1e-4));
-//*		likelihood += ww*norm2(rec_obs_like-rec_pred_like);
-		//likelihood += sf*norm2(log(rec_obs_like+1.0)-log(rec_pred_like+1.0));
-		//1d (by lontigude and by latitude)
-		/// comment this for e2
-		
-/*		dvector obs_lon = rowsum(rec_obs_like);
-		dvector obs_lat = colsum(rec_obs_like);
-		dvar_vector pred_lon = rowsum(rec_pred_like);
-		dvar_vector pred_lat = colsum(rec_pred_like);	
-		taglike += ww*(value(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat)));
-		likelihood += ww*(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat));
-*/		//taglike += (value(norm2(log(obs_lon+1)-log(pred_lon+1))+norm2(log(obs_lat+1)-log(pred_lat+1))));
-		//likelihood += (norm2(log(obs_lon+1)-log(pred_lon+1))+norm2(log(obs_lat+1)-log(pred_lat+1)));
-		//int nb_obs = sum(rec_obs_like);
 		const double ww = 0.0001;
-		//const float ww = 1.0; //if no tlib as weights
-//		double sf = ww*(1.0-nb_obs/(5.0+nb_obs));
-//		taglike += sf*value(norm2(log(rec_obs_like+1e-1)-log(rec_pred_like+1e-1)));
-		//cout << sf << " " << log(rec_obs_like+1e-1) << " "<< log(rec_pred_like+1e-1)<<" " << taglike << endl;
-//		likelihood += sf*norm2(log(rec_obs_like+1e-1)-log(rec_pred_like+1e-1));
 
 		taglike += ww*value(norm2(rec_obs_like-rec_pred_like));
 		likelihood += ww*norm2(rec_obs_like-rec_pred_like);
@@ -421,10 +384,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		dvar_vector pred_lon = rowsum(rec_pred_like);
 		dvar_vector pred_lat = colsum(rec_pred_like);	
 		taglike += 0.5*ww*(value(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat)));
-		likelihood += 0.5*ww*(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat));
-		//taglike += 0.15*ww*(value(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat)));
-		//likelihood += 0.15*ww*(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat));
-		
+		likelihood += 0.5*ww*(norm2(obs_lon-pred_lon)+norm2(obs_lat-pred_lat));		
 	}
 
 	return taglike;
