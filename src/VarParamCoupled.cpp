@@ -1217,13 +1217,12 @@ bool VarParamCoupled::read(const string& parfile)
 				float tlib_limit = 10;//days
 				tags_tlib_min = tlib_limit;
 				tags_tlib_max = 1e5;
-				if (!doc.get("/tags_tlib").empty()){
-					tags_tlib_min = doc.getDouble(string("/tags_tlib/"),"min");
+				if (!doc.get("/tags_tlib","min").empty()){
+					tags_tlib_min = doc.getDouble(string("/tags_tlib"),"min");
 					if (tags_tlib_min < tlib_limit)
 						tags_tlib_min = tlib_limit;
-					tags_tlib_max = doc.getDouble(string("/tags_tlib/"),"max");
+					tags_tlib_max = doc.getDouble(string("/tags_tlib"),"max");
 				}
-
 				if (!doc.get("/tags_grid").empty()){
 					dx_tags = doc.getDouble(string("/tags_grid/reso"),"dx");
 					dy_tags = doc.getDouble(string("/tags_grid/reso"),"dy");
