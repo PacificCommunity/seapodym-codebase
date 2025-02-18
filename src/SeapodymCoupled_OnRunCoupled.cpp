@@ -108,7 +108,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Habitat.initialize();
 	Mortality.initialize();
 
-	// For aggregated larvae likelihood
+	// For larvae likelihood
 	if (param->larvae_like[0])
 		create_init_larvae_vars();		
 
@@ -533,12 +533,13 @@ Mortality.initialize();
 			if (!tags_only)
 				Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
 
-			//8. Aggregate larvae density at larvae obs locations
+			//8. Extract larvae density
 			if (!elarvae_model){
 				if (year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
 				//if (t_count > nbt_building+nbstoskip){
-					if (param->larvae_input_aggregated_flag[0]==1 && param->larvae_like[0])
-						put_larvae_at_obs(sp,tcur);
+					if (param->larvae_like[0]){
+						extract_larvae(sp,tcur);
+					}
 				}
 			}
 
@@ -549,19 +550,28 @@ Mortality.initialize();
 		//		LIKELIHOOD SECTION			//
 		//------------------------------------------------------//
 		//I. Total abundance likelihood: augmented only if param->stock_like = true
-		//II.  Early-life data likelihood: only once at last time step
+		//II.  Early-life data likelihood
 		if (t_count == nbt_total){
 
 			stocklike += get_stock_like(total_stock, likelihood);
 
 			//II. Early-life data likelihood: only once at last time step
-			if (param->larvae_like[0]){
-
+			if (param->larvae_like[0] && param->larvae_input_aggregated_flag[0]){
 				get_larvae_at_obs();
-
-				larvaelike += get_larvae_like(likelihood, Larvae_density_pred_at_obs);
+				larvaelike += get_larvae_like(likelihood, Agg_larvae_density_pred_at_obs);
 			}		
 		}
+		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0]){
+			// Read larvae input data
+			int nbytetoskip = (9 +(3* nlat * nlon) + (nbt_total - nbt_building-nbstoskip) + ((nlat *nlon)* (t_count-nbt_building-nbstoskip-1))) * 4;
+			rw.rbin_input2d(param->strfile_larvae, map, mat.larvae_input[tcur], nbi, nbj, nbytetoskip);
+			// Compute likelihood
+			larvaelike += get_larvae_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur);
+		}
+		if (!param->gcalc()){
+			cout << "Early stage likelihood: " << larvaelike << endl;
+		}
+
 
 		//III. Tag data likelihood
 		if (param->tag_like[0])

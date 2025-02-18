@@ -3,6 +3,7 @@
 
 #include "SeapodymDocConsole.h"
 #include "Date.h"
+#include "NishikawaLike.h"
 
 /*!
 \brief The main simulation class
@@ -96,7 +97,8 @@ private:
 	i3_array tagpop_age_solve;
 
 	//larvae
-	dvar_matrix Larvae_density_pred_at_obs;
+	dvar_matrix Larvae_density_pred;
+	dvar_matrix Agg_larvae_density_pred_at_obs;
 	ivector kinf, ksup;
 	ivector ntime_agg;
 	double elarvae_dt;
@@ -109,9 +111,12 @@ private:
 	void get_catch_lf_like(dvariable& likelihood);
 	double get_stock_like(dvariable& total_stock, dvariable& likelihood);
 	double get_tag_like(dvariable& likelihood, bool writeoutputs);
-	double get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_at_obs);
+	double get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_larvae_density_at_obs);
+	double get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_pred, D3_ARRAY larvae_input, int t);
+	dvariable larvae_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat);
+	dvariable larvae_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat);
 	void create_init_larvae_vars();
-	void put_larvae_at_obs(const int sp, const int tcur);
+	void extract_larvae(const int sp, const int tcur);
 	void get_larvae_at_obs();
 	void elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles);
 	void write_elarvae_dym(const int sp);
