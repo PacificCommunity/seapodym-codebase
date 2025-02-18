@@ -1,8 +1,8 @@
 make
 objcopy --strip-all bin/seapodym bin/seapodym
 
-make -f Makefile.lclt
-objcopy --strip-all bin/seapodym_lclt bin/seapodym_lclt
+make -f Makefile.clte
+objcopy --strip-all bin/seapodym_clte bin/seapodym_clte
 
 make -f Makefile.flx
 objcopy --strip-all bin/seapodym_fluxes bin/seapodym_fluxes

@@ -1,2 +1,2 @@
-make -f Makefile.clt
-objcopy --strip-all bin/seapodym_cltags bin/seapodym_cltags
+make -f Makefile.clte
+objcopy --strip-all bin/seapodym_clte bin/seapodym_clte
