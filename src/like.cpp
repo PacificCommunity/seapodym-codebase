@@ -398,7 +398,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					if (month>9) ostr << month <<15;
 					else
 						ostr << 0 << month <<15;
-					string file_out = "./tags/" + param->sp_name[0] + "_tags_pred_"  + ostr.str() + ".txt";
+					string file_out = param->strout_tags + param->sp_name[0] + "_tags_pred_"  + ostr.str() + ".txt";
 					wtxt.open(file_out.c_str(), ios::out);
 					
 					if (wtxt){
@@ -408,7 +408,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					}
 					wtxt.close();
 			
-					file_out = "./tags/" + param->sp_name[0] + "_tags_obs_"  + ostr.str() + ".txt";
+					file_out = param->strout_tags + param->sp_name[0] + "_tags_obs_"  + ostr.str() + ".txt";
 					//file_out = "./" + param->sp_name[0] + "_releases_obs_"  + ostr.str() + ".txt";
 					wtxt.open(file_out.c_str(), ios::out);
 					if (wtxt){
