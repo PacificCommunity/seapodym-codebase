@@ -125,7 +125,7 @@ private:
 	void UpdateTimeVars(int& nbt_total, int& nbt_start_series);
 	///void SaveJuvCohorts(string fileJuv, int sp, bool FileMode);
 	///void SaveAdultCohorts(string fileAdu, int sp, bool FileMode);
-	void SaveCohortsDym(int sp, bool WriteHeader, dvector zlevel);
+	void SaveCohortsDym(int sp, bool WriteHeader, dvector zlevel, bool write_all_cohorts_dym, bool write_age1_dym);
 	void SaveOneCohortDym(int sp, bool WriteHeader, dvector zlevel);
 	void SaveLarvaeBeforeSstMort(int sp, bool WriteHeader, dvector zlevel);
 	void WriteAVariableDym(const dmatrix var, string filename, bool WriteHeader);

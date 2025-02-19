@@ -171,7 +171,7 @@ public:
 	// Larvae likelihood parameters
 	int q_mld_larvae;
 	double q_mld_slope, q_mld_depth;
-	ivector larvae_like; // weither to comute larvae likelihood, [sp]
+	ivector larvae_like; // weither to compute larvae likelihood, [sp]
 	DVECTOR q_sp_larvae;           // Larvae catchability, [sp]
 	DVECTOR likelihood_larvae_sigma;		// sigma parameter in Gaussian kernel used for larvae likelihood
 	DVECTOR likelihood_larvae_beta;		// betaf parameter in ZINB used for larvae likelihood
