@@ -68,7 +68,7 @@ void SeapodymCoupled::WriteOutput(int t, bool fishing)
 				mean_omega_sp, day, month, year, t_count,past_qtr, qtr, nbi, nbj);
 	for (int sp=0; sp< nb_species;sp++){
 		dvector zlevel; zlevel.allocate(0, nbt_total - 1);
-		SaveCohortsDym(sp, false, zlevel, param->write_all_cohorts_dym, param->larvae_like[sp]);
+		SaveCohortsDym(sp, false, zlevel, param->write_all_cohorts_dym, param->larvae_like[sp] && !param->elarvae_model[sp]);
 	}
 
 	for (int sp=0; sp< nb_species;sp++){
@@ -112,7 +112,7 @@ void SeapodymCoupled::WriteFileHeaders()
 	rw.InitSepodymFileDym(*param, mat, nbt_total, zlevel, mat.mask);
 
 	for (int sp=0; sp< nb_species;sp++)
-		SaveCohortsDym(sp, true, zlevel, param->write_all_cohorts_dym, param->larvae_like[sp]);
+		SaveCohortsDym(sp, true, zlevel, param->write_all_cohorts_dym, param->larvae_like[sp] && !param->elarvae_model[sp]);
 
 	//For Joe:
 	//SaveOneCohortDym(0, true, zlevel);
