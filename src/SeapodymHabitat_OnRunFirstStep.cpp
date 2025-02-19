@@ -48,7 +48,7 @@ void SeapodymCoupled::OnRunFirstStep()
 	func.allocate_dvmatr(map.imin,map.imax,map.jinf,map.jsup);
 
 	//to constrain the eF parameters: their sum should hold constant
-	eF_sum = 6.0;//sum(param->eF_habitat);
+	//eF_sum = 6.0;//sum(param->eF_habitat);
         //cout << "Just a WARNING: the sum of eF parameters = " << eF_sum << " will be used in the optimization" << endl;
 
 	pop.time_reading_init();
