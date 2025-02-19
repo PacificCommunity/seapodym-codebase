@@ -561,7 +561,7 @@ Mortality.initialize();
 				larvaelike += get_larvae_like(likelihood, Agg_larvae_density_pred_at_obs);
 			}		
 		}
-		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0]){
+		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0] && year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
 			// Read larvae input data
 			int nbytetoskip = (9 +(3* nlat * nlon) + (nbt_total - nbt_building-nbstoskip) + ((nlat *nlon)* (t_count-nbt_building-nbstoskip-1))) * 4;
 			rw.rbin_input2d(param->strfile_larvae, map, mat.larvae_input[tcur], nbi, nbj, nbytetoskip);
