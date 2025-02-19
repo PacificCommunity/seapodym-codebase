@@ -185,7 +185,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 			//2. Starting habitat computation (implicit age loop) 
 			int age = 0;	
-			if (!param->habitat_run_typefile){
+			if (!param->habitat_run_type){
 				//2.1 Spawning habitat	
 				func.Spawning_Habitat(*param, mat, map, Habitat, 1.0, sp, tcur, jday);
 
@@ -347,7 +347,7 @@ void SeapodymCoupled::ReadHabitat()
 	//mat.createMatHabitat_input(map,param->nb_habitat_run_age,nbt_total);
 	int nlevel = 0;
 	string file_input;
-	if (!param->habitat_run_typefile){
+	if (!param->habitat_run_type){
 		if (param->fit_spawning_habitat_raw){
 			file_input = param->strdir_output + param->sp_name[0] + "_spawning_habitat_input.dym";
 		}else{
@@ -396,7 +396,7 @@ void SeapodymCoupled::ReadHabitat()
 
 			//will need to prepare the input habitat that contains the data only for the selected time period
 			int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel + ((nlat_input *nlon_input)* (t_count-1))) * 4;
-			if (!param->habitat_run_typefile){
+			if (!param->habitat_run_type){
 				//rw.rbin_input2d(file_input, map, mat.habitat_input[0][t_count], nlon_input+2, nlat_input+2, nbytetoskip);
 				ifstream litbin(file_input.c_str(), ios::binary | ios::in);
 				const int sizeofDymInputType = sizeof(float);
