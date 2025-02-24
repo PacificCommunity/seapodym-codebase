@@ -34,6 +34,17 @@ void SeapodymCoupled::create_tag_recaptures(){
 	deltax = param->dx_tags; deltay = param->dy_tags;
 	xr_tags = deltax/DX;
 	yr_tags = deltay/DY;
+
+	float tlib_limit = 10;//days
+	if (param->tags_tlib_min < tlib_limit){
+		cout << endl << endl<< "!!!!!!! WARNING !!!!!!! You've entered parameter tags_tlib below authorized limit of 10 days! If not intended, stop the execution and fix the parameter. " << endl; 
+		if (!param->gcalc() && !param->scalc()){
+			do {
+				cout << "Press ENTER if you want to continue..." << endl;
+			} while (cin.get() != '\n');
+		}
+	}
+
 	if (xr_tags < deltax/DX){
 		deltax = xr_tags*DX;
 		cout << "WARNING: tagging data resolution should be divisible of model resolution, set dx = " << deltax << " degree(s) "<< endl;
@@ -95,6 +106,7 @@ void SeapodymCoupled::create_tag_recaptures(){
 
 void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 {
+
 	const int yyini  = param->ndatini/10000;
 	const int mmini  = (param->ndatini - (yyini * 10000) ) / 100 ;
 	int ddini  =  param->ndatini - ( yyini * 10000 ) - ( mmini *100 );

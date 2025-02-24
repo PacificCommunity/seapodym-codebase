@@ -1216,13 +1216,10 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 			nb_tag_files = 0;
 			if (tag_like(sp)){
-				float tlib_limit = 10;//days
-				tags_tlib_min = tlib_limit;
+				tags_tlib_min = 10;
 				tags_tlib_max = 1e5;
 				if (!doc.get("/tags_tlib","min").empty()){
 					tags_tlib_min = doc.getDouble(string("/tags_tlib"),"min");
-					if (tags_tlib_min < tlib_limit)
-						tags_tlib_min = tlib_limit;
 					tags_tlib_max = doc.getDouble(string("/tags_tlib"),"max");
 				}
 				if (!doc.get("/tags_grid").empty()){
