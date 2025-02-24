@@ -76,7 +76,7 @@ void SeapodymCoupled::OnRunFirstStep()
 	}
 	else {
 		cout << "----------------------------------------------------" << endl;
-		cout << "     SIMULATION WITHOUT FISHING!!!" << endl;
+		cout << "            MODEL RUN WITHOUT FISHING" << endl;
 		cout << "----------------------------------------------------" << endl;
 	}
 	func.allocate_dvmatr(map.imin,map.imax,map.jinf,map.jsup);
