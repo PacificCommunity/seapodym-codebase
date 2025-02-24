@@ -331,26 +331,6 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 						}
 					}
 				}
-				//temporally write recaptures to catch matrix (comment in CalcSums)
-				for (int i = imin; i <= imax; i++){
-					const int jmin = map.jinf[i];
-					const int jmax = map.jsup[i];
-					for (int j = jmin ; j <= jmax; j++){
-						if (map.carte[i][j]){
-							double xx = param->itolon(i);
-							double yy = param->jtolat(j);
-							if (writeoutputs){
-								for (int ii=0; ii<nx_obs; ii++)
-								for (int jj=0; jj<ny_obs; jj++){
-									if (xx>xlon[ii] && xx<=xlon[ii+1]&& yy<=ylat[jj] && yy>ylat[jj+1]){	
-										mat.total_obs_catch(0,i,j) = rec_obs(p,ii,jj)/(xr_tags*yr_tags);
-										mat.total_pred_catch(0,i,j)= value(rec_pred(p,ii,jj))/(xr_tags*yr_tags);
-									}
-								}
-							}
-						}
-					}
-				}
 				
 				mat.dvarDensity(p+1).initialize();
 				tagpop_age_solve(p,t_count).initialize();
