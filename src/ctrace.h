@@ -21,4 +21,7 @@
 #undef TTTRACE
 #define TTTRACE(o1,o2,o3) cerr << "line " << __LINE__ << ", file " << __FILE__ << ", " << #o1 " = " << o1<< ", " << #o2 " = " << o2 << ", " << #o3 " = " << o3 << endl;
 
+#undef TRACEDIM
+#define TRACEDIM(array) cerr << "line " << __LINE__ << ", file " << __FILE__ << ", " << #array " dimensions = " << array.rowsize() << " x " << array.colsize() << endl;
+
 #endif
