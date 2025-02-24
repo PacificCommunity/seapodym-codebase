@@ -7,15 +7,14 @@ void SeapodymCoupled::ReadLarvae()
 	file_input = param->strfile_larvae;
 	cout << "Reading input larvae file: "<< file_input << endl;
 	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
-	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
-	if (nlevel != nb_larvae_input_agg_groups){
-		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
-		exit(1);
-
-	}
-	cout << file_input << endl;
 
 	if (param->larvae_input_aggregated_flag[0]){
+		int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
+		if (nlevel != nb_larvae_input_agg_groups){
+			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
+			exit(1);
+		}
+
 		mat.larvae_input.allocate(0,nb_larvae_input_agg_groups-1);
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
 			mat.larvae_input[iAgg].allocate(1, nlon_input, 1, nlat_input);
@@ -121,7 +120,13 @@ void SeapodymCoupled::extract_larvae(const int sp, const int tcur)
 		}
 		ntime_agg[iAgg] += 1;
 	}else{
-		Larvae_density_pred = qmld*mat.dvarDensity[sp][0];
+		for (int i = map.imin; i <= map.imax; i++){
+			const int jmin = map.jinf[i];
+			const int jmax = map.jsup[i];
+			for (int j = jmin; j <= jmax; j++){
+			    Larvae_density_pred[i][j] = qmld[i][j] * mat.dvarDensity[sp][0][i][j];
+			}
+		}
 	}
 	
 /*

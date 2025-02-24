@@ -140,7 +140,6 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_
 				}else{
 					double L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
 					lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
-
 				}
 				likelihood += lkhd;
 				larvaelike += value(lkhd);

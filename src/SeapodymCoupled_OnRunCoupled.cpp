@@ -568,7 +568,7 @@ Mortality.initialize();
 			// Compute likelihood
 			larvaelike += get_larvae_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur);
 		}
-		if (!param->gcalc()){
+		if (param->gcalc()){
 			cout << "Early stage likelihood: " << larvaelike << endl;
 		}
 
@@ -630,7 +630,6 @@ Mortality.initialize();
 	param->total_like = value(likelihood);
 	double clike = value(likelihood)-lflike-taglike-stocklike-larvaelike;
 	if (!param->scalc()){ // all but sensitivity analysis
-
 		cout << "end of forward run, likelihood: " << defaultfloat << clike << " " << 
 			lflike << " " << taglike << " " << stocklike << " " << larvaelike << endl;
 

@@ -231,7 +231,7 @@ bool VarParamCoupled::read(const string& parfile)
 		if (doc.get("/fit_spawning_habitat_raw","flag").empty()){
 			fit_spawning_habitat_raw = 1;
 		}else{
-			fit_spawning_habitat_raw = doc.getInteger("/spawning_habitat_input", "flag");
+			fit_spawning_habitat_raw = doc.getInteger("/fit_spawning_habitat_raw", "flag");
 			if (!fit_spawning_habitat_raw && (doc.get("/strdir_larvae", "value").empty() || doc.get("/file_larvae_data", "value").empty())){
 				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <strdir_larvae> and <file_larvae_data> fields." << endl; exit(1);
 			}
