@@ -103,7 +103,7 @@ void SeapodymCoupled::extract_larvae(const int sp, const int tcur)
 			const int jmax = map.jsup[i];
 			for (int j = jmin; j <= jmax; j++){
 
-			    qmld(i,j) = 1.0/(1.0+exp(slope*(mat.vld[tcur][i][j]-depth)));
+				qmld(i,j) = 1.0/(1.0+exp(slope*(mat.vld[tcur][i][j]-depth)));
 			}
 		}
 	}
@@ -219,7 +219,7 @@ void SeapodymCoupled::write_elarvae_dym(const int sp)
 		const int jmax = map.jsup[i];
 		for (int j = jmin; j <= jmax; j++){
 			
-			mat.larvae(sp,i,j) = qmld(i,j) * value(mat.dvarDensity(sp,0,i,j));
+			mat.larvae(sp,i,j) = value(mat.dvarDensity(sp,0,i,j));
 		}
 	}
 	WriteAVariableDym(mat.larvae(sp),param->sp_name[sp] + "_early_larvae.dym",false);
