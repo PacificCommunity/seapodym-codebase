@@ -86,8 +86,7 @@
 	#'
 	#' Reads 3d variable from the DYM file, which has dimensions (time,longitude,latitude), and returns the list with time vector, coordinates, land mask and variable data.
 	#' @param file.in the DYM file accessible with provided path
-	#' @param t0.user the date provided as c(year,month,day) to be used the first date for extraction. If not provided, then read starting the first date written in the DYM file.
-	#' @param tfin.user the date provided as c(year,month,day) to be used the last date for extraction. If not provided, read until the last time step written in the DYM file.
+	#' @param t0.user, tfin.user the dates, which can provided either as c(year,month,day) or in the Date format, to be used as the first and the last dates for extraction. If not provided, then read starting the first date, or to the last date respectively, written in the DYM file.
 	#' @param region the set of four values c(x1,x2,y1,y2) defining east-west and south-north coordinates respectively.
 	#' @param verbose flag (default value is TRUE) controlling the prompt for the nominal function execution.
 	#' @return The list of variables written in the DYM file, that is a vector of longitudes, x, and latitudes, y, pointing to the centers of grid cells, times, t (in Date format unless t.date.format set to FALSE), corresponding to the center of the time step, the land mask matrix, landmask and the data 3d matrices, var[t,x,y]. 
@@ -98,12 +97,14 @@
 	read.var.dym<-function(file.in,t0.user=NULL,tfin.user=NULL,region=c(NA,NA,NA,NA),dt=30,apply.mask=FALSE,t.date.format=TRUE,verbose=TRUE){
 
 		#Checking dates input
-		if (!is.null(t0.user)){
-			t0.user[2] <- ifelse(t0.user[2]<1,1,t0.user[2])
-			t0.user[2] <- ifelse(t0.user[2]>12,12,t0.user[2])
-			if (!is.null(tfin.user)){
-				tfin.user[2] <- ifelse(tfin.user[2]<1,1,tfin.user[2])
-				tfin.user[2] <- ifelse(tfin.user[2]>12,12,tfin.user[2])
+		if (class(t0.user) != "Date" & class(tfin.user) != "Date"){			
+			if (!is.null(t0.user)){
+				t0.user[2] <- ifelse(t0.user[2]<1,1,t0.user[2])
+				t0.user[2] <- ifelse(t0.user[2]>12,12,t0.user[2])
+				if (!is.null(tfin.user)){
+					tfin.user[2] <- ifelse(tfin.user[2]<1,1,tfin.user[2])
+					tfin.user[2] <- ifelse(tfin.user[2]>12,12,tfin.user[2])
+				}
 			}
 		}
 
@@ -156,39 +157,45 @@
 		
 		dates <- get.dates()
 		# IF extracting data for sub-time vector
-		if (!is.null(t0.user) | !is.null(tfin.user)){ 
+		if (class(t0.user) == "Date" & class(tfin.user) == "Date"){		
+			t0.user.date <- t0.user
+			tfin.user.date <- tfin.user
+		} else {
+			if (!is.null(t0.user) | !is.null(tfin.user)){ 
 
-			if (is.null(t0.user))
-				t0.user <- date.2ymd(dates[1])
-			if (is.null(tfin.user))
-				tfin.user <- date.2ymd(dates[length(dates)])
+				if (is.null(t0.user))
+					t0.user <- date.2ymd(dates[1])
+				if (is.null(tfin.user))
+					tfin.user <- date.2ymd(dates[length(dates)])
 
-			#if day not specified add 15 in case of 30-days time stepping
-			if (dt == 30){
-				if (length(t0.user)==2) t0.user<-c(t0.user,15)
-				if (length(tfin.user)==2) tfin.user<-c(tfin.user,15)
-			} 
-			if (dt != 30){
+				#if day not specified add 15 in case of 30-days time stepping
+				if (dt == 30){
+					if (length(t0.user)==2) t0.user<-c(t0.user,15)
+					if (length(tfin.user)==2) tfin.user<-c(tfin.user,15)
+				} 
+				if (dt != 30){
 
-				#if day not specified in case of stadard calendar, add first and last of months
-				if (length(t0.user)==2){
-					message("Warning: the startdate does not contain day, will use the first of month!")
-					t0.user<-c(t0.user,1)
+					#if day not specified in case of stadard calendar, add first and last of months
+					if (length(t0.user)==2){
+						message("Warning: the startdate does not contain day, will use the first of month!")
+						t0.user<-c(t0.user,1)
+					}
+
+					if (length(tfin.user)==2){
+						message("Warning: the enddate does not contain day, will use the last of month!")
+						if (tfin.user[2]<12)
+							last.in.month.date <- ymd.2date(tfin.user[1],tfin.user[2]+1,1)-1
+						if (tfin.user[2]==12)
+							last.in.month.date <- ymd.2date(tfin.user[1]+1,1,1)-1
+						
+						tfin.user <- c(tfin.user,as.integer(format(last.in.month.date,"%d")))
+					}
 				}
-
-				if (length(tfin.user)==2){
-					message("Warning: the enddate does not contain day, will use the last of month!")
-					if (tfin.user[2]<12)
-						last.in.month.date <- ymd.2date(tfin.user[1],tfin.user[2]+1,1)-1
-					if (tfin.user[2]==12)
-						last.in.month.date <- ymd.2date(tfin.user[1]+1,1,1)-1
-					
-					tfin.user <- c(tfin.user,as.integer(format(last.in.month.date,"%d")))
-				}
+				t0.user.date <- as.Date(paste(t0.user,collapse="-"))
+				tfin.user.date <- as.Date(paste(tfin.user,collapse="-"))
 			}
-			t0.user.date <- as.Date(paste(t0.user,collapse="-"))
-			tfin.user.date <- as.Date(paste(tfin.user,collapse="-"))
-
+		}
+		if (t0.user.date != dates[1] | tfin.user.date != dates[length(dates)]){
 			if (verbose){
 				message("User defined first date of extraction: ",t0.user.date)
 				message("User defined last date of extraction: ",tfin.user.date)
