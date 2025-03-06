@@ -53,6 +53,34 @@ void CReadWrite::rbin_headpar(string file_in, int &nlong, int &nlat, int &nlevel
 
 	litbin.close();
 }
+
+void CReadWrite::rbin_headpar_dates(string file_in, const int nlon, const int nlat, const int nlevel, dvector& zlevel)
+{
+	ifstream litbin(file_in.c_str(), ios::binary|ios::in);
+	if (!litbin)
+	{
+		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_in << "\"\n";
+		exit(1);
+	}
+
+ 	const int nbytes= 4;
+	int nbytetoskip = (9 +  2*nlon*nlat) * nbytes;  
+	litbin.seekg(nbytetoskip, ios::beg); 
+
+	const int sizeofDymInputType = sizeof(DYM_INPUT_TYPE);
+	DYM_INPUT_TYPE buffl;
+	//---------------------------------------
+	//zlevel: valeurs des dates
+	//---------------------------------------
+	for (int k=0;k<nlevel;k++)
+	{
+		litbin.read(( char *)&buffl,sizeofDymInputType);
+		zlevel[k] = buffl;
+	}
+
+	litbin.close();
+}
+
 /*
 void CReadWrite::set_par_domain(CParam& param)
 {//initialization of domain parameters

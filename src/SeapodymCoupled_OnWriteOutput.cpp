@@ -159,6 +159,13 @@ void SeapodymCoupled::WriteFileHeaders_submodel(const string fileout)
                                 param->nlong, param->nlat, nbt_total,
                                 zlevel[0], zlevel[nbt_total-1],
                                 mat.xlon, mat.ylat, zlevel, mat.mask);
+
+	for (int sp=0; sp< nb_species;sp++){
+		if (param->elarvae_model[sp]){
+			//write a header
+			WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_early_larvae.dym", true);
+		}
+	}
 }
 
 void SeapodymCoupled::InitFileFluxes()

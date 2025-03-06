@@ -128,6 +128,8 @@ public:
 
 	void rbin_headpar(string file_in, int &nlong, int &nlat, int &nlevel);
 
+	void rbin_headpar_dates(string file_in, const int nlon, const int nlat, const int nlevel, dvector& zlevel);
+
 	void rtxt_headpar(string file_in, int &nlong, int &nlat, int &nlevel);
 
 	void rwbin_minmax(string file_io, double minvalstep, double maxvalstep);//Gael Nov04

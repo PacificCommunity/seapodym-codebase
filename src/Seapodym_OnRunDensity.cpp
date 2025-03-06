@@ -28,7 +28,6 @@ void SeapodymCoupled::prerun_model()
 double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 {
 	InitializeAll();
-
 	past_month=month;
 	past_qtr=qtr;
 
@@ -186,16 +185,29 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 		//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//
 		//------------------------------------------------------------------------------//
 		//------------------------------------------------------------------------------//
-		mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
-		//Precompute diagonal coefficients for larvae and juvenile ADREs
-		pop.precaldia(*param, map, mat);
-		pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+
 		for (int sp=0; sp < nb_species; sp++){
+
+			int elarvae_model = param->elarvae_model[sp];
+			//if !elarvae_model, elarvae_dt = 0 as elarvae_age = 0
+			elarvae_dt = param->elarvae_age[sp]/deltaT; 
+			double sigma_fcte_save = param->sigma_fcte;
+
+			//Precompute diagonal coefficients for larvae and juvenile ADREs
+			if (!elarvae_model){
+				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+				pop.precaldia(*param, map, mat);
+				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+			}
+
 			//store fish density before transport
 			for (int a=a0_adult(sp); a<aN_adult(sp); a++)
 				mat.density_before(sp,tcur,a) = value(mat.dvarDensity(sp,a));
 
 			//1. Precompute some variables outside of age loop
+			
+			//1.0 Forage scaling
+			func.Forage_Scaling(*param, mat, map, sp, tcur);
 
 			//1.1 Accessibility by adults (all cohorts)
  			func.Faccessibility(*param, mat, map, sp, jday, tcur, pop_built, false, tags_age_habitat);//checked
@@ -205,21 +217,53 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				FR_pop_comp(FR_pop, sp);
 //				ISR_denom_comp(ISR_denom, sp, tcur);
 			}
+			//1.6 Precompute Mortality range at age function
+			func.mortality_range_age_comp(*param,mat,sp);
 
 			//2. IMPLICIT AGE LOOP: increment age while moving through life stages 
 			int age = 0;	
 
-			//2.1 Spawning habitat	
+			//2.0 If activated, the Early Larvae Model (ELM) solved over elarvae_age
+			if (elarvae_model){
+				//Do the time-splitting for the first age class: 
+				//1- early (just a few days after yolk stage) and 
+				//2- late (up to one month of age) larvae
+		
+				bool time_getpred = false;
+				if (year>=param->larvae_like_firstyear
+						&& year<=param->larvae_like_lastyear 
+						&& t_count > nbt_building+nbstoskip)
+					time_getpred = true;
+
+				elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+			}
+
+			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 
+			//2.1.1 Spawning habitat
 			func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
 			
 			//2.2 Transport and mortality of larvae (always one age class)	
 			for (int n=0; n<param->sp_nb_cohort_lv[sp]; n++){
 				double mean_age = mean_age_cohort[sp][age]; 
+
+				
 				func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
-				pop.Precalrec_juv(map, mat, Mortality, tcur, 1);//checked
-				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur, 1);//checked
+				pop.Precalrec_juv(map, mat, Mortality, tcur, (1-elarvae_dt));//checked
+//TRACE(norm(Mortality))				
+				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur, (1-elarvae_dt));//checked
+//TTRACE(age,norm(value(mat.dvarDensity[sp][age])))
 				age++;
 			}
+
+			//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
+			if (elarvae_model){
+				param->sigma_fcte = sigma_fcte_save;
+				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+				//Precompute diagonal coefficients for juvenile ADREs
+				pop.precaldia(*param, map, mat);
+				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+			}
+			
 			//2.3. Juvenile habitat	
 			if (param->cannibalism[sp]){
 				Total_Pop_comp(Total_pop,sp,jday,tcur); //adjoint
@@ -318,7 +362,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 			//6. Ageing and survival
 			if (nt_dtau==dtau){
 				for (int a=param->sp_nb_cohorts[sp]-1; a >= 1; a--){
-						Survival(mat.dvarDensity[sp][a], mat.dvarDensity[sp][a-1] , a, sp);
+					Survival(mat.dvarDensity[sp][a], mat.dvarDensity[sp][a-1] , a, sp);
 				}
 				nt_dtau=0;
 			}
@@ -330,7 +374,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 		//		COMPUTING LIKELIHOOD			//
 		//------------------------------------------------------//	
 		//Biomass density likelihood. Note, degrade it to the resolution of the density_input
-		if (t_count > nbt_building+nbstoskip)
+		if (t_count > nbstoskip)
 			update_density_like(Density_pred, mat.density_input(t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood);
 
 		if (writeoutputfiles){
@@ -371,25 +415,35 @@ void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input,
 
 	int rr_x = (int)nlon/nlon_input; 
 	int rr_y = (int)nlat/nlat_input; 
-	//TTRACE(rr_x,rr_y)
+	
 	if (rr_x<1 || rr_y<1){ 
 		cerr << "Model resolution should be divisible without remainder by the resolution of input density field." << 
 		         endl<< "Currenly nlon/nlon_input = " << rr_x << ", and nlat/nlat_input = " << rr_y << endl << "Will exit now...";
 		exit(1);
 	}
+	dvariable Btot;
+	int cells_open;
 	for (int i=0; i<nlon_input; i++){
 		for (int j=0; j<nlat_input ; j++){
-			if (density_input(i,j)){
-				dvariable Bsum = 0.0;
+			cells_open = 0;
+			for (int ii=0; ii<rr_x; ii++)
+			for (int jj=0; jj<rr_y; jj++){
+				if (map_carte(rr_x*i+ii,rr_y*j+jj))
+					cells_open++;
+			}
+
+			//non-zero density_input as data landmask and at least one cell in current model grid
+			if (density_input(i,j) && cells_open){
+				Btot = 0.0;
 				for (int ii=0; ii<rr_x; ii++)
 				for (int jj=0; jj<rr_y; jj++){
 					if (map_carte(rr_x*i+ii,rr_y*j+jj))
-					       	Bsum += Density_pred[rr_x*i+ii][rr_y*j+jj];
+					       	Btot += Density_pred[rr_x*i+ii][rr_y*j+jj];
 				}
 				
-				if (Bsum>0)	 
-	                      		likelihood += (rr_x*rr_y*density_input(i,j)-Bsum)*
-					      	      (rr_x*rr_y*density_input(i,j)-Bsum);
+				if (Btot>0)	 
+	                      		likelihood += (rr_x*rr_y*density_input(i,j)-Btot)*
+					      	      (rr_x*rr_y*density_input(i,j)-Btot);
 			}
 		}
 	}
@@ -404,53 +458,69 @@ void SeapodymCoupled::ReadDensity()
 	string file_input;
 	file_input = param->strdir_output + param->sp_name[0] + "_density_input.dym";
 
-	int nlevel = 0;
-	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
-	cout << "Input density dimensions (nt, nx, ny): " << nlevel << " " << nlon_input << " "<< nlat_input << endl;
+	int nlevel_input = 0;
+	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel_input);
+	cout << "Input density dimensions (nt, nx, ny): " << nlevel_input << " " << nlon_input << " "<< nlat_input << endl;
+
+	dvector zlevel_input; zlevel_input.allocate(0, nlevel_input - 1);
+
+	rw.rbin_headpar_dates(file_input, nlon_input, nlat_input, nlevel_input, zlevel_input);
+
+	if (zlevel_input[0] < mat.zlevel[0] || zlevel_input[param->nlevel-1] > mat.zlevel[param->nlevel]){
+		cout << "WARNING: the date range in file density_input in outside of the forcing data dates! " <<endl;
+	}
+
+	if (zlevel_input[0] > mat.zlevel[nbt_start_series] || zlevel_input[nlevel_input-1] < mat.zlevel[nbt_start_series+nbt_total-1]){
+		cout << "The date range in file density_input does not overlap with selected date range! Exit now..." <<endl;
+		exit(1);
+	}
+
+	int date0_offset = 0;
+	while (zlevel_input[date0_offset]<mat.zlevel[nbt_start_series]){
+		date0_offset ++;
+	}
 
 	mat.density_input.allocate(1,nbt_total);
 	for (int t=1; t<=nbt_total; t++){
 		mat.density_input[t].allocate(0, nlon_input, 0, nlat_input);
 		mat.density_input[t].initialize();
 	}
+
 	for (; t_count<=nbt_total; t_count++){
 		getDate(jday);
-		if (t_count > nbt_building) {
-			//TIME SERIES 
-			t_series = t_count - nbt_building + nbt_start_series;
-			//----------------------------------------------//
-			//	READING DENSITY DATA			//
-			//----------------------------------------------//
-			int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel + ((nlat_input *nlon_input)* (t_series-1))) * 4;
-			
-			//rw.rbin_input2d(file_input, map, mat.density_input[t_count], nlon_input+2, nlat_input+2, nbytetoskip);
-			ifstream litbin(file_input.c_str(), ios::binary | ios::in);
-			if (!litbin)
-			{
-				cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
-				exit(1);
-			}
-
-			//---------------------------------------
-			// Reading the 2d matrix
-			//---------------------------------------
-			litbin.seekg(nbytetoskip, ios::cur);
-
-
-		 	const int sizeofDymInputType = sizeof(float);
-			float buf;
-			for (int j=0;j<nlat_input;j++)
-			{
-				for (int i=0;i<nlon_input;i++)
-				{
-					litbin.read(( char *)&buf,sizeofDymInputType);
-					mat.density_input[t_count][i+1][j+1]= buf;
-				}
-			}
 		
-			litbin.close();
-
+		//TIME SERIES 
+		t_series = t_count + date0_offset;
+		
+		//----------------------------------------------//
+		//	READING DENSITY DATA			//
+		//----------------------------------------------//
+		int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel_input + ((nlat_input *nlon_input)* (t_series-1))) * 4;
+			
+		ifstream litbin(file_input.c_str(), ios::binary | ios::in);
+		if (!litbin)
+		{
+			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
+			exit(1);
 		}
+
+		//---------------------------------------
+		// Reading the 2d matrix
+		//---------------------------------------
+		litbin.seekg(nbytetoskip, ios::cur);
+
+	 	const int sizeofDymInputType = sizeof(float);
+		float buf;
+		for (int j=0;j<nlat_input;j++)
+		{
+			for (int i=0;i<nlon_input;i++)
+			{
+				litbin.read(( char *)&buf,sizeofDymInputType);
+				mat.density_input[t_count][i+1][j+1]= buf;
+			}
+		}
+		
+		litbin.close();
 	}
 	t_count = t_count_init;
 }

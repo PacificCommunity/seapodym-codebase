@@ -124,7 +124,7 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 
 			//update the statistics.out file if the solution has been improved
 			int itn = fmc.itn;
-//			if ((itn==itr+1 && (idx>=1))){
+			if ((itn==itr+1 && (idx>=1))){
 				time(&time_sec);
 				time_t time2 = time_sec;
 				elapsed_time += (double)(time2-time1)/60.0;
@@ -132,7 +132,7 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 				sc.save_statistics(dirout,x_names,likelihood,g,elapsed_time,idx-1,itr,nvar);
 				sc.write(tempparfile.c_str());
 				itr = itn;
-//			}
+			}
 			//reset control parameters and run the model and its adjoint
 			if (fmc.ireturn > 0) {
 				likelihood = sc.run_density((dvar_vector)x);

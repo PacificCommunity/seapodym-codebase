@@ -41,7 +41,7 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 		b_sst = param->b_sst_larvae[sp];
 	}
 
-	if (param->elarvae_model[sp] | param->spawning_adult_func_only[sp]){
+	if (param->elarvae_model[sp] || param->spawning_adult_func_only[sp]){
 		spawning_adult_func_comp(J_c,N_mat,value(nb_recruitment),value(a_adults_spawning));
 		
 		J = nograd_assign(J_c);
