@@ -105,6 +105,11 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 		mean_fishery_cpue.initialize();
 		nrec_fishery.initialize();
 
+		int count_out_of_domain = 0;
+		ivector fisheries_out;
+		fisheries_out.allocate(0,nb_fishery-1);
+		fisheries_out.initialize();
+
 		int rec = 0;
 		bool DataExist = false;
 		while (rec<all_rec) {
@@ -141,17 +146,11 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 						//cout << "Scale fishing effort by " << (double)param.deltaT / 30 << endl;
 						eff  *= (double)param.deltaT / 30;
 						harv *= (double)param.deltaT / 30;
-
 						//const 
 						int i = param.lontoi(lon);
 						//const 
 						int j = param.lattoj(lat);	
 
-						if (i==0 || j==0) {
-							cout << "Attn: fishing data index 0 for (lon,lat) = (" 
-								<< lon << "," << lat << "), (i,j) = (" << i << "," 
-								<< j << ")" <<endl;
-						}
 						const int hr_x = (int)(freso/(2.0*deltaX));
 						const int hr_y = (int)(freso/(2.0*deltaY));
 						if ((i>hr_x && i+hr_x<nbi-1) && (j>hr_y && j+hr_y<nbj-1)){
@@ -167,12 +166,29 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 								nrec_oceanmask++;
 								numrec(f,yr,month)++;
 							}
+						} else {
+							count_out_of_domain++;
+							fisheries_out[f] = 1;
 						}
 					}
 				}
 			}
 			rec++;
-		}		   
+		}
+		if (count_out_of_domain){
+			std::ostringstream ostr;
+			for (int f=0; f<nb_fishery; f++)
+				if (fisheries_out[f]){
+					if (ostr.str() == "")
+						ostr << param.list_fishery_name[f];
+					else	ostr << ", " << param.list_fishery_name[f];
+				}
+
+			cout << endl << "WARNING: " << count_out_of_domain 
+				<< " fishing records were NOT used because they are outside of model domain."
+				<< " They are in fisheries: " << ostr.str() << endl << endl;
+		}
+
 		if (! DataExist && sum(param.mask_fishery_sp(0))!=0){
 			param.mask_fishery_sp.initialize();
 			cout << "WARNING: no fishery data found: fishery mask forced to zero" << endl;
