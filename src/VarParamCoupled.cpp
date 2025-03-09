@@ -688,9 +688,9 @@ bool VarParamCoupled::read(const string& parfile)
 		//Variable range as a function of age (old Rage)
 		M_range_age_max[sp] = 3.0/(1+pow(0.5,3));//value in the SKJ REF
 		M_range_age_slope[sp] = 3.0;			
-		if (!doc.get("/M_max_range_age",sp_name[sp]).empty())
+		if (!doc.get("/Mvar_range_age_max",sp_name[sp]).empty())
 			M_range_age_max[sp] = doc.getDouble("/Mvar_range_age_max", sp_name[sp]);
-		if (!doc.get("/M_max_range_slope",sp_name[sp]).empty())
+		if (!doc.get("/Mvar_range_age_slope",sp_name[sp]).empty())
 			M_range_age_slope[sp] = doc.getDouble("/Mvar_range_age_slope", sp_name[sp]);
 
 
