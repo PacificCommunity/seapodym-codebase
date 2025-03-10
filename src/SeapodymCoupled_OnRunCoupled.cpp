@@ -568,9 +568,9 @@ Mortality.initialize();
 			// Compute likelihood
 			larvaelike += get_larvae_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur);
 		}
-		if (param->gcalc()){
+		/*if (!param->gcalc()){
 			cout << "Early stage likelihood: " << larvaelike << endl;
-		}
+		}*/
 
 
 		//III. Tag data likelihood
