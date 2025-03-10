@@ -193,6 +193,9 @@
 				}
 				t0.user.date <- as.Date(paste(t0.user,collapse="-"))
 				tfin.user.date <- as.Date(paste(tfin.user,collapse="-"))
+			}else{
+				t0.user.date <- dates[1]
+				tfin.user.date <- dates[nlevel]
 			}
 		}
 		if (t0.user.date != dates[1] | tfin.user.date != dates[length(dates)]){
