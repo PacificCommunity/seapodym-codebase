@@ -19,6 +19,7 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 	M.initialize();
 
 	double Rage = mat.mortality_range_age[sp][age];
+	double Hval = param.Hval;
 
 	dvariable Mp_max   = param.dvarsMp_mean_max[sp];
 	dvariable Mp_exp   = param.dvarsMp_mean_exp[sp];
@@ -28,7 +29,7 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 	if (age==0)
 		range = param.dvarsM_larvae_range[sp]; 
 	else 
-		range = param.dvarsM_mean_range[sp]; 
+		range = param.dvarsM_mean_range[sp];
 
 	dvmatr1 = Mp_max;
 	dvmatr2 = Mp_exp;
@@ -36,7 +37,7 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 	dvmatr4 = Ms_max;
 	dvmatr5 = range;
 
-	M_sp_comp(map, M, value(H), value(Mp_max), value(Ms_max), value(Mp_exp), value(Ms_slope), value(range), Rage, mean_age_in_dtau);
+	M_sp_comp(map, M, value(H), value(Mp_max), value(Ms_max), value(Mp_exp), value(Ms_slope), value(range), Rage, Hval, mean_age_in_dtau);
 
 	//cout << __FILE__<< " " << __LINE__ << " " << age << " " << norm(M) << endl;
 
@@ -50,6 +51,7 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 
 	save_identifier_string((char*)"M_sp_comp_begin");
 	save_double_value(mean_age_in_dtau);
+	save_double_value(Hval);
 	range.save_prevariable_value();
 	dvmatr5.save_dvar_matrix_position();
 	Ms_max.save_prevariable_value();
@@ -104,6 +106,7 @@ void dv_M_sp_comp(void)
 	double Ms_max = restore_prevariable_value();
 	const dvar_matrix_position Range_pos  = restore_dvar_matrix_position();
 	double range = restore_prevariable_value();
+	const double Hval = restore_double_value();
 	const double mean_age = restore_double_value();
 	verify_identifier_string((char*)"M_sp_comp_begin");
 
@@ -158,15 +161,12 @@ void dv_M_sp_comp(void)
 		const int jmax = map->jsup[i];
 		for (int j = jmax; j >= jmin; j--){
 			if (map->carte(i,j)){	
-	
-	
-				double exprH = 1.0-H(i,j);
+				double exprH = 1.0-H(i,j)/Hval;
 				double H_var = pow(1.0+range+Rage,exprH); 
 
-				//M(i,j) *= pow(1.0+range,1-H(i,j)); 
-				dfH(i,j) -= M * log(1.0+range+Rage) * H_var * dfM(i,j);
-
-				dfRng(i,j) += M * exprH * pow(1.0+range+Rage,-H(i,j)) * dfM(i,j);
+				//M(i,j) *= pow(1.0+range,1-H(i,j)/Hval);
+				dfH(i,j) -= M * log(1.0+range+Rage) * H_var * dfM(i,j) / Hval;
+				dfRng(i,j) += M * exprH * pow(1.0+range+Rage,-H(i,j)/Hval) * dfM(i,j);
 
 				//const double M = (Ms+Mp)*H_var;
 				dfMpm(i,j) += dMpm * H_var * dfM(i,j);

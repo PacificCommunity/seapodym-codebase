@@ -693,6 +693,9 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/Mvar_range_age_slope",sp_name[sp]).empty())
 			M_range_age_slope[sp] = doc.getDouble("/Mvar_range_age_slope", sp_name[sp]);
 
+		Hval = 1.0;
+		if (!doc.get("/Mvar_Hval","value").empty())
+			Hval = doc.getDouble("/Mvar_Hval", "value");
 
 		//flag for optional mortality penalizing according to food requirement
 		if (!doc.get("/food_requirement_in_mortality",sp_name[sp]).empty()){

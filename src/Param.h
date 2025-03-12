@@ -226,6 +226,7 @@ public:
 	DVECTOR Ms_mean_max;		// natural mortality: max coeff of the "senescence" increasing sigmoid function
 	DVECTOR M_mean_range;		// range of the variability of natural mortality around M in relation with the habitat
 	DVECTOR M_larvae_range;		// range of the variability of natural mortality around M in relation with the habitat
+	double Hval; // Habitat threshold under which env. conditions deteriorates (i.e. mortality increases)
 	dvector M_range_age_max, M_range_age_slope;
 	dvector residual_competition;	// constant (temp) parameter accounting for competition with species, which are not in the model
 

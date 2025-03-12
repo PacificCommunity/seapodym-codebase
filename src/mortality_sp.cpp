@@ -40,7 +40,7 @@ void VarSimtunaFunc::M_early_sp(VarParamCoupled& param, const PMap& map, dvar_ma
 	}
 }
 
-void VarSimtunaFunc::M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double Mp_max, double Ms_max, double Mp_exp, double Ms_slope, double range, const double Rage, const double mean_age_in_dtau)
+void VarSimtunaFunc::M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double Mp_max, double Ms_max, double Mp_exp, double Ms_slope, double range, const double Rage, const double Hval, const double mean_age_in_dtau)
 {
 	const double Mp = Mp_max * exp(- Mp_exp * mean_age_in_dtau);
 	const double Ms = Ms_max * pow(mean_age_in_dtau,Ms_slope);
@@ -52,7 +52,7 @@ void VarSimtunaFunc::M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
 
-				M.elem_value(i,j) *= pow(1.0+Rage+range,1.0-H(i,j)); 
+				M.elem_value(i,j) *= pow(1.0+Rage+range,1.0-H(i,j)/Hval);
 			}
 		}
 	}

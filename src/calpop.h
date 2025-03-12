@@ -60,7 +60,7 @@ public:
 	void RecompDiagCoef_juv(const PMap& map, CMatrices& mat, const int t_count, const dmatrix mortality, dmatrix& a, dmatrix& bm, dmatrix& c, dmatrix& d, dmatrix& e, dmatrix& f,const double mult);
 	void RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& mat, const int t_count, const int jday, const dmatrix& mortality, const dmatrix& habitat, dmatrix& aa, dmatrix& bbm, dmatrix& cc, dmatrix& dd, dmatrix& ee, dmatrix& ff, const int sp, const int age, const double MSS, const double c_diff_fish, const double sigma_species);
 	void RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices& mat, const int t_count, const int jday, const dmatrix& mortality, const dmatrix& habitat, dmatrix& aa, dmatrix& bbm, dmatrix& cc, dmatrix& dd, dmatrix& ee, dmatrix& ff, const int sp, const int age, const double MSS, const double c_diff_fish, const double sigma_species);
-	void RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const dmatrix& H, const double Rage, const double mean_age_in_dtau, const int age, const int sp);
+	void RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const dmatrix& H, const double Rage, const double mean_age_in_dtau, const int age, const double Hval, const int sp);
 
 	void Predicted_Catch_Fishery(const PMap& map, VarParamCoupled& param, VarMatrices& mat, CReadWrite& rw, const int sp, const int f, const int k, const int year, const int month, const int t_count, const int step_count);
 	void predicted_catch_fishery_comp(const PMap& map, CParam& param, VarMatrices& mat, const int f, const int k, const int sp, const int age, const dmatrix& uu, const int step_count);
@@ -113,7 +113,7 @@ private:
 
 	
 	// Coefficients diagonaux
-	// utilisés par la fonction tridag
+	// utilisÃ©s par la fonction tridag
 	DMATRIX a;
 	DMATRIX b;
 	DMATRIX bm;

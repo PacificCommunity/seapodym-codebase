@@ -52,7 +52,7 @@ public:
 	void Seasonal_switch_year_precomp(CParam& param, CMatrices& mat, const PMap& map, double season_peak, double season_start,const int sp);
 
 	void Mortality_Sp( VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, dvar_matrix& H, int sp, double mean_age_in_dtau, const int age, const int t_count);
-	void M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double, double, double, double, double, const double,double);
+	void M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double, double, double, double, double, const double, const double, double);
 	void M_early_sp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const dmatrix& sst, const dmatrix& pp, const int sp);
 
 	void M_PH_juv_comp(VarParamCoupled& param, const PMap& map, CMatrices& mat, dvar_matrix& M, const dmatrix& PH, double mean_age_in_dtau);

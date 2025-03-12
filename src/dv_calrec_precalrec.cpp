@@ -34,6 +34,7 @@ void CCalpop::Precalrec_Calrec_adult(const PMap& map, VarMatrices& mat, VarParam
 	const double c_diff   = value(param.dvarsC_diff_fish[sp]);
 	const double mss_sp   = value(param.dvarsMSS_species[sp]);
 	const double sigma_sp = value(param.dvarsSigma_species[sp]);
+	const double Hval = param.Hval;
 
 	a  = value(dvarsA);
 	c  = value(dvarsC);
@@ -74,6 +75,7 @@ void CCalpop::Precalrec_Calrec_adult(const PMap& map, VarMatrices& mat, VarParam
 	save_double_value(c_diff);
 	save_double_value(mss_sp);
 	save_double_value(sigma_sp);
+	save_double_value(Hval);
 	save_int_value(step_count);
 	save_int_value(t_count);
 	save_int_value(jday);
@@ -122,6 +124,7 @@ void dv_calrec_precalrec()
 	unsigned jday	   = restore_int_value();
 	unsigned t_count   = restore_int_value();
 	unsigned step_count  = restore_int_value();
+	const double Hval   = restore_double_value();
 	const double sigma   = restore_double_value();
 	const double mss_sp  = restore_double_value();
 	const double c_diff  = restore_double_value();	
@@ -193,7 +196,7 @@ void dv_calrec_precalrec()
 	if (!no_mort){
 		//assuming all cohorts except the last one have the same age unit:
 		double mean_age_in_dtau = age * param->sp_unit_cohort[sp][age-1] + 0.5*param->sp_unit_cohort[sp][age];
-		pop->RecompM_sp(*map, *param, mortality, mat->adult_habitat(sp,t_count,ind_adult_habitat), mat->mortality_range_age[sp][age], mean_age_in_dtau, age, sp);
+		pop->RecompM_sp(*map, *param, mortality, mat->adult_habitat(sp,t_count,ind_adult_habitat), mat->mortality_range_age[sp][age], mean_age_in_dtau, age, Hval, sp);
 		pop->Recomp_total_mortality_comp(*map,*param,*mat,*rw,mortality,age,sp,year,month,step_count);
 	}
 	if (!vert_move)
@@ -362,6 +365,7 @@ void dv_calrec_with_catch_precalrec()
 	unsigned jday	   = restore_int_value();
 	unsigned t_count   = restore_int_value();
 	unsigned step_count  = restore_int_value();
+	const double Hval   = restore_double_value();
 	const double sigma   = restore_double_value();
 	const double mss_sp  = restore_double_value();
 	const double c_diff  = restore_double_value();	
@@ -447,7 +451,7 @@ void dv_calrec_with_catch_precalrec()
 	if (!no_mort){
 		//assuming all cohorts except the last one have the same age unit:
 		double mean_age_in_dtau = age * param->sp_unit_cohort[sp][age-1] + 0.5*param->sp_unit_cohort[sp][age];
-		pop->RecompM_sp(*map, *param, mortality, mat->adult_habitat(sp,t_count,ind_adult_habitat), mat->mortality_range_age[sp][age], mean_age_in_dtau, age, sp);
+		pop->RecompM_sp(*map, *param, mortality, mat->adult_habitat(sp,t_count,ind_adult_habitat), mat->mortality_range_age[sp][age], mean_age_in_dtau, age, Hval, sp);
 		pop->Recomp_total_mortality_comp(*map,*param,*mat,*rw,mortality,age,sp,year,month,step_count);
 	}
 //cout << age << " "<<  norm(mat->adult_habitat(sp,t_count,ind_adult_habitat)) << " " << norm(mortality) << endl;

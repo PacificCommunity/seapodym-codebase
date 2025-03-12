@@ -856,7 +856,7 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	}
 }
 
-void CCalpop::RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const dmatrix& H, const double Rage, const double mean_age_in_dtau, const int age, const int sp)
+void CCalpop::RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const dmatrix& H, const double Rage, const double mean_age_in_dtau, const int age, const double Hval, const int sp)
 {
 	double Mp_max   = param.Mp_mean_max[sp];
 	double Mp_exp   = param.Mp_mean_exp[sp];
@@ -876,7 +876,7 @@ void CCalpop::RecompM_sp(const PMap& map, const CParam& param, dmatrix& M, const
 		const int jmax = map.jsup[i];
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
-				M(i,j) *= pow(1.0+Rage+range,1.0-H(i,j)); 
+				M(i,j) *= pow(1.0+Rage+range,1.0-H(i,j)/Hval);
 			}
 		}
 	}
