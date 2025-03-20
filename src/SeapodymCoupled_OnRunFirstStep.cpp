@@ -1,6 +1,6 @@
 #include "SeapodymCoupled.h"
 
-void SeapodymCoupled::OnRunFirstStep()
+void SeapodymCoupled::OnRunFirstStep(const bool writeoutputfiles)
 {
 	sumFprime.allocate(0, nb_forage - 1); 		sumFprime.initialize();
 	sumF.allocate(0, nb_forage - 1);		sumF.initialize();
@@ -71,7 +71,7 @@ void SeapodymCoupled::OnRunFirstStep()
 		//read LF data file if provided
 		if (param->file_frq_data[0]!=""){
 			for (int sp=0; sp<nb_species; sp++)
-				rw.read_frq_data(*param, map, param->save_first_yr, param->save_last_yr, sp);
+				rw.read_frq_data(*param, map, param->save_first_yr, param->save_last_yr, sp, writeoutputfiles);
 		}
 	}
 	else {

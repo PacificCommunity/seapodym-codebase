@@ -5,7 +5,7 @@
 ///See SeapodymCoupled_OnRunCoupled.cpp for the description of the main function.
 
 void HabitatConsoleOutput(int t_count, int flag_simulation, string date_str, double norm_habitat_input, double norm_spawning_habitat, double like);
-void SeapodymCoupled::prerun_model()
+void SeapodymCoupled::prerun_model(const bool writeoutputfiles)
 {
 	OnRunFirstStep();
 	ReadHabitat();

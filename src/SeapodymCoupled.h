@@ -39,7 +39,7 @@ friend class tag_release;
 	}
 
 	int EditRunCoupled(const char* parfile);
-	void prerun_model();
+	void prerun_model(const bool writeoutputfiles = true);
 	double OnRunCoupled(dvar_vector x, const bool writeoutputfiles = false);
 	void OnSimulationEnd();
 	void ReadLarvae();	
@@ -50,7 +50,7 @@ friend class tag_release;
 	double OnRunDensity(dvar_vector x, const bool writeoutputfiles = false);
 	void ReadDensity();	
 
-	void OnRunFirstStep();
+	void OnRunFirstStep(const bool writeoutputfiles = true);
 	void OnBuildForage();
 
 	double get_total_time_reading(){
