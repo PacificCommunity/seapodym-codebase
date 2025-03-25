@@ -51,7 +51,6 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 
 	save_identifier_string((char*)"M_sp_comp_begin");
 	save_double_value(mean_age_in_dtau);
-	save_double_value(Hval);
 	range.save_prevariable_value();
 	dvmatr5.save_dvar_matrix_position();
 	Ms_max.save_prevariable_value();
@@ -106,7 +105,6 @@ void dv_M_sp_comp(void)
 	double Ms_max = restore_prevariable_value();
 	const dvar_matrix_position Range_pos  = restore_dvar_matrix_position();
 	double range = restore_prevariable_value();
-	const double Hval = restore_double_value();
 	const double mean_age = restore_double_value();
 	verify_identifier_string((char*)"M_sp_comp_begin");
 
@@ -122,6 +120,7 @@ void dv_M_sp_comp(void)
 	CParam* param  = (CParam*) pos_param;
 	CMatrices* mat = (CMatrices*) pos_mat;
 
+	const double Hval   = param->Hval;
 	const double expr1  = exp(-mean_age*Mp_exp);
 
 
