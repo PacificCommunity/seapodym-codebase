@@ -119,7 +119,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	string fileout;
 	fileout = param->strdir_output + param->sp_name[0] + "_density_output.dym";
 	if (writeoutputfiles){
-		WriteFileHeaders_submodel(fileout);	
+		WriteFileHeaders_submodel(fileout,true);	
 		if (!param->gcalc())
 			ConsoleOutput(0,0);
 	}

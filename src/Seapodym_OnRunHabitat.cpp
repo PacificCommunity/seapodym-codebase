@@ -109,7 +109,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	
 	//Write DYM headers
 	if (writeoutputfiles){
-		WriteFileHeaders_submodel(fileout);		
+		WriteFileHeaders_submodel(fileout,false);		
 		if (!param->gcalc())
 			HabitatConsoleOutput(0,0,date_str,0,0,0);
 	}

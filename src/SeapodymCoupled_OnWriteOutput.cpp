@@ -137,7 +137,7 @@ void SeapodymCoupled::WriteFileHeaders()
 
 }
 
-void SeapodymCoupled::WriteFileHeaders_submodel(const string fileout)
+void SeapodymCoupled::WriteFileHeaders_submodel(const string fileout, const bool write_elarvae)
 {
 	//Create time vector for output DYM files
 	dvector zlevel;
@@ -161,7 +161,7 @@ void SeapodymCoupled::WriteFileHeaders_submodel(const string fileout)
                                 mat.xlon, mat.ylat, zlevel, mat.mask);
 
 	for (int sp=0; sp< nb_species;sp++){
-		if (param->elarvae_model[sp]){
+		if (param->elarvae_model[sp] && write_elarvae){
 			//write a header
 			WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_early_larvae.dym", true);
 		}

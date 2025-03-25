@@ -135,7 +135,7 @@ private:
 	///void RestoreDistributions(ivector nb_juv_built, ivector nb_age_built);
 	void RestoreDistributions(ivector& nb_age_built);
 	void WriteFileHeaders();
-	void WriteFileHeaders_submodel(const string fileout);
+	void WriteFileHeaders_submodel(const string fileout, const bool write_elarvae);
 	void WriteOutput(int t, bool fishing);
 	void InitFileFluxes();
 	void WriteFluxes();
