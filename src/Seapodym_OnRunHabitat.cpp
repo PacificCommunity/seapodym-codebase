@@ -5,9 +5,9 @@
 ///See SeapodymCoupled_OnRunCoupled.cpp for the description of the main function.
 
 void HabitatConsoleOutput(int t_count, int flag_simulation, string date_str, double norm_habitat_input, double norm_spawning_habitat, double like);
-void SeapodymCoupled::prerun_model()
+void SeapodymCoupled::prerun_model(const bool writeoutputfiles)
 {
-	OnRunFirstStep();
+	OnRunFirstStep(writeoutputfiles);
 	ReadHabitat();
 }
 
@@ -70,9 +70,10 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 	IVECTOR ksup;
 	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
 	int ntime_agg[nb_larvae_input_agg_groups];
-    for (int i = 0; i < nb_larvae_input_agg_groups; ++i) {
-        ntime_agg[i] = 0;
-    }	
+
+	for (int i = 0; i < nb_larvae_input_agg_groups; ++i) {
+		ntime_agg[i] = 0;
+	}
 	if (param->larvae_input_aggregated_flag[0]){
 		// Aggregated spawning habitat over the entire period, only at obs. locations
 		kinf.allocate(0, nb_larvae_input_agg_groups-1);
@@ -92,9 +93,11 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 	//precompute seasonal switch function
 	for (int sp=0; sp < nb_species; sp++){
-		func.Seasonal_switch_year_precomp(*param,mat,map,
+		if (param->seasonal_migrations[sp]){
+			func.Seasonal_switch_year_precomp(*param,mat,map,
 						value(param->dvarsSpawning_season_peak[sp]),
 						value(param->dvarsSpawning_season_start[sp]),sp);
+		}
 	}
 
 	//DYM file names
@@ -176,6 +179,9 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 
 			if (param->habitat_run_type>0){
 			//1. Precompute some variables outside of age loop
+
+			//1.0 Forage scaling
+			func.Forage_Scaling(*param, mat, map, sp, tcur);
 			//1.1 Accessibility by adults (all cohorts)
 				ivector tags_age_habitat;
 				tags_age_habitat.allocate(0,aN_adult(0));
