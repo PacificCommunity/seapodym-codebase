@@ -65,7 +65,9 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	//----------------------------------------------//
 	// 	LIKELIHOOD INITIALISATION SECTION       //
 	//----------------------------------------------//	
+	double stocklike = 0.0;
 	dvariable likelihood = 0.0;
+	dvariable total_stock = 0.0;
 	//Reset model parameters:
 	reset(x);
 
@@ -249,9 +251,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				
 				func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
 				pop.Precalrec_juv(map, mat, Mortality, tcur, (1-elarvae_dt));//checked
-//TRACE(norm(Mortality))				
 				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur, (1-elarvae_dt));//checked
-//TTRACE(age,norm(value(mat.dvarDensity[sp][age])))
 				age++;
 			}
 
@@ -352,6 +352,10 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				CalcMeanTemp(t_count,tcur);
 				CalcSums();
 			}
+			//Compute total stock before the new recruitment (survival)
+			if (param->stock_like[sp] && t_count > nbt_building+nbstoskip)
+				Total_Stock_comp(total_stock, sp);
+
 
 			//5. Compute spawning biomass (sum of young and adults density weighted by maturity-at-age)
 			SpawningBiomass_comp(Total_pop, sp);
@@ -373,9 +377,12 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 		//------------------------------------------------------//
 		//		COMPUTING LIKELIHOOD			//
 		//------------------------------------------------------//	
+		if (t_count == nbt_total)
+			stocklike += get_stock_like(total_stock, likelihood);
 		//Biomass density likelihood. Note, degrade it to the resolution of the density_input
 		if (t_count > nbstoskip)
 			update_density_like(Density_pred, mat.density_input(t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood);
+
 
 		if (writeoutputfiles){
 			if (!param->gcalc())	
@@ -405,7 +412,9 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 	param->total_like = value(likelihood);
-	cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood) << endl;
+	if (!param->scalc())
+		cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood)-stocklike << " " << stocklike << endl;
+
 
 	return value(likelihood);
 }
@@ -451,7 +460,7 @@ void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input,
 
 void SeapodymCoupled::ReadDensity()
 {
-	cout << "Reading input density file... " << endl;
+	cout << "Reading input density file... ";
 	int jday = 0;
 	int t_count_init = t_count;
 			
