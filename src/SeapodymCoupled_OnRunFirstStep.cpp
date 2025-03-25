@@ -70,8 +70,9 @@ void SeapodymCoupled::OnRunFirstStep()
 		}
 		//read LF data file if provided
 		if (param->file_frq_data[0]!=""){
+			bool writeobs = (!param->gcalc() && !param->scalc());
 			for (int sp=0; sp<nb_species; sp++)
-				rw.read_frq_data(*param, map, param->save_first_yr, param->save_last_yr, sp);
+				rw.read_frq_data(*param, map, param->save_first_yr, param->save_last_yr, sp, writeobs);
 		}
 	}
 	else {

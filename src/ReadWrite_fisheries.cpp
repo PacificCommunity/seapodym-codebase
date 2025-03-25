@@ -1652,7 +1652,7 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 }
 
 
-void CReadWrite::read_frq_data(CParam& param, PMap& map, const float startdate, const float enddate, const int sp)
+void CReadWrite::read_frq_data(CParam& param, PMap& map, const float startdate, const float enddate, const int sp, const bool writeoutputfiles)
 {
 	const int nby = (int)(enddate) -(int)(startdate)+1;
 	const int nbq = 4; 
@@ -1736,56 +1736,55 @@ void CReadWrite::read_frq_data(CParam& param, PMap& map, const float startdate, 
 	}
 
 	//write the file with read observations aggregated over Seapodym's age classes during simulation period
-	string filename	= param.strdir_output + param.sp_name[0] + "_LF_obs.txt";
-	ofstream ecritLF(filename.c_str());
+	if (writeoutputfiles){
+		string filename	= param.strdir_output + param.sp_name[0] + "_LF_obs.txt";
+		ofstream ecritLF(filename.c_str());
 
-	if (ecritLF) {
-		ecritLF << "length" <<'\t' ;
-		for (int reg=0; reg< param.nb_region_sp_B[sp]; reg++)
+		if (ecritLF) {
+			ecritLF << "length" <<'\t' ;
+			for (int reg=0; reg< param.nb_region_sp_B[sp]; reg++)
+				for (int f=0; f< nb_fishery; f++)
+					if (param.mask_fishery_sp[sp][f])
+						ecritLF<<param.list_fishery_name[f]<<"_"<<param.sp_name[sp]<<"_region_"<<param.area_sp_B[sp][reg] <<'\t';
+
 			for (int f=0; f< nb_fishery; f++)
 				if (param.mask_fishery_sp[sp][f])
-					ecritLF<<param.list_fishery_name[f]<<"_"<<param.sp_name[sp]<<"_region_"<<param.area_sp_B[sp][reg] <<'\t';
-			
-		for (int f=0; f< nb_fishery; f++)
-			if (param.mask_fishery_sp[sp][f])
-				ecritLF<<"sum_" << param.list_fishery_name[f]<<"_"<<param.sp_name[sp]<<'\t';
-					
+					ecritLF<<"sum_" << param.list_fishery_name[f]<<"_"<<param.sp_name[sp]<<'\t';
 
-		for (int reg=0; reg< param.nb_region_sp_B[sp]; reg++)	
-			ecritLF<<"sum_" << param.sp_name[sp]<<"_region_"<<param.area_sp_B[sp][reg] <<'\t';		
+			for (int reg=0; reg< param.nb_region_sp_B[sp]; reg++)	
+				ecritLF<<"sum_" << param.sp_name[sp]<<"_region_"<<param.area_sp_B[sp][reg] <<'\t';		
 
-		ecritLF << endl;
-		
-		for (int q=0; q<=nbq; q++){
-			ecritLF <<"Quarter "<< q+1 << endl;
-			for (int a=a0; a< nb_ages; a++){
-				ecritLF << param.length(sp,a) << '\t';
-				for (int r=0; r< param.nb_region_sp_B[sp]; r++)
+			ecritLF << endl;
+			for (int q=0; q<=nbq; q++){
+				ecritLF <<"Quarter "<< q+1 << endl;
+				for (int a=a0; a< nb_ages; a++){
+					ecritLF << param.length(sp,a) << '\t';
+					for (int r=0; r< param.nb_region_sp_B[sp]; r++)
+						for (int f=0; f< nb_fishery; f++)
+							if (param.mask_fishery_sp[sp][f]){
+								int reg = param.area_sp_B[sp][r]-1;
+								ecritLF << sum_frq(f,reg,q,a) << '\t'; 
+							}
 					for (int f=0; f< nb_fishery; f++)
-						if (param.mask_fishery_sp[sp][f]){
-							int reg = param.area_sp_B[sp][r]-1;
-							ecritLF << sum_frq(f,reg,q,a) << '\t'; 
-						}
-				for (int f=0; f< nb_fishery; f++)
-					if (param.mask_fishery_sp[sp][f])				
-						ecritLF << sum_frq_fishery(f,q,a) << '\t';
+						if (param.mask_fishery_sp[sp][f])				
+							ecritLF << sum_frq_fishery(f,q,a) << '\t';
 
-				for (int r=0; r< param.nb_region_sp_B[sp]; r++){
-					int reg = param.area_sp_B[sp][r]-1;
-					ecritLF << sum_frq_region(reg,q,a) << '\t';
+					for (int r=0; r< param.nb_region_sp_B[sp]; r++){
+						int reg = param.area_sp_B[sp][r]-1;
+						ecritLF << sum_frq_region(reg,q,a) << '\t';
+					}
+
+					ecritLF << endl;
 				}
-
-				ecritLF << endl;
-					
 			}
+			ecritLF  << endl;
+			ecritLF.close();
 		}
-			
-		ecritLF  << endl;
-		ecritLF.close();
-	}
-	else
-	{
-		cout<<endl<<"WARNING : Cannot write file "<< filename.c_str()<<endl;
+		else
+		{
+			cout<<endl<<"WARNING : Cannot write file "<< filename.c_str()<<endl;
+		}
+
 	}
 }
 
