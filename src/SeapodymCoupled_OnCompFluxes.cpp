@@ -47,7 +47,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	int step_fishery_count= 0;
 	int jday = 0; 
 	int nbstoskip = param->nbsteptoskip; // nb of time step to skip before computing likelihood
-	ivector Nobs(0,nb_fishery-1); Nobs.initialize();
 
 	if (!param->gcalc()){
 		//need to read oxygen in case if month==past_month
@@ -65,6 +64,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	lflike = 0.0;
 	double taglike = 0;
 	double stocklike = 0.0;
+	double larvaelike = 0.0;
 	dvariable likelihood = 0.0;
 	dvariable total_stock = 0.0;
 	//Reset model parameters:
@@ -75,7 +75,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	//----------------------------------------------//	
 	dvar_matrix Spawning_Habitat;
 	dvar_matrix Total_pop;
-	dvar_matrix mature_fish, immature_fish;
 	dvar_matrix Habitat; 
 	dvar_matrix IFR; 
 	dvar_matrix ISR_denom; 
@@ -86,8 +85,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	mature_fish.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-	immature_fish.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 
 	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
@@ -101,8 +98,10 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Spawning_Habitat.initialize();
 	Habitat.initialize();
 	Mortality.initialize();
-	mature_fish.initialize();
-	immature_fish.initialize();
+
+	// For larvae likelihood
+	if (param->larvae_like[0])
+		create_init_larvae_vars();		
 
 	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
@@ -229,11 +228,12 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 				ReadClimatologyOxy(tcur, qtr);
 			}
 		}
+		
 		//----------------------------------------------//
 		//	READING CATCH DATA: C_obs, effort	//
 		//----------------------------------------------//
 		if (!tags_only && (nb_fishery > 0) && sum(param->mask_fishery_sp) && ( t_count > nbt_building) 
-				&& (year>=(int)param->save_first_yr) && (t_count <= nbt_no_forecast) ){
+				&& (year>=(int)param->save_first_yr) && (t_count <= nbt_no_forecast)){
 			mat.catch_est.initialize();
 			rw.get_fishery_data(*param, mat.effort, mat.catch_obs, mat.efflon, mat.efflat, year, month);
 			fishing = true;
@@ -270,16 +270,29 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//
 		//------------------------------------------------------------------------------//
 		//------------------------------------------------------------------------------//
-		mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
-		//Precompute diagonal coefficients for larvae and juvenile ADREs
-		pop.precaldia(*param, map, mat);
-		pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+
 		for (int sp=0; sp < nb_species; sp++){
+		
+			int elarvae_model = param->elarvae_model[sp];
+			//if !elarvae_model, elarvae_dt = 0 as elarvae_age = 0
+			elarvae_dt = param->elarvae_age[sp]/deltaT; 
+			double sigma_fcte_save = param->sigma_fcte;
+
+			//Precompute diagonal coefficients for larvae and juvenile ADREs
+			if (!elarvae_model){
+				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+				pop.precaldia(*param, map, mat);
+				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+			}
+
 			//store fish density before transport
 			for (int a=a0_adult(sp); a<aN_adult(sp); a++)
 				mat.density_before(sp,tcur,a) = value(mat.dvarDensity(sp,a));
 
 			//1. Precompute some variables outside of age loop
+			
+			//1.0 Forage scaling
+			func.Forage_Scaling(*param, mat, map, sp, tcur);
 
 			//1.1 Accessibility by adults (all cohorts)
  			func.Faccessibility(*param, mat, map, sp, jday, tcur, pop_built, tags_only, tags_age_habitat);//checked
@@ -287,7 +300,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			//1.2 Food Requirement by population
 			if (param->food_requirement_in_mortality(sp)){
 				FR_pop_comp(FR_pop, sp);
-//				ISR_denom_comp(ISR_denom, sp, tcur);
+			//	ISR_denom_comp(ISR_denom, sp, tcur);
 			}
 			//1.3 precompute local proportions of catch by fishery
 			if (fishing && param->fisheries_no_effort_exist[sp]){
@@ -297,26 +310,57 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			if (fishing)
 				pop.Selectivity_comp(*param,nb_fishery,a0_adult(sp),aN_adult(sp),sp);
 
+			//1.6 Precompute Mortality range at age function
+			func.mortality_range_age_comp(*param,mat,sp);
+
 			//2. IMPLICIT AGE LOOP: increment age while moving through life stages 
 			int age = 0;	
-			//2.1 Spawning habitat	
+
+			//2.0 If activated, the Early Larvae Model (ELM) solved over elarvae_age
+			if (elarvae_model){
+				//Do the time-splitting for the first age class: 
+				//1- early (just a few days after yolk stage) and 
+				//2- late (up to one month of age) larvae
+		
+				bool time_getpred = false;
+				if (year>=param->larvae_like_firstyear
+						&& year<=param->larvae_like_lastyear 
+						&& t_count > nbt_building+nbstoskip)
+					time_getpred = true;
+
+				elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+			}
+
+			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 
+			//2.1.1 Spawning habitat 	
 			if (!tags_only)
 				func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
-			//2.2 Transport and mortality of larvae (always one age class)	
+
+			//2.1.2 Transport and mortality of larvae (always one age class)	
 			for (int n=0; n<param->sp_nb_cohort_lv[sp]; n++){
 				double mean_age = mean_age_cohort[sp][age]; 
+
 				if (!tags_only){
-				func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
-				//Compute fluxes here
-				FluxesComp(mat.dvarDensity(sp,age), Habitat, Mortality, age, fishing, year, month, jday, step_fishery_count,tcur);
+					func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
+					//Compute fluxes here
+					FluxesComp(mat.dvarDensity(sp,age), Habitat, Mortality, age, fishing, year, month, jday, step_fishery_count,tcur,1-elarvae_dt);
 				
-				pop.Precalrec_juv(map, mat, Mortality, tcur);//checked
-				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur);//checked
+					pop.Precalrec_juv(map, mat, Mortality, tcur,(1-elarvae_dt));//checked
+					pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur,(1-elarvae_dt));//checked
 				}
 				age++;
 			}
-			///if (t_count > nbt_spinup_forage + nt_jv){ SPINUP TO BE FIXED OR REMOVED!!!
-			//2.3. Juvenile habitat	
+
+			//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
+			if (elarvae_model){
+				param->sigma_fcte = sigma_fcte_save;
+				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+				//Precompute diagonal coefficients for juvenile ADREs
+				pop.precaldia(*param, map, mat);
+				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+			}
+			
+			//2.2.1 Juvenile habitat	
 			if (!tags_only){
 				if (param->cannibalism[sp]){
 					Total_Pop_comp(Total_pop,sp,jday,tcur); //adjoint
@@ -325,20 +369,19 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 					func.Juvenile_Habitat(*param, mat, map, Habitat, sp, tcur);
 			}
 
-			//2.4. Transport and mortality of juvenile age classes	
+			//2.2.2 Transport and mortality of juvenile age classes	
 			for (int n=0; n<param->sp_nb_cohort_jv[sp]; n++){			
 				double mean_age = mean_age_cohort[sp][age];
 				if (!tags_only){
 					func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);
 					//Compute fluxes here
-					FluxesComp(mat.dvarDensity(sp,age), Habitat, Mortality, age, fishing, year, month, jday, step_fishery_count,tcur);
-					pop.Precalrec_juv(map,  mat, Mortality, tcur);
-					pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur);
+					FluxesComp(mat.dvarDensity(sp,age), Habitat, Mortality, age, fishing, year, month, jday, step_fishery_count,tcur,1);
+					pop.Precalrec_juv(map,  mat, Mortality, tcur,1);
+					pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur,1);
 				}
 				age++;
 			}
-			///} 
-			
+	
 			//----------------------------------------------//
 			//	Fishing with effort data available	//
 			//----------------------------------------------//
@@ -366,8 +409,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 				pop.Total_exploited_biomass_comp(map,*param,mat,sp,tcur);
 
 			//4. Transport and mortality of adult cohort
-			///if (t_count > nbt_spinup_forage + nt_yn){ TO BE FIXED!!!
-			///for (int age=0; age<=nb_age_built[sp]; age++){///TO BE FIXED!!!	
 			for (int n=0; n<param->sp_nb_cohort_ad[sp]; n++){
 
 				if (fishing && param->fisheries_no_effort_exist(sp))
@@ -379,7 +420,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 					if (!tags_only || tags_age_habitat(age))
 						func.Average_currents(*param, mat, map, age, tcur, pop_built);
 				}
-					
+				
 				//2014: catch at age computation for fisheries without effort data
 				//pop.Ctot_no_effort_sp_age_comp(map, *param, mat, value(mat.dvarDensity(sp,age)), tcur, sp, age);				
 				//this section will work only if seasonality switch is ON 
@@ -405,7 +446,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 						func.Mortality_Sp(*param, mat, map, Mortality, IFR, sp, mean_age, age, tcur);//checked
 					}
 					//Compute fluxes here
-					FluxesComp(mat.dvarDensity(sp,age), Habitat, Mortality, age, fishing, year, month, jday, step_fishery_count,tcur);
+					FluxesComp(mat.dvarDensity(sp,age), Habitat, Mortality, age, fishing, year, month, jday, step_fishery_count,tcur,0);
 
 					if (param->age_compute_habitat[sp][age]!=param->age_compute_habitat[sp][age-1]){
 						if (!tags_only || tags_age_habitat(age))
@@ -496,7 +537,18 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			}
 			//7. Spawning
 			if (!tags_only)
-				Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,pop_built,tcur);//checked
+				Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
+
+			//8. Extract larvae density
+			if (!elarvae_model){
+				if (year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
+				//if (t_count > nbt_building+nbstoskip){
+					if (param->larvae_like[0]){
+						extract_larvae(sp,tcur);
+					}
+				}
+			}
+			
 
 		}//end of 'sp' loop
 
@@ -504,9 +556,25 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		//		LIKELIHOOD SECTION			//
 		//------------------------------------------------------//
 		//I. Total abundance likelihood
-		if (t_count == nbt_total)
+		//II.  Early-life data likelihood
+		if (t_count == nbt_total){
+
 			stocklike += get_stock_like(total_stock, likelihood);
-	
+
+			//II. Early-life data likelihood: only once at last time step
+			if (param->larvae_like[0] && param->larvae_input_aggregated_flag[0]){
+				get_larvae_at_obs();
+				larvaelike += get_larvae_like(likelihood, Agg_larvae_density_pred_at_obs);
+			}		
+		}
+		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0] && year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
+			// Read larvae input data
+			int nbytetoskip = (9 +(3* nlat * nlon) + (nbt_total - nbt_building-nbstoskip) + ((nlat *nlon)* (t_count-nbt_building-nbstoskip-1))) * 4;
+			rw.rbin_input2d(param->strfile_larvae, map, mat.larvae_input[tcur], nbi, nbj, nbytetoskip);
+			// Compute likelihood
+			larvaelike += get_larvae_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur);
+		}
+
 		//II. Tag data likelihood
 		if (param->tag_like[0])
 			taglike += get_tag_like(likelihood, writeoutputfiles);
@@ -576,10 +644,10 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 }
 
 ///This function uses regional structure defined in the parfile to compute fluxes as biomass flow rates between regions.
-void SeapodymCoupled::FluxesComp(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur)
+void SeapodymCoupled::FluxesComp(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur, const double ts_fraction)
 {
 	if (fluxes_between_polygons){
-		FluxesComp_polygons(Density,Habitat,Mortality,age,fishing,year,month,jday,step_fishery_count,tcur);
+		FluxesComp_polygons(Density,Habitat,Mortality,age,fishing,year,month,jday,step_fishery_count,tcur,ts_fraction);
 		return;
 	}
 
@@ -620,8 +688,8 @@ int movement_fluxes_only = 1;
 		 	}
 		}
 		if (age<a0_adult[sp]){
-			pop.Precalrec_juv(map, mat, Mortality_copy, tcur);
-			pop.Calrec_juv(map, mat, Density_region(reg,age), Mortality_copy, tcur);
+			pop.Precalrec_juv(map, mat, Mortality_copy, tcur,ts_fraction);
+			pop.Calrec_juv(map, mat, Density_region(reg,age), Mortality_copy, tcur,ts_fraction);
 		}
 		if (age>=a0_adult[sp]){
 			pop.Precaldia_Caldia(map, *param, mat, Habitat_copy, Mortality_copy, sp, age, tcur,jday);
@@ -650,7 +718,7 @@ int movement_fluxes_only = 1;
 }
 
 ///This function uses EEZ mask, which can contain both EEZ contours and arbitrary, non-overlapping polygons, and computes fluxes as biomass flow rates between different polygons. 
-void SeapodymCoupled::FluxesComp_polygons(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur)
+void SeapodymCoupled::FluxesComp_polygons(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur, const double ts_fraction)
 {
 //temporal here:
 int movement_fluxes_only = 1;
@@ -685,8 +753,8 @@ int movement_fluxes_only = 1;
 		 	}
 		}
 		if (age<a0_adult[sp]){
-			pop.Precalrec_juv(map, mat, Mortality_copy, tcur);
-			pop.Calrec_juv(map, mat, Density_region(rd,age), Mortality_copy, tcur);
+			pop.Precalrec_juv(map, mat, Mortality_copy, tcur,ts_fraction);
+			pop.Calrec_juv(map, mat, Density_region(rd,age), Mortality_copy, tcur,ts_fraction);
 		}
 		if (age>=a0_adult[sp]){
 			pop.Precaldia_Caldia(map, *param, mat, Habitat_copy, Mortality_copy, sp, age, tcur,jday);

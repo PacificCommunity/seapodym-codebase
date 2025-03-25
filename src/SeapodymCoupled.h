@@ -165,9 +165,9 @@ private:
 	void FR_pop_comp(dvar_matrix& FR_pop, const int sp);
 	void ISR_denom_comp(dvar_matrix& ISR_denom, const int sp, const int t_count);
 
-	void FluxesComp(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur);
+	void FluxesComp(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur, const double ts_fraction);
 
-	void FluxesComp_polygons(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur);
+	void FluxesComp_polygons(dvar_matrix Density, dvar_matrix Habitat, dvar_matrix Mortality, const int age, const bool fishing, const int year, const int month, const int jday, const int step_fishery_count, const int tcur, const double ts_fraction);
 	
 	//autodif function
 	//void starvation_penalty(dvar_matrix& mortality, dvar_matrix& total_pop,dvar3_array& nF_ratio,const int sp, const int age);
