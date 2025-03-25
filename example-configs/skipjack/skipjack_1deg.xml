@@ -60,7 +60,7 @@
     <skj>3 3 3 3 1 1 1 1 3 1 1 1 3</skj>
 </likelihood_types>
 
-<!-- EARLY-LIFE DATA likelihood-->
+<!-- 5. EARLY-LIFE DATA likelihood-->
 <larvae_likelihood skj="1"/>
 <larvae_likelihood_years first_year="1995" last_year="2000"/>
 <larvae_likelihood_type skj="0"/><!-- Spawning Habitat likelihood: 0 - (Mixed) Gaussian Kernel, 1 - (Categorical) Poisson, 2 - (Categorical) Truncated Poisson, 3 - (Categorical) Zero-Inf Neg. Bin., 4 - (Categorical) Zero-Inf Poisson-->
