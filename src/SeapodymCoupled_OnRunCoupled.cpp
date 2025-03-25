@@ -1,8 +1,8 @@
 #include "SeapodymCoupled.h"
 
-void SeapodymCoupled::prerun_model(const bool writeoutputfiles)
+void SeapodymCoupled::prerun_model()
 {
-	OnRunFirstStep(writeoutputfiles);
+	OnRunFirstStep();
 	if (param->larvae_like[0]){
 		ReadLarvae();
 	}

@@ -1,6 +1,6 @@
 #include "SeapodymCoupled.h"
 
-void SeapodymCoupled::OnRunFirstStep(const bool writeoutputfiles)
+void SeapodymCoupled::OnRunFirstStep()
 {
 	sumFprime.allocate(0, nb_forage - 1); 		sumFprime.initialize();
 	sumF.allocate(0, nb_forage - 1);		sumF.initialize();

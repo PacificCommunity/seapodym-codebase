@@ -24,7 +24,7 @@ void Hessian_comp(const char* parfile)
 	dvector H2(1, nvar); H2.initialize();
 	dmatrix H(1,nvar,1,nvar); H.initialize();
 
-	sc.prerun_model(false);
+	sc.prerun_model();
 
 	double likelihood = 0.0;
 
@@ -116,7 +116,7 @@ void Taylor_derivative_test(const char* parfile)
 	sc.xinit(x, x_names);
 	cout << "Total number of variable parameters: " << nvar << '\n'<<'\n';
 
-	sc.prerun_model(false);	
+	sc.prerun_model();	
 
 	//analytical derivatives
 	dvector adv(1, nvar); adv.initialize();

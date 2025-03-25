@@ -226,7 +226,7 @@ public:
 	void read_lf_WCPO(CParam& param, string filename, const float startdate, const float enddate, const int sp);
 	void read_lf_EPO(CParam& param, string filename, const float startdate, const float enddate, const int sp);
 	void read_lf_fine(CParam& param, string filename, const float startdate, const float enddate, const int sp);
-	void read_frq_data(CParam& param, PMap& map, const float startdate, const float enddate, const int sp, const bool writeoutputfile);
+	void read_frq_data(CParam& param, PMap& map, const float startdate, const float enddate, const int sp);
 	void get_LF_qtr_data(CParam& param, d4_array LF_qtr_obs, int y, const int q);
 
 	void write_frq_data(CParam& param, int sp, int year, int qtr, d3_array frq, bool FILEMODE);
