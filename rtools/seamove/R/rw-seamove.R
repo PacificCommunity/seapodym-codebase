@@ -91,7 +91,7 @@ get.weights.header<-function(dir,age=1:1)
 }
 
 
-#' function extracts the total biomass in the region before the movement. It is equal to the model state vector saved at previous time step and before ageing (subject to change once the outputs in SEAPODYM will be written after ageing). The biomass extracted from 'fluxes' files is extracted at quarterly time step (depends on the time unit of biomass flow rates). The variable 'sp' should be defined.
+#' Function extracts the total biomass in the region before the movement. It is equal to the model state vector saved at previous time step and before ageing (subject to change once the outputs in SEAPODYM will be written after ageing). The biomass extracted from 'fluxes' files is extracted at quarterly time step (depends on the time unit of biomass flow rates). The variable 'sp' should be defined.
 #' @param dir is the full (or relative if working in local directory) path to the output directory.
 #' @param age is the vector of ages, for which the extraction is to be done.
 #' @param reg is the region, for which the biomass extraction is to be done.
