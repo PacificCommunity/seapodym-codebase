@@ -202,6 +202,7 @@ void SeapodymCoupled::CalcSums()
 		}
 	}
 	
+	bool issue_warning = false;
 	//------------------------------------------------------------------
 	//Note, All population stages will be stored in the units of density:
 	//Nb/km2 for stages Juv - Rercruits, tonnes/km2 for young - adults
@@ -253,9 +254,12 @@ void SeapodymCoupled::CalcSums()
 					// UNITS = (Nb/km^2) * W(mt) = tonnes/km^2, UNITS of sum = TONNES over entire domain
 					//------------------------------------------------------------
 					for (int age= age_recruits-1; age<= age_recruits+1; age++){//MFCL qtr class
-						mat.recruit[sp][i][j] += value(mat.dvarDensity[sp][age][i][j]); //in numbers/sq.km
-						//for SumDym write weight
-						mat.sum_B_recruit[sp] += value(mat.dvarDensity[sp][age][i][j])*W_mt(age)*lat_corrected_area;//total number
+						if (age <aN_adult[sp]){												   //
+							mat.recruit[sp][i][j] += value(mat.dvarDensity[sp][age][i][j]); //in numbers/sq.km
+							//for SumDym write weight
+							mat.sum_B_recruit[sp] += value(mat.dvarDensity[sp][age][i][j])*W_mt(age)*lat_corrected_area;//total number
+						} else 
+							issue_warning = true;
 					}
 					//-----------------------------------------------------------
 					// (Young) = age  autonomous to age mature
@@ -329,6 +333,9 @@ void SeapodymCoupled::CalcSums()
 			}
 		}
 	}
+	if (issue_warning)			
+		cout << "Can't extract quarterly sum, the last age is selected for recruits!" << endl;
+
 	SUM_CATCH += sum_total_catch;
 }
 

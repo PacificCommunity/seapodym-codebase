@@ -1386,7 +1386,7 @@ void CReadWrite::read_lf_WCPO(CParam& param, string filename, const float startd
 				///double L_pr = param.juv_length(sp,param.sp_nb_age_class_jv[sp]-1);
 				double L_pr = param.length(sp,a0-1);
 				int y=year-(int)startdate;
-				double right;
+				double right = 0;
 				for (int a=a0; a< nb_ages-1; a++){
 
 					double left  = 0.5*(L_pr+param.length(sp,a));
