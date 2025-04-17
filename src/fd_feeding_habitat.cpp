@@ -21,12 +21,6 @@ void VarSimtunaFunc::Seasonal_Habitat_Index(VarParamCoupled& param, VarMatrices&
 void VarSimtunaFunc::Forage_Scaling(VarParamCoupled& param, VarMatrices& mat, const PMap& map,  int sp, const int t_count){
 	
 	mat.dvarForage.initialize();
-        const int nb_forage = param.get_nbforage();
-
-//	for (int n=0; n<nb_forage; n++)
-//                mat.dvarForage[n] = mat.forage[t_count][n];
-
-//	if (!param.scale_forage_ave_currents[sp]) return;
 
 	F_scaling_comp(param,mat,map,sp,t_count);
 }

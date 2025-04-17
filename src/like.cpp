@@ -301,8 +301,6 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 	if (month==1 || month==4 || month==7 || month==10){
 		rec_obs_like.initialize();
 		rec_pred_like.initialize();
-	        mat.total_obs_catch.initialize();
-		mat.total_pred_catch.initialize();
 	}
 	for (int p=0; p<nb_tagpops; p++){
 //if (sum(mat.dvarDensity(p+1))>0)		
