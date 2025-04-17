@@ -7,7 +7,7 @@ const double sq_degree   = 12347.65; // sq.km in sq.degree (without lat_correcti
 
 void CCalpop::predicted_catch_fishery_comp(const PMap& map, CParam& param, VarMatrices& mat, /* dmatrix total_mort, */const int f, const int k, const int sp, const int age, const dmatrix& uu, const int step_count)
 {
-	double catchability = param.q_sp_fishery[sp][k]*(1.0+param.q_dyn_fishery[f]*step_count);
+	double catchability = param.q_sp_fishery[sp][k] + param.q_slope_fishery[k] * step_count;
 	if (catchability<0) catchability = 0; // in case if negative trend has been chosen
 	//const double selectivity = param.selectivity_comp(sp,age,f,k);
 	//const double selectivity = param.selectivity_comp(sp,age,f,k,step_count);

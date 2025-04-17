@@ -25,13 +25,16 @@ void CCalpop::Precalrec_total_mortality_comp(const PMap& map, VarParamCoupled& p
 			//2014: no use of effort for fisheries with no or bad effort data:
 			if (param.mask_fishery_sp_no_effort[sp][f]){ k++; continue;}
 
-			double catchability = param.q_sp_fishery[sp][k]*(1.0+param.q_dyn_fishery[f]*step_count);
+			double catchability = param.q_sp_fishery[sp][k] + param.q_slope_fishery[f] * step_count;
 			if (catchability<0) catchability = 0; // in case if negative trend has been chosen
 			//double selectivity = param.selectivity_comp(sp,age,f,k);
 			//double selectivity = param.selectivity_comp(sp,age,f,k,step_count);
 			const double selectivity = Selectivity(sp,f,age);
 			double sq  = selectivity * catchability;
 
+			dvar_matrix Qslope;
+			Qslope.allocate(map.imin, map.imax, map.jinf, map.jsup);
+			Qslope = param.dvarsQslope_fishery[k];
 			//re-use dvar_matrices that are no longer used 
 			//within the time step. It will avoid extra 
 			//dvar_matrix class allocations
@@ -65,6 +68,7 @@ void CCalpop::Precalrec_total_mortality_comp(const PMap& map, VarParamCoupled& p
 			precalrec_total_mortality_comp(map.carte, effort, mortality, sq, mat.lat_correction);
 
 			save_identifier_string2((char*)"total_mortality_comp_begin");
+			Qslope.save_dvar_matrix_position();
 			Mss_species.save_dvar_matrix_position();
 			Mss_size_slope.save_dvar_matrix_position();
 			mat.dvarsU.save_dvar_matrix_position();
@@ -117,6 +121,7 @@ void dv_total_mort_comp(void)
 	const dvar_matrix_position s_len_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position sslope_pos= restore_dvar_matrix_position();
 	const dvar_matrix_position q_pos     = restore_dvar_matrix_position();
+	const dvar_matrix_position qslope_pos     = restore_dvar_matrix_position();
 	verify_identifier_string2((char*)"total_mortality_comp_begin");
 
 	verify_identifier_string2((char*)"before_total_mort_comp");
@@ -133,7 +138,8 @@ void dv_total_mort_comp(void)
 	dmatrix dfss = restore_dvar_matrix_derivatives(sslope_pos);
 	dmatrix dfsl = restore_dvar_matrix_derivatives(s_len_pos);
 	dmatrix dfsa = restore_dvar_matrix_derivatives(s_asy_pos);
-	dmatrix dfq  = restore_dvar_matrix_derivatives(q_pos);
+	dmatrix dfQ  = restore_dvar_matrix_derivatives(q_pos);
+	dmatrix dfQslope  = restore_dvar_matrix_derivatives(qslope_pos);
 	dmatrix dfM  = restore_dvar_matrix_derivatives(mort_pos);
 	dmatrix dfM_pr  = restore_dvar_matrix_derivatives(m_pr_pos);
 
@@ -155,8 +161,8 @@ void dv_total_mort_comp(void)
 //	else
 //rw->get_effort(*param, effort, f, year, month);
 //		rw->get_effort_rm(*param, effort, f, year, month);
-	const double q_dyn = (1.0+param->q_dyn_fishery[f]*step);
-	double catchability = param->q_sp_fishery[sp][k]*q_dyn;
+	double catchability = param->q_sp_fishery[sp][f] + param->q_slope_fishery[f] * step;
+	if (catchability<0) catchability = 0; // in case if negative trend has been chosen
 
 	//const double selectivity = param->selectivity_comp(sp,age,f,k);
 	//const double selectivity = param->selectivity_comp(sp,age,f,k,step);
@@ -186,7 +192,8 @@ void dv_total_mort_comp(void)
 */
 				
 				//mortality(i,j) += mat.effort(f,i,j) * selectivity * catchability * lat_correction;
-				dfq(i,j)   += effort(i,j)*q_dyn*sl*dfM(i,j);
+				dfQslope(i,j)   += effort(i,j)*step*sl*dfM(i,j);
+				dfQ(i,j)   += effort(i,j)*sl*dfM(i,j);
 				dfss(i,j)  += effort(i,j)*dfslope*ql*dfM(i,j);
 				if (s_func_type>1)
 					dfsl(i,j)  += effort(i,j)*dflength*ql*dfM(i,j);
@@ -197,10 +204,15 @@ void dv_total_mort_comp(void)
 			}
 		}
 	}
+	if (catchability == 0){
+		dfQslope.initialize();
+		dfQ.initialize();
+	}
 
 	dfM.save_dmatrix_derivatives(mort_pos);
 	dfM_pr.save_dmatrix_derivatives(m_pr_pos);
-	dfq.save_dmatrix_derivatives(q_pos);
+	dfQ.save_dmatrix_derivatives(q_pos);
+	dfQslope.save_dmatrix_derivatives(qslope_pos);
 	dfss.save_dmatrix_derivatives(sslope_pos);
 	dfsl.save_dmatrix_derivatives(s_len_pos);
 	dfsa.save_dmatrix_derivatives(s_asy_pos);

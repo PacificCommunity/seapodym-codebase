@@ -1293,11 +1293,25 @@ bool VarParamCoupled::read(const string& parfile)
 				}
 			}
 		}
-		q_dyn_fishery.allocate(0, nb_fishery - 1);
-		q_dyn_fishery.initialize();
+		q_slope_fishery.allocate(0, nb_fishery - 1);
+		q_slope_fishery.initialize();
+		int k = 0;
 		for (int f = 0; f < nb_fishery; f++){
-			if (!doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/variable", "dyn").empty())
-				q_dyn_fishery[f] = doc.getDouble("/q_sp_fishery/"+list_fishery_name[f]+"/variable", "dyn");
+			if (mask_fishery_sp[0][f]){
+				// New format for slope, which enables estimation as well
+				if (!doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", sp_name[0]).empty()){
+					q_slope_fishery[k] = doc.getDouble("/q_sp_fishery/"+list_fishery_name[f]+"/slope", sp_name[0]);
+					if (mask_fishery_sp_no_effort[0][f] && doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/dyn", "use") == "true")
+						doc.set("/q_sp_fishery/"+list_fishery_name[f]+"/dyn","use","false");
+				}else{
+				// Old format for slope: dyn parameter, do not enable estimation
+					if (!doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/variable", "dyn").empty()){
+						double qdyn = doc.getDouble("/q_sp_fishery/"+list_fishery_name[f]+"/variable", "dyn");
+						q_slope_fishery[k] = qdyn * q_sp_fishery[0][k];
+					}
+				}
+				k++;
+			}
 		}
 
 		//selectivity function parameters for species and fishery
@@ -1497,6 +1511,12 @@ bool VarParamCoupled::read(const string& parfile)
 			q_sp_fishery_min[sp].initialize();
 			q_sp_fishery_max[sp].allocate(0, fmax-1);
 			q_sp_fishery_max[sp].initialize();
+			if (sp == 0){
+				q_slope_fishery_min.allocate(0, fmax-1);
+				q_slope_fishery_min.initialize();
+				q_slope_fishery_max.allocate(0, fmax-1);
+				q_slope_fishery_max.initialize();	
+			}
 			int k = 0;
 			for (int f = 0; f < nb_fishery; f++) {
 				if (mask_fishery_sp[sp][f]) {
@@ -1509,6 +1529,19 @@ bool VarParamCoupled::read(const string& parfile)
 						statpars_temp[nni] = q_sp_fishery[sp][k]; 
 						nni++;
 					}
+
+					if (sp==0){
+						if (doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", "use") == "true"){
+							_nvarcalc++; 
+							q_slope_fishery_min[k] = doc.getDouble("/q_sp_fishery/"+list_fishery_name[f]+"/slope", "min");
+							q_slope_fishery_max[k] = doc.getDouble("/q_sp_fishery/"+list_fishery_name[f]+"/slope", "max");
+						} else {
+							statpar_names_temp[nni] = "q slope sp fishery(" + str(k) + ")"; 
+							statpars_temp[nni] = q_slope_fishery[k]; 
+							nni++;
+						}
+					}
+
 					k++;
 				}
 			}
@@ -1520,6 +1553,9 @@ bool VarParamCoupled::read(const string& parfile)
 			if (mask_fishery_sp[sp][f]) {
 				statpar_names_temp[nni] = "q sp fishery(" + str(sp) +","+ str(k) + ")"; 
 				statpars_temp[nni] = q_sp_fishery[sp][k]; 
+				nni++;
+				statpar_names_temp[nni] = "q slope fishery(" + str(k) + ")"; 
+				statpars_temp[nni] = q_slope_fishery[k]; 
 				nni++;
 				k++;
 			}

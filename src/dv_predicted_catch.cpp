@@ -27,9 +27,11 @@ void CCalpop::Predicted_Catch_Fishery(const PMap& map, VarParamCoupled& param, V
 //	m = reso*60.0/param.deltaX+2; 
 //	n = reso*60.0/param.deltaY+2;  
 	//Q:
-	dvar_matrix Q, Sasympt;
+	dvar_matrix Q, Qslope, Sasympt;
 	Q.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Q = param.dvarsQ_sp_fishery[sp][k];
+	Qslope.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Qslope = param.dvarsQslope_fishery[k];
 	//Sslope:
 	mat.dvarsU.initialize();
 	mat.dvarsV.initialize();
@@ -55,10 +57,11 @@ void CCalpop::Predicted_Catch_Fishery(const PMap& map, VarParamCoupled& param, V
 		mat.dvarCatch_est(sp,k).save_dvar_matrix_position();
 		mat.dvarLF_est(sp,age,k).save_dvar_vector_position();
 		mat.dvarDensity(sp,age).save_dvar_matrix_position();
+		Qslope.save_dvar_matrix_position();
 		Q.save_dvar_matrix_position();
 		mat.dvarsV.save_dvar_matrix_position();
-                mat.dvarsU.save_dvar_matrix_position();
-                Sasympt.save_dvar_matrix_position();
+        mat.dvarsU.save_dvar_matrix_position();
+        Sasympt.save_dvar_matrix_position();
 		save_int_value(year);
 		save_int_value(month);
 		save_int_value(t_count);
@@ -105,6 +108,7 @@ void dv_predicted_catch_fishery()
 	const dvar_matrix_position slength_pos = restore_dvar_matrix_position();
 	const dvar_matrix_position sslope_pos  = restore_dvar_matrix_position();
 	const dvar_matrix_position q_pos     = restore_dvar_matrix_position();
+	const dvar_matrix_position qslope_pos     = restore_dvar_matrix_position();
 	const dvar_matrix_position uu_pos    = restore_dvar_matrix_position();
 	const dvar_vector_position lf_pos    = restore_dvar_vector_position();
 	const dvar_matrix_position catch_pos = restore_dvar_matrix_position();
@@ -154,6 +158,7 @@ void dv_predicted_catch_fishery()
 	dmatrix dfC_pred   = restore_dvar_matrix_derivatives(catch_pos);
 	dmatrix dfC_pr_age = restore_dvar_matrix_derivatives(c_pr_pos);
 	dmatrix dfQ	   = restore_dvar_matrix_derivatives(q_pos);
+	dmatrix dfQslope	   = restore_dvar_matrix_derivatives(qslope_pos);
 	dmatrix dfSslope   = restore_dvar_matrix_derivatives(sslope_pos);
 	dmatrix	dfSlength  = restore_dvar_matrix_derivatives(slength_pos);
 	dmatrix	dfSasympt  = restore_dvar_matrix_derivatives(sasympt_pos);
@@ -163,8 +168,9 @@ void dv_predicted_catch_fishery()
 	const double weight = pow(1e-3*param->weight[sp][age],catch_units);	
 	const double w_area  = weight*sq_degree;
 
-	const double q_dyn  = 1+param->q_dyn_fishery[f]*nstep;
-	const double catchability = param->q_sp_fishery[sp][k]*q_dyn;
+	double catchability = param->q_sp_fishery[sp][f] + param->q_slope_fishery[f] * nstep;
+	if (catchability<0) catchability = 0; // in case if negative trend has been chosen
+
 	//const double selectivity = param->selectivity_comp(sp,age,f,k);
 	//const double selectivity = param->selectivity_comp(sp,age,f,k,nstep);
 	const double selectivity = pop->Selectivity(sp,f,age);
@@ -249,14 +255,14 @@ void dv_predicted_catch_fishery()
 					*/
 
 					//const double s_c = selectivity*catchability;
-					dfQ(i,j)     += q_dyn*selectivity*dfs_c;					
+					dfQslope(i,j)  += nstep*selectivity*dfs_c;
+					dfQ(i,j)     += selectivity*dfs_c;
 					dfSslope(i,j)+= dfslope*catchability*dfs_c;
 					if (s_func_type>1)
 						dfSlength(i,j) += dflength*catchability*dfs_c;
 					if (s_func_type==3)
 						dfSasympt(i,j) += dfasympt*catchability*dfs_c;
 					dfs_c = 0.0;
-
 
 					for (int jj=n-1; jj>=0; jj--)
 						for (int ii=m-1; ii>=0; ii--)
@@ -269,11 +275,16 @@ void dv_predicted_catch_fishery()
 			}
 		}
 	}
+	if (catchability == 0){
+		dfQslope.initialize();
+		dfQ.initialize();
+	}
 
 	dfuu.save_dmatrix_derivatives(uu_pos); 
 	dfC_pred.save_dmatrix_derivatives(catch_pos);
 	dfC_pr_age.save_dmatrix_derivatives(c_pr_pos);
 	dfQ.save_dmatrix_derivatives(q_pos);
+	dfQslope.save_dmatrix_derivatives(qslope_pos);
 	dfSslope.save_dmatrix_derivatives(sslope_pos);
 	dfSlength.save_dmatrix_derivatives(slength_pos);
 	dfSasympt.save_dmatrix_derivatives(sasympt_pos);

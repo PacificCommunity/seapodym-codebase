@@ -308,7 +308,7 @@ public:
 	IMATRIX list_fishery_type_sp; 	// liste des codes des pecheries par espece [sp][nb_fishery_type_sp[sp]]
 	
 	DMATRIX q_sp_fishery;		// catchability by species and fishery [sp][sp_unit_age_class[sp]]
-	dvector q_dyn_fishery;
+	dvector q_slope_fishery; // catchability slope by species and fishery [sp][sp_unit_age_class[sp]]
 	ivector s_func_type;
 	DMATRIX s_slope_sp_fishery; 	// selectivity slope coefficient for species and fishery [sp][nb_fishery]
 	DMATRIX s_length_sp_fishery; 	// selectivity threshold coefficient for species and fishery [sp][nb_fishery]

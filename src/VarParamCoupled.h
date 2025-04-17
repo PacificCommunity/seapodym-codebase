@@ -260,7 +260,10 @@ public:
 //37+. dv_predicted_catch.cpp, dv_calrec_precalrec.cpp:
 	dmatrix q_sp_fishery_min;
 	dmatrix q_sp_fishery_max;
+	dvector q_slope_fishery_min;
+	dvector q_slope_fishery_max;
 	dvar_matrix dvarsQ_sp_fishery;
+	dvar_vector dvarsQslope_fishery;
 
 //... dv_predicted_catch.cpp, dv_calrec_precalrec.cpp:
 	dmatrix s_slope_sp_fishery_min;

@@ -395,7 +395,18 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 						q_sp_fishery[i][ifx] = value(dvarsQ_sp_fishery[i][ifx]);
 						dvarpars[idx] = q_sp_fishery[i][ifx];
 						++idx; 
-					} ifx++;
+					}
+					if (i==0){
+						if (doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", "use") == "true"){
+							dvarsQslope_fishery[ifx] = boundp(x[idx], q_slope_fishery_min[ifx], q_slope_fishery_max[ifx], penalty);
+							//large_pen(dvarsQslope_fishery[ifx],q_slope_fishery_min[ifx],q_slope_fishery_max[ifx],penalty,0.005);
+
+							q_slope_fishery[ifx] = value(dvarsQslope_fishery[ifx]);
+							dvarpars[idx] = q_slope_fishery[ifx];
+							++idx; 
+						}
+					}
+					ifx++;
 				}
 			}
 		}
