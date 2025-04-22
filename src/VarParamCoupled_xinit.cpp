@@ -80,23 +80,24 @@ void VarParamCoupled::xinit(dvector& x, adstring_array& x_names)
 						dvarpars_max[idx] = q_sp_fishery_max[i][k];
 						parfile_names[idx-1] = "/q_sp_fishery/"+list_fishery_name[f];
 						++idx; 
-
-						if (!doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", sp_name[0]).empty())
-							if (doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", "use") == "true"){
-								const double value2 = q_slope_fishery[k];
-								x[idx] = boundpin(value2, q_slope_fishery_min[k], q_slope_fishery_max[k]);
-								x_names[idx] = "qslope(" + str(i) + "," + str(k) + ")";
-								dvarpars[idx] = value2;
-								dvarpars_min[idx] = q_slope_fishery_min[k];
-								dvarpars_max[idx] = q_slope_fishery_max[k];
-								parfile_names[idx-1] = "/q_sp_fishery/"+list_fishery_name[f]+"/slope";
-								++idx;
-							}
-					}
-					else{
+					}else{
 						dvarsQ_sp_fishery[i][k] = q_sp_fishery[i][k];
-						dvarsQslope_fishery[k] = q_slope_fishery[k];
 					} 
+
+					if (!doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", sp_name[0]).empty()){
+						if (doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", "use") == "true"){
+							const double value = q_slope_fishery[k];
+							x[idx] = boundpin(value, q_slope_fishery_min[k], q_slope_fishery_max[k]);
+							x_names[idx] = "qslope(" + str(i) + "," + str(k) + ")";
+							dvarpars[idx] = value;
+							dvarpars_min[idx] = q_slope_fishery_min[k];
+							dvarpars_max[idx] = q_slope_fishery_max[k];
+							parfile_names[idx-1] = "/q_sp_fishery/"+list_fishery_name[f]+"/slope";
+							++idx;
+						}else{
+							dvarsQslope_fishery[k] = q_slope_fishery[k];
+						}
+					}
 					k++;
 				}
 			}

@@ -1301,8 +1301,9 @@ bool VarParamCoupled::read(const string& parfile)
 				// New format for slope, which enables estimation as well
 				if (!doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", sp_name[0]).empty()){
 					q_slope_fishery[k] = doc.getDouble("/q_sp_fishery/"+list_fishery_name[f]+"/slope", sp_name[0]);
-					if (mask_fishery_sp_no_effort[0][f] && doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/dyn", "use") == "true")
-						doc.set("/q_sp_fishery/"+list_fishery_name[f]+"/dyn","use","false");
+					if (mask_fishery_sp_no_effort[0][f] && doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/slope", "use") == "true"){
+						doc.set("/q_sp_fishery/"+list_fishery_name[f]+"/slope","use","false");
+					}
 				}else{
 				// Old format for slope: dyn parameter, do not enable estimation
 					if (!doc.get("/q_sp_fishery/"+list_fishery_name[f]+"/variable", "dyn").empty()){
