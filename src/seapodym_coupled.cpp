@@ -618,7 +618,7 @@ void verify_identifier_string2(char* str1) //ASSUME str1 is not null
   long int num_bytes=strlen(str1);
   char* str = new char[num_bytes+1]; 
   str[num_bytes]='\0';
-  gradient_structure::get_fp()->fread(str,num_bytes);
+  gradient_structure().get_fp()->fread(str,num_bytes);
   if(strcmp(str1,str))
   {
     cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: \"" << str << "\" != \"" << str1 << "\"\n";
@@ -643,7 +643,7 @@ string get_path(const char* parfile)
 int save_identifier_string2(char* str)
 {
   int length=strlen(str);
-  gradient_structure::get_fp()->fwrite(str,length);
+  gradient_structure().get_fp()->fwrite(str,length);
   return 0;
 }
 
@@ -651,14 +651,14 @@ void save_long_int_value(unsigned long int x)
 {
   int num_bytes = sizeof(unsigned long int); 
   void* y = (void*)&x; 
-  gradient_structure::get_fp()->fwrite(y,num_bytes);
+  gradient_structure().get_fp()->fwrite(y,num_bytes);
 }
 
 unsigned long int restore_long_int_value(void)
 {
   void* tmpout;
   int num_bytes = sizeof(unsigned long int);
-  gradient_structure::get_fp()->fread(&tmpout,num_bytes);
+  gradient_structure().get_fp()->fread(&tmpout,num_bytes);
   return (unsigned long int)tmpout;
 }
 
