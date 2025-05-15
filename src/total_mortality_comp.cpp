@@ -35,6 +35,7 @@ void CCalpop::Recomp_total_mortality_comp(const PMap& map, CParam& param, CMatri
 			if (param.mask_fishery_sp_no_effort[sp][f]){ k++; continue;}
 
 			double catchability = param.q_sp_fishery[sp][k] + param.q_slope_fishery[f]*step_count;
+			if (catchability<0) catchability = 0; // in case if negative trend has been chosen
 			const double selectivity = Selectivity(sp,f,age);
 			double sq  = selectivity * catchability;
 
