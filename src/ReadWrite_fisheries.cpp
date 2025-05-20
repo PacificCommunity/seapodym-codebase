@@ -1630,7 +1630,7 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 
 				//Constrain the sample size by smax (see robust LF likelihood)
 				//Should be done in pre-processing. Issue warning if found here
-				double smax = 500.0; 
+				double smax = 1000.0; 
 				double sumQ = sum(frq(f,reg-1,y,qtr-1));
 				if (sumQ>smax+1e-3){
 					cerr << "Large sample in the LF data! Sample size is "<< sumQ <<
