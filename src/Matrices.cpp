@@ -575,8 +575,8 @@ void CMatrices::MeanVarMortality(const PMap& map, const dmatrix& M, const double
 	double sum_density = sum(density_after(sp,age));
 //	double sum_density = 0;
 	if (sum_density == 0) {
-        	mean_mortality(sp,age) = (Ms_max+Mp_max) * exp(- Mp_exp * mean_age_in_month) +
-                                          Ms_max*pow(mean_age_in_month,Ms_slope);
+        	mean_mortality(sp,age) = Mp_max * exp(- Mp_exp * mean_age_in_month) +
+                                         Ms_max * pow(mean_age_in_month,Ms_slope);
         } else 
 		mean_mortality(sp,age) = comp_waverage(map, M, sp, age);
 		//mean_mortality(sp,age) = 0;
