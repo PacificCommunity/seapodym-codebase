@@ -576,7 +576,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 			if (tuna_spinup && t_count == nbt_building + 60){//temporal: the nb to skip can be set through parfile
 				//cout << date_str << "Saving initial distributions for simulation skipping spinup" << endl;
-				SaveDistributions(year, month);
+				SaveRestart(year, month);
 			}
 		}
 		nt_dtau++;
@@ -587,7 +587,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 
-	if (writeoutputfiles) {SaveDistributions(year, month);
+	if (writeoutputfiles) {SaveRestart(year, month);
 		cout << "total catch in simulation: " << SUM_CATCH << endl;
 	}
 

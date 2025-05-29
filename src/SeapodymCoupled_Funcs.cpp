@@ -46,7 +46,7 @@ void SeapodymCoupled::SaveIntermediate(const int sp, const int age)
 }
 
 
-void SeapodymCoupled::SaveDistributions(const int year, const int month)
+void SeapodymCoupled::SaveRestart(const int year, const int month)
 {	
 	for (int sp=0; sp<nb_species; sp++){
 		//write down the state vector to be used as initial condition
@@ -58,7 +58,7 @@ void SeapodymCoupled::SaveDistributions(const int year, const int month)
 
 		//Format of IC file: single regular DYM2 file
 		string fileCohorts = dirname + param->sp_name[sp] + "_cohorts" + date + ".dym";
-		cout << "Saving distributions to " << fileCohorts << endl;
+		cout << "Saving density-at-age to file " << fileCohorts << endl;
 
 		///int nb_cohorts = param->sp_nb_age_class_ad[sp]+3;
 		int nb_cohorts = param->sp_nb_cohorts[sp];
@@ -71,8 +71,6 @@ void SeapodymCoupled::SaveDistributions(const int year, const int month)
 					mat.xlon, mat.ylat, zlevel, mat.mask);
 
 		SaveCohorts(fileCohorts, sp, true);
-		///SaveJuvCohorts(fileCohorts, sp, true);
-		///SaveAdultCohorts(fileCohorts, sp, true);
 	}
 }
 

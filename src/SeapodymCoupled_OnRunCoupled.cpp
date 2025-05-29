@@ -500,10 +500,15 @@ Mortality.initialize();
 			if (writeoutputfiles){
 				CalcMeanTemp(t_count,tcur);
 				CalcSums();
+				//Write density at age files if requested
+				if (param->write_all_cohorts_dym)
+					SaveDensityAtAgeDym(sp, false);
 			}
 			//Compute total stock before the new recruitment (survival)
 			if (param->stock_like[sp] && t_count > nbt_building+nbstoskip)
 				Total_Stock_comp(total_stock, sp);
+
+
 
 			//5. Compute spawning biomass (sum of young and adults density weighted by maturity-at-age)
 			if (!tags_only)
@@ -624,7 +629,8 @@ Mortality.initialize();
 
 	} // end of simulation loop
 
-	if (writeoutputfiles) {SaveDistributions(year, month);
+	if (writeoutputfiles) {
+		SaveRestart(year, month);
 		cout << "total catch in simulation (optimization): " << SUM_CATCH << endl;
 	}
 	param->total_like = value(likelihood);

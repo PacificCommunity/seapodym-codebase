@@ -66,12 +66,11 @@ void SeapodymCoupled::WriteOutput(int t, bool fishing)
 	//save ascii file with sums
 	rw.SaveSepodymFileTxt(*param, mat, map, sumPP, sumF, sumFprime, sumF_area_pred, sumF_required_by_sp, 
 				mean_omega_sp, day, month, year, t_count,past_qtr, qtr, nbi, nbj);
-	for (int sp=0; sp< nb_species;sp++){
-		dvector zlevel; zlevel.allocate(0, nbt_total - 1);
-		SaveCohortsDym(sp, false, zlevel, param->write_all_cohorts_dym, param->larvae_like[sp] && !param->elarvae_model[sp]);
-	}
+
 
 	for (int sp=0; sp< nb_species;sp++){
+		if (param->larvae_like[sp])
+			WriteAVariableDym(value(mat.dvarDensity[sp][0]),param->sp_name[sp] + "_spawn.dym", false);
 		if (param->larvae_mortality_sst[sp]){
 			dvector zlevel; zlevel.allocate(0, nbt_total - 1);
 			SaveLarvaeBeforeSstMort(sp, false, zlevel);
@@ -100,8 +99,6 @@ void SeapodymCoupled::WriteFileHeaders()
 	for (int n=0; n<nbt_total; n++)
 		zlevel[n] = mat.zlevel[n+nbt_start_series];
 	
-    //Date::zlevel_run(*param,mat.zlevel,nbt_total,zlevel,nbt_start_series);
-
 	// Create and initialize (dym) files for saving spatial variables
 	//rewrite dym mask by the mask used in the run, i.e. map.carte:
 	for (int i=0; i<nbi-2; i++){
@@ -111,8 +108,9 @@ void SeapodymCoupled::WriteFileHeaders()
 	}	
 	rw.InitSepodymFileDym(*param, mat, nbt_total, zlevel, mat.mask);
 
-	for (int sp=0; sp< nb_species;sp++)
-		SaveCohortsDym(sp, true, zlevel, param->write_all_cohorts_dym, param->larvae_like[sp] && !param->elarvae_model[sp]);
+	if (param->write_all_cohorts_dym)
+		for (int sp=0; sp< nb_species;sp++)
+			SaveDensityAtAgeDym(sp, true);
 
 	//For Joe:
 	//SaveOneCohortDym(0, true, zlevel);
@@ -131,6 +129,9 @@ void SeapodymCoupled::WriteFileHeaders()
 			//write a header
 			WriteAVariableDym(mat.density_after(sp,0),param->sp_name[sp] + "_tagged.dym", true);
 		}
+		if (param->larvae_like[sp])
+			WriteAVariableDym(value(mat.dvarDensity[sp][0]),param->sp_name[sp] + "_spawn.dym", true);
+			
 	}
 	// Create and initialize (txt) files for saving aggregated variables
 	rw.InitSepodymFileTxt(*param);
@@ -197,44 +198,52 @@ void SeapodymCoupled::InitFileFluxes()
 	}	
 }
 
-void SeapodymCoupled::SaveCohortsDym(int sp, bool WriteHeader, dvector zlevel, bool write_all_cohorts_dym, bool write_age1_dym)
-{
-	//To remove estimates in Indian ocean (boundary effect)
-	//int ilim = param->lontoi(125);
-	//int jlim = param->lattoj(-8);
+void SeapodymCoupled::SaveDensityAtAgeDym(int sp, bool WriteHeader)
+{///Here we write the density at age into files spname_ageN+1.dym, where N refers 
+ ///to the age class index and '+1' refers to 'one step forward'. For example, 
+ ///skj_age1.dym will contain the density of skipjack larvae aged one time step 
+ ///(e.g., one month). Note, this function should be called at the end of the
+ ///time step but *before ageing* as it accounts for ageing while keeping the 
+ ///last age class of size dtau from being added to A+. 
+ 
+	dvector zlevel;
+	zlevel.allocate(0, nbt_total - 1);
+	zlevel.initialize();
+	for (int n=0; n<nbt_total; n++)
+		zlevel[n] = mat.zlevel[n+nbt_start_series];
 
 	const int nb_ages= param->sp_nb_cohorts[sp];
 	for (int a=0; a<nb_ages; a++){
-		if ((a==0 && write_age1_dym) || write_all_cohorts_dym){
-			double minval = min(value(mat.dvarDensity(sp,a)));
-			double maxval = max(value(mat.dvarDensity(sp,a)));
+		double minval = 1e6;
+		double maxval = 0;
 
-			std::ostringstream ostr;
-			ostr << a+1;
-			string fileout = param->strdir_output + param->sp_name[sp] + "_age" + ostr.str() + ".dym";
-			if (WriteHeader){
-					//Write file headers during the first time step
-					rw.wbin_header(fileout, param->idformat, param->idfunc, minval, maxval, param->nlong, param->nlat, nbt_total,
-					zlevel[0], zlevel[nbt_total-1],
-					mat.xlon, mat.ylat, zlevel, mat.mask);
+		std::ostringstream ostr;
+		ostr << a+1;
+		string fileout = param->strdir_output + param->sp_name[sp] + "_age" + ostr.str() + ".dym";
+		if (WriteHeader){
+			//Write file headers during the first time step
+			rw.wbin_header(fileout, param->idformat, param->idfunc, minval, maxval, param->nlong, param->nlat, nbt_total,
+			zlevel[0], zlevel[nbt_total-1],
+			mat.xlon, mat.ylat, zlevel, mat.mask);
 
-			}else{
-				//Append data for the current date
-				dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
-				mat2d.initialize();
-				for (int i=map.imin; i <= map.imax; i++){
-						for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
-								if (map.carte[i][j]){
-									//Units: Nb/sq.km
-									mat2d(i-1,j-1) = value(mat.dvarDensity(sp,a,i,j));
-									//if (i<ilim && j>jlim) mat2d[i-1][j-1] = 0.0;
-								}
-						}
+		}else{
+			minval = min(value(mat.dvarDensity(sp,a)));
+			maxval = max(value(mat.dvarDensity(sp,a)));
+
+			//Append data for the current date
+			dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
+			mat2d.initialize();
+			for (int i=map.imin; i <= map.imax; i++){
+				for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
+					if (map.carte[i][j]){
+						//Units: Nb/sq.km
+						mat2d(i-1,j-1) = value(mat.dvarDensity(sp,a,i,j));
+					}
 				}
-				rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
-				//update min-max values in header
-				rw.rwbin_minmax(fileout, minval, maxval);
 			}
+			rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
+			//update min-max values in header
+			rw.rwbin_minmax(fileout, minval, maxval);
 		}
 	}
 }

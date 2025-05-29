@@ -121,11 +121,11 @@ private:
 	void elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles);
 	void write_elarvae_dym(const int sp);
 	void getDate(int& jday);
-	void SaveDistributions(const int year, const int month);
+	void SaveRestart(const int year, const int month);
 	void UpdateTimeVars(int& nbt_total, int& nbt_start_series);
 	///void SaveJuvCohorts(string fileJuv, int sp, bool FileMode);
 	///void SaveAdultCohorts(string fileAdu, int sp, bool FileMode);
-	void SaveCohortsDym(int sp, bool WriteHeader, dvector zlevel, bool write_all_cohorts_dym, bool write_age1_dym);
+	void SaveDensityAtAgeDym(int sp, bool WriteHeader);
 	void SaveOneCohortDym(int sp, bool WriteHeader, dvector zlevel);
 	void SaveLarvaeBeforeSstMort(int sp, bool WriteHeader, dvector zlevel);
 	void WriteAVariableDym(const dmatrix var, string filename, bool WriteHeader);
