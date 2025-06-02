@@ -77,6 +77,9 @@ int SeapodymCoupled::EditRunCoupled(const char* parfile)
 	}
 	lflike_fishery.allocate(0,nb_fishery-1);
 	clike_fishery.allocate(0,nb_fishery-1);
+	lflike_fishery.initialize();
+	clike_fishery.initialize();
+
 	param->init_param_dym();
 
 	return 0;

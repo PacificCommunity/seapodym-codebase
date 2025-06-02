@@ -30,7 +30,11 @@ friend class tag_release;
 	double run_habitat(dvar_vector x, const bool writeoutputfiles = false) { return OnRunHabitat(x, writeoutputfiles); }
 	double run_density(dvar_vector x, const bool writeoutputfiles = false) { return OnRunDensity(x, writeoutputfiles); }		
 	dvariable reset(dvar_vector x) { return param->reset(x); }
-
+	void reset_simulation_flags(){
+		lflike_fishery.initialize();
+		clike_fishery.initialize();
+		param->set_gradcalc(false);
+	}
 	void write(const char* parfile) {
 		param->write(parfile);
 	}

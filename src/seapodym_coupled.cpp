@@ -166,6 +166,7 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, const bool r
 
 	//after minimization is finished one simulation will 
 	//be run with estimated parameters; outputs will be saved
+	sc.reset_simulation_flags();
 	gradient_structure::set_NO_DERIVATIVES();
 	sc.run_coupled((dvar_vector)x, true);
 	sc.write(newparfile.c_str());
