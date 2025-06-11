@@ -349,6 +349,8 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 	int af_n = max(fishery_reso)*60.0/param.deltaY;  
 	if (param.deltaX>60.0) af_m += 2;
 	if (param.deltaY>60.0) af_n += 2;
+	if (param.deltaX<6.0) af_m += 1;
+	if (param.deltaY<6.0) af_n += 1;
 
 	long int maxn = nrec_oceanmask;//corrected on 20210719, double check that it works in all cases!
 	if (!param.fdata_rm)
@@ -358,6 +360,7 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 
 	//temporal containers as we don't know here the size of redistributed effort
 	//fishing_effort *efr_tmp;
+TRACE(maxn)
 	efr_tmp = new fishing_effort[maxn];
 	dvector C;
 	C.allocate(0,nb_species-1);
