@@ -28,7 +28,7 @@ void CCalpop::predicted_catch_fishery_comp(const PMap& map, CParam& param, VarMa
 	dmatrix efflon(map.imin,map.imax,map.jinf,map.jsup); efflon = mat.efflon(f);
 	dmatrix efflat(map.imin,map.imax,map.jinf,map.jsup); efflat = mat.efflat(f);
 	const double cell_area_deg = param.deltaX*param.deltaY/(60*60);
-	const int reso = param.fishery_reso(f);
+	const float reso = param.fishery_reso(f);
 	//Catch equation: we will compute and fit predicted catch at the resolution of the fishing data
 	//assume we have E(m,n) at coarser resolution than ours: rx>=deltaX, ry>=deltaY
 	//C(m,n) = q*sum_ij(E(i,j)*B(i,j)) = [if E(i,j)=const=E(m,n)/(rx*ry)] = q*E/(rx*ry)*sum_ij(B(i,j))	
@@ -39,7 +39,6 @@ void CCalpop::predicted_catch_fishery_comp(const PMap& map, CParam& param, VarMa
         int m = reso*60.0/param.deltaX+2; 
 	int n = reso*60.0/param.deltaY+2;
 	dmatrix af(0,m-1,0,n-1);
-
 	for (int i = map.imin; i <= map.imax; i++){	
 		const int jmin = map.jinf[i];
 		const int jmax = map.jsup[i];

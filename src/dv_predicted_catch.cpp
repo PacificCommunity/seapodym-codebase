@@ -139,7 +139,7 @@ void dv_predicted_catch_fishery()
 	//effort.initialize();
 	rw->get_effort_lonlat(*param, effort, efflon, efflat, f, year, month);	
 
-	const int reso = param->fishery_reso(f);
+	const float reso = param->fishery_reso(f);
 	int m = reso*60.0/param->deltaX+2; 
 	int n = reso*60.0/param->deltaY+2;  
 	dmatrix af(0,m-1,0,n-1);
