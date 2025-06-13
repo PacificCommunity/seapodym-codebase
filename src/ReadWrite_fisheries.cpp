@@ -360,7 +360,6 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 
 	//temporal containers as we don't know here the size of redistributed effort
 	//fishing_effort *efr_tmp;
-TRACE(maxn)
 	efr_tmp = new fishing_effort[maxn];
 	dvector C;
 	C.allocate(0,nb_species-1);
