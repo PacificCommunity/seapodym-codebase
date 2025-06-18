@@ -25,7 +25,7 @@ void CCalpop::Precalrec_total_mortality_comp(const PMap& map, VarParamCoupled& p
 			//2014: no use of effort for fisheries with no or bad effort data:
 			if (param.mask_fishery_sp_no_effort[sp][f]){ k++; continue;}
 
-			double catchability = param.q_sp_fishery[sp][k] + param.q_slope_fishery[f] * step_count;
+			double catchability = param.q_sp_fishery[sp][k] + param.q_slope_fishery[k] * step_count;
 			if (catchability<0) catchability = 0; // in case if negative trend has been chosen
 			//double selectivity = param.selectivity_comp(sp,age,f,k);
 			//double selectivity = param.selectivity_comp(sp,age,f,k,step_count);
@@ -161,7 +161,7 @@ void dv_total_mort_comp(void)
 //	else
 //rw->get_effort(*param, effort, f, year, month);
 //		rw->get_effort_rm(*param, effort, f, year, month);
-	double catchability = param->q_sp_fishery[sp][f] + param->q_slope_fishery[f] * step;
+	double catchability = param->q_sp_fishery[sp][k] + param->q_slope_fishery[k] * step;
 	if (catchability<0) catchability = 0; // in case if negative trend has been chosen
 
 	//const double selectivity = param->selectivity_comp(sp,age,f,k);

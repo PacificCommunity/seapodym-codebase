@@ -168,7 +168,7 @@ void dv_predicted_catch_fishery()
 	const double weight = pow(1e-3*param->weight[sp][age],catch_units);	
 	const double w_area  = weight*sq_degree;
 
-	double catchability = param->q_sp_fishery[sp][f] + param->q_slope_fishery[f] * nstep;
+	double catchability = param->q_sp_fishery[sp][k] + param->q_slope_fishery[k] * nstep;
 	if (catchability<0) catchability = 0; // in case if negative trend has been chosen
 
 	//const double selectivity = param->selectivity_comp(sp,age,f,k);
