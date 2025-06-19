@@ -29,6 +29,7 @@ friend class tag_release;
 	double run_coupled(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCoupled(x, writeoutputfiles); }
 	double run_habitat(dvar_vector x, const bool writeoutputfiles = false) { return OnRunHabitat(x, writeoutputfiles); }
 	double run_density(dvar_vector x, const bool writeoutputfiles = false) { return OnRunDensity(x, writeoutputfiles); }		
+	double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
 	dvariable reset(dvar_vector x) { return param->reset(x); }
 	void reset_simulation_flags(){
 		lflike_fishery.initialize();
@@ -47,6 +48,8 @@ friend class tag_release;
 	double OnRunCoupled(dvar_vector x, const bool writeoutputfiles = false);
 	void OnSimulationEnd();
 	void ReadLarvae();	
+
+	double OnRunCohort(dvar_vector x, const bool writeoutputfiles = false);
 
 	double OnRunHabitat(dvar_vector x, const bool writeoutputfiles = false);
 	void ReadHabitat();
@@ -153,6 +156,7 @@ private:
 	void ConsoleOutput(int flag,double like);
 	void OutputLikelihoodsFishery();
 	void InitializeAll();
+	void InitializeCohort();
 	void ReadTimeSeriesData(int t, int t_series);
 	void ReadClimatologyData(int t, int month);
 	void ReadClimatologyOxy(int t, int t_clm);

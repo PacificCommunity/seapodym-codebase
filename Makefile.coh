@@ -40,7 +40,7 @@ VarParamCoupled_reset.cpp \
 SeapodymCoupled_EditRunCoupled.cpp \
 SeapodymCoupled_Funcs.cpp \
 SeapodymCoupled_Forage.cpp \
-Seapodym_OnRunDensity.cpp \
+Seapodym_OnRunCohort.cpp \
 SeapodymCoupled_OnRunFirstStep.cpp \
 SeapodymCoupled_OnReadForcing.cpp \
 SeapodymCoupled_OnWriteOutput.cpp \

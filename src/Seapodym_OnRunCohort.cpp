@@ -88,7 +88,7 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 
-	dvarCohortDensity = dvarDensity(sp,0);
+	dvarCohortDensity = mat.dvarDensity(sp,0);
 	int age = 0;
 
 	if (param->food_requirement_in_mortality(0)){ 
