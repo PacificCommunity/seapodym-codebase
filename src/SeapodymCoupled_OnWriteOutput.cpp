@@ -250,49 +250,50 @@ void SeapodymCoupled::SaveDensityAtAgeDym(int sp, bool WriteHeader)
 
 void SeapodymCoupled::SaveOneCohortDym(int sp, bool WriteHeader, dvector zlevel)
 {//First created for Joe (SimpoDym) at 20160229
-	double minval = min(value(mat.dvarDensity(sp,3)));
-        double maxval = max(value(mat.dvarDensity(sp,3)));
-	
-        string fileout = param->strdir_output + param->sp_name[sp] + "_cohort_density.dym";
-        if (WriteHeader){
-        	//Write file headers during the first time step
+	double minval = min(value(mat.dvarDensity(sp,0)));
+	double maxval = max(value(mat.dvarDensity(sp,0)));
+
+	string fileout = param->strdir_output + param->sp_name[sp] + "_cohort_density.dym";
+	if (WriteHeader){
+		//Write file headers during the first time step
 		rw.wbin_header(fileout, param->idformat, param->idfunc, minval, maxval,
-                                        param->nlong, param->nlat, nbt_total,
-                                        zlevel[0], zlevel[nbt_total-1],
-                                        mat.xlon, mat.ylat, zlevel, mat.mask);
+										param->nlong, param->nlat, nbt_total,
+										zlevel[0], zlevel[nbt_total-1],
+										mat.xlon, mat.ylat, zlevel, mat.mask);
 
-        }
-        else {
-        	const int nb_ages= param->sp_nb_cohorts[sp];
-		int age_extract = 3;
-	        for (int age=0; age<nb_ages; age++){
+	}
+	else {
+		const int nb_ages= param->sp_nb_cohorts[sp];
+		int age_extract = 0;
+		for (int age=0; age<nb_ages; age++){
 
-			if (age == t_count+2 && age < param->sp_nb_cohorts[sp]-1) {
+			if (age == t_count && age < param->sp_nb_cohorts[sp]-1) {
 				cout << "age to extract " << age << endl; 
 				age_extract = age;
 			}
-			if (t_count+2 >= param->sp_nb_cohorts[sp]-1 && age == param->sp_nb_cohorts[sp]-1){
-			       	cout << "age to extract " << age << endl;
+			if (t_count >= param->sp_nb_cohorts[sp]-1 && age == param->sp_nb_cohorts[sp]-1){
+					cout << "age to extract " << age << endl;
 				age_extract = age;
 			}
 		}
-	
-	        //Append data for the current date
-	        dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
-	        mat2d.initialize();
-	        for (int i=map.imin; i <= map.imax; i++){
-	               	for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
-	                       	if (map.carte[i][j]){
-	                               	//Units: Nb/sq.km
-	                                mat2d(i-1,j-1) = value(mat.dvarDensity(sp,age_extract,i,j));
+		
+		//Append data for the current date
+		dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
+		mat2d.initialize();
+		for (int i=map.imin; i <= map.imax; i++){
+			for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
+				if (map.carte[i][j]){
+					//Units: Nb/sq.km
+					mat2d(i-1,j-1) = value(mat.dvarDensity(sp,age_extract,i,j));
 
-	                        }
-	                }
+				}
+			}
 		}
-	        rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
+
+		rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
 		//update min-max values in header
 		rw.rwbin_minmax(fileout, minval, maxval);
-        }
+	}
 }
 
 void SeapodymCoupled::SaveLarvaeBeforeSstMort(int sp, bool WriteHeader, dvector zlevel)
