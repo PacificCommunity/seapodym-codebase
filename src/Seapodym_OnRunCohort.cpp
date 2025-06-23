@@ -50,6 +50,8 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 	int step_fishery_count= 0;
 	int jday = 0; 
 	int nbstoskip = param->nbsteptoskip; // nb of time step to skip before computing likelihood
+	int age = 0;// 0 or older, needs to be defined by the CohortManager?
+	int nbt_cohort = param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0] - age;// simulation time for the cohort
 
 	if (!param->gcalc()){
 		//need to read oxygen in case if month==past_month
@@ -86,8 +88,7 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 
-	dvarCohortDensity = mat.dvarDensity(0,0);
-	int age = 0;
+	dvarCohortDensity = mat.dvarDensity(0,age);
 
 	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
@@ -138,7 +139,7 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////
 	int pop_built = 1;
-	for (;t_count <= nbt_total; t_count++)
+	for (;t_count <= nbt_cohort; t_count++)
 	{
 		//----------------------------------------------//
 		//              INITIALISATION                  //
@@ -345,6 +346,15 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 			//update min-max values in header
 			rw.rwbin_minmax(fileout, minval, maxval);
 		}
+
+
+		///////////////////////////////////////////
+		//                                       //	
+		// Needs some serialization of data here //
+		//                                       //	
+		///////////////////////////////////////////
+
+
 		nt_dtau++;
 		past_month=month;
 		step_count++;
@@ -361,7 +371,7 @@ void SeapodymCoupled::InitializeCohort()
         t_count = nbt_building+1;
         mat.mats.initialize();
         for (int sp=0; sp<nb_species; sp++){
-		mat.dvarDensity(sp,0) = mat.init_density_species(sp,0);
+			mat.dvarDensity(sp,0) = mat.init_density_species(sp,0);
         }
 }
 
