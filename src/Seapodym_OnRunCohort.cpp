@@ -64,9 +64,7 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 	//----------------------------------------------//
 	// 	LIKELIHOOD INITIALISATION SECTION       //
 	//----------------------------------------------//	
-	double stocklike = 0.0;
 	dvariable likelihood = 0.0;
-	dvariable total_stock = 0.0;
 	//Reset model parameters:
 	reset(x);
 
@@ -188,14 +186,11 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 		//------------------------------------------------------------------------------//
 
 		for (int sp=0; sp < nb_species; sp++){
-			int elarvae_model;
-			double sigma_fcte_save;
-			if (age==0){
-				elarvae_model = param->elarvae_model[sp];
-				//if !elarvae_model, elarvae_dt = 0 as elarvae_age = 0
-				elarvae_dt = param->elarvae_age[sp]/deltaT; 
-				sigma_fcte_save = param->sigma_fcte;
-			}
+				
+			int elarvae_model = param->elarvae_model[sp];
+			//if !elarvae_model, elarvae_dt = 0 as elarvae_age = 0
+			elarvae_dt = param->elarvae_age[sp]/deltaT; 
+			double sigma_fcte_save = param->sigma_fcte;
 
 			if (age <=param->sp_nb_cohort_jv[sp]){
 				//Precompute diagonal coefficients for larvae and juvenile ADREs
@@ -241,15 +236,12 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 				func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
 				
 				//2.2 Transport and mortality of larvae (always one age class)	
-				for (int n=0; n<param->sp_nb_cohort_lv[sp]; n++){
-					double mean_age = mean_age_cohort[sp][age]; 
-
-					
-					func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
-					pop.Precalrec_juv(map, mat, Mortality, tcur, (1-elarvae_dt));//checked
-					pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, (1-elarvae_dt));//checked
-				}
-
+				double mean_age = mean_age_cohort[sp][age]; 
+	
+				func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
+				pop.Precalrec_juv(map, mat, Mortality, tcur, (1-elarvae_dt));//checked
+				pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, (1-elarvae_dt));//checked
+				
 				//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
 				if (elarvae_model){
 					param->sigma_fcte = sigma_fcte_save;
@@ -269,12 +261,13 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 					func.Juvenile_Habitat(*param, mat, map, Habitat, sp, tcur);
 					
 				//2.4. Transport and mortality of juvenile age classes	
-					double mean_age = mean_age_cohort[sp][age];
+				double mean_age = mean_age_cohort[sp][age];
 
-					func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);
-					pop.Precalrec_juv(map,  mat, Mortality, tcur, 1);
-					pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, 1);
+				func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);
+				pop.Precalrec_juv(map,  mat, Mortality, tcur, 1);
+				pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, 1);
 			}			
+
 			if (age > param->sp_nb_cohort_jv[sp] && age <= param->sp_nb_cohort_jv[sp]+param->sp_nb_cohort_ad[sp]){
 				//4. Transport and mortality of adult cohort
 
@@ -290,7 +283,8 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 				} // end of section with seasonality switch and <1 maturity at age parameter 
 				else {
 					migration_flag = 0;
-					if (age>=param->age_mature[sp] && param->seasonal_migrations[sp]) migration_flag = 1;
+					if (age>=param->age_mature[sp] && param->seasonal_migrations[sp]) 
+						migration_flag = 1;
 
 					func.Feeding_Habitat(*param,mat,map,Habitat,sp,age,jday,tcur,migration_flag);
 
@@ -336,18 +330,18 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 				ConsoleOutput(1,value(likelihood));
 
 			dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
-            mat2d.initialize();
+			mat2d.initialize();
 			for (int i=map.imin; i <= map.imax; i++){
-					for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
-							if (map.carte[i][j]){
-								mat2d(i-1,j-1) = value(dvarCohortDensity(i,j));
-							}
+				for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
+					if (map.carte[i][j]){
+						mat2d(i-1,j-1) = value(dvarCohortDensity(i,j));
 					}
+				}
 			}
 			double minval = min(value(dvarCohortDensity));
 			double maxval = max(value(dvarCohortDensity));
 
-            rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
+			rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
 			//update min-max values in header
 			rw.rwbin_minmax(fileout, minval, maxval);
 		}
@@ -355,49 +349,11 @@ double SeapodymCoupled::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 		past_month=month;
 		step_count++;
 		if (qtr != past_qtr) past_qtr = qtr; 
+
 		age++;
 	} // end of simulation loop
 
 	return 0;
-}
-
-//potentially to be moved to like.cpp
-void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood){
-
-	int rr_x = (int)nlon/nlon_input; 
-	int rr_y = (int)nlat/nlat_input; 
-	
-	if (rr_x<1 || rr_y<1){ 
-		cerr << "Model resolution should be divisible without remainder by the resolution of input density field." << 
-		         endl<< "Currenly nlon/nlon_input = " << rr_x << ", and nlat/nlat_input = " << rr_y << endl << "Will exit now...";
-		exit(1);
-	}
-	dvariable Btot;
-	int cells_open;
-	for (int i=0; i<nlon_input; i++){
-		for (int j=0; j<nlat_input ; j++){
-			cells_open = 0;
-			for (int ii=0; ii<rr_x; ii++)
-			for (int jj=0; jj<rr_y; jj++){
-				if (map_carte(rr_x*i+ii,rr_y*j+jj))
-					cells_open++;
-			}
-
-			//non-zero density_input as data landmask and at least one cell in current model grid
-			if (density_input(i,j) && cells_open){
-				Btot = 0.0;
-				for (int ii=0; ii<rr_x; ii++)
-				for (int jj=0; jj<rr_y; jj++){
-					if (map_carte(rr_x*i+ii,rr_y*j+jj))
-					       	Btot += Density_pred[rr_x*i+ii][rr_y*j+jj];
-				}
-				
-				if (Btot>0)	 
-	                      		likelihood += (rr_x*rr_y*density_input(i,j)-Btot)*
-					      	      (rr_x*rr_y*density_input(i,j)-Btot);
-			}
-		}
-	}
 }
 
 void SeapodymCoupled::InitializeCohort()
