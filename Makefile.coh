@@ -17,7 +17,8 @@ Utilities.h \
 VarMatrices.h \
 VarParamCoupled.h \
 VarSimtunaFunc.h \
-NishikawaLike.h
+NishikawaLike.h \
+SeapodymCohort.h
 
 SRCS= \
 main_cohort.cpp \
@@ -40,6 +41,7 @@ VarParamCoupled_reset.cpp \
 SeapodymCoupled_EditRunCoupled.cpp \
 SeapodymCoupled_Funcs.cpp \
 SeapodymCoupled_Forage.cpp \
+SeapodymCohort.cpp \
 Seapodym_OnRunCohort.cpp \
 SeapodymCoupled_OnRunFirstStep.cpp \
 SeapodymCoupled_OnReadForcing.cpp \
@@ -88,7 +90,7 @@ Calpop_precaldia.cpp  \
 Calpop_precalrec.cpp  \
 Calpop_tridag.cpp \
 Calpop_recompute.cpp \
-hessian.cpp \
+#hessian.cpp \
 like.cpp \
 NishikawaLike.cpp
 

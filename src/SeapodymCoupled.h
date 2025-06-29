@@ -29,7 +29,6 @@ friend class tag_release;
 	double run_coupled(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCoupled(x, writeoutputfiles); }
 	double run_habitat(dvar_vector x, const bool writeoutputfiles = false) { return OnRunHabitat(x, writeoutputfiles); }
 	double run_density(dvar_vector x, const bool writeoutputfiles = false) { return OnRunDensity(x, writeoutputfiles); }		
-	double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
 	dvariable reset(dvar_vector x) { return param->reset(x); }
 	void reset_simulation_flags(){
 		lflike_fishery.initialize();
@@ -71,7 +70,7 @@ friend class tag_release;
 	int get_maxfn(){return param->maxfn;}
 	double get_crit(){return param->crit;}
 
-private:
+protected:
 	double dnum1, t_yrdd;
 	double cell_area;
 	int day, month, qtr, year, past_month, past_qtr, jday_run, jday_spinup; //date variables
