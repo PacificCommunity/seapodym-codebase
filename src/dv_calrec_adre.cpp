@@ -1,5 +1,7 @@
 #include "calpop.h"
-
+// to sleep...
+#include <thread>
+#include <chrono>
 ///Main function with memory control and adjoint functions for: 
 ///calrec for larval and juvenile life stages, i.e. with passive drift only. 
 ///These routines solve ADR equations for larvae and juveniles, advected 
@@ -19,6 +21,9 @@ unsigned long int restore_long_int_value(void);
 
 void CCalpop::Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_matrix& mortality, const int t_count, const double move_dtmod)
 {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	uu = uu + 0.01;
+	/*
 	bm = value(dvarsBM);
 	xbet = value(Xbet);
 	dmatrix mort_c = value(mortality);
@@ -42,6 +47,7 @@ void CCalpop::Calrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& uu, dvar_
 	
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_calrec_adre);
+	*/
 } 
 
 void dv_calrec_adre()
