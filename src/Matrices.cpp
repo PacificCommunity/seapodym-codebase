@@ -351,6 +351,11 @@ void CMatrices::createMatSpecies(const PMap& map, int t0, int nbt, int nbi, int 
 	// total de la biomasse en thon
 	sum_total_pop.allocate(0, nb_species - 1);
 
+	obs_rec_time.allocate(0, nb_species - 1);
+	mod_rec_time.allocate(0, nb_species - 1);
+	obs_rec_time.initialize();
+	mod_rec_time.initialize();
+
 	sum_B_larvae.initialize();
 	sum_B_juv.initialize();
 	sum_B_young.initialize();

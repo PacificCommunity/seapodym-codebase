@@ -193,11 +193,15 @@ void SeapodymCoupled::CalcSums()
 	//total catch per time step
 	double sum_total_catch = 0;
 
+	mat.mod_rec_time.initialize();
+	mat.obs_rec_time.initialize();
 	int nb_active_groups = 0;
 	for (int p=0; p<nb_tagpops; p++){
 		if (t_count>=t_count_rec(p)){
 			nb_active_groups++;
 		}
+		if (t_count==t_count_rec(p))
+			mat.obs_rec_time(0) = sum(rec_obs(p));
 	}
 	
 	bool issue_warning = false;
@@ -297,6 +301,7 @@ void SeapodymCoupled::CalcSums()
 								cerr << "NEGATIVE BIOMASS for " << aa << " " 
 									<< value(mat.dvarDensity(1,aa,i,j)) << endl;
 						}
+						mat.mod_rec_time[sp] += mat.total_tags[sp][i][j] * lat_corrected_area;
 					}
 
 
@@ -352,8 +357,8 @@ void SeapodymCoupled::ConsoleOutput(int flag_simulation, double like)
 	    } else {
                 cout << setw(4)  << left << t_count<<"| "
                      << setw(14) << date_str<<"| "
-                     << setw(14) << sum(mat.total_obs_catch(0))<<" | "
-                     << setw(14) << sum(mat.total_pred_catch(0))<<" | "
+                     << setw(14) << mat.obs_rec_time(0)<<" | "
+                     << setw(14) << mat.mod_rec_time(0)<<" | "
                      << like << endl;		    
 	    }
         }
