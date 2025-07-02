@@ -4,6 +4,9 @@ void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input,
 void SeapodymCoupled::prerun_model()
 {
 	OnRunFirstStep();
+	int age = 0;
+	int nbt_cohort = param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0] - age;// simulation time for the cohort
+	nbt_total = nbt_cohort;
 }
 
 ///This is the main loop for the model without fishing and fitting of density. 
@@ -26,47 +29,7 @@ void SeapodymCoupled::prerun_model()
 */
 double SeapodymCohort::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
 {
-	InitializeCohort(*param);
-	past_month=month;
-	past_qtr=qtr;
-
-	if (!param->gcalc()){
-		//need to read oxygen in case if month==past_month
-		//(otherwise we may not have it for the first time steps)
-		if (param->type_oxy==1 && month==past_month)
-			ReadClimatologyOxy(1, month);
-		//need to read oxygen in case if qtr==past_qtr 
-		if (param->type_oxy==2 && qtr==past_qtr)
-			ReadClimatologyOxy(1, qtr);
-	}
-
-	//----------------------------------------------//
-	// 	LIKELIHOOD INITIALISATION SECTION       //
-	//----------------------------------------------//	
-	//Reset model parameters:
-	reset(x);
-
-	//precompute thermal habitat parameters
-	for (int sp=0; sp < nb_species; sp++)
-		func.Vars_at_age_precomp(*param,sp);
-
-	//precompute seasonal switch function
-	for (int sp=0; sp < nb_species; sp++){
-		if (param->seasonal_migrations[sp]){
-			func.Seasonal_switch_year_precomp(*param,mat,map,
-						value(param->dvarsSpawning_season_peak[sp]),
-						value(param->dvarsSpawning_season_start[sp]),sp);
-		}
-	}
-
-	//Output DYM file name
-	string fileout;
-	fileout = param->strdir_output + param->sp_name[0] + "_cohort.dym";//will need the date of birth stamp
-	if (writeoutputfiles){
-		WriteFileHeaders_submodel(fileout,true);	
-		if (!param->gcalc())
-			ConsoleOutput(0,0);
-	}
+	InitializeCohort(x, writeoutputfiles);
 
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////

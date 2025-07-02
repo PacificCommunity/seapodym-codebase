@@ -5,36 +5,39 @@
 
 
 
-void SeapodymCohort::InitializeCohort(VarParamCoupled& param) 
+void SeapodymCohort::InitializeCohort(dvar_vector& x, bool writeoutputfiles) 
 {
+	age = 0;// 0 or older, needs to be defined by the CohortManager?
+
 	t_count = nbt_building+1;
 	mat.mats.initialize();
 	for (int sp=0; sp<nb_species; sp++){
-		mat.dvarDensity(sp,0) = mat.init_density_species(sp,0);
+		////////////////////////////////////////////////////////////////////////
+		// HERE dvarCohortDensity will be initialized from an external array ///
+		dvarCohortDensity = mat.init_density_species(sp,age);
+		////////////////////////////////////////////////////////////////////////
 	}
 
 	//Temporarily reading the tau of the first cohort
 	//Need to be just a single number for all cohorts
-	dtau = param.sp_unit_cohort[0][1];
+	dtau = param->sp_unit_cohort[0][1];
 	nbt_before_first_recruitment = Date::get_nbt_before_first_recruitment(
-			param.first_recruitment_date,
-			param.ndatini,param.deltaT,param.date_mode); 	
+			param->first_recruitment_date,
+			param->ndatini,param->deltaT,param->date_mode); 	
 	//counter of number of time steps between recruitments (survival equations)
 	//once nt_dtau = dtau, recruitment occurs and nt_dtau=0
 	//its initial value is dtau-nbt_before_first_recruitment_date
 	nt_dtau = dtau-nbt_before_first_recruitment; 
 
 	//routine-specific variables
-	tcur = t_count; //will be used for forcing variable time control
 	nbt_no_forecast = t_count + nbt_spinup_tuna + nbt_total - 1;
 	fishing = false;
 	migration_flag = 0;
 	step_count= 0;
 	step_fishery_count= 0;
 	jday = 0; 
-	nbstoskip = param.nbsteptoskip; // nb of time step to skip before computing likelihood
-	age = 0;// 0 or older, needs to be defined by the CohortManager?
-	nbt_cohort = param.sp_nb_cohort_jv[0] + param.sp_nb_cohort_ad[0] - age;// simulation time for the cohort
+	nbstoskip = param->nbsteptoskip; // nb of time step to skip before computing likelihood
+	nbt_cohort = param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0] - age;// simulation time for the cohort
 
 	likelihood = 0.0;
 
@@ -47,9 +50,7 @@ void SeapodymCohort::InitializeCohort(VarParamCoupled& param)
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 
-	dvarCohortDensity = mat.dvarDensity(0,age);
-
-	if (param.food_requirement_in_mortality(0)){ 
+	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
 		IFR.allocate(map.imin, map.imax, map.jinf, map.jsup);
 		ISR_denom.allocate(map.imin, map.imax, map.jinf, map.jsup);
@@ -69,6 +70,46 @@ void SeapodymCohort::InitializeCohort(VarParamCoupled& param)
 	
 	pop_built = 1;
 
+	past_month=month;
+	past_qtr=qtr;
+
+	//if (!param->gcalc()){
+		//need to read oxygen in case if month==past_month
+		//(otherwise we may not have it for the first time steps)
+		if (param->type_oxy==1 && month==past_month)
+			ReadClimatologyOxy(1, month);
+		//need to read oxygen in case if qtr==past_qtr 
+		if (param->type_oxy==2 && qtr==past_qtr)
+			ReadClimatologyOxy(1, qtr);
+	//}
+
+	//----------------------------------------------//
+	// 	LIKELIHOOD INITIALISATION SECTION       //
+	//----------------------------------------------//	
+	//Reset model parameters:
+	reset(x);
+
+	//precompute thermal habitat parameters
+	for (int sp=0; sp < nb_species; sp++)
+		func.Vars_at_age_precomp(*param,sp);
+
+	//precompute seasonal switch function
+	for (int sp=0; sp < nb_species; sp++){
+		if (param->seasonal_migrations[sp]){
+			func.Seasonal_switch_year_precomp(*param,mat,map,
+						value(param->dvarsSpawning_season_peak[sp]),
+						value(param->dvarsSpawning_season_start[sp]),sp);
+		}
+	}
+
+	//Output DYM file name
+	string fileout;
+	fileout = param->strdir_output + param->sp_name[0] + "_cohort.dym";//will need the date of birth stamp
+	if (writeoutputfiles){
+		WriteFileHeaders_submodel(fileout,true);	
+		if (!param->gcalc())
+			ConsoleOutput(0,0);
+	}
 }
 
 void SeapodymCohort::stepForward(bool writeoutputfiles)
@@ -87,7 +128,31 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	for (int sp=0; sp < nb_species; sp++){
 		func.Seasonal_switch(*param,mat,map,jday,sp);	
 	}
-	tcur = t_count;
+
+	//----------------------------------------------//
+	//	DATA READING SECTION: U,V,T,O2,PP	//
+	//----------------------------------------------//
+	tcur = 1; 
+	//if ((t_count > nbt_building)) { //CC run with average effort forecast
+	if ((t_count > nbt_building) && (t_count <= nbt_no_forecast)) {
+		//TIME SERIES 
+		t_series = t_count - nbt_building + nbt_start_series;
+		ReadTimeSeriesData(tcur,t_series);	
+	}
+	else if (((t_count <= nbt_building) && (month != past_month)) || (t_count > nbt_no_forecast)) {
+
+		//AVERAGED CLIMATOLOGY DATA
+		ReadClimatologyData(tcur, month);
+	}
+	if (param->type_oxy==1 && month != past_month) {
+		//MONTHLY O2
+		ReadClimatologyOxy(tcur, month);
+	}
+	if (param->type_oxy==2 && qtr != past_qtr) {
+		//QUARTERLY O2
+		ReadClimatologyOxy(tcur, qtr);
+	}
+
 	//------------------------------------------------------------------------------//
 	//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//
 	//------------------------------------------------------------------------------//
@@ -136,7 +201,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 						&& t_count > nbt_building+nbstoskip)
 					time_getpred = true;
 
-				elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+					elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
 			}
 
 			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 

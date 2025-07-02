@@ -51,6 +51,11 @@ private:
 
 	void stepForward(bool writeoutputfiles);
 	double OnRunCohort(dvar_vector x, const bool writeoutputfiles);
-	void InitializeCohort(VarParamCoupled& param);
+	void InitializeCohort(dvar_vector& x, bool writeoutputfiles);
+
+	// Remaining to implement
+	void setStateFromArray(const std::vector<double>& array);
+	std::vector<double> getArrayFromState();
+	void save(const std::string& restartFile);	
 };
 #endif
