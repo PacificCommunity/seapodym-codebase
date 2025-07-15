@@ -158,9 +158,6 @@ void SeapodymCoupled::extract_larvae(const int sp, const int tcur)
 
 void SeapodymCoupled::elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	
-	/*
 	double sigma_fcte_save = param->sigma_fcte;
 
 	//2.0.0 Prepare diagonal coefficients for early-life movement and mortality
@@ -197,7 +194,6 @@ void SeapodymCoupled::elarvae_model_run(dvar_matrix& M, const int sp, const int 
 	//Precompute diagonal coefficients for larvae and juvenile ADREs
 	pop.precaldia(*param, map, mat);
 	pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
-	*/
 	
 }
 

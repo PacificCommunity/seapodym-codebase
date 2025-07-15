@@ -1,8 +1,6 @@
 #include "SeapodymCoupled.h"
 #include <fvar.hpp>
-// to sleep...
-#include <thread>
-#include <chrono>
+
 void dv_total_pop_comp();
 void dv_spawning_biomass_comp();
 void dv_total_stock_comp();
@@ -46,8 +44,6 @@ void SeapodymCoupled::Total_Pop_comp(dvar_matrix& total_pop, const int sp, const
 
 void SeapodymCoupled::Total_Pop_comp(dvar_matrix& total_pop, const int sp, const int jday, const int t_count)
 { 	
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	/*
 	total_pop.initialize();
 	for (int a=param->sp_a0_adult[sp]+1; a < param->sp_nb_cohorts[sp]; a++){
 
@@ -88,7 +84,6 @@ void SeapodymCoupled::Total_Pop_comp(dvar_matrix& total_pop, const int sp, const
 		
 		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_total_pop_comp);
 	}
-		*/
 }
 
 void SeapodymCoupled::SpawningBiomass_comp(dvar_matrix& total_pop, const int sp)

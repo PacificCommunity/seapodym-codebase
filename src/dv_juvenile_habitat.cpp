@@ -1,7 +1,5 @@
 #include "VarSimtunaFunc.h"
-// to sleep...
-#include <thread>
-#include <chrono>
+
 ///Main function with memory control and adjoint functions for: 
 ///juvenile habitat functions. This function depends on the temperature
 ///in the epipelagic layer, with or without cannibalism effect 
@@ -17,8 +15,6 @@ const double c_zoo = 100.0; //constant in the first tests ECCO, need to make it 
 
 void VarSimtunaFunc::Juvenile_Habitat(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hj, int sp, const int t_count)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	/*
 	Hj.initialize();
 
 	dvariable a,b;
@@ -58,14 +54,11 @@ void VarSimtunaFunc::Juvenile_Habitat(VarParamCoupled& param, CMatrices& mat, co
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_Hj_comp);
 
-	*/
 }
 
 
 void VarSimtunaFunc::Juvenile_Habitat_cannibalism(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hj, dvar_matrix& total_pop, int sp, const int t_count)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	/*
 	Hj.initialize();
 
 	dvariable a,b;
@@ -108,7 +101,6 @@ void VarSimtunaFunc::Juvenile_Habitat_cannibalism(VarParamCoupled& param, CMatri
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_Hj_cannibalism_comp);
 
-	*/
 }
 
 void dv_Hj_comp(void)

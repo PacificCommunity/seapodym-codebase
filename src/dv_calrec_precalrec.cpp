@@ -1,7 +1,5 @@
 #include "calpop.h"
-// to sleep...
-#include <thread>
-#include <chrono>
+
 ///Main function with memory control and adjoint functions for: 
 ///precalrec and calrec for adults functions. These routines finalize 
 ///the computation of diagonal elements by adding total mortalily rates 
@@ -23,9 +21,6 @@ unsigned long int restore_long_int_value(void);
 
 void CCalpop::Precalrec_Calrec_adult(const PMap& map, VarMatrices& mat, VarParamCoupled& param, CReadWrite& rw, dvar_matrix& uu, dvar_matrix& mortality, const int t_count, const bool fishing, const int age, const int sp, const int year, const int month, const int jday, const int step_count, const int no_mortality)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	uu = uu + 0.01;
-	/*
 	bool call_calrec_catch = false;
 	if (param.fisheries_no_effort_exist[sp] && fishing){
 		call_calrec_catch = true;
@@ -108,7 +103,6 @@ void CCalpop::Precalrec_Calrec_adult(const PMap& map, VarMatrices& mat, VarParam
 		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_calrec_precalrec);
 	else
 		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_calrec_with_catch_precalrec);
-		*/
 } 
 
 void dv_calrec_precalrec()

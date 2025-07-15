@@ -1,7 +1,5 @@
 #include "VarSimtunaFunc.h"
-// to sleep...
-#include <thread>
-#include <chrono>
+
 ///Main function with memory control and adjoint functions for: 
 ///mortality rates at age functions. These functions include fixed natural mortality
 ///rate and variable component, depending on habitat indices defined for the life stage
@@ -18,8 +16,6 @@ unsigned long int restore_long_int_value(void);
 
 void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, dvar_matrix& H, const int sp, const double mean_age_in_dtau, const int age, const int t_count)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	/*
 	M.initialize();
 
 	double Rage = mat.mortality_range_age[sp][age];
@@ -83,7 +79,6 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_M_sp_comp);
 
-	*/
 }
 
 void dv_M_sp_comp(void)

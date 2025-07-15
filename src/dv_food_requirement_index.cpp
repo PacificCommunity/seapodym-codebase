@@ -1,7 +1,5 @@
 #include "SeapodymCoupled.h"
-// to sleep...
-#include <thread>
-#include <chrono>
+
 ///Main function with memory control and adjoint functions for: 
 ///complex non-linear function that depends on the density of adult biomass
 ///to derive the food requirement and compute the index of depletion in case 
@@ -25,8 +23,6 @@ unsigned long int restore_long_int_value(void);
 
 void SeapodymCoupled::Food_Requirement_Index(dvar_matrix& IFR, dvar_matrix FR_pop, dvar_matrix ISR_denom, const int sp, const int age, const int t_count, const int jday)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	/*
 	IFR.initialize();
 
 	IFR_age_comp(IFR, value(FR_pop), value(ISR_denom), age, sp, t_count);
@@ -50,14 +46,11 @@ void SeapodymCoupled::Food_Requirement_Index(dvar_matrix& IFR, dvar_matrix FR_po
 	save_identifier_string2((char*)"food_requirement_comp_end");
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_food_requirement_index_comp);
-	*/
 }
 
 //Total food requirement function, identical to Spawning_Biomass_comp, except for multiplier
 void SeapodymCoupled::FR_pop_comp(dvar_matrix& FR_pop, const int sp)
 { 	
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	/*
 	FR_pop.initialize();
 	const double R = param->forage_ration[sp];
 
@@ -87,7 +80,6 @@ void SeapodymCoupled::FR_pop_comp(dvar_matrix& FR_pop, const int sp)
 
 		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_FR_pop_comp);
 	}
-		*/
 } 
 
 

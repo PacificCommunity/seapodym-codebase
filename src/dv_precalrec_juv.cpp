@@ -1,7 +1,5 @@
 #include "calpop.h"
-// to sleep...
-#include <thread>
-#include <chrono>
+
 ///Main function with memory control and adjoint functions for: 
 ///precalrec for larval and juvenile life stages. 
 ///This routine precomputes diagonal coefficient for calrec_adre 
@@ -21,8 +19,6 @@ unsigned long int restore_long_int_value(void);
 
 void CCalpop::Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortality, const int t_count,const double move_dtmod)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	/*
 	dmatrix M_c    = value(mortality);
 	dmatrix bm_c   = value(dvarsBM);
 	dmatrix xbet_c = value(Xbet);
@@ -60,7 +56,6 @@ void CCalpop::Precalrec_juv(const PMap& map, CMatrices& mat, dvar_matrix& mortal
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_precalrec_juv_comp);
 //}
-	*/
 }
 
 void dv_precalrec_juv_comp(void)
