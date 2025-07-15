@@ -369,6 +369,9 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				}
 				nt_dtau=0;
 			}
+			int age_extract = t_count;
+			if (age_extract>=param->sp_nb_cohorts[sp]-1) age_extract=0;
+			cerr << setprecision(8) << "t_count = " << t_count << ": sum(density) = " << sum(mat.dvarDensity[sp][age_extract]) << endl;
 			//7. Spawning
 			Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
 		}//end of 'sp' loop
