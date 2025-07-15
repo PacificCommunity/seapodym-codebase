@@ -132,26 +132,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	//----------------------------------------------//
 	//	DATA READING SECTION: U,V,T,O2,PP	//
 	//----------------------------------------------//
-	tcur = 1; 
-	//if ((t_count > nbt_building)) { //CC run with average effort forecast
-	if ((t_count > nbt_building) && (t_count <= nbt_no_forecast)) {
-		//TIME SERIES 
-		t_series = t_count - nbt_building + nbt_start_series;
-		ReadTimeSeriesData(tcur,t_series);	
-	}
-	else if (((t_count <= nbt_building) && (month != past_month)) || (t_count > nbt_no_forecast)) {
-
-		//AVERAGED CLIMATOLOGY DATA
-		ReadClimatologyData(tcur, month);
-	}
-	if (param->type_oxy==1 && month != past_month) {
-		//MONTHLY O2
-		ReadClimatologyOxy(tcur, month);
-	}
-	if (param->type_oxy==2 && qtr != past_qtr) {
-		//QUARTERLY O2
-		ReadClimatologyOxy(tcur, qtr);
-	}
+	tcur = t_count; 
 
 	//------------------------------------------------------------------------------//
 	//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//

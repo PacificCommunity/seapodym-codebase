@@ -19,7 +19,6 @@ void SeapodymCoupled::OnRunFirstStep()
 	//Create time-dependent forcing matrices here:
 	int t0  = t_count;
 	int nbt = nbt_total;
-	if (!param->gcalc()) nbt = t_count;
 	mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
 	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
 	if (!param->larvae_input_aggregated_flag[0])
@@ -46,9 +45,7 @@ void SeapodymCoupled::OnRunFirstStep()
 		}
 	}
 	
-	//In Optimization Mode will read all data at once!
-	if (param->gcalc())
-		ReadAll();
+	ReadAll();
 
 	if (!tuna_spinup && !param->tags_only) 
 		RestoreDistributions(mat.nb_age_built);
