@@ -11,12 +11,6 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, bool writeoutputfiles)
 
 	t_count = nbt_building+1;
 	mat.mats.initialize();
-	for (int sp=0; sp<nb_species; sp++){
-		////////////////////////////////////////////////////////////////////////
-		// HERE dvarCohortDensity will be initialized from an external array ///
-		dvarCohortDensity = mat.init_density_species(sp,age);
-		////////////////////////////////////////////////////////////////////////
-	}
 
 	//Temporarily reading the tau of the first cohort
 	//Need to be just a single number for all cohorts
@@ -49,6 +43,12 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, bool writeoutputfiles)
 	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	for (int sp=0; sp<nb_species; sp++){
+		////////////////////////////////////////////////////////////////////////
+		// HERE dvarCohortDensity will be initialized from an external array ///
+		dvarCohortDensity = mat.init_density_species(sp,age);
+		////////////////////////////////////////////////////////////////////////
+	}
 
 	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
@@ -296,7 +296,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 			}
 		}
 	}//end of 'sp' loop
-	//cerr << setprecision(8) << "t_count = " << t_count << ": sum(density) = " << sum(dvarCohortDensity) << endl;
+	cerr << setprecision(8) << "t_count = " << t_count << ": sum(density) = " << sum(dvarCohortDensity) << endl;
 
 	if (writeoutputfiles){
 		//Output DYM file name
