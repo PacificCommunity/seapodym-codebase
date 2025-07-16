@@ -113,7 +113,7 @@ CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -O3 -DOPT_LIB -Wall -Wno-
 ###### with optimized library ###########################
 LFLAGS= -L$(ADMODEL_HOME)/lib  -ladmbo -lstdc++ -lxml2 -lm
 
-CC=gcc
+CC=mpicxx
 LL=$(CC)
 
 
