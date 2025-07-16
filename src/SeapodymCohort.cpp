@@ -280,7 +280,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	}//end of 'sp' loop
 	cerr << setprecision(8) << "t_count = " << t_count << ": sum(density) = " << sum(dvarCohortDensity) << endl;
 
-	if (writeoutputfiles){
+	/*if (writeoutputfiles){
 		//Output DYM file name
 		string fileout;
 		fileout = param->strdir_output + param->sp_name[0] + "_cohort.dym";//will 
@@ -302,7 +302,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 		rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
 		//update min-max values in header
 		rw.rwbin_minmax(fileout, minval, maxval);
-	}
+	}*/
 
 
 	///////////////////////////////////////////
