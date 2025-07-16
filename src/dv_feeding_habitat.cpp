@@ -1,5 +1,7 @@
 #include "VarSimtunaFunc.h"
-
+// to sleep...
+#include <thread>
+#include <chrono>
 ///Main function with memory control and adjoint functions for: 
 ///feeding habitat for young and adult life stages, with or 
 ///without seasonal switch between habitats depending on the 
@@ -59,7 +61,9 @@ void VarSimtunaFunc::Feeding_Habitat_Index(VarParamCoupled& param, VarMatrices& 
 }
 
 void VarSimtunaFunc::Forage_Scaling(VarParamCoupled& param, VarMatrices& mat, const PMap& map,  int sp, const int t_count){
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));	
 	
+	/*
 	mat.dvarForage.initialize();
 	const int nb_forage = param.get_nbforage();
 //	for (int n=0; n<nb_forage; n++)
@@ -86,6 +90,7 @@ void VarSimtunaFunc::Forage_Scaling(VarParamCoupled& param, VarMatrices& mat, co
 	save_identifier_string2((char*)"F_scaling_comp_end");
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_F_scaling_comp);
+	*/
 }
 
 

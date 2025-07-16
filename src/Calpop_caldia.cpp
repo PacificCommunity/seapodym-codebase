@@ -1,4 +1,7 @@
 #include "calpop.h"
+// to sleep...
+#include <thread>
+#include <chrono>
 
 /////////////////////////////////////////////////////////////////////////////////
 //   -------------------------------------------------------------
@@ -7,7 +10,7 @@
 //     de t=t a t=t+1/2   (a - b - c) 
 //     de t=t+1/2 a t=t+1 (d - e - f) 
 
-//     voir Fournier et Sibert (1994) pour le calcul détaillé
+//     voir Fournier et Sibert (1994) pour le calcul dï¿½taillï¿½
 
 //	si type_diff=0 la diffusion est constante pour source et forage
 //	si type_diff=1 la diffusion est fonction de l'indice d'habitat pour les thons
@@ -22,6 +25,9 @@
 
 void CCalpop::caldia(const PMap& map, const CParam& param, const DMATRIX& diffusion_x, const DMATRIX& advection_x, const DMATRIX& diffusion_y, const DMATRIX& advection_y)
 {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	
+	/*
 	if (map.global==1){
 		caldia_GO(map, param, diffusion_x, advection_x, diffusion_y, advection_y);
 		return;
@@ -78,6 +84,7 @@ void CCalpop::caldia(const PMap& map, const CParam& param, const DMATRIX& diffus
 	}
 	ybet_comp(map);
 //cout << norm(a) << " " <<  norm(c) << " " << norm(d) << " " << norm(e) << " " << norm(f) <<" " << norm(ybet) << endl;
+	*/
 }
 
 void CCalpop::caldia_GO(const PMap& map, const CParam& param, const DMATRIX& diffusion_x, const DMATRIX& advection_x, const DMATRIX& diffusion_y, const DMATRIX& advection_y)
