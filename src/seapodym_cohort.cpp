@@ -1,10 +1,10 @@
 #include <fvar.hpp>
-#include "SeapodymCoupled.h"
+#include "SeapodymCohort.h"
 
 string get_path(const char* full_path);
-void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x);
+/*void Hyperspace_projection(SeapodymCohort& sc, dvar_vector x);
 void Taylor_derivative_test(const char* parfile);
-void Hessian_comp(const char* parfile);
+void Hessian_comp(const char* parfile);*/
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
@@ -49,16 +49,16 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	cout << "\nstarting time: " << ctime(&time_sec) << endl;
 
 	//if mode 2 or 4, redirecting to respective routine and exit.
-	if (cmp_regime == 2){
+	/*if (cmp_regime == 2){
 		Hessian_comp(parfile);
 		return 0;
 	} else if (cmp_regime == 4){
 		Taylor_derivative_test(parfile);
 		return 0;
-	}
+	}*/
 
 	//read parfile
-	SeapodymCoupled sc(parfile);
+	SeapodymCohort sc(parfile);
 
 	//iniitalize variables of optimization
 	const int nvar = sc.nvarcalc();
@@ -101,15 +101,19 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	ios::sync_with_stdio();
 
 	//initialization of simulation
-	sc.prerun_model();
+	int age_start = 0;
+	int t_start = 1;
+	//dmatrix state_start = 0;
+	//sc.prerun_model(age_start, t_start, state_start);
+	sc.prerun_model(age_start, t_start);
 
 	//simulation regime to compute 2d projection of likelihood function
 	//over any two variable parameters (should be specified through parfile)
-	if (cmp_regime == 1){
+	/*if (cmp_regime == 1){
 		gradient_structure::set_NO_DERIVATIVES();
 		Hyperspace_projection(sc,(dvar_vector)x);
 		return 0;
-	}
+	}*/
 
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
@@ -173,8 +177,8 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	return 0;
 }
 
-///1. Option for computing likelihood projection in 2D parametric space.
-void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x)
+/*///1. Option for computing likelihood projection in 2D parametric space.
+void Hyperspace_projection(SeapodymCohort& sc, dvar_vector x)
 {
 //	sc.param->set_gradcalc(false);
 	const int Npars = sc.param->nb_varproj-1;
@@ -230,9 +234,9 @@ void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x)
 	double total_elapsed_time = (double)((time2-time1)/CLOCKS_PER_SEC)/60.0;
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
 	//cleanup_temporary_files();
-}
+}*/
 
-double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
+double run_model(SeapodymCohort& sc, dvar_vector x, dvector& g, const int nvar)
 {
 	double like = 0.0;
 	like = sc.run_cohort((dvar_vector)x);
@@ -244,7 +248,7 @@ double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 	return like;
 }
 
-double run_sim(SeapodymCoupled& sc, dvar_vector x)
+double run_sim(SeapodymCohort& sc, dvar_vector x)
 {
 	double like = 0.0;
 	like = sc.run_cohort((dvar_vector)x);

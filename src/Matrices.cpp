@@ -1,7 +1,9 @@
 //#include "StdAfx.h"
 #include "Matrices.h"
 #include "Utilities.h"
-
+// to sleep...
+#include <thread>
+#include <chrono>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -549,6 +551,8 @@ void CMatrices::MeanVarMovement(const PMap& map, const dmatrix& Adv_x, const dma
 		const double mss, const double sigma_species, const double length_age, const double length_age_max,
 		const int dT, const int sp, const int age)
 {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	/*
 	const double Vvar_slope = 0.0;//0.15;
 	const double Vmax_diff  = 1.9;
 
@@ -568,6 +572,7 @@ void CMatrices::MeanVarMovement(const PMap& map, const dmatrix& Adv_x, const dma
                 mean_speed(sp,age) = mean_speed(sp,age) * cc;
                 mean_diffusion(sp,age) = comp_waverage(map, Diff, sp, age)/dT;
 	}
+				*/
 }
 
 void CMatrices::MeanVarMortality(const PMap& map, const dmatrix& M, const double Mp_max, const double Ms_max, const double Mp_exp, const double Ms_slope, const double mean_age_in_month, const int sp, const int age)

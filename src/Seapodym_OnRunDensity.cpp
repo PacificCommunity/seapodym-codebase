@@ -119,15 +119,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	string fileout;
 	fileout = param->strdir_output + param->sp_name[0] + "_density_output.dym";
 	if (writeoutputfiles){
-		WriteFileHeaders_submodel(fileout,true);
-
-		dvector zlevel;
-		zlevel.allocate(0, nbt_total - 1);
-		zlevel.initialize();
-		for (int n=0; n<nbt_total; n++)
-			zlevel[n] = mat.zlevel[n+nbt_start_series];
-		SaveOneCohortDym(0, true, zlevel);
-
+		WriteFileHeaders_submodel(fileout,true);	
 		if (!param->gcalc())
 			ConsoleOutput(0,0);
 	}
@@ -150,6 +142,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	int pop_built = 1;
 	for (;t_count <= nbt_total; t_count++)
 	{
+
 		//----------------------------------------------//
 		//              INITIALISATION                  //
 		//----------------------------------------------//
@@ -261,8 +254,6 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				pop.Calrec_juv(map, mat, mat.dvarDensity[sp][age], Mortality, tcur, (1-elarvae_dt));//checked
 				age++;
 			}
-			
-
 			//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
 			if (elarvae_model){
 				param->sigma_fcte = sigma_fcte_save;
@@ -278,7 +269,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				func.Juvenile_Habitat_cannibalism(*param, mat, map, Habitat, Total_pop, sp, tcur);
 			} else 
 				func.Juvenile_Habitat(*param, mat, map, Habitat, sp, tcur);
-	
+				
 			//2.4. Transport and mortality of juvenile age classes	
 			for (int n=0; n<param->sp_nb_cohort_jv[sp]; n++){			
 				double mean_age = mean_age_cohort[sp][age];
@@ -378,9 +369,11 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				}
 				nt_dtau=0;
 			}
-			int age_extract = t_count;
+			
+			/*int age_extract = t_count;
 			if (age_extract>=param->sp_nb_cohorts[sp]-1) age_extract=0;
-			cerr << setprecision(8) << "t_count = " << t_count << ": sum(density) = " << sum(mat.dvarDensity[sp][age_extract]) << endl;
+			cerr << setprecision(8) << "t_count = " << t_count << ": sum(density) = " << sum(mat.dvarDensity[sp][age_extract]) << endl;*/
+
 			//7. Spawning
 			Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
 		}//end of 'sp' loop
@@ -414,9 +407,6 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
                         rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
 			//update min-max values in header
 			rw.rwbin_minmax(fileout, minval, maxval);
-
-			dvector zlevel; zlevel.allocate(0, nbt_total - 1);
-			SaveOneCohortDym(0, false, zlevel);
 		}
 		nt_dtau++;
 		past_month=month;

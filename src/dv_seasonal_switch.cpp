@@ -1,5 +1,9 @@
 #include "VarSimtunaFunc.h"
 
+// to sleep...
+#include <thread>
+#include <chrono>
+
 ///Main function with memory control and adjoint functions for: 
 ///computing the seasonal switch function used to switch between habitats.
 ///Forward functions are in seasonal_switch.cpp
@@ -16,6 +20,9 @@ unsigned long int restore_long_int_value(void);
 void VarSimtunaFunc::Seasonal_switch(VarParamCoupled& param, VarMatrices& mat, const PMap& map, int jday, int sp)
 {
 
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+	/*
 	dvariable season_peak  = param.dvarsSpawning_season_peak[sp];
 	dvariable season_start = param.dvarsSpawning_season_start[sp];
 
@@ -40,6 +47,7 @@ void VarSimtunaFunc::Seasonal_switch(VarParamCoupled& param, VarMatrices& mat, c
 	save_identifier_string2((char*)"season_switch_comp_end");
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_seasonal_switch_comp);
+	*/
 }
 
 

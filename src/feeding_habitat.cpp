@@ -1,5 +1,7 @@
 #include "VarSimtunaFunc.h"
-
+// to sleep...
+#include <thread>
+#include <chrono>
 ///Forward functions for:
 ///feeding habitat for young and adult life stages, with or 
 ///without seasonal switch between habitats depending on the 
@@ -19,6 +21,8 @@ double sigma_hss_comp(double temp_age, double temp_max, const int age, const int
 
 void VarSimtunaFunc::Feeding_Habitat(VarParamCoupled& param, VarMatrices& mat, const PMap& map, dvar_matrix& Ha, int sp, int age, const int jday, const int t_count, const int migration_flag)
 {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	/*
 	
 	Feeding_Habitat_Index(param,mat,map,Ha,sp,age,jday,t_count);
 
@@ -34,6 +38,7 @@ void VarSimtunaFunc::Feeding_Habitat(VarParamCoupled& param, VarMatrices& mat, c
 
 		Seasonal_Habitat_Index(param,mat,map,Hs,Ha,sp,age,jday,t_count);
 	}
+		*/
 }
 
 void VarSimtunaFunc::F_scaling_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, const int t)

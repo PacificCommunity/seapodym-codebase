@@ -1,5 +1,7 @@
 #include "VarSimtunaFunc.h"
-
+// to sleep...
+#include <thread>
+#include <chrono>
 ///Main function with memory control and adjoint functions for: 
 ///1) accessibility to forage components (f_accessibility) or to
 ///their respective layers (f_accessibility_layer).
@@ -29,6 +31,9 @@ unsigned long int restore_long_int_value(void);
 
 void VarSimtunaFunc::Faccessibility(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, const int jday, const int t_count, const int pop_built, const int tags_only, const ivector tags_age_solve)
 {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	
+	/*
 	const int nb_forage  = param.get_nbforage();
 	const int nb_layer   = param.nb_layer;
 	const int a0 = param.sp_a0_adult[sp];
@@ -112,10 +117,13 @@ void VarSimtunaFunc::Faccessibility(VarParamCoupled& param, VarMatrices& mat, co
 		}
 	    }
 	}
+	*/
 }
 
 void VarSimtunaFunc::Average_currents(VarParamCoupled& param, VarMatrices& mat, const PMap& map, int age, const int t_count, const int pop_built)
 {
+	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	/*
 	const int nb_layer  = param.nb_layer;
 	mat.dvarsU.initialize();
 	mat.dvarsV.initialize();
@@ -138,6 +146,7 @@ void VarSimtunaFunc::Average_currents(VarParamCoupled& param, VarMatrices& mat, 
 	save_identifier_string2((char*)"Average_currents_comp_end");
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_average_currents_comp);
+	*/
 }
 
 
