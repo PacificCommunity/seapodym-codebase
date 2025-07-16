@@ -18,6 +18,8 @@ public:
 	virtual ~SeapodymCohort() {/*DoNothing*/};
 
 	double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
+	//void prerun_model(int age_start, int t_start, DMATRIX state_start);
+	void prerun_model(int age_start, int t_start);
 
 private:
 	int dtau;
@@ -36,6 +38,8 @@ private:
 
 	dvariable likelihood;
 
+	DMATRIX init_state;
+
 	dvar_matrix Spawning_Habitat;
 	dvar_matrix Total_pop;
 	dvar_matrix Habitat; 
@@ -51,7 +55,7 @@ private:
 
 	void stepForward(bool writeoutputfiles);
 	double OnRunCohort(dvar_vector x, const bool writeoutputfiles);
-	void InitializeCohort(dvar_vector& x, bool writeoutputfiles);
+	void InitializeCohort(dvar_vector& x, const bool writeoutputfiles);
 
 	// Remaining to implement
 	void setStateFromArray(const std::vector<double>& array);

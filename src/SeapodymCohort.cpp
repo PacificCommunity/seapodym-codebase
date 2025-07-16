@@ -5,7 +5,7 @@
 
 
 
-void SeapodymCohort::InitializeCohort(dvar_vector& x, bool writeoutputfiles) 
+void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles) 
 {
 	age = 0;// 0 or older, needs to be defined by the CohortManager?
 
@@ -45,9 +45,10 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, bool writeoutputfiles)
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	for (int sp=0; sp<nb_species; sp++){
 		////////////////////////////////////////////////////////////////////////
-		// HERE dvarCohortDensity will be initialized from an external array ///
-		dvarCohortDensity = mat.init_density_species(sp,age);
+		// HERE init_state will be initialized from an external array ///
+		init_state = mat.init_density_species(sp,age);
 		////////////////////////////////////////////////////////////////////////
+		dvarCohortDensity = init_state;
 	}
 
 	if (param->food_requirement_in_mortality(0)){ 

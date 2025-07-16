@@ -1,12 +1,15 @@
 #include "SeapodymCohort.h"
 
 void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood);
-void SeapodymCoupled::prerun_model()
+//void SeapodymCohort::prerun_model(int age_start, int t_start, DMATRIX state_start)
+void SeapodymCohort::prerun_model(int age_start, int t_start)
 {
 	OnRunFirstStep();
-	int age = 0;
+	t_count = t_start;
+	int age = age_start;
 	int nbt_cohort = param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0] - age;// simulation time for the cohort
 	nbt_total = nbt_cohort;
+	//init_state = state_start;
 }
 
 ///This is the main loop for the model without fishing and fitting of density. 

@@ -101,7 +101,11 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	ios::sync_with_stdio();
 
 	//initialization of simulation
-	sc.prerun_model();
+	int age_start = 0;
+	int t_start = 1;
+	//dmatrix state_start = 0;
+	//sc.prerun_model(age_start, t_start, state_start);
+	sc.prerun_model(age_start, t_start);
 
 	//simulation regime to compute 2d projection of likelihood function
 	//over any two variable parameters (should be specified through parfile)
