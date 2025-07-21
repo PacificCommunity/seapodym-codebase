@@ -44,6 +44,7 @@ SeapodymCoupled_Forage.cpp \
 SeapodymCohort.cpp \
 Seapodym_OnRunCohort.cpp \
 SeapodymCoupled_OnRunFirstStep.cpp \
+SeapodymCohort_OnRunFirstStep.cpp \
 SeapodymCoupled_OnReadForcing.cpp \
 SeapodymCoupled_OnWriteOutput.cpp \
 SeapodymCoupled_ReadTags.cpp \

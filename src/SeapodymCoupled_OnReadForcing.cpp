@@ -1,4 +1,5 @@
 #include "SeapodymCoupled.h"
+#include "SeapodymCohort.h"
 
 void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)	
 {
@@ -140,6 +141,15 @@ void SeapodymCoupled::ReadAll()
 		}
 	}
 	t_count = t_count_init;
+}
+
+void SeapodymCohort::ReadAll()
+{
+	// Read only data at the times needed for the cohort
+	int nbt_total_init = nbt_total;
+	nbt_total = nbt_cohort;
+	SeapodymCoupled::ReadAll();
+	nbt_total = nbt_total_init;
 }
 
 void SeapodymCoupled::RestoreDistributions(ivector& nb_age_built)

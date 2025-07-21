@@ -9,17 +9,22 @@
 #include "SeapodymCoupled.h"
 
 
-
 class SeapodymCohort : public SeapodymCoupled
 {
 public:
 	SeapodymCohort(){/*DoesNothing*/};
-	SeapodymCohort(const char* parfile) : SeapodymCoupled(parfile) {};
+	SeapodymCohort(const char* parfile, int cohort_id) : SeapodymCoupled(parfile) {
+		// Get starting age_class and start time from cohort_id
+		int nb_age_class = param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0];
+		age_start = cohort_id % nb_age_class;
+		t_start = 1 + (cohort_id / nb_age_class);
+	};
 	virtual ~SeapodymCohort() {/*DoNothing*/};
 
 	double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
-	//void prerun_model(int age_start, int t_start, DMATRIX state_start);
-	void prerun_model(int age_start, int t_start);
+	void prerun_model();
+	void OnRunFirstStep();
+	void ReadAll();
 
 private:
 	int dtau;
@@ -35,6 +40,9 @@ private:
 	int nbstoskip; 
 	int age;
 	int nbt_cohort;
+	int cohort_id;
+	int age_start;
+	int t_start;
 
 	dvariable likelihood;
 

@@ -22,7 +22,7 @@ This is the main routine that calls upper-level functions such as
    f) computing 2d projection of likelihood function the pair of parameters (should be specified in parfile).
 */
 
-int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers)
+int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers, int cohort_id)
 {
 	time_t time_sec;
 	time(&time_sec);
@@ -58,7 +58,7 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	}*/
 
 	//read parfile
-	SeapodymCohort sc(parfile);
+	SeapodymCohort sc(parfile, cohort_id);
 
 	//iniitalize variables of optimization
 	const int nvar = sc.nvarcalc();
@@ -101,11 +101,7 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	ios::sync_with_stdio();
 
 	//initialization of simulation
-	int age_start = 0;
-	int t_start = 1;
-	//dmatrix state_start = 0;
-	//sc.prerun_model(age_start, t_start, state_start);
-	sc.prerun_model(age_start, t_start);
+	sc.prerun_model();
 
 	//simulation regime to compute 2d projection of likelihood function
 	//over any two variable parameters (should be specified through parfile)

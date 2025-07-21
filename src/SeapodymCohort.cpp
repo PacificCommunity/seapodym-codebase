@@ -7,9 +7,8 @@
 
 void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles) 
 {
-	age = 0;// 0 or older, needs to be defined by the CohortManager?
-
-	t_count = nbt_building+1;
+	t_count = t_start;
+	age = age_start;
 	mat.mats.initialize();
 
 	//Temporarily reading the tau of the first cohort
@@ -31,7 +30,6 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfile
 	step_fishery_count= 0;
 	jday = 0; 
 	nbstoskip = param->nbsteptoskip; // nb of time step to skip before computing likelihood
-	nbt_cohort = param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0] - age;// simulation time for the cohort
 
 	likelihood = 0.0;
 
@@ -45,7 +43,8 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfile
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	for (int sp=0; sp<nb_species; sp++){
 		////////////////////////////////////////////////////////////////////////
-		// HERE init_state will be initialized from an external array ///
+		// HERE init_state will be initialized from other cohorts or from initilization file ///
+		//init_state = get_initial_state(cohort_id);
 		init_state = mat.init_density_species(sp,age);
 		////////////////////////////////////////////////////////////////////////
 		dvarCohortDensity = init_state;
@@ -267,7 +266,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 						param->length(sp,param->sp_nb_cohorts[sp]-1),
 						deltaT,sp,age);
 				}
-					
+
 				mat.adult_habitat(sp,tcur,param->age_compute_habitat[sp][age]) = value(Habitat);
 
 				pop.Precalrec_Calrec_adult(map,mat,*param,rw,

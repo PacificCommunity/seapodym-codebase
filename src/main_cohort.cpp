@@ -6,7 +6,7 @@
 using std::cout;
 void help(char* argv0);
 int OptionToCode(char* Option);
-int seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers);
+int seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id);
 bool read_memory_options(int argc, char** argv, const bool grad_calc);
 
 int main(int argc, char** argv) {
@@ -37,7 +37,11 @@ int main(int argc, char** argv) {
 	}
 
 	// Finalization of MPI
-	err = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers);
+	////////////////////////////////////////////////////////////////////////
+	// cohort_id to be controlled by CohortManager                       ///
+	int cohort_id = 0;
+	////////////////////////////////////////////////////////////////////////
+	err = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers, cohort_id);
 	err = MPI_Finalize();
 
 	return 0;

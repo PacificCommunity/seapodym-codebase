@@ -1,6 +1,7 @@
 #include "SeapodymCoupled.h"
+#include "SeapodymCohort.h"
 
-void SeapodymCoupled::OnRunFirstStep()
+void SeapodymCohort::OnRunFirstStep()
 {
 	sumFprime.allocate(0, nb_forage - 1); 		sumFprime.initialize();
 	sumF.allocate(0, nb_forage - 1);		sumF.initialize();
@@ -15,11 +16,13 @@ void SeapodymCoupled::OnRunFirstStep()
 	Date::idatymd(param->ndatini, year, month, day);
 	param->set_nbt(nbt_total);
 	nbt_building = nbt_spinup_tuna;
-	t_count = nbt_building+1;
+	t_count = t_start;
+	nbt_cohort = 1 + param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0] - age_start;
+	if (nbt_cohort > nbt_total) nbt_cohort = nbt_total;
+
 	//Create time-dependent forcing matrices here:
 	int t0  = t_count;
-	int nbt = nbt_total;
-	if (!param->gcalc()) nbt = t_count;
+	int nbt = nbt_cohort;
 	mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
 	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
 	if (!param->larvae_input_aggregated_flag[0])
@@ -46,9 +49,7 @@ void SeapodymCoupled::OnRunFirstStep()
 		}
 	}
 	
-	//In Optimization Mode will read all data at once!
-	if (param->gcalc())
-		ReadAll();
+	ReadAll();
 
 	if (!tuna_spinup && !param->tags_only) 
 		RestoreDistributions(mat.nb_age_built);
