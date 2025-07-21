@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <mpi.h>
+
 using std::cout;
 void help(char* argv0);
 int OptionToCode(char* Option);
@@ -8,6 +10,12 @@ int seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_
 bool read_memory_options(int argc, char** argv, const bool grad_calc);
 
 int main(int argc, char** argv) {
+
+	// Initialization of MPI
+	int err;
+	err = MPI_Init(&argc, &argv);
+	
+	
 	int cmp_regime = -1;
 	bool reset_buffers = false;
 	int k=1;
@@ -27,7 +35,12 @@ int main(int argc, char** argv) {
 			grad_calc = true;
 		reset_buffers = read_memory_options(argc, argv, grad_calc);	
 	}
-	return seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers);
+
+	// Finalization of MPI
+	err = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers);
+	err = MPI_Finalize();
+
+	return 0;
 }
 
 
