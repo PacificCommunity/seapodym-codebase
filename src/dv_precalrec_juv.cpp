@@ -118,7 +118,7 @@ void dv_precalrec_juv_comp(void)
 	dfw.save_dmatrix_derivatives(w_pos);
 //keep it temporally, until mortality of early larvae remains fixed	
 //this condition will work for all elarvae_dt <= 14 days
-	if (move_dtmod>.5)
+	//if (move_dtmod>.5)
 		dfM.save_dmatrix_derivatives(M_pos);
 
 }
