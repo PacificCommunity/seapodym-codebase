@@ -13,6 +13,8 @@ void dv_M_sp_comp(void);
 void dv_Scaling_factor_sstdep_larvae_mortality_comp(void);
 void save_long_int_value(unsigned long int x);
 unsigned long int restore_long_int_value(void);
+void dv_M_early_sp_comp(void);
+double sigmoid1(const double tau, const double delta);
 
 void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, dvar_matrix& H, const int sp, const double mean_age_in_dtau, const int age, const int t_count)
 {
@@ -266,3 +268,109 @@ void dv_Scaling_factor_sstdep_larvae_mortality_comp(void)
 	dfS.save_dmatrix_derivatives(S_pos);
 }
 
+void VarSimtunaFunc::M_early_sp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const dmatrix& sst, const dmatrix& pp, const int sp)
+{
+	double mort_min = param.elarvae_mortality_min[sp];
+	double mort_inc = param.elarvae_mortality_inc[sp];
+	double sst_low  = param.elarvae_sst_low[sp];
+	double sst_high = param.elarvae_sst_high[sp];
+	double slp_low  = param.elarvae_slope_low[sp];
+	double slp_high = param.elarvae_slope_high[sp];
+
+	dvariable a_sst, b_sst;
+	if (!param.uncouple_sst_larvae[sp]){
+		a_sst = param.dvarsA_sst_spawning[sp];
+		b_sst = param.dvarsB_sst_spawning[sp];
+	} else {
+		a_sst = param.dvarsA_sst_larvae[sp];
+		b_sst = param.dvarsB_sst_larvae[sp];
+	}
+	dvmatr1 = a_sst;
+	dvmatr2 = b_sst;
+
+	for (int i = map.imin; i <= map.imax; i++){
+		const int jmin = map.jinf[i];
+		const int jmax = map.jsup[i];
+		for (int j = jmin; j <= jmax; j++){
+			if (map.carte(i,j)){
+				//1. eggs survival function derived from observations
+				double f_sst  = sigmoid1(slp_low,sst(i,j)-sst_low) + sigmoid1(slp_high,sst_high-sst(i,j))-1;
+				//2. early larvae mortality due to thermal factor as in Hs
+				//To be added with variable parameters if proven necessary (Nov2024)   
+				double f_sst2 = exp(-pow(sst(i,j)-value(b_sst), 2.0)/(2.0*pow(value(a_sst), 2.0)));
+
+				//3. other factors influencing early larvae survival
+				double f_prey = 1.0;//no other factors
+
+				M.elem_value(i,j) = mort_min + mort_inc*(1-f_prey*f_sst*f_sst2);
+			}
+		}
+	}
+
+	unsigned long int pmap   = (unsigned long int)&map;
+	verify_identifier_string((char*)"M_early_sp_comp_begin");
+	save_double_value(mort_inc);
+	save_double_value(sst_low);
+	save_double_value(sst_high);
+	save_double_value(slp_low);
+	save_double_value(slp_high);
+	a_sst.save_prevariable_value();
+	b_sst.save_prevariable_value();
+	sst.save_dmatrix_value();
+	sst.save_dmatrix_position();
+	dvmatr1.save_dvar_matrix_position();
+	dvmatr2.save_dvar_matrix_position();
+	M.save_dvar_matrix_position();
+	save_long_int_value(pmap);
+	verify_identifier_string((char*)"M_early_sp_comp_end");
+
+	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_M_early_sp_comp);
+}
+
+
+void dv_M_early_sp_comp(void)
+{
+	verify_identifier_string((char*)"M_early_sp_comp_end");
+	unsigned long int pos_map  = restore_long_int_value();
+	const dvar_matrix_position M_pos  = restore_dvar_matrix_position();
+	const dvar_matrix_position b_sst_pos  = restore_dvar_matrix_position();
+	const dvar_matrix_position a_sst_pos = restore_dvar_matrix_position();
+	const dmatrix_position sst_pos  = restore_dmatrix_position();
+	dmatrix sst = restore_dmatrix_value(sst_pos);
+	double b_sst = restore_prevariable_value();
+    double a_sst = restore_prevariable_value();
+    const double slp_high = restore_double_value();
+    const double slp_low = restore_double_value();
+    const double sst_high = restore_double_value();
+    const double sst_low = restore_double_value();
+    const double mort_inc = restore_double_value();
+	verify_identifier_string((char*)"M_early_sp_comp_begin");
+
+	dmatrix dfA_sst = restore_dvar_matrix_derivatives(a_sst_pos);
+	dmatrix dfB_sst = restore_dvar_matrix_derivatives(b_sst_pos);
+	dmatrix dfM = restore_dvar_matrix_derivatives(M_pos);
+	PMap* map = (PMap*) pos_map;
+
+	const int imax = map->imax;
+	const int imin = map->imin;
+	for (int i = imax; i >= imin; i--){
+		const int jmin = map->jinf[i];
+		const int jmax = map->jsup[i];
+		for (int j = jmax; j >= jmin; j--){
+			if (map->carte(i,j)){
+				double f_sst  = sigmoid1(slp_low,sst(i,j)-sst_low) + sigmoid1(slp_high,sst_high-sst(i,j))-1;
+				double f_prey = 1.0;
+				double f_sst2 = exp(-pow(sst(i,j)-b_sst,2.0)/(2.0*pow(a_sst, 2.0)));
+
+				double df_sst2 = -dfM(i,j) * mort_inc * f_prey * f_sst;
+				dfA_sst(i,j) += df_sst2 * pow(sst(i,j)-b_sst, 2.0) * f_sst2 / pow(a_sst, 3.0);
+				dfB_sst(i,j) += df_sst2 * f_sst2 * (sst(i,j)-b_sst) / pow(a_sst, 2.0);
+				df_sst2 = 0.0;
+			}
+		}
+	}
+
+	dfA_sst.save_dmatrix_derivatives(a_sst_pos);
+	dfB_sst.save_dmatrix_derivatives(b_sst_pos);
+	dfM.save_dmatrix_derivatives(M_pos);
+}
