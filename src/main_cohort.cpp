@@ -2,11 +2,12 @@
 #include <cstring>
 #include <cstdlib>
 #include <mpi.h>
+#include "SeapodymCohort.h"
 
 using std::cout;
 void help(char* argv0);
 int OptionToCode(char* Option);
-int seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id);
+SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id);
 bool read_memory_options(int argc, char** argv, const bool grad_calc);
 
 int main(int argc, char** argv) {
@@ -36,12 +37,14 @@ int main(int argc, char** argv) {
 		reset_buffers = read_memory_options(argc, argv, grad_calc);	
 	}
 
-	// Finalization of MPI
-	////////////////////////////////////////////////////////////////////////
 	// cohort_id to be controlled by CohortManager                       ///
 	int cohort_id = 0;
 	////////////////////////////////////////////////////////////////////////
-	err = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers, cohort_id);
+	SeapodymCohort* scp = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers, cohort_id);
+	delete scp;
+
+	// Finalization of MPI
+	////////////////////////////////////////////////////////////////////////
 	err = MPI_Finalize();
 
 	return 0;
