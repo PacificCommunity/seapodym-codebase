@@ -37,7 +37,7 @@ void  CParam::delete_param(bool flag)
 	if ((flag) && (nb_region))
 	{
 		for (int i=0 ; i<nb_region ; i++)
-			delete [] area[i];
+			delete area[i];
 		delete [] area;
 	}
 	if (nb_EEZ) Utilities::delete1d(EEZ_name);
