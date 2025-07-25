@@ -72,34 +72,34 @@ SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool 
 	//writing temporal output to parfile folder	
 
 	//function minimizer class
-	fmm fmc(nvar);
+	// fmm fmc(nvar);
 
-	//flags for function minimizer
-	fmc.iprint = 1;
-	fmc.crit = sc.get_crit();//0.1;
-	fmc.imax = 30;
-	fmc.scroll_flag = 1;
-	fmc.ifn = 0;
-	fmc.maxfn = sc.get_maxfn();//2000;
-	if (fmc.maxfn <= 0)
-		fmc.ireturn = -1; 
+	// //flags for function minimizer
+	// fmc.iprint = 1;
+	// fmc.crit = sc.get_crit();//0.1;
+	// fmc.imax = 30;
+	// fmc.scroll_flag = 1;
+	// fmc.ifn = 0;
+	// fmc.maxfn = sc.get_maxfn();//2000;
+	// if (fmc.maxfn <= 0)
+	// 	fmc.ireturn = -1; 
 
-	//if this flag is 0 then the gradient will not be computed
-	int compute_gradient = 1;
-	if (cmp_regime == 0){
-		sc.param->set_gradcalc(false);
-		compute_gradient = 0;
-	}
+	// //if this flag is 0 then the gradient will not be computed
+	// int compute_gradient = 1;
+	// if (cmp_regime == 0){
+	// 	sc.param->set_gradcalc(false);
+	// 	compute_gradient = 0;
+	// }
 
-	double likelihood = 0;
-	double elapsed_time = 0;
+	// double likelihood = 0;
+	// double elapsed_time = 0;
 
-	//gradient vector allocation and initialization
-	dvector g(1, nvar); g.initialize();
+	// //gradient vector allocation and initialization
+	// dvector g(1, nvar); g.initialize();
 
-	int idx = 0;
-	int itr = 0;
-	ios::sync_with_stdio();
+	// int idx = 0;
+	// int itr = 0;
+	// ios::sync_with_stdio();
 
 	//initialization of simulation
 	sc.prerun_model();
