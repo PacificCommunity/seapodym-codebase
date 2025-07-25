@@ -28,34 +28,10 @@ SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool 
 	time(&time_sec);
 	const time_t time0 = time_sec;
 
-	/*//-----Memory stack sizes for dvariables and derivatives storage------
-	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
-	long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
-	bool grad_calc = false;
-	if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
-	buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
-	if (reset_buffers)
-		buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
-
-	gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
-	gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
-	gradient_structure gs(gs_var_buffer);*/
-	//--------------------------------------------------------------------		
-
-
 	int out_hessian = 0;
 	gradient_structure::set_USE_FOR_HESSIAN(out_hessian);
 
 	cout << "\nstarting time: " << ctime(&time_sec) << endl;
-
-	//if mode 2 or 4, redirecting to respective routine and exit.
-	/*if (cmp_regime == 2){
-		Hessian_comp(parfile);
-		return 0;
-	} else if (cmp_regime == 4){
-		Taylor_derivative_test(parfile);
-		return 0;
-	}*/
 
 	//read parfile
 	SeapodymCohort* scp = new SeapodymCohort(parfile, cohort_id);
@@ -69,88 +45,12 @@ SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool 
 	sc.xinit(x, x_names);
 	cout << "Total number of variables: " << nvar << '\n'<<'\n';
 
-	//writing temporal output to parfile folder	
-
-	//function minimizer class
-	// fmm fmc(nvar);
-
-	// //flags for function minimizer
-	// fmc.iprint = 1;
-	// fmc.crit = sc.get_crit();//0.1;
-	// fmc.imax = 30;
-	// fmc.scroll_flag = 1;
-	// fmc.ifn = 0;
-	// fmc.maxfn = sc.get_maxfn();//2000;
-	// if (fmc.maxfn <= 0)
-	// 	fmc.ireturn = -1; 
-
-	// //if this flag is 0 then the gradient will not be computed
-	// int compute_gradient = 1;
-	// if (cmp_regime == 0){
-	// 	sc.param->set_gradcalc(false);
-	// 	compute_gradient = 0;
-	// }
-
-	// double likelihood = 0;
-	// double elapsed_time = 0;
-
-	// //gradient vector allocation and initialization
-	// dvector g(1, nvar); g.initialize();
-
-	// int idx = 0;
-	// int itr = 0;
-	// ios::sync_with_stdio();
-
 	//initialization of simulation
 	sc.prerun_model();
-
-	//simulation regime to compute 2d projection of likelihood function
-	//over any two variable parameters (should be specified through parfile)
-	/*if (cmp_regime == 1){
-		gradient_structure::set_NO_DERIVATIVES();
-		Hyperspace_projection(sc,(dvar_vector)x);
-		return 0;
-	}*/
 
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
 	string newparfile  = "newparfile.xml";
-
-
-	// //clock_t time1 = clock();
-	// time(&time_sec);
-	// time_t time1 = time_sec;
-	// //'run_coupled' runs the model in forward (simulation) mode
-	// //'gradcalc' runs backward (adjoint) mode
-	// //'save_statistics' stores current information on function minimization
-	// if (compute_gradient){
-	// 	string dirout = get_path(parfile);
-	// 	tempparfile = dirout +"/tempparfile.xml";
-	// 	newparfile  = dirout +"/newparfile.xml";
-	// 	cout << "\nentering minimization loop" << endl;
-	// 	while (fmc.ireturn >= 0) {
-	// 		//call function minimizer
-	// 		fmc.fmin(likelihood, x, g);
-
-	// 		//update the statistics.out file if the solution has been improved
-	// 		int itn = fmc.itn;
-	// 		if ((itn==itr+1 && (idx>=1))){
-	// 			time(&time_sec);
-	// 			time_t time2 = time_sec;
-	// 			elapsed_time += (double)(time2-time1)/60.0;
-	// 			time1 = time2;
-	// 			sc.save_statistics(dirout,x_names,likelihood,g,elapsed_time,idx-1,itr,nvar);
-	// 			sc.write(tempparfile.c_str());
-	// 			itr = itn;
-	// 		}
-	// 		//reset control parameters and run the model and its adjoint
-	// 		if (fmc.ireturn > 0) {
-	// 			likelihood = sc.run_cohort((dvar_vector)x);
-	// 			gradcalc(nvar,g); 
-	// 			cout << "function evaluation " << idx++ << endl;
-	// 		}
-	// 	}
-	// }
 
 	//after minimization is finished one simulation will 
 	//be run with estimated parameters; outputs will be saved
@@ -169,7 +69,6 @@ SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool 
 	time_t time2 = time_sec;
 	double total_elapsed_time = (double)(time2-time0) / 60.0;
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
-//exit(1);
 
 	return scp;
 }
