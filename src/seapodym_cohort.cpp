@@ -117,40 +117,40 @@ SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool 
 	string newparfile  = "newparfile.xml";
 
 
-	//clock_t time1 = clock();
-	time(&time_sec);
-	time_t time1 = time_sec;
-	//'run_coupled' runs the model in forward (simulation) mode
-	//'gradcalc' runs backward (adjoint) mode
-	//'save_statistics' stores current information on function minimization
-	if (compute_gradient){
-		string dirout = get_path(parfile);
-		tempparfile = dirout +"/tempparfile.xml";
-		newparfile  = dirout +"/newparfile.xml";
-		cout << "\nentering minimization loop" << endl;
-		while (fmc.ireturn >= 0) {
-			//call function minimizer
-			fmc.fmin(likelihood, x, g);
+	// //clock_t time1 = clock();
+	// time(&time_sec);
+	// time_t time1 = time_sec;
+	// //'run_coupled' runs the model in forward (simulation) mode
+	// //'gradcalc' runs backward (adjoint) mode
+	// //'save_statistics' stores current information on function minimization
+	// if (compute_gradient){
+	// 	string dirout = get_path(parfile);
+	// 	tempparfile = dirout +"/tempparfile.xml";
+	// 	newparfile  = dirout +"/newparfile.xml";
+	// 	cout << "\nentering minimization loop" << endl;
+	// 	while (fmc.ireturn >= 0) {
+	// 		//call function minimizer
+	// 		fmc.fmin(likelihood, x, g);
 
-			//update the statistics.out file if the solution has been improved
-			int itn = fmc.itn;
-			if ((itn==itr+1 && (idx>=1))){
-				time(&time_sec);
-				time_t time2 = time_sec;
-				elapsed_time += (double)(time2-time1)/60.0;
-				time1 = time2;
-				sc.save_statistics(dirout,x_names,likelihood,g,elapsed_time,idx-1,itr,nvar);
-				sc.write(tempparfile.c_str());
-				itr = itn;
-			}
-			//reset control parameters and run the model and its adjoint
-			if (fmc.ireturn > 0) {
-				likelihood = sc.run_cohort((dvar_vector)x);
-				gradcalc(nvar,g); 
-				cout << "function evaluation " << idx++ << endl;
-			}
-		}
-	}
+	// 		//update the statistics.out file if the solution has been improved
+	// 		int itn = fmc.itn;
+	// 		if ((itn==itr+1 && (idx>=1))){
+	// 			time(&time_sec);
+	// 			time_t time2 = time_sec;
+	// 			elapsed_time += (double)(time2-time1)/60.0;
+	// 			time1 = time2;
+	// 			sc.save_statistics(dirout,x_names,likelihood,g,elapsed_time,idx-1,itr,nvar);
+	// 			sc.write(tempparfile.c_str());
+	// 			itr = itn;
+	// 		}
+	// 		//reset control parameters and run the model and its adjoint
+	// 		if (fmc.ireturn > 0) {
+	// 			likelihood = sc.run_cohort((dvar_vector)x);
+	// 			gradcalc(nvar,g); 
+	// 			cout << "function evaluation " << idx++ << endl;
+	// 		}
+	// 	}
+	// }
 
 	//after minimization is finished one simulation will 
 	//be run with estimated parameters; outputs will be saved
