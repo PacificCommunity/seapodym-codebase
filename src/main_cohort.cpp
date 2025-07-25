@@ -53,13 +53,28 @@ int main(int argc, char** argv) {
 	gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
 	gradient_structure gs(gs_var_buffer);
 
+	int num_age_groups = cmdLine.get<int>("-na");
+	std::vector<int> cohort_ids;
+	for (int ia = 0; ia < num_age_groups; ++ia) {
+		if (ia % num_workers == workerId) {
+			cohort_ids.push_back(ia);
+		}
+	}
 
-	// Initially
-	int cohort_id = 0; //workerId;
-	cout << "Worker ID: " << cohort_id << " argv[argc-1]=" << argv[argc-1] << " cmp_regime=" << cmp_regime << " reset_buffers=" << reset_buffers << std::endl;
+	// cohorts handled by this worker
+	std::vector< SeapodymCohort* > cohorts;
 	const char* parfile = cmdLine.get<std::string>("-s").c_str();
-	SeapodymCohort* scp = seapodym_cohort(parfile, cmp_regime, reset_buffers, cohort_id, gs);
-	delete scp;
+	for (auto cohort_id : cohort_ids) {
+		SeapodymCohort* scp = seapodym_cohort(parfile, cmp_regime, reset_buffers, cohort_id, gs);
+		cohorts.push_back(scp);
+	}
+
+	// TO DO
+
+	// Clean up 
+	for (auto scp : cohorts) {
+		delete scp;
+	}
 
 	// Finalization of MPI
 	////////////////////////////////////////////////////////////////////////
