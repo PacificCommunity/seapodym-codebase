@@ -7,8 +7,10 @@
 using std::cout;
 void help(char* argv0);
 int OptionToCode(char* Option);
-SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id);
+SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs);
 bool read_memory_options(int argc, char** argv, const bool grad_calc);
+void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
+void buffers_set(long int &mv, long int &mc, long int &mg);
 
 int main(int argc, char** argv) {
 
@@ -40,7 +42,23 @@ int main(int argc, char** argv) {
 	// cohort_id to be controlled by CohortManager                       ///
 	int cohort_id = 0;
 	////////////////////////////////////////////////////////////////////////
-	SeapodymCohort* scp = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers, cohort_id);
+
+
+	//-----Memory stack sizes for dvariables and derivatives storage------
+	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
+	long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
+	bool grad_calc = false;
+	if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
+	buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
+	if (reset_buffers)
+		buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
+
+	gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
+	gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
+	gradient_structure gs(gs_var_buffer);
+
+
+	SeapodymCohort* scp = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers, cohort_id, gs);
 	delete scp;
 
 	// Finalization of MPI

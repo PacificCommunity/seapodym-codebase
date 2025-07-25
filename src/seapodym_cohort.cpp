@@ -5,8 +5,8 @@ string get_path(const char* full_path);
 /*void Hyperspace_projection(SeapodymCohort& sc, dvar_vector x);
 void Taylor_derivative_test(const char* parfile);
 void Hessian_comp(const char* parfile);*/
-void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
-void buffers_set(long int &mv, long int &mc, long int &mg);
+//void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
+//void buffers_set(long int &mv, long int &mc, long int &mg);
 
 /*!
 \brief The first function to be executed.
@@ -22,13 +22,13 @@ This is the main routine that calls upper-level functions such as
    f) computing 2d projection of likelihood function the pair of parameters (should be specified in parfile).
 */
 
-SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers, int cohort_id)
+SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs)
 {
 	time_t time_sec;
 	time(&time_sec);
 	const time_t time0 = time_sec;
 
-	//-----Memory stack sizes for dvariables and derivatives storage------
+	/*//-----Memory stack sizes for dvariables and derivatives storage------
 	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
 	long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
 	bool grad_calc = false;
@@ -39,7 +39,7 @@ SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool 
 
 	gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
 	gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
-	gradient_structure gs(gs_var_buffer);
+	gradient_structure gs(gs_var_buffer);*/
 	//--------------------------------------------------------------------		
 
 
