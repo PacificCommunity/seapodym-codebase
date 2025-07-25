@@ -17,32 +17,14 @@ int main(int argc, char** argv) {
 	// Initialization of MPI
 	int err;
 	err = MPI_Init(&argc, &argv);
+	int workerId = 0;
+	err = MPI_Comm_rank(MPI_COMM_WORLD, &workerId);
+	int num_workers = 1;
+	err = MPI_Comm_size(MPI_COMM_WORLD, &num_workers);
 	
 	
-	int cmp_regime = -1;
+	int cmp_regime = 0;
 	bool reset_buffers = false;
-	int k=1;
-	char *cmdLineOption = argv[k];
-	//Note, other options are yet to be integrated from the seapodym_coupled code
-	//Currently only simulation, optimization and Hessian calculation are possible
-	cmp_regime = OptionToCode(cmdLineOption);
-	if (cmp_regime==-1) k=0;
-	if (cmp_regime==-3) help(argv[0]);
-	if (argc < k+2) {
-		cout << "Too few parameters... \n"; 
-		help(argv[0]);
-	}
-	if ((cmp_regime==-1 && argc>2) || (cmp_regime>=0 && argc>3)){
-		bool grad_calc = false;
-		if (cmp_regime == -1 || cmp_regime == 2)
-			grad_calc = true;
-		reset_buffers = read_memory_options(argc, argv, grad_calc);	
-	}
-
-	// cohort_id to be controlled by CohortManager                       ///
-	int cohort_id = 0;
-	////////////////////////////////////////////////////////////////////////
-
 
 	//-----Memory stack sizes for dvariables and derivatives storage------
 	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
@@ -58,6 +40,9 @@ int main(int argc, char** argv) {
 	gradient_structure gs(gs_var_buffer);
 
 
+	// Initially
+	int cohort_id = 0; //workerId;
+	cout << "Worker ID: " << cohort_id << " argv[argc-1]=" << argv[argc-1] << " cmp_regime=" << cmp_regime << " reset_buffers=" << reset_buffers << std::endl;
 	SeapodymCohort* scp = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers, cohort_id, gs);
 	delete scp;
 
