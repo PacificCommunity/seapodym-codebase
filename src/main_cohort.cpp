@@ -3,12 +3,10 @@
 #include <cstdlib>
 #include <mpi.h>
 #include "SeapodymCohort.h"
+#include <CmdLineArgParser.h>
 
 using std::cout;
-void help(char* argv0);
-int OptionToCode(char* Option);
 SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs);
-bool read_memory_options(int argc, char** argv, const bool grad_calc);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
@@ -25,6 +23,22 @@ int main(int argc, char** argv) {
 	
 	int cmp_regime = 0;
 	bool reset_buffers = false;
+
+	CmdLineArgParser cmdLine;
+	cmdLine.set("-s", std::string("initparfile.xml"), "Input parameter file");
+	cmdLine.set("-na", 1, "Number of age groups");
+	// Parse the command line arguments
+    bool success = cmdLine.parse(argc, argv);
+    bool help = cmdLine.get<bool>("-help") || cmdLine.get<bool>("-h");
+    if (!success) {
+        std::cerr << "Error parsing command line arguments." << std::endl;
+        cmdLine.help();
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
+    if (help) {
+        cmdLine.help();
+        MPI_Abort(MPI_COMM_WORLD, 1);
+    }
 
 	//-----Memory stack sizes for dvariables and derivatives storage------
 	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
@@ -43,7 +57,8 @@ int main(int argc, char** argv) {
 	// Initially
 	int cohort_id = 0; //workerId;
 	cout << "Worker ID: " << cohort_id << " argv[argc-1]=" << argv[argc-1] << " cmp_regime=" << cmp_regime << " reset_buffers=" << reset_buffers << std::endl;
-	SeapodymCohort* scp = seapodym_cohort(argv[argc-1],cmp_regime,reset_buffers, cohort_id, gs);
+	const char* parfile = cmdLine.get<std::string>("-s").c_str();
+	SeapodymCohort* scp = seapodym_cohort(parfile, cmp_regime, reset_buffers, cohort_id, gs);
 	delete scp;
 
 	// Finalization of MPI
@@ -51,37 +66,6 @@ int main(int argc, char** argv) {
 	err = MPI_Finalize();
 
 	return 0;
-}
-
-
-int OptionToCode(char* op) {
-
-	const int N = 12;
-	const char *cmdop[N] = {"-s","-p","-H","-t","-h","-v","--simulation","--likelihood-projection","--hessian","--taylor-test","--help","--version"};
-	int cmpCode[N] = {0,1,2,4,-3,-2,0,1,2,4,-3,-2};
-	for (int i=0; i<N; i++)
-		if (strcmp(op,cmdop[i])==0){
-			if (cmpCode[i]==-2) {
-				cout << "SEAPODYM 4.0 without fishing for parameter estimation using population density \n";
-				cout << "Copyright (C) 2022, SPC, CLS, University of Hawaii.\n";
-				exit(0);
-			}
-			return cmpCode[i];
-		}
-	return -1;//by default - optimization
-}
-
-void help(char* argv0) {
-
-	cout << "Usage:" << argv0 << " [option] parfile \n";
-	cout << "      IMPORTANT!!! If [option] is omitted, then application will start optimization run! \n"; 
-	cout << "Options: \n";
-	cout << "  -h, --help \t\t\t Print this message and exit.\n";
-	cout << "  -H, --hessian \t\t Compute Hessian matrix.\n";
-	cout << "  -t, --taylor-test   \t\t Perform Taylor derivative test with central differencing.\n";
-	cout << "  -s, --simulation \t\t Run simulation without optimization.\n";
-	cout << "  -v, --version \t\t Print version number and exit.\n";
-	exit(0);
 }
 
 
