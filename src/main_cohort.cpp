@@ -64,12 +64,41 @@ int main(int argc, char** argv) {
 	// cohorts handled by this worker
 	std::vector< SeapodymCohort* > cohorts;
 	const char* parfile = cmdLine.get<std::string>("-s").c_str();
+
+	// Initialize the cohorts for each age group assigned to this worker
+	int out_hessian = 0;
+	gradient_structure::set_USE_FOR_HESSIAN(out_hessian);
+
+	// //initialize variables of optimization
+	// VarParamCoupled var;
+	// var.read(parfile);
+	// const int nvar = var.nvarcalc();
+	// independent_variables x(1, nvar);
+	// adstring_array x_names(1, nvar);
+
 	for (auto cohort_id : cohort_ids) {
+
 		SeapodymCohort* scp = seapodym_cohort(parfile, cmp_regime, reset_buffers, cohort_id, gs);
+
+		// //read parfile
+		// SeapodymCohort* scp = new SeapodymCohort(parfile, cohort_id);
+		// SeapodymCohort& sc = *scp;
+
+		// sc.xinit(x, x_names);
+		// cout << "Total number of variables: " << nvar << '\n'<<'\n';
+
+		// //initialization of simulation
+		// sc.prerun_model();
+
 		cohorts.push_back(scp);
 	}
 
-	// TO DO
+	// TO DO, run a single step for each cohort habdled by this worker
+	for (auto scp : cohorts) {
+		//scp->prerun_model();
+		scp->OnRunFirstStep();
+		// scp->stepForward(false); // false means no output files written
+	}
 
 	// Clean up 
 	for (auto scp : cohorts) {

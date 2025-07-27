@@ -54,7 +54,9 @@ SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool 
 	//after minimization is finished one simulation will 
 	//be run with estimated parameters; outputs will be saved
 	gradient_structure::set_NO_DERIVATIVES();
+
 	sc.run_cohort((dvar_vector)x, true);
+
 	sc.write(newparfile.c_str());
 
 	remove(tempparfile.c_str());
