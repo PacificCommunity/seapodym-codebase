@@ -86,7 +86,11 @@ int main(int argc, char** argv) {
 	if (workerId == 0) {
 		// Manager
 		TaskManager manager(MPI_COMM_WORLD, numTasks);
-		std::vector<int> errs = manager.run();
+		std::vector<int> task_ids = manager.run();
+		for (auto task_id : task_ids) {
+			std::cout << task_id << ", ";	
+		}
+		std::cout << std::endl;
 
 	} else {
 		// Worker
