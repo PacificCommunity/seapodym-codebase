@@ -493,5 +493,3 @@ void CParam::rbin_mat2d(string file_in, DMATRIX& mat2d, int nlat, int nlong, int
 
 	litbin.close();
 }
-
-
