@@ -68,10 +68,11 @@ private:
 	
 	int pop_built;
 
-	void stepForward(bool writeoutputfiles);
 	double OnRunCohort(dvar_vector x, const bool writeoutputfiles);
 	void InitializeCohort(dvar_vector& x, const bool writeoutputfiles);
 
+public:
+	void stepForward(bool writeoutputfiles);
 	// Remaining to implement
 	void setStateFromArray(const std::vector<double>& array);
 	std::vector<double> getArrayFromState();

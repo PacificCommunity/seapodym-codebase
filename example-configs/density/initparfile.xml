@@ -93,7 +93,7 @@
 <!--MODEL INPUT-OUTPUT-->
 <!--================= -->
 <!-- Forcing Directory -->
-<strdir value="$/INTERIM-2x30d-PO/"/>
+<strdir value="/home/pletzera/seapodym-pletzer/example-configs/skipjack/data/forcings/INTERIM-2x30d-PO/"/>
 
 <!--Land mask and topo index files-->
 <str_file_mask value="po_interim_2deg_mask_short_noIO.txt"/>
@@ -185,6 +185,10 @@
 <sp_unit_cohort>
     <skj> 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 600</skj>
 </sp_unit_cohort>
+
+<age_compute_habitat>
+  <skj>0  1  2  3  4  5  6  7  8  9 10 11 12 12 13 13 14 14 15 15 16 16 17 17 17 18 18 18 19 19 19 19 20 20 20 20 21 </skj>
+</age_compute_habitat>
 
 <length>
     <skj>3 4.5 7.52 11.65 16.91 21.83 26.43 30.72 34.73 38.49 41.99 45.27 48.33 51.19 53.86 56.36 58.70 60.88 62.92 64.83 66.61 68.27 69.83 71.28 72.64 73.91 75.10 76.21 77.25 78.22 79.12 79.97 80.76 81.50 82.19 82.83 87.96 </skj>

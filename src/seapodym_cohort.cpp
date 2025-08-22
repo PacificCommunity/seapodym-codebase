@@ -1,12 +1,11 @@
 #include <fvar.hpp>
 #include "SeapodymCohort.h"
 
-string get_path(const char* full_path);
 /*void Hyperspace_projection(SeapodymCohort& sc, dvar_vector x);
 void Taylor_derivative_test(const char* parfile);
 void Hessian_comp(const char* parfile);*/
-void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
-void buffers_set(long int &mv, long int &mc, long int &mg);
+//void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
+//void buffers_set(long int &mv, long int &mc, long int &mg);
 
 /*!
 \brief The first function to be executed.
@@ -22,43 +21,20 @@ This is the main routine that calls upper-level functions such as
    f) computing 2d projection of likelihood function the pair of parameters (should be specified in parfile).
 */
 
-int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers, int cohort_id)
+SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs)
 {
 	time_t time_sec;
 	time(&time_sec);
 	const time_t time0 = time_sec;
-
-	//-----Memory stack sizes for dvariables and derivatives storage------
-	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
-	long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
-	bool grad_calc = false;
-	if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
-	buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
-	if (reset_buffers)
-		buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
-
-	gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
-	gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
-	gradient_structure gs(gs_var_buffer);
-	//--------------------------------------------------------------------		
-
 
 	int out_hessian = 0;
 	gradient_structure::set_USE_FOR_HESSIAN(out_hessian);
 
 	cout << "\nstarting time: " << ctime(&time_sec) << endl;
 
-	//if mode 2 or 4, redirecting to respective routine and exit.
-	/*if (cmp_regime == 2){
-		Hessian_comp(parfile);
-		return 0;
-	} else if (cmp_regime == 4){
-		Taylor_derivative_test(parfile);
-		return 0;
-	}*/
-
 	//read parfile
-	SeapodymCohort sc(parfile, cohort_id);
+	SeapodymCohort* scp = new SeapodymCohort(parfile, cohort_id);
+	SeapodymCohort& sc = *scp;
 
 	//iniitalize variables of optimization
 	const int nvar = sc.nvarcalc();
@@ -68,93 +44,19 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	sc.xinit(x, x_names);
 	cout << "Total number of variables: " << nvar << '\n'<<'\n';
 
-	//writing temporal output to parfile folder	
-
-	//function minimizer class
-	fmm fmc(nvar);
-
-	//flags for function minimizer
-	fmc.iprint = 1;
-	fmc.crit = sc.get_crit();//0.1;
-	fmc.imax = 30;
-	fmc.scroll_flag = 1;
-	fmc.ifn = 0;
-	fmc.maxfn = sc.get_maxfn();//2000;
-	if (fmc.maxfn <= 0)
-		fmc.ireturn = -1; 
-
-	//if this flag is 0 then the gradient will not be computed
-	int compute_gradient = 1;
-	if (cmp_regime == 0){
-		sc.param->set_gradcalc(false);
-		compute_gradient = 0;
-	}
-
-	double likelihood = 0;
-	double elapsed_time = 0;
-
-	//gradient vector allocation and initialization
-	dvector g(1, nvar); g.initialize();
-
-	int idx = 0;
-	int itr = 0;
-	ios::sync_with_stdio();
-
 	//initialization of simulation
 	sc.prerun_model();
-
-	//simulation regime to compute 2d projection of likelihood function
-	//over any two variable parameters (should be specified through parfile)
-	/*if (cmp_regime == 1){
-		gradient_structure::set_NO_DERIVATIVES();
-		Hyperspace_projection(sc,(dvar_vector)x);
-		return 0;
-	}*/
 
 	//the function is invoked in the coupled simulation only
 	string tempparfile = "tempparfile.xml";
 	string newparfile  = "newparfile.xml";
 
-
-	//clock_t time1 = clock();
-	time(&time_sec);
-	time_t time1 = time_sec;
-	//'run_coupled' runs the model in forward (simulation) mode
-	//'gradcalc' runs backward (adjoint) mode
-	//'save_statistics' stores current information on function minimization
-	if (compute_gradient){
-		string dirout = get_path(parfile);
-		tempparfile = dirout +"/tempparfile.xml";
-		newparfile  = dirout +"/newparfile.xml";
-		cout << "\nentering minimization loop" << endl;
-		while (fmc.ireturn >= 0) {
-			//call function minimizer
-			fmc.fmin(likelihood, x, g);
-
-			//update the statistics.out file if the solution has been improved
-			int itn = fmc.itn;
-			if ((itn==itr+1 && (idx>=1))){
-				time(&time_sec);
-				time_t time2 = time_sec;
-				elapsed_time += (double)(time2-time1)/60.0;
-				time1 = time2;
-				sc.save_statistics(dirout,x_names,likelihood,g,elapsed_time,idx-1,itr,nvar);
-				sc.write(tempparfile.c_str());
-				itr = itn;
-			}
-			//reset control parameters and run the model and its adjoint
-			if (fmc.ireturn > 0) {
-				likelihood = sc.run_cohort((dvar_vector)x);
-				gradcalc(nvar,g); 
-				cout << "function evaluation " << idx++ << endl;
-			}
-		}
-	}
-
 	//after minimization is finished one simulation will 
 	//be run with estimated parameters; outputs will be saved
 	gradient_structure::set_NO_DERIVATIVES();
+
 	sc.run_cohort((dvar_vector)x, true);
+
 	sc.write(newparfile.c_str());
 
 	remove(tempparfile.c_str());
@@ -168,91 +70,8 @@ int seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffer
 	time_t time2 = time_sec;
 	double total_elapsed_time = (double)(time2-time0) / 60.0;
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
-//exit(1);
 
-	return 0;
-}
-
-/*///1. Option for computing likelihood projection in 2D parametric space.
-void Hyperspace_projection(SeapodymCohort& sc, dvar_vector x)
-{
-//	sc.param->set_gradcalc(false);
-	const int Npars = sc.param->nb_varproj-1;
-	ivector ix(0,Npars); ix.initialize(); 
-	int n1 = sc.param->varproj_nsteps[0];
-	int n2 = sc.param->varproj_nsteps[1];
-	int nmax = max(n1,n2)-1;  
-	dmatrix xvalues(0,Npars,0,nmax); xvalues.initialize();
-	dmatrix pars(0,Npars,0,nmax); pars.initialize();
-	dmatrix Lproj(0,n1-1,0,n2-1); 
-	Lproj.initialize();
-
-	sc.param->get_param_index(ix, xvalues, pars);
-
-	sc.OnRunFirstStep();
-	clock_t time1 = clock();
-	cout << "\nstarting hyperspace projection computation for ";
-	for (int n=0; n<sc.param->nb_varproj; n++) cout << sc.param->varproj[n] << " ";
-	cout << endl;
-
-	ofstream ofs;
-	const char* filename = "hyperproj.out";
-	ofs.open(filename, ios::out);
-	for (int n=0; n<sc.param->nb_varproj; n++)
-		ofs << sc.param->varproj[n] << " ";
-	ofs << "\n" << n1 << " " << n2 << "\n"; 
-	for (int n=0; n<=Npars; n++){
-		for (int i=0; i<sc.param->varproj_nsteps(n); i++)
-			ofs << pars(n,i)<< " ";
-		ofs << "\n";
-	}
-	ofs.close();
-		
-	for (int i=0; i<n1; i++){
-		for (int j=0; j<n2; j++){
-			cout << j+i*n2+1<< ": ";
-			for (int n=0; n<=Npars; n++){
-				int k;
-				if (n==0)  k = i; 
-				if (n==1)  k = j;
-				x[ix(n)] = xvalues(n,k); cout << pars(n,k) << " "; 
-			}
-			Lproj(i,j) = sc.run_cohort(x);
-		}
-		ofs.open(filename, ios::app);
-		for (int j=0; j<n2; j++)
-			ofs << Lproj(i,j) << " ";
-		ofs << "\n";
-		ofs.close();
-	}
-
-	time_t time2 = clock();
-	double total_elapsed_time = (double)((time2-time1)/CLOCKS_PER_SEC)/60.0;
-	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
-	//cleanup_temporary_files();
-}*/
-
-double run_model(SeapodymCohort& sc, dvar_vector x, dvector& g, const int nvar)
-{
-	double like = 0.0;
-	like = sc.run_cohort((dvar_vector)x);
-	if (like==0){
-		cerr << "No data in the likelihood - gradient will not be calculated, exiting now!" << endl;
-		exit(1);
-	}
-	gradcalc(nvar,g); 
-	return like;
-}
-
-double run_sim(SeapodymCohort& sc, dvar_vector x)
-{
-	double like = 0.0;
-	like = sc.run_cohort((dvar_vector)x);
-	if (like==0){
-		cerr << "No data in the likelihood - gradient will not be calculated, exiting now!" << endl;
-		exit(1);
-	}
-	return like;
+	return scp;
 }
 
 
@@ -273,17 +92,6 @@ void verify_identifier_string2(char* str1) //ASSUME str1 is not null
 
   if (str) delete [] str;
 
-}
-
-string get_path(const char* parfile)
-{
-  size_t pos;
-  string full_path = string(parfile);
-  pos = full_path.find_last_of("/");
-  if (pos==string::npos) 
-	return ".";
-  string dir = full_path.substr(0,pos);
-  return dir;
 }
 
 int save_identifier_string2(char* str)
