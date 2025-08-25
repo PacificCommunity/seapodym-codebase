@@ -47,14 +47,14 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfile
 		}else{
 			// 1. Use Spawning_Biomass_comp to compute Spawning Biomass from array_ptr (at previous time step)
 			// 1.1 Figure out which cohortIDs and global step in the *array_ptr to use
-			int global_step = cohort_id - nb_age_class;
-			std:vector<int> cohort_ids;
-			int a = cohort_id - nb_age_class;
-			for (; a < cohort_id; a++){
-				cohort_ids.push_back(a);
+			int global_step_prvs = cohort_id - nb_age_class - 1;
+			std:vector<int> ages;
+			int a = 0;
+			for (; a < nb_age_class; a++){
+				ages.push_back(a);
 			}
 			// 1.2 Figure out the starting memory adress of the sub-array, and its size
-			int start = ((global_step / nb_age_class) + (cohort_id - nb_age_class)) * size_map;
+			int start = global_step_prvs * nb_age_class * size_map;
 			//int size = nb_age_class * size_map;
 
 			// 1.3 Compute spawning biomass
@@ -336,8 +336,11 @@ void SeapodymCohort::stepForward(DVAR4_ARRAY* array_ptr)
 	if (qtr != past_qtr) past_qtr = qtr; 
 
 	// Make density available to the Manager
-	int global_step = cohort_id - nb_age_class;
-	int start = ((global_step / nb_age_class) + cohort_id) * size_map;
+	int global_step = 0;
+	if (cohort_id >= nb_age_class){
+		global_step = cohort_id - nb_age_class;
+	}
+	int start = (global_step * nb_age_class + age) * size_map;
 
 		// Not sure how to code this:
 		// Option 1:

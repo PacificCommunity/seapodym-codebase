@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 	param->init_param();
 	EditRunCoupled(parfile);
 
-    // Create a 4D array to store cohort density across time: [time, cohorts, lon, lat] (Actually 5D: [time, sp, cohorts, lon, lat] but only one species for now)
+    // Create a 4D array to store cohort density across time: [time, age, lon, lat] (Actually 5D: [time, sp, age, lon, lat] but only one species for now)
     int nb_species = 1;
     SeapodymCohort bogus_sc = new SeapodymCohort(parfile, 0);// bogus cohort to get map object
     bogus_sc.prerun_model();
@@ -117,8 +117,11 @@ int main(int argc, char** argv) {
         cohorts_densities[t].allocate(0, nb_species - 1);
         cohorts_densities[t].initiliaze();
         for (int sp=0; sp<nb_species, sp++){
-            cohorts_densities[t][sp].allocate(bogus_sc.map.imin1, bogus_sc.map.imax1, bogus_sc.map.jinf1, bogus_sc.map.jsup1);
-            cohorts_densities[t][sp].initialize();
+            cohorts_densities[t][sp].allocate(0, bogus_sc.nb_age_class - 1);
+            for (int a=0; a<bogus_sc.nb_age_class; a++){
+                cohorts_densities[t][sp][a].allocate(bogus_sc.map.imin1, bogus_sc.map.imax1, bogus_sc.map.jinf1, bogus_sc.map.jsup1);
+                cohorts_densities[t][sp][a].initialize();
+            }
         }
     }
 
