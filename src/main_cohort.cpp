@@ -13,8 +13,8 @@ using std::cout;
 SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
-
-int taskFunction(int task_id, const char* parfile) {
+int taskFunction(int cohortId, int step,  int numSteps, char* parfile) {
+    //array_ptr would point toward a 4D array [time; cohort_id, lon, lat]
 
     int cmp_regime = 0;
     bool reset_buffers = false;
@@ -34,16 +34,33 @@ int taskFunction(int task_id, const char* parfile) {
     // its own gradient structure?
     gradient_structure gs(gs_var_buffer);
 
-    int cohort_id = task_id; // For the time being
-    SeapodymCohort* scp = seapodym_cohort(parfile, cmp_regime, reset_buffers, cohort_id, gs);
+    SeapodymCohort* cohort;
+    if (step == 0) {
+        cohort = new SeapodymCohort((char*)parfile, cohortId);
 
-    scp->prerun_model();
-    scp->OnRunFirstStep();
+        //initialize variables of optimization
+        const int nvar = cohort->nvarcalc();
+        independent_variables x(1, nvar);
+        adstring_array x_names(1,nvar);
 
-    delete scp;
+        cohort->xinit(x, x_names);
+        //cout << "Total number of variables: " << nvar << '\n'<<'\n';
+
+        //initialization of simulation
+        cohort->prerun_model(x);
+    }
+
+    // advance the cohort by one step
+    // NOT SURE IF ALL THE cohorts share the same param? Should param be passed as an argument to the taskFunction? Or should it be computed 
+    cohort->stepForward(false);
+
+    if (step == numSteps - 1) {
+        // remove the cohort
+        delete cohort;
+    }
 
     // Could return an error code instead
-    return task_id;
+    return cohortId;
 }
 
 int main(int argc, char** argv) {
@@ -80,7 +97,7 @@ int main(int argc, char** argv) {
     }
 
     std::string parfile = cmdLine.get<std::string>("-s");
-    auto taskFunc = std::bind(taskFunction, std::placeholders::_1, parfile.c_str());
+    auto taskFunc = std::bind(taskFunction, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, parfile.c_str());
     int numTasks = cmdLine.get<int>("-nT");
 
     if (workerId == 0) {

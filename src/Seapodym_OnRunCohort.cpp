@@ -2,9 +2,10 @@
 
 void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood);
 //void SeapodymCohort::prerun_model(int age_start, int t_start, DMATRIX state_start)
-void SeapodymCohort::prerun_model()
+void SeapodymCohort::prerun_model(dvar_vector x)
 {
 	OnRunFirstStep();
+	InitializeCohort(x, false);
 }
 
 ///This is the main loop for the model without fishing and fitting of density. 
@@ -25,26 +26,3 @@ void SeapodymCohort::prerun_model()
 /*!
 \brief The tuna population simulation without fishing and density fitting.
 */
-double SeapodymCohort::OnRunCohort(dvar_vector x, const bool writeoutputfiles)
-{
-	InitializeCohort(x, writeoutputfiles);
-
-	/////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////
-	////------------------------------------------------------------/////
-	////								/////
-	////		||| START OF SIMULATION CYCLE |||		/////
-	////								/////
-	////------------------------------------------------------------/////
-	/////////////////////////////////////////////////////////////////////
-	/////////////////////////////////////////////////////////////////////
-	for (;t_count <= nbt_cohort; t_count++)
-	{
-		stepForward(writeoutputfiles);
-	} // end of simulation loop
-
-	return 0;
-}
-
-
-
