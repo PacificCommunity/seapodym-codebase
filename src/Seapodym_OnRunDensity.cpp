@@ -357,7 +357,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 
 
 			//5. Compute spawning biomass (sum of young and adults density weighted by maturity-at-age)
-			SpawningBiomass_comp(Total_pop, sp);
+			SpawningBiomass_comp(Total_pop, sp, &mat.dvarDensity);
 			//----------------------------------------------//
 			//	    TUNA AGEING AND SPAWNING		//
 			//----------------------------------------------//

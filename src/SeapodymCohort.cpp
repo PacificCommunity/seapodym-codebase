@@ -5,7 +5,7 @@
 
 
 
-void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles) 
+void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles, int init_from_inputfile, DVAR4_ARRAY* array_ptr) 
 {
 	t_count = t_start;
 	age = age_start;
@@ -42,12 +42,31 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfile
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	for (int sp=0; sp<nb_species; sp++){
-		////////////////////////////////////////////////////////////////////////
-		// HERE init_state will be initialized from other cohorts or from initilization file ///
-		//init_state = get_initial_state(cohort_id);
-		init_state = mat.init_density_species(sp,age);
-		////////////////////////////////////////////////////////////////////////
-		dvarCohortDensity = init_state;
+		if (init_from_inputfile){
+			dvarCohortDensity = mat.init_density_species(sp,age);
+		}else{
+			// 1. Use Spawning_Biomass_comp to compute Spawning Biomass from array_ptr (at previous time step)
+			// 1.1 Figure out which cohortIDs and global step in the *array_ptr to use
+			int global_step = cohort_id - nb_age_class;
+			std:vector<int> cohort_ids;
+			int a = cohort_id - nb_age_class;
+			for (; a < cohort_id; a++){
+				cohort_ids.push_back(a);
+			}
+			// 1.2 Figure out the starting memory adress of the sub-array, and its size
+			int start = ((global_step / nb_age_class) + (cohort_id - nb_age_class)) * size_map;
+			//int size = nb_age_class * size_map;
+
+			// 1.3 Compute spawning biomass
+			dvar_matrix Spawning_pop;
+			SpawningBiomass_comp(Spawning_pop, sp, array_ptr + start);
+			// 2. Compute Spawning Habitat at previous time step
+			int jday_prvs = jday - 1;
+			int tprvs = tcur - 1;
+			func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tprvs, jday_prvs);
+			// 3. Compute 
+			Spawning(dvarCohortDensity, Spawning_Habitat, Spawning_pop,jday,sp,tcur);//checked
+		}
 	}
 
 	if (param->food_requirement_in_mortality(0)){ 
@@ -107,12 +126,12 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfile
 	fileout = param->strdir_output + param->sp_name[0] + "_cohort.dym";//will need the date of birth stamp
 	if (writeoutputfiles){
 		WriteFileHeaders_submodel(fileout,true);	
-		if (!param->gcalc())
-			ConsoleOutput(0,0);
+		/*if (!param->gcalc())
+			ConsoleOutput(0,0);*/
 	}
 }
 
-void SeapodymCohort::stepForward(bool writeoutputfiles)
+void SeapodymCohort::stepForward(DVAR4_ARRAY* array_ptr)
 {
 	//----------------------------------------------//
 	//              INITIALISATION                  //
@@ -182,7 +201,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 						&& t_count > nbt_building+nbstoskip)
 					time_getpred = true;
 
-					elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+					elarvae_model_run(Mortality,sp,tcur,time_getpred,false);
 			}
 
 			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 
@@ -315,6 +334,22 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	past_month=month;
 	step_count++;
 	if (qtr != past_qtr) past_qtr = qtr; 
+
+	// Make density available to the Manager
+	int global_step = cohort_id - nb_age_class;
+	int start = ((global_step / nb_age_class) + cohort_id) * size_map;
+
+		// Not sure how to code this:
+		// Option 1:
+	//*(array_ptr + start) = dvarCohortDensity;// is this correct?
+
+		// Option 2:
+	for (int i=0; i<size_map; i++){
+		*(array_ptr + start + i) = dvarCohortDensity[i];
+	}
+
+		// Option3:
+	//memcpy(array_ptr + start, dvarCohortDensity, size_map * sizeof(double));// or sizeof(dvariable) ?
 
 	age++;
 }

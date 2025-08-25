@@ -4,7 +4,7 @@
 ///OnRunCoupled function, with modifications to compute either spawning of feeding habitats.
 ///See SeapodymCoupled_OnRunCoupled.cpp for the description of the main function.
 
-void HabitatConsoleOutput(int t_count, int flag_simulation, string date_str, double norm_habitat_input, double norm_spawning_habitat, double like);
+void HabitatConsoleOutput(int t_count, int flag_simulation, string date_str, double norm_habitat_input, double norm_spawning_habitat, double like, int step);
 void SeapodymCoupled::prerun_model()
 {
 	OnRunFirstStep();

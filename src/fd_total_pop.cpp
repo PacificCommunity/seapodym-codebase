@@ -51,7 +51,7 @@ void SeapodymCoupled::Total_Pop_comp(dvar_matrix& total_pop, const int sp, const
 } 
 
 
-void SeapodymCoupled::SpawningBiomass_comp(dvar_matrix& total_pop, const int sp)
+void SeapodymCoupled::SpawningBiomass_comp(dvar_matrix& total_pop, const int sp, DVAR4_ARRAY* dvarDensity)
 { 	
 	total_pop.initialize();
 
@@ -63,7 +63,7 @@ void SeapodymCoupled::SpawningBiomass_comp(dvar_matrix& total_pop, const int sp)
 			for (int j = jmin; j <= jmax; j++){
 				if (map.carte(i,j)){
 					double total_pr = value(total_pop(i,j));				
-					total_pop.elem_value(i,j) = total_pr + maturity_age[a] * value(mat.dvarDensity(sp,a,i,j));
+					total_pop.elem_value(i,j) = total_pr + maturity_age[a] * value(*dvarDensity(sp,a,i,j));
 				}				 
 			}
 		}

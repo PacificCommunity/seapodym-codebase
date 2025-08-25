@@ -184,7 +184,7 @@ protected:
 	
 	void Total_Pop_comp(dvar_matrix& total_pop, const int sp, const int jday, const int t_count);
 	void Total_Stock_comp(dvariable& total_stock, const int sp);
-	void SpawningBiomass_comp(dvar_matrix& total_pop, const int sp);
+	void SpawningBiomass_comp(dvar_matrix& total_pop, const int sp, DVAR4_ARRAY* dvarDensity);
 
 	///void Age_class_survivals(dvar_matrix& N_a, const dmatrix N_a_1, const dmatrix Mort_a, const dmatrix Mort_a_1, const int nt_a, const int nt_a_1);
 	//void Age_class_survivals(dvar_matrix& N_a, const dmatrix N_a_1, const int nt_a, const int nt_a_1);

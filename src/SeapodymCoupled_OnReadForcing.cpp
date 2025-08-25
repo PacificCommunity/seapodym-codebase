@@ -105,7 +105,7 @@ void SeapodymCoupled::ReadClimatologyOxy(int t, int t_clm)
 
 void SeapodymCoupled::ReadAll()
 {
-	cout << "Reading all forcing variables at once... " << endl;
+	//cout << "Reading all forcing variables at once... " << endl;
 	int jday = 0;
 	int t_count_init = t_count;
 
@@ -148,8 +148,10 @@ void SeapodymCohort::ReadAll()
 	// Read only data at the times needed for the cohort
 	int nbt_total_init = nbt_total;
 	nbt_total = nbt_cohort;
+	t_count--;// So that we read data at the previous time step as well (to compute spawning habitat and spawning biomass)
 	SeapodymCoupled::ReadAll();
 	nbt_total = nbt_total_init;
+	t_count++;// Restore t_count;
 }
 
 void SeapodymCoupled::RestoreDistributions(ivector& nb_age_built)

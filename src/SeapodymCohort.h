@@ -13,7 +13,10 @@ class SeapodymCohort : public SeapodymCoupled
 {
 public:
 	SeapodymCohort(){/*DoesNothing*/};
-	SeapodymCohort(const char* parfile, int cohort_id) : SeapodymCoupled(parfile) {
+	SeapodymCohort(VarParamCoupled* prm, int cohort_id) {
+		// copy param
+		param = prm;
+
 		// Get starting age_class and start time from cohort_id
 		int nb_age_class = param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0];
 		int quotient = cohort_id / nb_age_class;
@@ -25,11 +28,23 @@ public:
 			age_start = remainder;
 			t_start = 1;
 		}
+
+		// Size of map (useful to access to a specific position adress of the 4D array pointer storing density)
+		size_map = 0;
+		const int imin = map.imin;
+		const int imax = map.imax;
+		for (int i = imin; i <= imax; i++){
+			const int jmin = map.jinf[i];
+			const int jmax = map.jsup[i];
+			for (int j = jmin ; j <= jmax; j++){
+				size_map++;
+			}
+		}
 	};
 	virtual ~SeapodymCohort() {/*DoNothing*/};
 
 	double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
-	void prerun_model();
+	void prerun_model(dvar_vector x, int init_from_inputfile, DVAR4_ARRAY* array_ptr);
 	void OnRunFirstStep();
 	void ReadAll();
 
@@ -50,6 +65,8 @@ private:
 	int cohort_id;
 	int age_start;
 	int t_start;
+	int nb_age_class;
+	int size_map;
 
 	dvariable likelihood;
 
@@ -72,10 +89,6 @@ private:
 	void InitializeCohort(dvar_vector& x, const bool writeoutputfiles);
 
 public:
-	void stepForward(bool writeoutputfiles);
-	// Remaining to implement
-	void setStateFromArray(const std::vector<double>& array);
-	std::vector<double> getArrayFromState();
-	void save(const std::string& restartFile);	
+	void stepForward(DVAR4_ARRAY* array_ptr);
 };
 #endif
