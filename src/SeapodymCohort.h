@@ -45,6 +45,7 @@ public:
 
 	double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
 	void prerun_model(dvar_vector x, int init_from_inputfile, DVAR4_ARRAY* array_ptr);
+	void prerun_model(dvar_vector x);
 	void OnRunFirstStep();
 	void ReadAll();
 

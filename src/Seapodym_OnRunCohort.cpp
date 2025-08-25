@@ -8,6 +8,11 @@ void SeapodymCohort::prerun_model(dvar_vector x, int init_from_inputfile, DVAR4_
 	InitializeCohort(x, true, init_from_inputfile, array_ptr);
 }
 
+void SeapodymCohort::prerun_model(dvar_vector x)
+{
+	OnRunFirstStep();
+}
+
 ///This is the main loop for the model without fishing and fitting of density. 
 ///Similar to the default function, it includes the following calls:
 ///1- Initialising population density 
