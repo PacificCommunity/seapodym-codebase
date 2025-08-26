@@ -277,7 +277,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 			}
 		}
 	}//end of 'sp' loop
-	cerr << setprecision(8) << "t_count = " << t_count << ": sum(density) = " << sum(dvarCohortDensity) << endl;
+	cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ": sum(density) = " << sum(dvarCohortDensity) << endl;
 
 	/*if (writeoutputfiles){
 		//Output DYM file name
@@ -315,6 +315,8 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	past_month=month;
 	step_count++;
 	if (qtr != past_qtr) past_qtr = qtr; 
+
+	t_count++;
 
 	age++;
 }

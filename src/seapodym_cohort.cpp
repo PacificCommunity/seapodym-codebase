@@ -23,7 +23,7 @@ This is the main routine that calls upper-level functions such as
 
 SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs)
 {
-	time_t time_sec;
+	/*time_t time_sec;
 	time(&time_sec);
 	const time_t time0 = time_sec;
 
@@ -71,7 +71,8 @@ SeapodymCohort* seapodym_cohort(const char* parfile, int cmp_regime, const bool 
 	double total_elapsed_time = (double)(time2-time0) / 60.0;
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
 
-	return scp;
+	return scp;*/
+	return 0;
 }
 
 

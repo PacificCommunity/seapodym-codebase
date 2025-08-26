@@ -274,7 +274,7 @@ void VarParamCoupled::xinit(dvector& x, adstring_array& x_names)
 //cout << dvarpars << endl;
 //cout << statpars << endl;
 
-	outp_param(x_names,idx-1);	
+	//outp_param(x_names,idx-1);	
 }
 
 void VarParamCoupled::par_init(dvar_vector& dvarsCoef, dvector& coef, const double coef_min, const double coef_max, string s, dvector& x, adstring_array& x_names, int& idx)  
