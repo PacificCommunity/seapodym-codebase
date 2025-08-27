@@ -108,15 +108,14 @@ int main(int argc, char** argv) {
         parfile.c_str());
     
     // Read parfile
-    VarParamCoupled* param;
-    param = new VarParamCoupled();
-	param->init_param();
-	param->read(parfile);
+    VarParamCoupled param;
+	param.init_param();
+	param.read(parfile);
 
     // Get number of time steps and number of cohorts from param
-    int numAgeGroups = param->sp_nb_cohorts[0];
+    int numAgeGroups = param.sp_nb_cohorts[0];
     int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
-    Date::init_time_variables(*param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
+    Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
     int numTasks = numAgeGroups + numTimeSteps - 1;
 
     // analyze the conhort Id task dependencies
