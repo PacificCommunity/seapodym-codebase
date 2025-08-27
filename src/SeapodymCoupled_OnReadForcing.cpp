@@ -164,8 +164,8 @@ void SeapodymCoupled::RestoreDistributions(ivector& nb_age_built)
 		int nlon = param->nlong;
 		rw.rbin_headpar(fileCohorts, param->nlong, param->nlat, nlevel);
 		if (nlevel != nb_ages) 
-			cout << "WARNING: in file " << fileCohorts << " number of cohorts is " << 
-				nlevel << " != " << nb_ages << " in the current parfile!" << endl;
+			/*cout << "WARNING: in file " << fileCohorts << " number of cohorts is " << 
+				nlevel << " != " << nb_ages << " in the current parfile!" << endl;*/
 		for (int a=0; a<nb_ages; a++){
 			int nbytetoskip = (9 +(3* nlat * nlon) + nlevel + ((nlat *nlon)* a)) * 4; 
 			rw.rbin_input2d(fileCohorts, map, mat.init_density_species[sp][a], nbi, nbj, nbytetoskip);
