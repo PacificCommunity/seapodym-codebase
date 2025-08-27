@@ -138,7 +138,7 @@ char PMap::get_bord_layer_y(const int i, const int j){
 	return pos;	
 }
 */
-void PMap::definit_cell_bords(const int nti, const int ntj) // définition des bords des cellules de la zone
+void PMap::definit_cell_bords(const int nti, const int ntj) // dï¿½finition des bords des cellules de la zone
 {
   CBord bordures; //bordures, objet de la classe Cbords  
 
@@ -160,7 +160,7 @@ void PMap::definit_cell_bords(const int nti, const int ntj) // définition des bo
   }  
   //***********************
   // Cadre de la grille 
-  // Definition des cotés des cellules situées aux bords de la grille
+  // Definition des cotï¿½s des cellules situï¿½es aux bords de la grille
   //***********************
   // bord horizontal haut de la grille, donc ferme a gauche
   i = 1;
@@ -707,8 +707,8 @@ void PMap::domain_type(const int nlon) {
 	if (nlon==360) 
 		global = 1;
 
-	cout << "Is global domain? ";
+	/*cout << "Is global domain? ";
 	if (global) cout << "YES" << endl;	
-	else cout << "NO" << endl;	
+	else cout << "NO" << endl;	*/
 }
 

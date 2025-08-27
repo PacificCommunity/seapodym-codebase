@@ -54,7 +54,7 @@ void Date::init_time_variables(CParam& param, int& Tr_step, int& nbt_spinup_tuna
         case 1: {
 	        jday_run=julday(day,month,year);
         	jday_spinup =jday_run - (deltaT * (nbt_spinup_total));
-		cout << "-------------Standard Time Stepping-----------------" << endl;
+		//cout << "-------------Standard Time Stepping-----------------" << endl;
 		dmy(jday_spinup, dayspinup, monthspinup, yearspinup);
         break;
         }
@@ -62,7 +62,7 @@ void Date::init_time_variables(CParam& param, int& Tr_step, int& nbt_spinup_tuna
         case 2:{
 		jday_run = nlyjulday(day,month,year);
 		jday_spinup =jday_run - (deltaT * (nbt_spinup_total));
-	        cout << "------------Noleap year Time Stepping---------------" << endl;
+	        //cout << "------------Noleap year Time Stepping---------------" << endl;
 		nlydmy(jday_spinup, dayspinup, monthspinup, yearspinup);
         break; 
         }
@@ -70,7 +70,7 @@ void Date::init_time_variables(CParam& param, int& Tr_step, int& nbt_spinup_tuna
         case 3: {
         	jday_run=clmjulday(day,month,year);
         	jday_spinup =jday_run - (deltaT * (nbt_spinup_total)); 
-		cout << "-----Standard Time Stepping - 360 days calendar-----" << endl;
+		//cout << "-----Standard Time Stepping - 360 days calendar-----" << endl;
 		clmdmy(jday_spinup, dayspinup, monthspinup, yearspinup);
         break;
         }
@@ -79,7 +79,7 @@ void Date::init_time_variables(CParam& param, int& Tr_step, int& nbt_spinup_tuna
 
 	nbstot = get_nbstot(ndat000,ndatfin,jday_run,deltaT,param.date_mode,param.rundates);
 
-        cout << "Number of time steps in simulation : " << nbstot  << endl;
+        /*cout << "Number of time steps in simulation : " << nbstot  << endl;
         cout << "Number of time steps in spin up    : " << nbt_spinup_total << endl;
         cout << "Delta T                            : " << deltaT << endl;
 	if (nbt_spinup_total)
@@ -89,7 +89,7 @@ void Date::init_time_variables(CParam& param, int& Tr_step, int& nbt_spinup_tuna
 	cout << "Start Date SpinUp                  : " << ndatspinup << endl;
         cout << "Start Date Run                     : " << ndat000 << endl;
 	cout << "End Date Run                       : " << ndatfin << endl;
-        cout << "----------------------------------------------------" << endl;
+        cout << "----------------------------------------------------" << endl;*/
 	
 }
 
@@ -308,7 +308,7 @@ int Date::dym_startdate_run(CParam& param, const dvector zlevel_dym, const int n
 		++nini; 
 	}
 //nini = 0;	
-cout << __FILE__ << " : Time steps to skip in DYM files " << nini << endl; //exit(1);
+//cout << __FILE__ << " : Time steps to skip in DYM files " << nini << endl; //exit(1);
 	return nini;
 }
 

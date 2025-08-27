@@ -105,7 +105,7 @@ void SeapodymCoupled::ReadClimatologyOxy(int t, int t_clm)
 
 void SeapodymCoupled::ReadAll()
 {
-	cout << "Reading all forcing variables at once... " << endl;
+	//cout << "Reading all forcing variables at once... " << endl;
 	int jday = 0;
 	int t_count_init = t_count;
 

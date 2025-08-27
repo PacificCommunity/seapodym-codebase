@@ -66,7 +66,7 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 	ifstream littxt(filename.c_str());
 	if (littxt){
 
-		cout << endl << "Reading fishing data from the file: " << endl << filename.c_str() << endl;
+		//cout << endl << "Reading fishing data from the file: " << endl << filename.c_str() << endl;
 		littxt >> nb_fishery_file;
 		ivector nb_recs_fishery(0,nb_fishery_file-1);
 		nb_recs_fishery.initialize();
@@ -184,14 +184,14 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 					else	ostr << ", " << param.list_fishery_name[f];
 				}
 
-			cout << endl << "WARNING: " << count_out_of_domain 
+			/*cout << endl << "WARNING: " << count_out_of_domain 
 				<< " fishing records were NOT used because they are outside of model domain."
-				<< " They are in fisheries: " << ostr.str() << endl << endl;
+				<< " They are in fisheries: " << ostr.str() << endl << endl;*/
 		}
 
 		if (! DataExist && sum(param.mask_fishery_sp(0))!=0){
 			param.mask_fishery_sp.initialize();
-			cout << "WARNING: no fishery data found: fishery mask forced to zero" << endl;
+			//cout << "WARNING: no fishery data found: fishery mask forced to zero" << endl;
 		}
 
 		littxt.close();
@@ -205,13 +205,13 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 			if (param.sp_name[0].find("alb")==0) fact = 25.0;
 			param.cpue_mult(f) = fact*max(mean_fishery_cpue)/mean_fishery_cpue(f);
 		}
-		cout << "Mean cpue by fishery: "<< mean_fishery_cpue << endl;
-		cout << "weights for fisheries: "<< param.cpue_mult << endl;
+		//cout << "Mean cpue by fishery: "<< mean_fishery_cpue << endl;
+		//cout << "weights for fisheries: "<< param.cpue_mult << endl;
 	} else {
-		cout << endl << "WARNING : Cannot read file " << filename.c_str() << ". Will exit now!" << endl;
+		//cout << endl << "WARNING : Cannot read file " << filename.c_str() << ". Will exit now!" << endl;
 		exit(1);
 	}
-	cout << "Number of cells with fishing data: " << nrec_oceanmask << ", sumt(Ct): " << SUM << endl;
+	//cout << "Number of cells with fishing data: " << nrec_oceanmask << ", sumt(Ct): " << SUM << endl;
 	nrec_oceanmask_original = nrec_oceanmask;
 
 	//reallocate the memory for this class
@@ -223,7 +223,7 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 
 	param.fishery_reso = fishery_reso;
 
-	cout << param.fishery_reso << endl;
+	//cout << param.fishery_reso << endl;
 
 	//Redistribute fishing data on model resolution if 
 	//1. There are 'no effort' fisheries. In this case
@@ -269,8 +269,8 @@ void CReadWrite::degrade_fishery_reso(CParam& param, PMap& map, const int nbt, c
 	for (int j=0; j<nflat; j++) flat[j] = cnorth - creso*(j+0.5); 
 
 	//Interested to see only in optimisation mode, which does not support currently high resolutions
-	if (deltaX>=1) cout << "Centers of degraded C-cells: \n" << flon[0] << ", " << flon[1] << ",..., " << flon[nflon-1] << endl << 
-							    	    flat[0] << ", " << flat[1] << ",..., " << flat[nflat-1] << endl; 
+	/*if (deltaX>=1) cout << "Centers of degraded C-cells: \n" << flon[0] << ", " << flon[1] << ",..., " << flon[nflon-1] << endl << 
+							    	    flat[0] << ", " << flat[1] << ",..., " << flat[nflat-1] << endl; */
 
 	int year, month, day, jday, xx;
 	for (int f=0; f<nb_fishery; f++){
@@ -312,8 +312,8 @@ void CReadWrite::degrade_fishery_reso(CParam& param, PMap& map, const int nbt, c
             }
 	}
 	param.fishery_reso = fishery_reso;
-	cout << "After degradation the fishing data resolutions (by fishery) are: " << 
-		endl  << param.fishery_reso << endl;
+	/*cout << "After degradation the fishing data resolutions (by fishery) are: " << 
+		endl  << param.fishery_reso << endl;*/
 }
 
 void CReadWrite::delete_fisheries_rec() 
@@ -435,8 +435,8 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 						sumE+= E;
 					}
 					if (E-sumE>1e-2) {
-						cout << "E was not conserved! " << Elon << " " << Elat << 
-						"E before redistribution = " << E << "!= " << sumE << "after!" <<  endl; 
+						/*cout << "E was not conserved! " << Elon << " " << Elat << 
+						"E before redistribution = " << E << "!= " << sumE << "after!" <<  endl; */
 					}
 				}//end of reading E for a given y and m
 			}
@@ -456,9 +456,9 @@ void CReadWrite::set_effort_rm(CParam& param, PMap& map, const int nbt, const in
 //i.e. if (deltaX<fishery_reso(f) | deltaY<fishery_reso(f))
 void CReadWrite::set_frec_rm(CParam& param, const PMap& map, const int nbt, const int jday_spinup)
 {
-	cout << "Notification: EEZ or MPA option activated..." << endl;
+	/*cout << "Notification: EEZ or MPA option activated..." << endl;
 	cout << "Begin redistribution of the fishing data, resolutions (by fishery) are:" << endl 
-		<< param.fishery_reso << endl;
+		<< param.fishery_reso << endl;*/
 
 	const int nb_fishery = param.get_nbfishery();
 	const int nb_species = param.get_nbspecies();
@@ -611,8 +611,8 @@ void CReadWrite::set_frec_rm(CParam& param, const PMap& map, const int nbt, cons
 	}
 	param.fishery_reso = fishery_reso;
 
-	cout << "Finished redistribution of the fishing data to the resolutions:" << endl 
-		<< param.fishery_reso << endl;
+	/*cout << "Finished redistribution of the fishing data to the resolutions:" << endl 
+		<< param.fishery_reso << endl;*/
 
 	//clean-up the old class, reallocate and rewrite
 	delete [] frec;
@@ -625,7 +625,7 @@ void CReadWrite::set_frec_rm(CParam& param, const PMap& map, const int nbt, cons
 
 void CReadWrite::set_frec_rm_no_effort_fisheries(CParam& param, const PMap& map, const int nbt, const int jday_spinup)
 {
-	cout << "Notification: The redistribution of fisheries 'without effort' to the model resolution..." << endl;
+	//cout << "Notification: The redistribution of fisheries 'without effort' to the model resolution..." << endl;
 
 	const int nb_fishery = param.get_nbfishery();
 	const int nb_species = param.get_nbspecies();
@@ -777,8 +777,8 @@ void CReadWrite::set_frec_rm_no_effort_fisheries(CParam& param, const PMap& map,
 	}
 	param.fishery_reso = fishery_reso;
 
-	cout << "Finished redistribution of the fishing data to the resolutions:" << endl 
-		<< param.fishery_reso << endl;
+	/*cout << "Finished redistribution of the fishing data to the resolutions:" << endl 
+		<< param.fishery_reso << endl;*/
 
 	//clean-up the old class, reallocate and rewrite
 	delete [] frec;
@@ -1508,7 +1508,7 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 
 	ifstream littxt(filename.c_str());
 	if (littxt){
-		cout << endl << "Reading LF data from the file: " << endl << filename.c_str() << endl;
+		//cout << endl << "Reading LF data from the file: " << endl << filename.c_str() << endl;
 		int nb_regions, nb_fleets, nb_records, nb_intervals, l1, dl;
 
 		littxt >> nb_regions >> nb_fleets >> nb_records;
@@ -1649,8 +1649,8 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 	} else {
 		cout << endl << "WARNING : Cannot read file " << filename.c_str() << endl;
 	}
-	cout << "Number of fine-resolution size distributions used from LF data: " << nbsd << endl;
-	cout << endl;
+	/*cout << "Number of fine-resolution size distributions used from LF data: " << nbsd << endl;
+	cout << endl;*/
 }
 
 

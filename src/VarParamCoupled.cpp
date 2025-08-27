@@ -122,7 +122,7 @@ bool VarParamCoupled::read(const string& parfile)
 	if (!doc.get("/strfile_sst","value").empty()){
 		strfile_sst = str_dir + doc.get("/strfile_sst", "value");
 		use_sst = 1;
-		cout << "SST is in use in this simulation!" << endl; 
+		//cout << "SST is in use in this simulation!" << endl; 
 	}
 	use_vld = 0;
 	if (!doc.get("/strfile_vld","value").empty()){
@@ -138,7 +138,7 @@ bool VarParamCoupled::read(const string& parfile)
 	type_oxy = 0;
 	if (!doc.get("/type_oxy","value").empty())
 		type_oxy = doc.getInteger("/type_oxy", "value");
-	else cout << "WARNING: the type of oxygen data is not set up, default is monthly time series!" << endl; 
+	//else cout << "WARNING: the type of oxygen data is not set up, default is monthly time series!" << endl; 
 	
 
 	for (int k=0;k<nb_layer;k++){
@@ -634,30 +634,30 @@ bool VarParamCoupled::read(const string& parfile)
 		maturity_age[sp].allocate(0,sp_nb_cohorts[sp]-1);
 		maturity_age[sp] = 1.0;
 		if (doc.get("/maturity_age").empty()){
-			cout << endl << "IMPORTANT: Maturity-at-age described by step function with 0 below and 1 above 50% maturity" << endl << endl;
+			//cout << endl << "IMPORTANT: Maturity-at-age described by step function with 0 below and 1 above 50% maturity" << endl << endl;
 			for (int a=0; a<sp_nb_cohorts[sp]; a++){
 				if (a<age_mature[sp]) maturity_age[sp][a] = 0.0;
 			}
 		}
 		if (!doc.get("/maturity_age").empty()){
-			cout << endl << "IMPORTANT: Maturity-at-age described by continuous function" << endl;
+			//cout << endl << "IMPORTANT: Maturity-at-age described by continuous function" << endl;
 			for (int a=0; a<sp_nb_cohorts[sp]; a++)
                 		maturity_age[sp][a] = doc.getDouble("/maturity_age/"+ sp_name[sp], a);
 
 			for (int a=0; a<sp_nb_cohorts[sp]; a++){
 				if (maturity_age[sp][a]>=0.15) {
-					cout << "IMPORTANT: first age class with spawning potential (15% of individuals are mature) is " << a << endl;
+					//cout << "IMPORTANT: first age class with spawning potential (15% of individuals are mature) is " << a << endl;
 					age_mature[sp] = a;
 						break;
 				}
 			}
 			for (int a=0; a<sp_nb_cohorts[sp]; a++){
 				if (maturity_age[sp][a]>=0.5) {
-					cout << "FOR INFORMATION ONLY: first age class with 50% maturity is " << a << endl;
+					//cout << "FOR INFORMATION ONLY: first age class with 50% maturity is " << a << endl;
 						break;
 				}
 			}
-			cout << endl;
+			//cout << endl;
 		}
 		migrations_by_maturity_flag = 0;
 	}		
@@ -783,11 +783,11 @@ bool VarParamCoupled::read(const string& parfile)
 				elarvae_age[sp] = doc.getDouble(vstr, "value");
 				if (elarvae_age[sp]<1) {
 					elarvae_age[sp] = 1;
-					cout << endl << "WARNING!!! Mean observed age of larvae cannot be less than 1 day! Re-set to 1" << endl<< endl;
+					//cout << endl << "WARNING!!! Mean observed age of larvae cannot be less than 1 day! Re-set to 1" << endl<< endl;
 				}
 				if (elarvae_age[sp]>14){
 					elarvae_age[sp] = 14;
-					cout << endl << "WARNING!!! Re-set mean observed age of larvae to 14 days - a maximal supported value" << endl<< endl;
+					//cout << endl << "WARNING!!! Re-set mean observed age of larvae to 14 days - a maximal supported value" << endl<< endl;
 				}
 				vstr = str + "/mortality_rate";
 				elarvae_mortality_min[sp] = doc.getDouble(vstr, "min");
@@ -968,7 +968,7 @@ bool VarParamCoupled::read(const string& parfile)
 						file_frq_data.push_back(str_dir_fisheries+doc.get("/file_frq_data/"+sp_name[sp],ostr.str()));
 					}
 			} else {
-				cout << "WARNING: LF DATA ARE ABSENT" << endl; 
+				//cout << "WARNING: LF DATA ARE ABSENT" << endl; 
 				file_frq_data.push_back("");
 			}
 		}
@@ -1023,8 +1023,8 @@ bool VarParamCoupled::read(const string& parfile)
 						mask_fishery_sp_no_effort[sp][f] = doc.getInteger(string("/mask_fishery_no_effort/") + sp_name[sp], f);
 				}
 				//fisheries_no_effort_exist will be used as a flag to avoid catch removal from density of tags
-				if (!flag_no_fishing)
-					cout << "FISHERIES without effort (1) in the simulation: " << mask_fishery_sp_no_effort(sp) << endl;				
+				/*if (!flag_no_fishing)
+					cout << "FISHERIES without effort (1) in the simulation: " << mask_fishery_sp_no_effort(sp) << endl;	*/			
 				fisheries_no_effort_exist[sp] = sum(mask_fishery_sp_no_effort[sp]);
 				
 				//check: if no effort fisheries have different catch units in the parfile 
@@ -1126,7 +1126,7 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/like_c_cpue","value").empty()){
 			int flag = doc.getInteger("/like_c_cpue", "value");
 			if (!flag) {
-				cout << "CPUE will be used in the likelihood" << endl;
+				//cout << "CPUE will be used in the likelihood" << endl;
 				cpue = true;
 			}
 		}
@@ -1138,7 +1138,7 @@ bool VarParamCoupled::read(const string& parfile)
 			frq_like[sp] = doc.getInteger("/frq_likelihood",sp_name[sp]);
 			if (flag_no_fishing){
 				frq_like[sp] = 0;
-				cout << "WARNING: LF likelihood is forced to OFF in NO FISHING run" << endl;
+				//cout << "WARNING: LF likelihood is forced to OFF in NO FISHING run" << endl;
 			}
 		}
 
@@ -1230,13 +1230,13 @@ bool VarParamCoupled::read(const string& parfile)
 					dy_tags = doc.getDouble(string("/tags_grid/reso"),"dy");
 					if (dx_tags<deltaX/60){ 
 						dx_tags=deltaX/60; 
-						cout << "WARNING: changed the tagging data longitudinal resolution to deltaX = "
-							<< deltaX/60 << " degree" << endl; 
+						/*cout << "WARNING: changed the tagging data longitudinal resolution to deltaX = "
+							<< deltaX/60 << " degree" << endl; */
 					}
 					if (dy_tags<deltaY/60){ 
 						dy_tags=deltaY/60; 
-						cout << "WARNING: changed the tagging data latitudinal resolution to deltaY = "
-							<< deltaY/60 << " degree" <<endl; 
+						/*cout << "WARNING: changed the tagging data latitudinal resolution to deltaY = "
+							<< deltaY/60 << " degree" <<endl; */
 					}
 					lonmin_tags = doc.getDouble(string("/tags_grid/longitude"),"east");
 					lonmax_tags = doc.getDouble(string("/tags_grid/longitude"),"west");
@@ -1352,13 +1352,13 @@ bool VarParamCoupled::read(const string& parfile)
 	for (int sp=0;sp<nb_species;sp++){ 
 		if (frq_like[sp] && !flag_no_fishing){
 			use_lf_regstruc = 1;
-			cout << "WARNING: LF likelihood is active -> using LF regions for biomass aggregation!" << endl; 
-			if (nb_species>1)
-				cout << "ATTENTION: Verify that LF data for species " << sp << " have the same regional structure!" << endl; 
+			//cout << "WARNING: LF likelihood is active -> using LF regions for biomass aggregation!" << endl; 
+			/*if (nb_species>1)
+				cout << "ATTENTION: Verify that LF data for species " << sp << " have the same regional structure!" << endl; */
 			define_regions();
 		} else {
-			if (!frq_like[sp])
-				cout << "WARNING: LF likelihood is not active -> use_lf_regstruc is OFF -> use regional structure for biomass aggregation" << endl; 
+			/*if (!frq_like[sp])
+				cout << "WARNING: LF likelihood is not active -> use_lf_regstruc is OFF -> use regional structure for biomass aggregation" << endl; */
 			use_lf_regstruc = 0;
 		}
 	}
@@ -1368,7 +1368,7 @@ bool VarParamCoupled::read(const string& parfile)
 		}
 		nb_region = doc.getInteger("/nb_region", "value");
 		if (nb_region) {
-			cout << "INFO: Parfile regional structure in use; number of regions: " << nb_region << endl; 
+			//cout << "INFO: Parfile regional structure in use; number of regions: " << nb_region << endl; 
 			area = new region*[nb_region];
 			for (int a=0; a< nb_region; a++) {
         	               	std::ostringstream ostr;
@@ -1390,7 +1390,7 @@ bool VarParamCoupled::read(const string& parfile)
 				nb_region_sp_B[sp] = doc.getInteger("/nb_region_sp_B", sp_name[sp]);
 				if (nb_region_sp_B[sp]>nb_region) {
 					nb_region_sp_B[sp] = nb_region;
-					cout << "WARNING: nb_region_sp_B cannot be > nb_region, value " << nb_region_sp_B[sp] << " will be taken" << endl;
+					//cout << "WARNING: nb_region_sp_B cannot be > nb_region, value " << nb_region_sp_B[sp] << " will be taken" << endl;
 				}
 			}
 			//liste des regions par espece ou aggreger les biomasses
@@ -1410,11 +1410,11 @@ bool VarParamCoupled::read(const string& parfile)
 				area_sp_B[sp].allocate(0, 0);
 				area_sp_B[sp][0] = 0;//1;
 			}
-			cout << endl << "WARNING!!!!!! nb_region=0 -> NO biomass aggregations"; 
-			if (!flag_no_fishing)
+			//cout << endl << "WARNING!!!!!! nb_region=0 -> NO biomass aggregations"; 
+			/*if (!flag_no_fishing)
 				cout << "; NO predicted LFs computed!"<< endl; 
 			else cout << endl;
-			cout << endl;
+			cout << endl;*/
 		}
 	}	
 
@@ -1770,14 +1770,14 @@ void VarParamCoupled::re_read_varparam(){
 						double min_val = doc.getDouble("/q_sp_fishery/"+list_fishery_name[f]+"/variable", "min");
 						if (min_val<0) {
 							min_val = 0;
-							cout << "restored min to 0" << endl;
+							//cout << "restored min to 0" << endl;
 						}
 						q_sp_fishery_min[sp][k] = min_val;
 
 						double max_val = doc.getDouble("/q_sp_fishery/"+list_fishery_name[f]+"/variable", "max");
 						if (max_val>1){
 							max_val = 1;
-							cout << "restored min to 1" << endl;
+							//cout << "restored min to 1" << endl;
 						}
 						q_sp_fishery_max[sp][k] = max_val;
 					}
@@ -1796,7 +1796,7 @@ void VarParamCoupled::re_read_varparam(){
 						double min_val = doc.getDouble("/s_sp_fishery/"+list_fishery_name[f]+"/variable", "min");
 						if (min_val<0) {
 							min_val = 0;
-							cout << "restored min to 0" << endl;
+							//cout << "restored min to 0" << endl;
 						}
 						
 						double max_val = doc.getDouble("/s_sp_fishery/"+list_fishery_name[f]+"/variable", "max");					
@@ -1808,12 +1808,12 @@ void VarParamCoupled::re_read_varparam(){
 							double min_val = doc.getDouble("/s_sp_fishery/"+list_fishery_name[f]+"/right_asymptote", "min");
 							if (min_val<0) {
 								min_val = 0;
-								cout << "restored min to 0" << endl;
+								//cout << "restored min to 0" << endl;
 							}
 							double max_val = doc.getDouble("/s_sp_fishery/"+list_fishery_name[f]+"/right_asymptote", "max");					
 							if (max_val>1){
 								max_val = 1;
-								cout << "restored min to 1" << endl;
+								//cout << "restored min to 1" << endl;
 							}								
 							s_asympt_sp_fishery_min[sp][k] = min_val;
 							s_asympt_sp_fishery_max[sp][k] = max_val;
@@ -1839,7 +1839,7 @@ void CParam::define_regions()
 			littxt >> nb_region_file >> nb_fleets >> nb_records;
 			nb_region += nb_region_file;
 		} else {
-			cout << endl << "WARNING : Cannot read LF data file with regions" << filename.c_str() << endl;
+			//cout << endl << "WARNING : Cannot read LF data file with regions" << filename.c_str() << endl;
 		}
 	}
 	area = new region*[nb_region];
@@ -1932,12 +1932,12 @@ void VarParamCoupled::par_read(double& varmin, double& varmax, string s, const d
 			double var_min = doc.getDouble(sv, "min");
 			if (var_min < fixmin) { 
 				var_min = fixmin; 
-				cout << "restored min to " << fixmin << endl;
+				//cout << "restored min to " << fixmin << endl;
 			}
 			double var_max = doc.getDouble(sv, "max");
 			if (var_max > fixmax) {
 				var_max = fixmax;
-				cout << "restored max to " << fixmax << endl;
+				//cout << "restored max to " << fixmax << endl;
 			}
 			varmin = var_min;
 			varmax = var_max;

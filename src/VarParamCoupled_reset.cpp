@@ -9,8 +9,8 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 	dvariable penalty = 0.0;
 	int idx = 1;
 
-	if (!scalc())
-		cout << "total penalty: ";
+	/*if (!scalc())
+		cout << "total penalty: ";*/
 
 	//Order is important (must be the same as in xinit function)!
 	if (doc.get("/q_sp_larvae/variable", "use") == "true") {
@@ -478,8 +478,8 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 //cout << dvarpars << endl;
 //cout << statpars << endl;
 //exit(1);
-	if (!scalc())
-		cout << value(penalty) << "; ";
+	/*if (!scalc())
+		cout << value(penalty) << "; ";*/
 	return penalty;
 }
 
