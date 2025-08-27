@@ -13,7 +13,9 @@ class SeapodymCohort : public SeapodymCoupled
 {
 public:
 	SeapodymCohort(){/*DoesNothing*/};
-	SeapodymCohort(const char* parfile, int cohort_id) : SeapodymCoupled(parfile) {
+	SeapodymCohort(const char* parfile, int cohortId) : SeapodymCoupled(parfile) {
+		cohort_id = cohortId;
+
 		// Get starting age_class and start time from cohort_id
 		int nb_age_class = param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0];
 		int quotient = cohort_id / nb_age_class;

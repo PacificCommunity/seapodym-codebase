@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
         TaskStepManager manager(MPI_COMM_WORLD, numTasks, stepBegMap, stepEndMap, dependencyMap);
         auto results = manager.run();
         for (const auto& [task_id, step, res] : results) {
-            std::cout << task_id << " and step " << step << ": " << res << ", ";	
+            std::cout << "Task ID " << task_id << " and step " << step << ": res = " << res << std::endl;	
         }
         std::cout << std::endl;
 

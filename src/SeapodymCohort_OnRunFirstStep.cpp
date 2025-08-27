@@ -77,9 +77,9 @@ void SeapodymCohort::OnRunFirstStep()
 		}
 	}
 	else {
-		cout << "----------------------------------------------------" << endl;
+		/*cout << "----------------------------------------------------" << endl;
 		cout << "            MODEL RUN WITHOUT FISHING" << endl;
-		cout << "----------------------------------------------------" << endl;
+		cout << "----------------------------------------------------" << endl;*/
 	}
 	func.allocate_dvmatr(map.imin,map.imax,map.jinf,map.jsup);
 	//TAG data reading and allocation section
