@@ -165,7 +165,7 @@ protected:
 	void delete_tag_releases();
 	void gaussian_kernel(dmatrix& gauss_kernel, dvector x, dvector y, double lon, double lat, double rx, double ry);
 	double lon_distance(const double lon_rel, const double lon_rec, const double lat_rel, const double lat_rec);
-	void ReadAll();
+	void ReadAll(int tstart, int tend, int offset);
 	void UnitConversions(int t);
 	void Food_Requirement_Index(dvar_matrix& IFR, dvar_matrix FR_pop, dvar_matrix ISR_denom, const int sp, const int age, const int t_count, const int jday);
 	void IFR_age_comp(dvar_matrix& IFR, dmatrix FR_pop, dmatrix ISR_denom, const int age, const int sp, const int t);

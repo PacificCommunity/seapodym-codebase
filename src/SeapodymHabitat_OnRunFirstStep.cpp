@@ -43,7 +43,7 @@ void SeapodymCoupled::OnRunFirstStep()
 	
 	//In Optimization Mode will read all data at once!
 	if (param->gcalc())
-		ReadAll();
+		ReadAll(t_count, nbt_total, 0);
 
 	func.allocate_dvmatr(map.imin,map.imax,map.jinf,map.jsup);
 

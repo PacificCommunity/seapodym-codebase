@@ -16,12 +16,15 @@ void SeapodymCohort::OnRunFirstStep()
 	Date::idatymd(param->ndatini, year, month, day);
 	param->set_nbt(nbt_total);
 	nbt_building = nbt_spinup_tuna;
-	t_count = t_start;
-	nbt_cohort = 1 + param->sp_nb_cohort_jv[0] + param->sp_nb_cohort_ad[0] - age_start;
-	if (nbt_cohort > nbt_total) nbt_cohort = nbt_total;
+	t_count = tstart_cohort;
+	tf_cohort = tstart_cohort + nb_age_class - 1;
+	if (tf_cohort > nbt_total){
+		tf_cohort = nbt_total;
+	}
+	int	nbt_cohort = tf_cohort - tstart_cohort + 1;
 
 	//Create time-dependent forcing matrices here:
-	int t0  = t_count;
+	int t0  = 1;
 	int nbt = nbt_cohort;
 	mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
 	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
@@ -49,7 +52,7 @@ void SeapodymCohort::OnRunFirstStep()
 		}
 	}
 	
-	ReadAll();
+	ReadAll(1, nbt_cohort, tstart_cohort-1);
 
 	if (!tuna_spinup && !param->tags_only) 
 		RestoreDistributions(mat.nb_age_built);

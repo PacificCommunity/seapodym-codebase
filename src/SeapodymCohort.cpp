@@ -2,12 +2,13 @@
 #include "Utilities.h"
 #include "Date.h"
 #include "sys/stat.h"
+#include <chrono>
 
 
 
 void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles) 
 {
-	t_count = t_start;
+	t_count = tstart_cohort;
 	age = age_start;
 	mat.mats.initialize();
 
@@ -132,7 +133,6 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	//----------------------------------------------//
 	//	DATA READING SECTION: U,V,T,O2,PP	//
 	//----------------------------------------------//
-	tcur = t_count; 
 
 	//------------------------------------------------------------------------------//
 	//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//
@@ -149,7 +149,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 		if (age <=param->sp_nb_cohort_jv[sp]){
 			//Precompute diagonal coefficients for larvae and juvenile ADREs
 			if (!elarvae_model){
-				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+				mat.u = mat.un[age+1][0]; mat.v = mat.vn[age+1][0]; 
 				pop.precaldia(*param, map, mat);
 				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
 			}
@@ -158,11 +158,11 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 		//1. Precompute some variables outside of age loop
 		
 		//1.0 Forage scaling
-		func.Forage_Scaling(*param, mat, map, sp, tcur);
+		func.Forage_Scaling(*param, mat, map, sp, age+1);
 
 		//No need to precompute accessibility for all ages, can be done at each time step for a given age			
 		//1.1 Accessibility by adults (all cohorts)
-		func.Faccessibility(*param, mat, map, sp, jday, tcur, pop_built, false, tags_age_habitat);//checked
+		func.Faccessibility(*param, mat, map, sp, jday, age+1, pop_built, false, tags_age_habitat);//checked
 
 		//1.6 Precompute Mortality range at age function
 		func.mortality_range_age_comp(*param,mat,sp);
@@ -182,24 +182,24 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 						&& t_count > nbt_building+nbstoskip)
 					time_getpred = true;
 
-					elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+					elarvae_model_run(Mortality,sp,age+1,time_getpred,writeoutputfiles);
 			}
 
 			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 
 			//2.1.1 Spawning habitat
-			func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
+			func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, age+1, jday);
 			
 			//2.2 Transport and mortality of larvae (always one age class)	
 			double mean_age = mean_age_cohort[sp][age]; 
 
-			func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
-			pop.Precalrec_juv(map, mat, Mortality, tcur, (1-elarvae_dt));//checked
-			pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, (1-elarvae_dt));//checked
+			func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, age+1);
+			pop.Precalrec_juv(map, mat, Mortality, age+1, (1-elarvae_dt));//checked
+			pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, age+1, (1-elarvae_dt));//checked
 			
 			//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
 			if (elarvae_model){
 				param->sigma_fcte = sigma_fcte_save;
-				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+				mat.u = mat.un[age+1][0]; mat.v = mat.vn[age+1][0]; 
 				//Precompute diagonal coefficients for juvenile ADREs
 				pop.precaldia(*param, map, mat);
 				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
@@ -209,17 +209,17 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 		if (age >0 && age <=param->sp_nb_cohort_jv[sp]){
 			//2.3. Juvenile habitat	
 			if (param->cannibalism[sp]){
-				Total_Pop_comp(Total_pop,sp,jday,tcur); //adjoint
-				func.Juvenile_Habitat_cannibalism(*param, mat, map, Habitat, Total_pop, sp, tcur);
+				Total_Pop_comp(Total_pop,sp,jday,age+1); //adjoint
+				func.Juvenile_Habitat_cannibalism(*param, mat, map, Habitat, Total_pop, sp, age+1);
 			} else 
-				func.Juvenile_Habitat(*param, mat, map, Habitat, sp, tcur);
+				func.Juvenile_Habitat(*param, mat, map, Habitat, sp, age+1);
 				
 			//2.4. Transport and mortality of juvenile age classes	
 			double mean_age = mean_age_cohort[sp][age];
 
-			func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);
-			pop.Precalrec_juv(map,  mat, Mortality, tcur, 1);
-			pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, 1);
+			func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, age+1);
+			pop.Precalrec_juv(map,  mat, Mortality, age+1, 1);
+			pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, age+1, 1);
 		}			
 
 		if (age > param->sp_nb_cohort_jv[sp] && age <= param->sp_nb_cohort_jv[sp]+param->sp_nb_cohort_ad[sp]){
@@ -227,7 +227,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 
 			//NOTE: currently current averaging doesn't depend on seasonal migrations
 			if (param->vert_movement[sp]){
-				func.Average_currents(*param, mat, map, age, tcur, pop_built);
+				func.Average_currents(*param, mat, map, age, age+1, pop_built);
 			}
 				
 			//the option with smooth maturity to be revised and if necessary to be used later
@@ -240,18 +240,18 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 				if (age>=param->age_mature[sp] && param->seasonal_migrations[sp]) 
 				migration_flag = 1;
 
-				func.Feeding_Habitat(*param,mat,map,Habitat,sp,age,jday,tcur,migration_flag);
+				func.Feeding_Habitat(*param,mat,map,Habitat,sp,age,jday,age+1,migration_flag);
 
 				double mean_age = mean_age_cohort[sp][age];
 
 				if (!param->food_requirement_in_mortality(sp)){
-					func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);//checked
+					func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, age+1);//checked
 				} else {
-					Food_Requirement_Index(IFR, FR_pop, ISR_denom, sp, age, tcur, jday);
-					func.Mortality_Sp(*param, mat, map, Mortality, IFR, sp, mean_age, age, tcur);//checked
+					Food_Requirement_Index(IFR, FR_pop, ISR_denom, sp, age, age+1, jday);
+					func.Mortality_Sp(*param, mat, map, Mortality, IFR, sp, mean_age, age, age+1);//checked
 				}
 
-				pop.Precaldia_Caldia(map, *param, mat, Habitat, Total_pop, sp, age, tcur, jday);//checked	
+				pop.Precaldia_Caldia(map, *param, mat, Habitat, Total_pop, sp, age, age+1, jday);//checked	
 
 				if (!param->gcalc()){
 					// Additional outputs:
@@ -267,11 +267,11 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 						deltaT,sp,age);
 				}
 
-				mat.adult_habitat(sp,tcur,param->age_compute_habitat[sp][age]) = value(Habitat);
+				mat.adult_habitat(sp,age+1,param->age_compute_habitat[sp][age]) = value(Habitat);
 
 				pop.Precalrec_Calrec_adult(map,mat,*param,rw,
 						dvarCohortDensity,Mortality,
-						tcur,fishing,age,sp,year,month,
+						age+1,fishing,age,sp,year,month,
 						jday,step_fishery_count,0);//checked 20150210	
 			
 			}

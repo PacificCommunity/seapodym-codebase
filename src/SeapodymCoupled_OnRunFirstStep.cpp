@@ -48,7 +48,7 @@ void SeapodymCoupled::OnRunFirstStep()
 	
 	//In Optimization Mode will read all data at once!
 	if (param->gcalc())
-		ReadAll();
+		ReadAll(t_count, nbt_total, 0);
 
 	if (!tuna_spinup && !param->tags_only) 
 		RestoreDistributions(mat.nb_age_built);

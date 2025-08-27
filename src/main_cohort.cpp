@@ -4,10 +4,13 @@
 #include <functional>
 #include <mpi.h>
 //#include "SeapodymCohort.h"
+#include "VarParamCoupled.h"
+#include "SeapodymCohortDependencyAnalyzer.h"
 #include "TaskStepWorker.h"
 #include "TaskStepManager.h"
 #include "SeapodymCohort.h"
 #include <CmdLineArgParser.h>
+#include "ctrace.h"
 
 using std::cout;
 SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs);
@@ -101,38 +104,40 @@ int main(int argc, char** argv) {
 
     std::string parfile = cmdLine.get<std::string>("-s");
     auto taskFunc = std::bind(taskFunction, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, parfile.c_str());
-    int numTasks = cmdLine.get<int>("-nT");
-    int numSteps = cmdLine.get<int>("-ns");
+    
+    // Read parfile
+    VarParamCoupled* param;
+    param = new VarParamCoupled();
+	param->init_param();
+	param->read(parfile);
 
-    // set the number of steps for each task
-    std::map<int, int> stepBegMap;
-    std::map<int, int> stepEndMap;
-    for (int task_id = 0; task_id < numTasks; ++task_id) {
-        // in this version it is the same for each task
-        stepBegMap[task_id] = 0;
-        stepEndMap[task_id] = numSteps;
-    }
+    // Get number of time steps and number of cohorts from param
+    int numAgeGroups = param->sp_nb_cohorts[0];
+    int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
+    Date::init_time_variables(*param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
+    int numTasks = numAgeGroups + numTimeSteps - 1;
 
-    // infer the dependency taskId => {[taskId, step], ...}
-    std::map<int, std::set<std::array<int, 2>>> dependencyMap;
-    for (int task_id = 0; task_id < numTasks; ++task_id) {
-        std::set< std::array<int, 2>> dep_set;
-        for (int i = 0; i < numSteps; ++i) {
-            if (task_id - i - 1 >= 0) {
-                dep_set.insert(std::array<int, 2>{task_id - i - 1, i});
-            }
-        }
-        dependencyMap[task_id] = dep_set;
-        // print the dependencies for debugging
-        if(workerId == 0) {
-            std::cout << "Task " << task_id << " has steps " << stepBegMap[task_id] << "..." <<  stepEndMap[task_id] - 1 
-                << " and depends on ";
-            for (auto d : dep_set) {
-                std::cout << d[0] << ":" << d[1] << ", "; 
+    // analyze the conhort Id task dependencies
+    SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps);
+    int numCohorts = taskDeps.getNumberOfCohorts();
+    int numCohortSteps = taskDeps.getNumberOfCohortSteps();
+    std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
+    std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
+    std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
+
+    // print the dependencies for debugging
+    if (workerId == 0) {
+        cout << "Number of age groups: " << numAgeGroups << endl;
+        cout << "Number of tasks: " << numTasks << "; simulation time: " << numTimeSteps << endl << endl;
+        for (const auto& [task_id, stepBeg] : stepBegMap) {
+            int globalTimeIndex = std::max(0, task_id - numAgeGroups + 1);
+            std::cout << "At time " << globalTimeIndex << " Task " << task_id << " has steps " << stepBeg << "..." << stepEndMap.at(task_id) - 1 << " and depends on: ";
+            for (const auto& [task_id2, step] : dependencyMap.at(task_id)) {
+                std::cout << task_id2 << ":" << step << ", ";
             }
             std::cout << std::endl;
         }
-    }
+    }   
 
     if (workerId == 0) {
         // Manager

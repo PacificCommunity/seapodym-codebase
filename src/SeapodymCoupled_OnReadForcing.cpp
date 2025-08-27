@@ -103,11 +103,11 @@ void SeapodymCoupled::ReadClimatologyOxy(int t, int t_clm)
 		rw.rbin_input2d(param->strfile_oxy[k], map, mat.oxygen[t][k], nbi, nbj, nbytetoskip);
 }
 
-void SeapodymCoupled::ReadAll()
+void SeapodymCoupled::ReadAll(int tstart, int tend, int offset)
 {
 	//cout << "Reading all forcing variables at once... " << endl;
 	int jday = 0;
-	int t_count_init = t_count;
+	int t = tstart;
 
 	//need to read oxygen in case if month==past_month
 	//(otherwise we may not have it for the first time steps)
@@ -117,39 +117,29 @@ void SeapodymCoupled::ReadAll()
 	if (param->type_oxy==2 && qtr==past_qtr)
 		ReadClimatologyOxy(1, qtr);
 
-	for (; t_count<=nbt_total; t_count++){
+	for (; t<=tend; t++){
 		getDate(jday);
 		//----------------------------------------------//
 		//	DATA READING SECTION: U,V,T,O2,PP	//
 		//----------------------------------------------//
-		if (t_count > nbt_building) {
+		if (t > nbt_building) {
 			//TIME SERIES 
-			t_series = t_count - nbt_building + nbt_start_series;
-			ReadTimeSeriesData(t_count, t_series);	
+			t_series = t - nbt_building + nbt_start_series + offset;
+			ReadTimeSeriesData(t, t_series);	
 		}
-		else if ((t_count <= nbt_building) && (month != past_month)) {
+		else if ((t <= nbt_building) && (month != past_month)) {
 			//AVERAGED CLIMATOLOGY DATA
-			ReadClimatologyData(t_count, month);
+			ReadClimatologyData(t, month);
 		}
 		if (param->type_oxy==1 && month != past_month) {
 			//MONTHLY O2
-			ReadClimatologyOxy(t_count, month);
+			ReadClimatologyOxy(t, month);
 		}
 		if (param->type_oxy==2 && qtr != past_qtr) {
 			//QUARTERLY O2
-			ReadClimatologyOxy(t_count, qtr);
+			ReadClimatologyOxy(t, qtr);
 		}
 	}
-	t_count = t_count_init;
-}
-
-void SeapodymCohort::ReadAll()
-{
-	// Read only data at the times needed for the cohort
-	int nbt_total_init = nbt_total;
-	nbt_total = nbt_cohort;
-	SeapodymCoupled::ReadAll();
-	nbt_total = nbt_total_init;
 }
 
 void SeapodymCoupled::RestoreDistributions(ivector& nb_age_built)
