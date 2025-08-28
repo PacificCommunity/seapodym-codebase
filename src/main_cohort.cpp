@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <functional>
 #include <mpi.h>
-//#include "SeapodymCohort.h"
 #include "VarParamCoupled.h"
 #include "SeapodymCohortDependencyAnalyzer.h"
 #include "TaskStepWorker.h"
@@ -17,7 +16,8 @@ SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
-int taskFunction(int task_id, int step, int stepBeg, int stepEnd, const char* parfile) {
+void 
+taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, const char* parfile) {
 
     int cmp_regime = 0;
     bool reset_buffers = false;
@@ -37,35 +37,34 @@ int taskFunction(int task_id, int step, int stepBeg, int stepEnd, const char* pa
     // its own gradient structure?
     gradient_structure gs(gs_var_buffer);
 
-    int cohort_id = task_id; // For the time being
+    int cohort_id = task_id; // In our case task_id is the cohort Id
 
-    static SeapodymCohort *cohort = nullptr;
-    if (step==stepBeg){
-        cohort = new SeapodymCohort((char*)parfile, cohort_id);
+    SeapodymCohort cohort((char*)parfile, cohort_id);
 
-        //initialize variables of optimization
-        const int nvar = cohort->nvarcalc();
-        independent_variables x(1, nvar);
-        adstring_array x_names(1,nvar);
+    //initialize variables of optimization
+    const int nvar = cohort.nvarcalc();
+    independent_variables x(1, nvar);
+    adstring_array x_names(1,nvar);
 
-        cohort->xinit(x, x_names);
-        //cout << "Total number of variables: " << nvar << '\n'<<'\n';
+    cohort.xinit(x, x_names);
+    //cout << "Total number of variables: " << nvar << '\n'<<'\n';
 
-        //initialization of simulation
-        cohort->prerun_model(x);
-    }
+    //initialization of simulation
+    cohort.prerun_model(x);
+    
 
     // advance the cohort by one step
-    // NOT SURE IF ALL THE cohorts share the same param? Should param be passed as an argument to the taskFunction? Or should it be computed 
-    cohort->stepForward(false);
+    for (auto step = stepBeg; step < stepEnd; ++step) {
 
-    if (step == stepEnd) {
-        // remove the cohort
-        delete cohort;
+        cohort.stepForward(false);
+
+        int success = 1;
+        // send message to the manager that the step is complete
+        int output[3] = {task_id, step, success};
+        const int endTaskTag = 1;
+        MPI_Send(output, 3, MPI_INT, 0, endTaskTag, comm);
     }
 
-    // Could return an error code instead
-    return task_id;
 }
 
 int main(int argc, char** argv) {
@@ -84,11 +83,7 @@ int main(int argc, char** argv) {
     
     CmdLineArgParser cmdLine;
     cmdLine.set("-s", std::string("initparfile.xml"), "Input parameter file");
-    cmdLine.set("-ns", 5, "Number of steps for each task");
 
-    // NO NEED TO HAVE -na, its in the parfile. However, we need that quantity before we 
-    // intantiate the cohort objects.
-    cmdLine.set("-nT", 1, "Number of tasks");
     // Parse the command line arguments
     bool success = cmdLine.parse(argc, argv);
     bool help = cmdLine.get<bool>("-help") || cmdLine.get<bool>("-h");
@@ -103,18 +98,24 @@ int main(int argc, char** argv) {
     }
 
     std::string parfile = cmdLine.get<std::string>("-s");
-    auto taskFunc = std::bind(taskFunction, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, parfile.c_str());
+
+    // Bind the task function with the necessary parameters
+    auto taskFunc = std::bind(taskFunction,
+        std::placeholders::_1, // task_id
+        std::placeholders::_2, // stepBeg
+        std::placeholders::_3, // stepEnd
+        std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
+        parfile.c_str());
     
     // Read parfile
-    VarParamCoupled* param;
-    param = new VarParamCoupled();
-	param->init_param();
-	param->read(parfile);
+    VarParamCoupled param;
+	param.init_param();
+	param.read(parfile);
 
     // Get number of time steps and number of cohorts from param
-    int numAgeGroups = param->sp_nb_cohorts[0];
+    int numAgeGroups = param.sp_nb_cohorts[0];
     int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
-    Date::init_time_variables(*param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
+    Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
     int numTasks = numAgeGroups + numTimeSteps - 1;
 
     // analyze the conhort Id task dependencies
@@ -150,7 +151,6 @@ int main(int argc, char** argv) {
 
     } else {
         // Worker
-
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
         worker.run();
     }

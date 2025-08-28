@@ -277,7 +277,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 			}
 		}
 	}//end of 'sp' loop
-	cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ": sum(density) = " << sum(dvarCohortDensity) << endl;
+	cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ", global time:" << t_count << ", sum(density) = " << sum(dvarCohortDensity) << endl;
 
 	/*if (writeoutputfiles){
 		//Output DYM file name
