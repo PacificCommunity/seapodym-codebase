@@ -24,7 +24,7 @@ public:
 			age_start = 0;
 			tstart_cohort = 2 + (quotient - 1)*nb_age_class + remainder;
 		}else{
-			age_start = remainder;
+			age_start = nb_age_class - remainder - 1;
 			tstart_cohort = 1;
 		}
 	};
