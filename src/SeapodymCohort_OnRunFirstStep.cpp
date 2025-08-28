@@ -17,7 +17,7 @@ void SeapodymCohort::OnRunFirstStep()
 	param->set_nbt(nbt_total);
 	nbt_building = nbt_spinup_tuna;
 	t_count = tstart_cohort;
-	tf_cohort = tstart_cohort + nb_age_class - 1;
+	tf_cohort = tstart_cohort + nb_age_class - 1 - age_start;
 	if (tf_cohort > nbt_total){
 		tf_cohort = nbt_total;
 	}
