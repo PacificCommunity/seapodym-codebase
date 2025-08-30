@@ -4,113 +4,69 @@
 #include "sys/stat.h"
 #include <chrono>
 
+void SeapodymCohort::prerun_model()
+{
+	OnRunFirstStep();
+}
 
 
 void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles) 
 {
-	t_count = tstart_cohort;
-	age = age_start;
-	mat.mats.initialize();
 
-	//Temporarily reading the tau of the first cohort
-	//Need to be just a single number for all cohorts
-	dtau = param->sp_unit_cohort[0][1];
-	nbt_before_first_recruitment = Date::get_nbt_before_first_recruitment(
-			param->first_recruitment_date,
-			param->ndatini,param->deltaT,param->date_mode); 	
-	//counter of number of time steps between recruitments (survival equations)
-	//once nt_dtau = dtau, recruitment occurs and nt_dtau=0
-	//its initial value is dtau-nbt_before_first_recruitment_date
-	nt_dtau = dtau-nbt_before_first_recruitment; 
-
-	//routine-specific variables
-	nbt_no_forecast = t_count + nbt_spinup_tuna + nbt_total - 1;
-	fishing = false;
-	migration_flag = 0;
-	step_count= 0;
-	step_fishery_count= 0;
-	jday = 0; 
-	nbstoskip = param->nbsteptoskip; // nb of time step to skip before computing likelihood
-
-	likelihood = 0.0;
-
-	//----------------------------------------------//
-	// 	LOCAL MATRICES ALLOCATION SECTION       //
-	//----------------------------------------------//	
-	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-	for (int sp=0; sp<nb_species; sp++){
-		////////////////////////////////////////////////////////////////////////
-		// HERE init_state will be initialized from other cohorts or from initilization file ///
-		//init_state = get_initial_state(cohort_id);
-		init_state = mat.init_density_species(sp,age);
-		////////////////////////////////////////////////////////////////////////
-		dvarCohortDensity = init_state;
-	}
-
-	if (param->food_requirement_in_mortality(0)){ 
-		//temporal, need to check memory use first 
-		IFR.allocate(map.imin, map.imax, map.jinf, map.jsup);
-		ISR_denom.allocate(map.imin, map.imax, map.jinf, map.jsup);
-		FR_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
-		IFR.initialize();
-		ISR_denom.initialize();
-		FR_pop.initialize();
-	}
-	Spawning_Habitat.initialize();
-	Habitat.initialize();
-	Mortality.initialize();
-
-	//Vector of zeroes, to avoid duplicating the F_accessibility function 
-	tags_age_habitat;
-	tags_age_habitat.allocate(0,aN_adult(0));
-	tags_age_habitat.initialize();
-	
-	pop_built = 1;
-
-	past_month=month;
-	past_qtr=qtr;
-
-	//if (!param->gcalc()){
-		//need to read oxygen in case if month==past_month
-		//(otherwise we may not have it for the first time steps)
-		if (param->type_oxy==1 && month==past_month)
-			ReadClimatologyOxy(1, month);
-		//need to read oxygen in case if qtr==past_qtr 
-		if (param->type_oxy==2 && qtr==past_qtr)
-			ReadClimatologyOxy(1, qtr);
-	//}
-
-	//----------------------------------------------//
-	// 	LIKELIHOOD INITIALISATION SECTION       //
-	//----------------------------------------------//	
 	//Reset model parameters:
 	reset(x);
 
-	//precompute thermal habitat parameters
-	for (int sp=0; sp < nb_species; sp++)
-		func.Vars_at_age_precomp(*param,sp);
+	//----------------------------------------------//
+	//	ALLOCATE AND INITIALIZE COHORT DENSITY	//
+	//----------------------------------------------//	
+	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	if (cohort_id < nb_age_class){ 
 
-	//precompute seasonal switch function
+		//Initialize from restart file
+		RestoreDistributions(mat.nb_age_built);
+		dvarCohortDensity = mat.init_density_species(0,age_start);
+
+	} else {
+		//Initialize from spawning
+		int sp = 0;
+		int tcur = 0;
+
+		//Compute eggs at the end of t-1!	
+		getDate(jday, tstart_cohort);
+
+		//1. Spawning habitat (ToDo:IF NEEDED, see spawning_in_hs)
+		func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
+
+		//2: Spawning biomass: 
+		//If load Density(t-1(+deltaT),amature,..,na) passed by Manager to mat.dvarDensity(sp,a,i,j), then no need to change the function
+		SpawningBiomass_comp(Total_pop, sp);
+
+		//3: Reproduction
+		Spawning(dvarCohortDensity,Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
+	}
+
+	if (writeoutputfiles){
+		if (!param->gcalc())
+			ConsoleOutput(0,0);
+	}
+
+	//----------------------------------------------//
+	// PRECOMPUTE VARIABLES USED IN COHORT MODELING	//
+	//----------------------------------------------//	
+	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++){
+		func.Vars_at_age_precomp(*param,sp);
+		func.mortality_range_age_comp(*param,mat,sp);
+	
+		//precompute seasonal switch function
 		if (param->seasonal_migrations[sp]){
 			func.Seasonal_switch_year_precomp(*param,mat,map,
 						value(param->dvarsSpawning_season_peak[sp]),
 						value(param->dvarsSpawning_season_start[sp]),sp);
 		}
-	}
+	}	
 
-	//Output DYM file name
-	string fileout;
-	fileout = param->strdir_output + param->sp_name[0] + "_cohort.dym";//will need the date of birth stamp
-	if (writeoutputfiles){
-		WriteFileHeaders_submodel(fileout,true);	
-		if (!param->gcalc())
-			ConsoleOutput(0,0);
-	}
+	age = age_start;
 }
 
 void SeapodymCohort::stepForward(bool writeoutputfiles)
@@ -123,25 +79,21 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	sumF.initialize();
 	mat.dvarCatch_est.initialize();
 	//----------------------------------------------//
-	//		       DATE			//
+	//		DATE and TIME-AGE		//
 	//----------------------------------------------//
-	getDate(jday);
+	tcur = age - age_start + 1;
+
+	int model_time_count = tstart_cohort + age - age_start;
+	getDate(jday, model_time_count+1);
 	for (int sp=0; sp < nb_species; sp++){
 		func.Seasonal_switch(*param,mat,map,jday,sp);	
 	}
 
 	//----------------------------------------------//
-	//	DATA READING SECTION: U,V,T,O2,PP	//
+	//	COHORT DYNAMICS WITHOUT FISHING		//
 	//----------------------------------------------//
-
-	//------------------------------------------------------------------------------//
-	//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//
-	//------------------------------------------------------------------------------//
-	//------------------------------------------------------------------------------//
-
 	for (int sp=0; sp < nb_species; sp++){
 
-		tcur = age + 1 - age_start;
 
 		int elarvae_model = param->elarvae_model[sp];
 		//if !elarvae_model, elarvae_dt = 0 as elarvae_age = 0
@@ -157,19 +109,13 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 			}
 		}
 
-		//1. Precompute some variables outside of age loop
-		
 		//1.0 Forage scaling
 		func.Forage_Scaling(*param, mat, map, sp, tcur);
 
-		//No need to precompute accessibility for all ages, can be done at each time step for a given age			
-		//1.1 Accessibility by adults (all cohorts)
+		//!!!NOT YET DONE: No need to precompute accessibility for all ages, can be done at each time step for a given age
+		//Function below feels dvarZ_access and dvarF_access across param.sp_a0_adult[sp]:param.sp_nb_cohorts[sp] at time tcur. Need to write another one, which will compute accessibility for current age-time.  
+		//1.1 Accessibility by adults (all age classes)
 		func.Faccessibility(*param, mat, map, sp, jday, tcur, pop_built, false, tags_age_habitat);//checked
-
-		//1.6 Precompute Mortality range at age function
-		func.mortality_range_age_comp(*param,mat,sp);
-
-		//2. IMPLICIT AGE LOOP: increment age while moving through life stages 
 
 		if (age==0){
 			//2.0 If activated, the Early Larvae Model (ELM) solved over elarvae_age
@@ -181,10 +127,10 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 				bool time_getpred = false;
 				if (year>=param->larvae_like_firstyear
 						&& year<=param->larvae_like_lastyear 
-						&& t_count > nbt_building+nbstoskip)
+						&& tstart_cohort > nbstoskip-1)
 					time_getpred = true;
 
-					elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+				elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
 			}
 
 			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 
@@ -246,12 +192,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 
 				double mean_age = mean_age_cohort[sp][age];
 
-				if (!param->food_requirement_in_mortality(sp)){
-					func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);//checked
-				} else {
-					Food_Requirement_Index(IFR, FR_pop, ISR_denom, sp, age, tcur, jday);
-					func.Mortality_Sp(*param, mat, map, Mortality, IFR, sp, mean_age, age, tcur);//checked
-				}
+				func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);//checked
 
 				pop.Precaldia_Caldia(map, *param, mat, Habitat, Total_pop, sp, age, tcur, jday);//checked	
 
@@ -281,31 +222,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	}//end of 'sp' loop
 	//int year, month, day, jday, xx;		
 	//Date::update_time_variables(tcur, param->deltaT, param->date_mode, jday_spinup, jday, day, month, year, xx);
-	cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ", time = " << t_count << ", year = "<< year << ", month = " << month << ", sum(density) = " << sum(dvarCohortDensity) << endl;
-
-	/*if (writeoutputfiles){
-		//Output DYM file name
-		string fileout;
-		fileout = param->strdir_output + param->sp_name[0] + "_cohort.dym";//will 
-		if (!param->gcalc())	
-			ConsoleOutput(1,value(likelihood));
-
-		dmatrix mat2d(0, nbi - 1, 0, nbj - 1);
-		mat2d.initialize();
-		for (int i=map.imin; i <= map.imax; i++){
-			for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
-				if (map.carte[i][j]){
-					mat2d(i-1,j-1) = value(dvarCohortDensity(i,j));
-				}
-			}
-		}
-		double minval = min(value(dvarCohortDensity));
-		double maxval = max(value(dvarCohortDensity));
-
-		rw.wbin_transpomat2d(fileout, mat2d, nbi-2, nbj-2, true);
-		//update min-max values in header
-		rw.rwbin_minmax(fileout, minval, maxval);
-	}*/
+	cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ", time = " << model_time_count << ", year = "<< year << ", month = " << month << ", sum(density) = " << sum(dvarCohortDensity) << endl;
 
 
 	///////////////////////////////////////////
@@ -319,8 +236,6 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	past_month=month;
 	step_count++;
 	if (qtr != past_qtr) past_qtr = qtr; 
-
-	t_count++;
 
 	age++;
 }

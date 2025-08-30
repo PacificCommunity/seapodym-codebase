@@ -126,7 +126,7 @@ protected:
 	void get_larvae_at_obs();
 	void elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles);
 	void write_elarvae_dym(const int sp);
-	void getDate(int& jday);
+	void getDate(int& jday, const int t_count);
 	void SaveRestart(const int year, const int month);
 	void UpdateTimeVars(int& nbt_total, int& nbt_start_series);
 	///void SaveJuvCohorts(string fileJuv, int sp, bool FileMode);

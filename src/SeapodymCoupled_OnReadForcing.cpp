@@ -118,7 +118,7 @@ void SeapodymCoupled::ReadAll(int tstart, int tend, int offset)
 		ReadClimatologyOxy(1, qtr);
 
 	for (; t<=tend; t++){
-		getDate(jday);
+		getDate(jday,t);
 		//----------------------------------------------//
 		//	DATA READING SECTION: U,V,T,O2,PP	//
 		//----------------------------------------------//

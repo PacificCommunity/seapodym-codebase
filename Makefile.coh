@@ -42,7 +42,6 @@ SeapodymCoupled_EditRunCoupled.cpp \
 SeapodymCoupled_Funcs.cpp \
 SeapodymCoupled_Forage.cpp \
 SeapodymCohort.cpp \
-Seapodym_OnRunCohort.cpp \
 SeapodymCoupled_OnRunFirstStep.cpp \
 SeapodymCohort_OnRunFirstStep.cpp \
 SeapodymCoupled_OnReadForcing.cpp \

@@ -193,7 +193,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		//----------------------------------------------//
 		//		       DATE			//
 		//----------------------------------------------//
-		getDate(jday);
+		getDate(jday,t_count);
 		for (int sp=0; sp < nb_species; sp++){
 			func.Seasonal_switch(*param,mat,map,jday,sp);	
 		}

@@ -21,7 +21,7 @@ dmatrix SeapodymCoupled::DtoBcell(const dmatrix var)
 }
 
 
-void SeapodymCoupled::getDate(int& jday)
+void SeapodymCoupled::getDate(int& jday, const int t_count)
 {
 	int newyear; //(Inna 12/10/11) no need for the moment
 	Date::update_time_variables(t_count, param->deltaT, param->date_mode, jday_spinup, jday, day, month, year, newyear);

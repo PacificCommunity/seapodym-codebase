@@ -153,7 +153,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 		//----------------------------------------------//
 		//		       DATE			//
 		//----------------------------------------------//
-		getDate(jday);
+		getDate(jday,t_count);
 		for (int sp=0; sp < nb_species; sp++){
 			func.Seasonal_switch(*param,mat,map,jday,sp);	
 		}
@@ -500,7 +500,7 @@ void SeapodymCoupled::ReadDensity()
 	}
 
 	for (; t_count<=nbt_total; t_count++){
-		getDate(jday);
+		getDate(jday,t_count);
 		
 		//TIME SERIES 
 		t_series = t_count + date0_offset;

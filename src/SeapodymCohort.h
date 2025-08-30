@@ -18,20 +18,19 @@ public:
 		nb_age_class = param->sp_nb_cohorts[0];
 
 		// Get starting age_class and start time from cohort_id
-		int quotient = cohort_id / nb_age_class;
-		int remainder = cohort_id % nb_age_class;
 		if (cohort_id >= nb_age_class){
 			age_start = 0;
-			tstart_cohort = 2 + (quotient - 1)*nb_age_class + remainder;
+			tstart_cohort = cohort_id-nb_age_class+1;
 		}else{
-			age_start = nb_age_class - remainder - 1;
-			tstart_cohort = 1;
+			age_start = nb_age_class - cohort_id - 1;
+			tstart_cohort = 0;
 		}
 	};
 	virtual ~SeapodymCohort() {/*DoNothing*/};
 
-	double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
-	void prerun_model(dvar_vector x);
+	//double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
+	void init_cohort(dvar_vector x, const bool writeoutputfiles = false) { return InitializeCohort(x, writeoutputfiles); }		
+	void prerun_model();
 	void OnRunFirstStep();
 	int nb_age_class;
 
@@ -55,7 +54,7 @@ private:
 
 	dvariable likelihood;
 
-	DMATRIX init_state;
+	//DMATRIX init_state;//not needed, initialized from mat.init_density_species
 
 	dvar_matrix Spawning_Habitat;
 	dvar_matrix Total_pop;
@@ -64,17 +63,16 @@ private:
 	dvar_matrix ISR_denom; 
 	dvar_matrix FR_pop;
 	dvar_matrix Mortality; 
-	dvar_matrix dvarCohortDensity; 
+	dvar_matrix dvarCohortDensity; //think if we want to preserve multi-species
 
 	ivector  tags_age_habitat;
 	
 	int pop_built;
 
-	double OnRunCohort(dvar_vector x, const bool writeoutputfiles);
-	void InitializeCohort(dvar_vector& x, const bool writeoutputfiles);
+	void InitializeCohort(dvar_vector& x, const bool writeoutputfiles = false);
 
 public:
-	void stepForward(bool writeoutputfiles);
+	void stepForward(const bool writeoutputfiles = false);
 	// Remaining to implement
 	void setStateFromArray(const std::vector<double>& array);
 	std::vector<double> getArrayFromState();

@@ -1,6 +1,7 @@
 #include "SeapodymCoupled.h"
 #include "SeapodymCohort.h"
 
+//Prepare cohort run: initialize control variables, set flags, allocate memory for model and data variables, read forcing and fisheries data.
 void SeapodymCohort::OnRunFirstStep()
 {
 	sumFprime.allocate(0, nb_forage - 1); 		sumFprime.initialize();
@@ -16,25 +17,31 @@ void SeapodymCohort::OnRunFirstStep()
 	Date::idatymd(param->ndatini, year, month, day);
 	param->set_nbt(nbt_total);
 	nbt_building = nbt_spinup_tuna;
-	t_count = tstart_cohort;
-	tf_cohort = tstart_cohort + nb_age_class - 1 - age_start;
+	tf_cohort = tstart_cohort + nb_age_class;
 	if (tf_cohort > nbt_total){
 		tf_cohort = nbt_total;
 	}
-	int	nbt_cohort = tf_cohort - tstart_cohort + 1;
+	int nbt_cohort = tf_cohort - tstart_cohort + 1;
 
 	//Create time-dependent forcing matrices here:
 	int t0  = 1;
+	int offset_tstart_cohort = tstart_cohort;
+	//to enable reading of forcing starting from t-1:
+	if (cohort_id >= nb_age_class){
+		t0 = 0;
+		offset_tstart_cohort = tstart_cohort-1;
+		nbt_building = -1;
+	}
 	int nbt = nbt_cohort;
 	mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
 	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
 	if (!param->larvae_input_aggregated_flag[0])
-		mat.createMatLarvae(map, t0, nbt, nbi, nbj, deltaT);
+		mat.createMatLarvae(map, 1, nbt, nbi, nbj, deltaT);
 
 	int nb_pops = nb_species*(1+param->nb_tag_files);
-	mat.CreateMatSpecies(map,t0, nbt, nbi, nbj, nb_pops, a0_adult, param->sp_nb_cohorts);
+	mat.CreateMatSpecies(map,1, nbt, nbi, nbj, nb_pops, a0_adult, param->sp_nb_cohorts);
 	mat.CreateMatScalingFactorLarvae(map, nb_species);
-	mat.CreateMatHabitat(map,nb_species,nb_forage,nb_layer,max(param->sp_nb_cohorts),t0, nbt,nbi,nbj,a0_adult,param->sp_nb_cohorts,param->age_compute_habitat);
+	mat.CreateMatHabitat(map,nb_species,nb_forage,nb_layer,max(param->sp_nb_cohorts),1,nbt,nbi,nbj,a0_adult,param->sp_nb_cohorts,param->age_compute_habitat);
 	past_month=0;
 	past_qtr=0;
 	sumP = 0; 
@@ -51,11 +58,19 @@ void SeapodymCohort::OnRunFirstStep()
        				mat.daylength[jd][j] = func.daylength_twilight(lat,jd,18); 
 		}
 	}
-	
-	ReadAll(1, nbt_cohort, tstart_cohort-1);
+	//Reading all forcing data for the cohort lifetime window
+	ReadAll(t0, nbt, offset_tstart_cohort);
 
-	if (!tuna_spinup && !param->tags_only) 
-		RestoreDistributions(mat.nb_age_built);
+	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Habitat.initialize();
+	Mortality.initialize();
+	Spawning_Habitat.initialize();
+	Total_pop.initialize();
+	mat.mats.initialize();
+
 
 	rw.init_writing(*param);
 
@@ -85,35 +100,41 @@ void SeapodymCohort::OnRunFirstStep()
 		cout << "----------------------------------------------------" << endl;*/
 	}
 	func.allocate_dvmatr(map.imin,map.imax,map.jinf,map.jsup);
-	//TAG data reading and allocation section
-	nb_tagpops = param->nb_tag_files;
 
-	if (param->tag_like[0]){
-		nb_rel.allocate(0,nb_tagpops-1);
-		for (int n=0; n<nb_tagpops; n++){
-			nb_rel(n).allocate(0,nbt_total-1);
-			nb_rel(n).initialize();
-		}
-		create_tag_recaptures();
-		ReadTaggingData(nb_rel, t_count_rec);
-	}
-	
+	//vector of zeroes, for accessibility function
 	tags_age_habitat.allocate(0,aN_adult(0));
 	tags_age_habitat.initialize();
 	
-	if (nb_tagpops>0){
-		tagpop_age_solve.allocate(0,nb_tagpops-1);
-		for (int p=0; p<nb_tagpops; p++){
-			tagpop_age_solve(p).allocate(0,nbt_total);
-			for (int n=0; n<nbt_total+1; n++){
-				tagpop_age_solve(p,n).allocate(0,aN_adult(0));
-				tagpop_age_solve(p,n).initialize();
-			}
-		}
-	}
-	//END of TAG data reading and allocation section
 	
 	pop.time_reading_init();
 	func.time_reading_init();
 	param->time_reading_init();
+
+
+	//Temporarily reading the tau of the first cohort
+	//Need to be just a single number for all cohorts
+	dtau = param->sp_unit_cohort[0][1];
+	nbt_before_first_recruitment = Date::get_nbt_before_first_recruitment(
+			param->first_recruitment_date,
+			param->ndatini,param->deltaT,param->date_mode); 	
+	//counter of number of time steps between recruitments (survival equations)
+	//once nt_dtau = dtau, recruitment occurs and nt_dtau=0
+	//its initial value is dtau-nbt_before_first_recruitment_date
+	nt_dtau = dtau-nbt_before_first_recruitment; 
+
+	//routine-specific variables
+	fishing = false;
+	migration_flag = 0;
+	step_count= 0;
+	step_fishery_count= 0;
+	jday = 0; 
+	nbstoskip = param->nbsteptoskip; // nb of time step to skip before computing likelihood
+
+	likelihood = 0.0;
+
+	pop_built = 1;
+
+	past_month=month;
+	past_qtr=qtr;
+	
 }

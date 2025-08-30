@@ -49,9 +49,11 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, const char* p
     cohort.xinit(x, x_names);
     //cout << "Total number of variables: " << nvar << '\n'<<'\n';
 
-    //initialization of simulation
-    cohort.prerun_model(x);
-    
+    //prepare cohort run
+    cohort.prerun_model();
+
+    //initialize cohort either from restart or from spawning
+    cohort.init_cohort(x);
 
     // advance the cohort by one step
     for (auto step = stepBeg; step < stepEnd; ++step) {
@@ -120,8 +122,8 @@ int main(int argc, char** argv) {
 
     // analyze the conhort Id task dependencies
     SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps);
-    int numCohorts = taskDeps.getNumberOfCohorts();
-    int numCohortSteps = taskDeps.getNumberOfCohortSteps();
+//    int numCohorts = taskDeps.getNumberOfCohorts();
+//    int numCohortSteps = taskDeps.getNumberOfCohortSteps();
     std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
     std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
     std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
