@@ -55,7 +55,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, const char* p
     //initialize cohort either from restart or from spawning
     cohort.init_cohort(x);
 
-    // advance the cohort by one step
+    // advance the cohort 
     for (auto step = stepBeg; step < stepEnd; ++step) {
 
         cohort.stepForward(false);
