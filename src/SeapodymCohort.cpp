@@ -9,6 +9,24 @@ void SeapodymCohort::prerun_model()
 	OnRunFirstStep();
 }
 
+std::vector<double> SeapodymCohort::GetCohortDensity(){
+	DMATRIX dm = value(dvarCohortDensity);
+	const int imin = map.imin;
+	const int imax = map.imax;
+	std::vector<double> vec;
+	int sum = 0;
+	//if (cohort_id==0 && age==4) TTTRACE(cohort_id, age, dm(imin,map.jinf[imin]))
+	for (int i = imin; i <= imax; i++){
+		const int jmin = map.jinf[i];
+		const int jmax = map.jsup[i];
+		for (int j = jmin ; j <= jmax; j++){
+			vec.push_back(dm(i, j));
+			sum += dm(i, j);
+		}
+	}
+	if (cohort_id==0 && age==4) TRACE(sum)
+	return vec;
+}
 
 void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles) 
 {

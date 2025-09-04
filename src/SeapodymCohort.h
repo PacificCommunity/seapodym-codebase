@@ -33,6 +33,7 @@ public:
 	void prerun_model();
 	void OnRunFirstStep();
 	int nb_age_class;
+	std::vector<double> GetCohortDensity();
 
 private:
 	int dtau;

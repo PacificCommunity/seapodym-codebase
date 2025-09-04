@@ -6,6 +6,7 @@
 #include "VarParamCoupled.h"
 #include "SeapodymCohortDependencyAnalyzer.h"
 #include "TaskStepWorker.h"
+#include "DistDataCollector.h"
 #include "TaskStepManager.h"
 #include "SeapodymCohort.h"
 #include <CmdLineArgParser.h>
@@ -16,8 +17,17 @@ SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
+int getChunkId(int task_id, int step, int numAgeGroups) {
+    int row = std::max(0, task_id - numAgeGroups + 1) + step;
+    int col = task_id % numAgeGroups;
+    return row * numAgeGroups + col;
+}
 void 
-taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, const char* parfile) {
+taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, 
+    const char* parfile, int numData, 
+    DistDataCollector* dataCollector,
+    std::map<int, std::set<std::array<int, 2>>>* dependencyMap)
+{
 
     int cmp_regime = 0;
     bool reset_buffers = false;
@@ -55,12 +65,39 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, const char* p
     //initialize cohort either from restart or from spawning
     cohort.init_cohort(x);
 
+    int numAgeGroups = cohort.param->sp_nb_cohorts[0];
+
+    std::vector<double> localData(numData);
+    
     // advance the cohort 
     for (auto step = stepBeg; step < stepEnd; ++step) {
+        /*// Fetch the data needed to create this cohort from the manager
+        // and sum them up
+        std::vector<double> initData(numData, 0.0);
+        for (const auto& [task_id2, step] : (*dependencyMap)[task_id]) {
+            int chunk_id = getChunkId(task_id2, step, numAgeGroups);
+            std::vector<double> data = dataCollector->get(chunk_id);
+            // check that the data are valid
+            if (!data.empty() && data.back() == dataCollector->BAD_VALUE) {
+                // The data have not been previously populated. This could indicate that
+                // the worker has not yet produced any output for this cohort or the manager
+                // has not yet received the data.
+                MPI_Abort(comm, 1);
+            }
+            // sum up the cohort data at the previous time step
+            std::transform(data.begin(), data.end(), initData.begin(), initData.begin(), std::plus<double>());
+        }*/
 
         cohort.stepForward(false);
 
-        int success = 1;
+        // Send the data to the manager.
+        std::vector<double> localData = cohort.GetCohortDensity();
+        //std::fill(localData.begin(), localData.end(), 0.1);
+        int chunk_id = getChunkId(task_id, step, numAgeGroups);
+        dataCollector->put(chunk_id, localData.data());
+        TTTRACE(cohort_id, step, chunk_id)
+
+        int success = task_id;
         // send message to the manager that the step is complete
         int output[3] = {task_id, step, success};
         const int endTaskTag = 1;
@@ -71,13 +108,13 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, const char* p
 
 int main(int argc, char** argv) {
 
-    // Initialization of MPI
-    int err;
-    err = MPI_Init(&argc, &argv);
-    int workerId = 0;
-    err = MPI_Comm_rank(MPI_COMM_WORLD, &workerId);
-    int size = 1;
-    err = MPI_Comm_size(MPI_COMM_WORLD, &size);
+    // MPI initialization
+    MPI_Init(&argc, &argv);
+    int numWorkers, size;
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    numWorkers = size - 1;
+    int workerId;
+    MPI_Comm_rank(MPI_COMM_WORLD, &workerId);
     if (size < 2) {
         std::cerr << "ERROR: must have at least 2 ranks\n";
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -100,15 +137,7 @@ int main(int argc, char** argv) {
     }
 
     std::string parfile = cmdLine.get<std::string>("-s");
-
-    // Bind the task function with the necessary parameters
-    auto taskFunc = std::bind(taskFunction,
-        std::placeholders::_1, // task_id
-        std::placeholders::_2, // stepBeg
-        std::placeholders::_3, // stepEnd
-        std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
-        parfile.c_str());
-    
+  
     // Read parfile
     VarParamCoupled param;
 	param.init_param();
@@ -118,20 +147,37 @@ int main(int argc, char** argv) {
     int numAgeGroups = param.sp_nb_cohorts[0];
     int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
     Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
-    int numTasks = numAgeGroups + numTimeSteps - 1;
+    //int numTasks = numAgeGroups + numTimeSteps - 1;
 
-    // analyze the conhort Id task dependencies
+
+    // Size of map (useful to access to a specific position adress of the 4D array pointer storing density)
+    PMap map;
+    map.lit_map(param);
+    int numData = 0;
+    const int imin = map.imin;
+    const int imax = map.imax;
+    for (int i = imin; i <= imax; i++){
+        const int jmin = map.jinf[i];
+        const int jmax = map.jsup[i];
+        for (int j = jmin ; j <= jmax; j++){
+            numData++;
+        }
+    }
+
+    // set up the data collector
+    int numChunks = numAgeGroups * numTimeSteps;
+    DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
+    
+    // analyze the cohort Id task dependencies
     SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps);
-//    int numCohorts = taskDeps.getNumberOfCohorts();
-//    int numCohortSteps = taskDeps.getNumberOfCohortSteps();
+    int numCohorts = taskDeps.getNumberOfCohorts();
+    int numCohortSteps = taskDeps.getNumberOfCohortSteps();
     std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
     std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
     std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
 
     // print the dependencies for debugging
     if (workerId == 0) {
-        cout << "Number of age groups: " << numAgeGroups << endl;
-        cout << "Number of tasks: " << numTasks << "; simulation time: " << numTimeSteps << endl << endl;
         for (const auto& [task_id, stepBeg] : stepBegMap) {
             int globalTimeIndex = std::max(0, task_id - numAgeGroups + 1);
             std::cout << "At time " << globalTimeIndex << " Task " << task_id << " has steps " << stepBeg << "..." << stepEndMap.at(task_id) - 1 << " and depends on: ";
@@ -140,17 +186,28 @@ int main(int argc, char** argv) {
             }
             std::cout << std::endl;
         }
-    }   
+    }
+
+    // Bind the task function with the necessary parameters
+    auto taskFunc = std::bind(taskFunction,
+        std::placeholders::_1, // task_id
+        std::placeholders::_2, // stepBeg
+        std::placeholders::_3, // stepEnd
+        std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
+        parfile.c_str(),
+        numData,
+        &dataCollect,
+        &dependencyMap);
 
     if (workerId == 0) {
         // Manager
-        TaskStepManager manager(MPI_COMM_WORLD, numTasks, stepBegMap, stepEndMap, dependencyMap);
+        TaskStepManager manager(MPI_COMM_WORLD, numCohorts, stepBegMap, stepEndMap, dependencyMap);
         auto results = manager.run();
         for (const auto& [task_id, step, res] : results) {
             std::cout << "Task ID " << task_id << " and step " << step << ": res = " << res << std::endl;	
         }
         std::cout << std::endl;
-
+        dataCollect.displaySumChunk(12);
     } else {
         // Worker
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
@@ -159,7 +216,9 @@ int main(int argc, char** argv) {
 
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
-    err = MPI_Finalize();
+    dataCollect.free();
+
+    MPI_Finalize();
 
     return 0;
 }
