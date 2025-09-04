@@ -7,6 +7,7 @@
 #include "Param.h"
 #include "ReadWrite.h"
 #include "SeapodymCoupled.h"
+#include "DistDataCollector.h"
 
 
 class SeapodymCohort : public SeapodymCoupled
@@ -29,11 +30,25 @@ public:
 	virtual ~SeapodymCohort() {/*DoNothing*/};
 
 	//double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
-	void init_cohort(dvar_vector x, const bool writeoutputfiles = false) { return InitializeCohort(x, writeoutputfiles); }		
+	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }		
 	void prerun_model();
 	void OnRunFirstStep();
 	int nb_age_class;
 	std::vector<double> GetCohortDensity();
+
+	int getChunkId(int task_id, int step) {
+
+		int row = task_id - nb_age_class + 1 + step;
+		int col = step;
+		if (task_id<nb_age_class){
+			//row += step;
+			if (row==0)
+				col = nb_age_class - task_id - 1;
+			else
+				col = row - task_id + nb_age_class - 1;
+		}
+	    	return row * nb_age_class + col;
+	}
 
 private:
 	int dtau;
@@ -70,7 +85,7 @@ private:
 	
 	int pop_built;
 
-	void InitializeCohort(dvar_vector& x, const bool writeoutputfiles = false);
+	void InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles = false);
 
 public:
 	void stepForward(const bool writeoutputfiles = false);

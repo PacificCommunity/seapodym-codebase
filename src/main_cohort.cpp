@@ -17,11 +17,6 @@ SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
-int getChunkId(int task_id, int step, int numAgeGroups) {
-    int row = std::max(0, task_id - numAgeGroups + 1) + step;
-    int col = task_id % numAgeGroups;
-    return row * numAgeGroups + col;
-}
 void 
 taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, 
     const char* parfile, int numData, 
@@ -63,7 +58,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     cohort.prerun_model();
 
     //initialize cohort either from restart or from spawning
-    cohort.init_cohort(x);
+    cohort.init_cohort(x,*dataCollector);
 
     int numAgeGroups = cohort.param->sp_nb_cohorts[0];
 
@@ -71,31 +66,13 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     
     // advance the cohort 
     for (auto step = stepBeg; step < stepEnd; ++step) {
-        /*// Fetch the data needed to create this cohort from the manager
-        // and sum them up
-        std::vector<double> initData(numData, 0.0);
-        for (const auto& [task_id2, step] : (*dependencyMap)[task_id]) {
-            int chunk_id = getChunkId(task_id2, step, numAgeGroups);
-            std::vector<double> data = dataCollector->get(chunk_id);
-            // check that the data are valid
-            if (!data.empty() && data.back() == dataCollector->BAD_VALUE) {
-                // The data have not been previously populated. This could indicate that
-                // the worker has not yet produced any output for this cohort or the manager
-                // has not yet received the data.
-                MPI_Abort(comm, 1);
-            }
-            // sum up the cohort data at the previous time step
-            std::transform(data.begin(), data.end(), initData.begin(), initData.begin(), std::plus<double>());
-        }*/
 
         cohort.stepForward(false);
 
         // Send the data to the manager.
         std::vector<double> localData = cohort.GetCohortDensity();
-        //std::fill(localData.begin(), localData.end(), 0.1);
-        int chunk_id = getChunkId(task_id, step, numAgeGroups);
+        int chunk_id = cohort.getChunkId(task_id, step);
         dataCollector->put(chunk_id, localData.data());
-        TTTRACE(cohort_id, step, chunk_id)
 
         int success = task_id;
         // send message to the manager that the step is complete
@@ -154,11 +131,11 @@ int main(int argc, char** argv) {
     PMap map;
     map.lit_map(param);
     int numData = 0;
-    const int imin = map.imin;
-    const int imax = map.imax;
+    const int imin = map.imin1;
+    const int imax = map.imax1;
     for (int i = imin; i <= imax; i++){
-        const int jmin = map.jinf[i];
-        const int jmax = map.jsup[i];
+        const int jmin = map.jinf1[i];
+        const int jmax = map.jsup1[i];
         for (int j = jmin ; j <= jmax; j++){
             numData++;
         }
@@ -207,7 +184,7 @@ int main(int argc, char** argv) {
             std::cout << "Task ID " << task_id << " and step " << step << ": res = " << res << std::endl;	
         }
         std::cout << std::endl;
-        dataCollect.displaySumChunk(12);
+        dataCollect.displaySumChunk(5);
     } else {
         // Worker
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);

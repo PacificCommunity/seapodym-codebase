@@ -3,32 +3,30 @@
 #include "Date.h"
 #include "sys/stat.h"
 #include <chrono>
+#include "DistDataCollector.h"
 
 void SeapodymCohort::prerun_model()
 {
 	OnRunFirstStep();
 }
 
-std::vector<double> SeapodymCohort::GetCohortDensity(){
-	DMATRIX dm = value(dvarCohortDensity);
-	const int imin = map.imin;
-	const int imax = map.imax;
+std::vector<double> SeapodymCohort::GetCohortDensity()
+{
+	const int imin = map.imin1;
+	const int imax = map.imax1;
 	std::vector<double> vec;
-	int sum = 0;
-	//if (cohort_id==0 && age==4) TTTRACE(cohort_id, age, dm(imin,map.jinf[imin]))
 	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
+		const int jmin = map.jinf1[i];
+		const int jmax = map.jsup1[i];
 		for (int j = jmin ; j <= jmax; j++){
-			vec.push_back(dm(i, j));
-			sum += dm(i, j);
+			vec.push_back(dvarCohortDensity.elem_value(i, j));
 		}
 	}
-	if (cohort_id==0 && age==4) TRACE(sum)
+	//if (cohort_id==5 && age==1) TTRACE(sum(dvarCohortDensity))
 	return vec;
 }
 
-void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfiles) 
+void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles) 
 {
 
 	//Reset model parameters:
@@ -48,6 +46,25 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, const bool writeoutputfile
 		//Initialize from spawning
 		int sp = 0;
 		int tcur = 0;
+
+		//std::vector<double> data = dataCollector.get(0);
+ 
+		// Get density of all age class from dataCollector
+		for (int aa=0; aa<nb_age_class; aa++){
+			int chunk_id = (tstart_cohort-1)*nb_age_class + aa;
+			int index = 0;
+			std::vector<double> data = dataCollector.get(chunk_id);
+			for (int i = map.imin1; i <= map.imax1; i++){
+				const int jmin1 = map.jinf1[i];
+				const int jmax1 = map.jsup1[i];
+				for (int j = jmin1 ; j <= jmax1; j++){
+					mat.dvarDensity(0,aa,i,j) = data[index];
+					index++;
+				}
+			}
+		}
+		//TTTRACE(sum(mat.dvarDensity(0,0)),sum(mat.dvarDensity(0,1)),sum(mat.dvarDensity(0,2)))
+		
 
 		//Compute eggs at the end of t-1!	
 		getDate(jday, tstart_cohort);
