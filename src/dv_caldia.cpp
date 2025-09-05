@@ -31,8 +31,6 @@ const double rho = 0.99;
 
 void CCalpop::Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatrices& mat, dvar_matrix& habitat, dvar_matrix& total_pop, const int sp, const int age, const int t_count, const int jday)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	/*
 	dvariable mss_species  = param.dvarsMSS_species[sp];
 	dvariable mss_size_slope  = param.dvarsMSS_size_slope[sp];
 	dvariable c_diff_fish  = param.dvarsC_diff_fish[sp];
@@ -59,16 +57,12 @@ void CCalpop::Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatri
 	dvarsE = nograd_assign(e);
 	dvarsF = nograd_assign(f);
 	Ybet   = nograd_assign(ybet);
-	*/
-	///////////////////////// Truely commented section
 	/*if (!param.gcalc()){
 		// only in simulation mode: compute mean speed in BL/sec and mean diffusion rate in nmi^2/day
 		mat.MeanVarMovement(map,value(mat.dvarsAdvection_x),value(mat.dvarsAdvection_y),
 				    value(mat.dvarsDiffusion_y),value(mss_species),value(sigma_species),
 				    param.length(sp,age),param.length(sp,param.sp_nb_cohorts[sp]-1),param.deltaT,sp,age);
 	}*/
-	/////////////////////////
-	/*
 	save_identifier_string2((char*)"Precaldia_Caldia_begin");
 	if (param.vert_movement[sp]){
 		mat.dvarsU.save_dvar_matrix_position();
@@ -113,7 +107,6 @@ void CCalpop::Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatri
 		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_caldia);
 	else 
 		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_caldia_UV);
-		*/
 }
 
 void dv_caldia()

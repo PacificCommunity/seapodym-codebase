@@ -1,13 +1,7 @@
 #include "calpop.h"
-// to sleep...
-#include <thread>
-#include <chrono>
 
 void CCalpop::precaldia(const CParam& param, const PMap& map, CMatrices& mat)
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	
-	/*
 	const double sigma_fcte = param.sigma_fcte;
 
 	for (int i = map.imin; i <= map.imax; i++){	
@@ -28,5 +22,4 @@ void CCalpop::precaldia(const CParam& param, const PMap& map, CMatrices& mat)
 			}
 		}
 	}
-	*/
 }

@@ -1,7 +1,4 @@
 #include "VarSimtunaFunc.h"
-// to sleep...
-#include <thread>
-#include <chrono>
 
 ///Main function with memory control and adjoint functions for: 
 ///spawning habitat functions. This function depends on the temperature
@@ -24,8 +21,6 @@ double sigmoid1(const double tau, const double delta);
 
 void VarSimtunaFunc::Spawning_Habitat(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, const double sigma_sp_var, int sp, const int t_count, const int jday)
 {
-//	std::this_thread::sleep_for(std::chrono::milliseconds(10));
-	
 	Hs.initialize();
 	const int nb_forage = param.get_nbforage();
 
