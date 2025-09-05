@@ -1,5 +1,4 @@
 #include "SeapodymCoupled.h"
-#include "SeapodymCohort.h"
 
 void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)	
 {
