@@ -22,7 +22,6 @@ std::vector<double> SeapodymCohort::GetCohortDensity()
 			vec.push_back(dvarCohortDensity.elem_value(i, j));
 		}
 	}
-	//if (cohort_id==5 && age==1) TTRACE(sum(dvarCohortDensity))
 	return vec;
 }
 
@@ -46,8 +45,6 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		//Initialize from spawning
 		int sp = 0;
 		int tcur = 0;
-
-		//std::vector<double> data = dataCollector.get(0);
  
 		// Get density of all age class from dataCollector
 		for (int aa=0; aa<nb_age_class; aa++){
@@ -63,7 +60,6 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 				}
 			}
 		}
-		//TTTRACE(sum(mat.dvarDensity(0,0)),sum(mat.dvarDensity(0,1)),sum(mat.dvarDensity(0,2)))
 		
 
 		//Compute eggs at the end of t-1!	
@@ -258,6 +254,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	//int year, month, day, jday, xx;		
 	//Date::update_time_variables(tcur, param->deltaT, param->date_mode, jday_spinup, jday, day, month, year, xx);
 	cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ", time = " << model_time_count << ", year = "<< year << ", month = " << month << ", sum(density) = " << sum(dvarCohortDensity) << endl;
+
 
 
 	///////////////////////////////////////////

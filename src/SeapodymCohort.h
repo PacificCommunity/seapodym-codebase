@@ -33,21 +33,14 @@ public:
 	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }		
 	void prerun_model();
 	void OnRunFirstStep();
-	int nb_age_class;
 	std::vector<double> GetCohortDensity();
-
-	int getChunkId(int task_id, int step) {
-
-		int row = task_id - nb_age_class + 1 + step;
+	int getChunkId(int step) {
+		int row = cohort_id - nb_age_class + 1 + step;
 		int col = step;
-		if (task_id<nb_age_class){
-			//row += step;
-			if (row==0)
-				col = nb_age_class - task_id - 1;
-			else
-				col = row - task_id + nb_age_class - 1;
+		if (cohort_id<nb_age_class && row==0){
+			col = nb_age_class - cohort_id - 1;
 		}
-	    	return row * nb_age_class + col;
+		return row * nb_age_class + col;
 	}
 
 private:
@@ -67,6 +60,7 @@ private:
 	int cohort_id;
 	int age_start;
 	int tstart_cohort;
+	int nb_age_class;
 
 	dvariable likelihood;
 

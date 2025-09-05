@@ -71,7 +71,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 
         // Send the data to the manager.
         std::vector<double> localData = cohort.GetCohortDensity();
-        int chunk_id = cohort.getChunkId(task_id, step);
+        int chunk_id = cohort.getChunkId(step);
         dataCollector->put(chunk_id, localData.data());
 
         int success = task_id;
@@ -124,8 +124,6 @@ int main(int argc, char** argv) {
     int numAgeGroups = param.sp_nb_cohorts[0];
     int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
     Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
-    //int numTasks = numAgeGroups + numTimeSteps - 1;
-
 
     // Size of map (useful to access to a specific position adress of the 4D array pointer storing density)
     PMap map;
@@ -184,7 +182,6 @@ int main(int argc, char** argv) {
             std::cout << "Task ID " << task_id << " and step " << step << ": res = " << res << std::endl;	
         }
         std::cout << std::endl;
-        dataCollect.displaySumChunk(5);
     } else {
         // Worker
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
