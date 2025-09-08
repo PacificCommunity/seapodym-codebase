@@ -702,6 +702,34 @@ exit(1);
 */
 }
 
+int PMap::get_state_array_size(){
+//model state variables are allocated on the model domain 
+//with one extra grid cell for the boundary conditions.  
+	int numData = 0;
+	for (int i = imin1; i <= imax1; i++){
+		const int j_min = jinf1[i];
+		const int j_max = jsup1[i];
+		for (int j = j_min ; j <= j_max; j++){
+			numData++;
+		}
+	}
+	return numData;
+}
+
+int PMap::get_array_size(){
+//model state variables are allocated on the model domain 
+//with one extra grid cell for the boundary conditions.  
+	int numData = 0;
+	for (int i = imin; i <= imax; i++){
+		const int j_min = jinf[i];
+		const int j_max = jsup[i];
+		for (int j = j_min ; j <= j_max; j++){
+			numData++;
+		}
+	}
+	return numData;
+}
+
 void PMap::domain_type(const int nlon) {
 	global = 0;
 	if (nlon==360) 

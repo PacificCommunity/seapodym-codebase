@@ -17,6 +17,8 @@ SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
+double tik, tak, time_init, time_calc;
+
 void 
 taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, 
     const char* parfile, int numData, 
@@ -27,6 +29,8 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     int cmp_regime = 0;
     bool reset_buffers = false;
 
+    tik = MPI_Wtime();
+    
     //-----Memory stack sizes for dvariables and derivatives storage------
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
@@ -57,10 +61,13 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     //prepare cohort run
     cohort.prerun_model();
 
+    tak = MPI_Wtime();
+
+    time_init += tak - tik;
+
+    tik = MPI_Wtime();
     //initialize cohort either from restart or from spawning
     cohort.init_cohort(x,*dataCollector);
-
-    int numAgeGroups = cohort.param->sp_nb_cohorts[0];
 
     std::vector<double> localData(numData);
     
@@ -81,10 +88,15 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
         MPI_Send(output, 3, MPI_INT, 0, endTaskTag, comm);
     }
 
+    tak = MPI_Wtime();
+    time_calc += tak - tik;
+
 }
 
 int main(int argc, char** argv) {
 
+time_init = 0;	
+time_calc = 0;	
     // MPI initialization
     MPI_Init(&argc, &argv);
     int numWorkers, size;
@@ -117,27 +129,21 @@ int main(int argc, char** argv) {
   
     // Read parfile
     VarParamCoupled param;
-	param.init_param();
-	param.read(parfile);
+    PMap map;
+
+    param.init_param();
+    param.read(parfile);
 
     // Get number of time steps and number of cohorts from param
     int numAgeGroups = param.sp_nb_cohorts[0];
     int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
     Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
+    //int numTasks = numAgeGroups + numTimeSteps - 1;
+
 
     // Size of map (useful to access to a specific position adress of the 4D array pointer storing density)
-    PMap map;
     map.lit_map(param);
-    int numData = 0;
-    const int imin = map.imin1;
-    const int imax = map.imax1;
-    for (int i = imin; i <= imax; i++){
-        const int jmin = map.jinf1[i];
-        const int jmax = map.jsup1[i];
-        for (int j = jmin ; j <= jmax; j++){
-            numData++;
-        }
-    }
+    int numData = map.get_state_array_size();
 
     // set up the data collector
     int numChunks = numAgeGroups * numTimeSteps;
@@ -151,7 +157,7 @@ int main(int argc, char** argv) {
     std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
     std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
 
-    // print the dependencies for debugging
+/*    // print the dependencies for debugging
     if (workerId == 0) {
         for (const auto& [task_id, stepBeg] : stepBegMap) {
             int globalTimeIndex = std::max(0, task_id - numAgeGroups + 1);
@@ -162,7 +168,7 @@ int main(int argc, char** argv) {
             std::cout << std::endl;
         }
     }
-
+*/
     // Bind the task function with the necessary parameters
     auto taskFunc = std::bind(taskFunction,
         std::placeholders::_1, // task_id
@@ -182,6 +188,7 @@ int main(int argc, char** argv) {
             std::cout << "Task ID " << task_id << " and step " << step << ": res = " << res << std::endl;	
         }
         std::cout << std::endl;
+//        dataCollect.displaySumChunk(5);
     } else {
         // Worker
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
@@ -191,8 +198,9 @@ int main(int argc, char** argv) {
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
     dataCollect.free();
-
     MPI_Finalize();
+
+    TTTRACE(time_init,time_calc,time_calc/(time_calc+time_init))
 
     return 0;
 }

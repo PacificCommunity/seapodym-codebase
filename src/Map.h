@@ -28,6 +28,9 @@ public:
 	void delete_map(const CParam &param) {/*DoesNothing*/}
 	void reg_indices(CParam &param);
 
+	int get_array_size();
+	int get_state_array_size();
+
 	//char get_bord_layer_x(const int i, const int j);
 	//char get_bord_layer_y(const int i, const int j);
 
