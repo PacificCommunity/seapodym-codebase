@@ -19,31 +19,11 @@ void buffers_set(long int &mv, long int &mc, long int &mg);
 
 double tik, tak, time_init, time_calc;
 
-SeapodymCohort wrapper(const char* parfile){
+SeapodymCohort xinit_prerun_wrapper(const char* parfile){
 
     tik = MPI_Wtime();
     
-    /*
-    int cmp_regime = 0;
-    bool reset_buffers = false;
-    //-----Memory stack sizes for dvariables and derivatives storage------
-    gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
-    long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
-    bool grad_calc = false;
-    if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
-    buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
-    if (reset_buffers)
-        buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
-
-    gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
-    gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
-    // Des every worker need a gradiant structure object? Or does every cohort object need
-    // its own gradient structure?
-    gradient_structure gs(gs_var_buffer);*/
-
-    int cohort_id = 0; // In our case task_id is the cohort Id
-
-    SeapodymCohort cohort((char*)parfile, cohort_id);
+    SeapodymCohort cohort((char*)parfile, 0);
 
     //initialize variables of optimization
     const int nvar = cohort.nvarcalc();
@@ -60,8 +40,6 @@ SeapodymCohort wrapper(const char* parfile){
 
     time_init += tak - tik;
 
-    tik = MPI_Wtime();
-
     return cohort;
 }
 
@@ -73,20 +51,15 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     std::map<int, std::set<std::array<int, 2>>>* dependencyMap,
     SeapodymCohort* cohort)
 {
-
-
-
     //initialize variables of optimization
     const int nvar = cohort->nvarcalc();
     independent_variables x(1, nvar);
     adstring_array x_names(1,nvar);
 
-
-
-
     int cohort_id = task_id;
     cohort->restart(cohort_id);
     //initialize cohort either from restart or from spawning
+    tik = MPI_Wtime();
     cohort->init_cohort(x,*dataCollector);
 
     std::vector<double> localData(numData);
@@ -115,8 +88,8 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 
 int main(int argc, char** argv) {
 
-time_init = 0;	
-time_calc = 0;	
+    time_init = 0;	
+    time_calc = 0;	
     // MPI initialization
     MPI_Init(&argc, &argv);
     int numWorkers, size;
@@ -146,45 +119,21 @@ time_calc = 0;
     }
 
     std::string parfile = cmdLine.get<std::string>("-s");
-  
-
-
-    int cmp_regime = 0;
-    bool reset_buffers = false;
-    //-----Memory stack sizes for dvariables and derivatives storage------
-    gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
-    long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
-    bool grad_calc = false;
-    if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
-    buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
-    if (reset_buffers)
-        buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
-
-    gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
-    gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
-    // Des every worker need a gradiant structure object? Or does every cohort object need
-    // its own gradient structure?
-    gradient_structure gs(gs_var_buffer);
-    
-    
-    
-    SeapodymCohort cohort = wrapper(parfile.c_str()); 
-    // Read parfile
-    //VarParamCoupled param;
+ 
+    // Read parfile and map
+    VarParamCoupled param;
     PMap map;
-
-    //param.init_param();
-    //param.read(parfile);
+    param.init_param();
+    param.read(parfile);
 
     // Get number of time steps and number of cohorts from param
-    int numAgeGroups = cohort.param->sp_nb_cohorts[0];
+    int numAgeGroups = param.sp_nb_cohorts[0];
     int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
-    Date::init_time_variables(*cohort.param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
+    Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
     //int numTasks = numAgeGroups + numTimeSteps - 1;
 
-
     // Size of map (useful to access to a specific position adress of the 4D array pointer storing density)
-    map.lit_map(*cohort.param);
+    map.lit_map(param);
     int numData = map.get_state_array_size();
 
     // set up the data collector
@@ -211,17 +160,7 @@ time_calc = 0;
         }
     }
 */
-    // Bind the task function with the necessary parameters
-    auto taskFunc = std::bind(taskFunction,
-        std::placeholders::_1, // task_id
-        std::placeholders::_2, // stepBeg
-        std::placeholders::_3, // stepEnd
-        std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
-        parfile.c_str(),
-        numData,
-        &dataCollect,
-        &dependencyMap,
-        &cohort);
+
 
     if (workerId == 0) {
         // Manager
@@ -234,6 +173,39 @@ time_calc = 0;
 //        dataCollect.displaySumChunk(5);
     } else {
         // Worker
+
+        // Create SeapodymCohort object that will be shared among each worker
+        int cmp_regime = 0;
+        bool reset_buffers = false;
+        //-----Memory stack sizes for dvariables and derivatives storage------
+        gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
+        long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
+        bool grad_calc = false;
+        if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
+        buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
+        if (reset_buffers)
+            buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
+
+        gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
+        gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
+        // Des every worker need a gradiant structure object? Or does every cohort object need
+        // its own gradient structure?
+        gradient_structure gs(gs_var_buffer);        
+        
+        SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
+
+        // Bind the task function with the necessary parameters
+        auto taskFunc = std::bind(taskFunction,
+            std::placeholders::_1, // task_id
+            std::placeholders::_2, // stepBeg
+            std::placeholders::_3, // stepEnd
+            std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
+            parfile.c_str(),
+            numData,
+            &dataCollect,
+            &dependencyMap,
+            &cohort);
+
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
         worker.run();
     }
