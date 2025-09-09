@@ -53,6 +53,7 @@ public:
 			age_start = nb_age_class - cohort_id - 1;
 			tstart_cohort = 0;
 		}
+		t_count = tstart_cohort+1;
 	}
 
 private:

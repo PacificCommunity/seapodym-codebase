@@ -41,7 +41,7 @@ SeapodymCohort wrapper(const char* parfile){
     // its own gradient structure?
     gradient_structure gs(gs_var_buffer);*/
 
-    int cohort_id = 4; // In our case task_id is the cohort Id
+    int cohort_id = 0; // In our case task_id is the cohort Id
 
     SeapodymCohort cohort((char*)parfile, cohort_id);
 

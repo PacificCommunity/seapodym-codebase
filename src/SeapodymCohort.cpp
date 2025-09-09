@@ -44,7 +44,8 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 	} else {
 		//Initialize from spawning
 		int sp = 0;
-		int tcur = 0;
+		//int tcur = 0;
+		int tcur = t_count-1;
  
 		// Get density of all age class from dataCollector
 		for (int aa=0; aa<nb_age_class; aa++){
@@ -112,7 +113,8 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	//----------------------------------------------//
 	//		DATE and TIME-AGE		//
 	//----------------------------------------------//
-	tcur = age - age_start + 1;
+	//tcur = age - age_start + 1;
+	tcur = t_count;
 
 	int model_time_count = tstart_cohort + age - age_start;
 	getDate(jday, model_time_count+1);
@@ -270,5 +272,6 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	if (qtr != past_qtr) past_qtr = qtr; 
 
 	age++;
+	t_count++;
 }
 
