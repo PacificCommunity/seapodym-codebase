@@ -1509,7 +1509,8 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 	ifstream littxt(filename.c_str());
 	if (littxt){
 		cout << endl << "Reading LF data from the file: " << endl << filename.c_str() << endl;
-		int nb_regions, nb_fleets, nb_records, nb_intervals, l1, dl;
+		int nb_regions, nb_fleets, nb_records, nb_intervals;
+		float l1, dl;
 
 		littxt >> nb_regions >> nb_fleets >> nb_records;
 		ivector region(0,nb_regions-1);
@@ -1557,7 +1558,6 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 				if (frequency == -1) break;
 				lf[l] = frequency;	
 			}
-
 			bool fishery_to_throw = true;
 			int f;
 			for (f=0;f<nb_fishery;f++){
