@@ -42,6 +42,19 @@ public:
 		}
 		return row * nb_age_class + col;
 	}
+	void restart(int cohortId){
+		cohort_id = cohortId;
+		nb_age_class = param->sp_nb_cohorts[0];
+		// Get starting age_class and start time from cohort_id
+		if (cohort_id >= nb_age_class){
+			age_start = 0;
+			tstart_cohort = cohort_id-nb_age_class+1;
+		}else{
+			age_start = nb_age_class - cohort_id - 1;
+			tstart_cohort = 0;
+		}
+		t_count = tstart_cohort+1;
+	}
 
 private:
 	int dtau;

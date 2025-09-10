@@ -24,7 +24,7 @@ void SeapodymCohort::OnRunFirstStep()
 	int nbt_cohort = tf_cohort - tstart_cohort + 1;
 
 	//Create time-dependent forcing matrices here:
-	int t0  = 1;
+	/*int t0  = 1;
 	int offset_tstart_cohort = tstart_cohort;
 	//to enable reading of forcing starting from t-1:
 	if (cohort_id >= nb_age_class){
@@ -32,7 +32,14 @@ void SeapodymCohort::OnRunFirstStep()
 		offset_tstart_cohort = tstart_cohort-1;
 		nbt_building = -1;
 	}
-	int nbt = nbt_cohort;
+	int nbt = nbt_cohort;*/
+	nbt_building = nbt_spinup_tuna;
+	t_count = nbt_building+1;
+	//Create time-dependent forcing matrices here:
+	int t0  = t_count;
+	int nbt = nbt_total;
+	//nbt_building = -1;
+
 	mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
 	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
 	if (!param->larvae_input_aggregated_flag[0])
@@ -59,7 +66,8 @@ void SeapodymCohort::OnRunFirstStep()
 		}
 	}
 	//Reading all forcing data for the cohort lifetime window
-	ReadAll(t0, nbt, offset_tstart_cohort);
+	//ReadAll(t0, nbt, offset_tstart_cohort);
+	ReadAll(t_count, nbt_total, 0);
 
 	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
