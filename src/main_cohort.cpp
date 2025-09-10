@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <functional>
+#include <numeric>      // std::accumulate
 #include <mpi.h>
 #include "VarParamCoupled.h"
 #include "SeapodymCohortDependencyAnalyzer.h"
@@ -42,7 +43,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 
     gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
     gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
-    // Des every worker need a gradiant structure object? Or does every cohort object need
+    // Does every worker need a gradient structure object? Or does every cohort object need
     // its own gradient structure?
     gradient_structure gs(gs_var_buffer);
 
@@ -184,11 +185,15 @@ time_calc = 0;
         // Manager
         TaskStepManager manager(MPI_COMM_WORLD, numCohorts, stepBegMap, stepEndMap, dependencyMap);
         auto results = manager.run();
-        for (const auto& [task_id, step, res] : results) {
-            std::cout << "Task ID " << task_id << " and step " << step << ": res = " << res << std::endl;	
-        }
-        std::cout << std::endl;
+        // for (const auto& [task_id, step, res] : results) {
+        //     std::cout << "Task ID " << task_id << " and step " << step << ": res = " << res << std::endl;	
+        // }
+        // std::cout << std::endl;
 //        dataCollect.displaySumChunk(5);
+        double* data = dataCollect.getCollectedDataPtr();
+        // print check sum
+        double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
+        std::cout << "Checksum = " << checksum << std::endl;
     } else {
         // Worker
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
