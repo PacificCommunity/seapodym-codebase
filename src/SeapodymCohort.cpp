@@ -48,7 +48,7 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		int tcur = t_count-1;
  
 		// Get density of all age class from dataCollector
-		for (int aa=0; aa<nb_age_class; aa++){
+		for (int aa=param->age_mature[sp]; aa<nb_age_class; aa++){
 			int chunk_id = (tstart_cohort-1)*nb_age_class + aa;
 			int index = 0;
 			std::vector<double> data = dataCollector.get(chunk_id);
