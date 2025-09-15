@@ -49,7 +49,6 @@ void
 taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, 
     const char* parfile, int numData, 
     DistDataCollector* dataCollector,
-    std::map<int, std::set<std::array<int, 2>>>* dependencyMap,
     SeapodymCohort* cohort)
 {
     //initialize variables of optimization
@@ -208,7 +207,6 @@ int main(int argc, char** argv) {
             parfile.c_str(),
             numData,
             &dataCollect,
-            &dependencyMap,
             &cohort);
 
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
