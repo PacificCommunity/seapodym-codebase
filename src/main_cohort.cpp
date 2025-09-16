@@ -13,14 +13,13 @@
 #include <CmdLineArgParser.h>
 #include "ctrace.h"
 
-using std::cout;
 SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
-double tik, tak, time_init, time_calc;
+double tik, tak, time_init, time_calc, time_mpi;
 
-SeapodymCohort xinit_prerun_wrapper(const char* parfile){
+SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 
     tik = MPI_Wtime();
     
@@ -32,7 +31,6 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile){
     adstring_array x_names(1,nvar);
 
     cohort.xinit(x, x_names);
-    //cout << "Total number of variables: " << nvar << '\n'<<'\n';
 
     //prepare cohort run
     cohort.prerun_model();
@@ -49,7 +47,6 @@ void
 taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, 
     const char* parfile, int numData, 
     DistDataCollector* dataCollector,
-    std::map<int, std::set<std::array<int, 2>>>* dependencyMap,
     SeapodymCohort* cohort)
 {
     //initialize variables of optimization
@@ -73,13 +70,19 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
         // Send the data to the manager.
         std::vector<double> localData = cohort->GetCohortDensity();
         int chunk_id = cohort->getChunkId(step);
+
+        double tik_mpi = MPI_Wtime();
         dataCollector->put(chunk_id, localData.data());
+        time_mpi += MPI_Wtime() - tik_mpi;
 
         int success = task_id;
         // send message to the manager that the step is complete
         int output[3] = {task_id, step, success};
         const int endTaskTag = 1;
+
+        tik_mpi = MPI_Wtime();
         MPI_Send(output, 3, MPI_INT, 0, endTaskTag, comm);
+        time_mpi += MPI_Wtime() - tik_mpi;
     }
 
     tak = MPI_Wtime();
@@ -149,33 +152,16 @@ int main(int argc, char** argv) {
     std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
     std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
 
-/*    // print the dependencies for debugging
-    if (workerId == 0) {
-        for (const auto& [task_id, stepBeg] : stepBegMap) {
-            int globalTimeIndex = std::max(0, task_id - numAgeGroups + 1);
-            std::cout << "At time " << globalTimeIndex << " Task " << task_id << " has steps " << stepBeg << "..." << stepEndMap.at(task_id) - 1 << " and depends on: ";
-            for (const auto& [task_id2, step] : dependencyMap.at(task_id)) {
-                std::cout << task_id2 << ":" << step << ", ";
-            }
-            std::cout << std::endl;
-        }
-    }
-*/
-
-
     if (workerId == 0) {
         // Manager
+        double tik = MPI_Wtime();
         TaskStepManager manager(MPI_COMM_WORLD, numCohorts, stepBegMap, stepEndMap, dependencyMap);
         auto results = manager.run();
-        // for (const auto& [task_id, step, res] : results) {
-        //     std::cout << "Task ID " << task_id << " and step " << step << ": res = " << res << std::endl;	
-        // }
-        // std::cout << std::endl;
-//        dataCollect.displaySumChunk(5);
+        double time_manager = MPI_Wtime() - tik;
         double* data = dataCollect.getCollectedDataPtr();
         // print check sum
         double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
-        std::cout << "Checksum = " << checksum << std::endl;
+        printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
     } else {
         // Worker
 
@@ -193,7 +179,7 @@ int main(int argc, char** argv) {
 
         gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
         gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
-        // Des every worker need a gradiant structure object? Or does every cohort object need
+        // Does every worker need a gradiant structure object? Or does every cohort object need
         // its own gradient structure?
         gradient_structure gs(gs_var_buffer);        
         
@@ -208,18 +194,22 @@ int main(int argc, char** argv) {
             parfile.c_str(),
             numData,
             &dataCollect,
-            &dependencyMap,
             &cohort);
 
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
         worker.run();
     }
 
+    printf("[%d] Timings calc/init/comm: %10.3lf/%10.3lf/%10.3lf\n", workerId, 
+        time_calc, time_init, time_mpi);
+
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
     dataCollect.free();
     MPI_Finalize();
 
+    // What time_init, time_calc are we printing here? Each MPI rank has its own 
+    // values...
     TTTRACE(time_init,time_calc,time_calc/(time_calc+time_init))
 
     return 0;
