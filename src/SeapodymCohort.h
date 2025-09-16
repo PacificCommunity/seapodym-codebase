@@ -29,6 +29,7 @@ public:
 	};
 	virtual ~SeapodymCohort() {/*DoNothing*/};
 
+	double time_overhead;	
 	//double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
 	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }		
 	void prerun_model();

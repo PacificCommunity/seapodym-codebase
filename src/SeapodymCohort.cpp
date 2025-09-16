@@ -8,6 +8,7 @@
 void SeapodymCohort::prerun_model()
 {
 	OnRunFirstStep();
+	time_overhead = 0;
 }
 
 std::vector<double> SeapodymCohort::GetCohortDensity()
@@ -133,6 +134,10 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 		elarvae_dt = param->elarvae_age[sp]/deltaT; 
 		double sigma_fcte_save = param->sigma_fcte;
 
+double t0 = MPI_Wtime();
+		//In the serial version the code below is executed once 
+		//for all larvae and juveniles. Here it is executed for 
+		//each age in larval and juvenile stages
 		if (age <=param->sp_nb_cohort_jv[sp]){
 			//Precompute diagonal coefficients for larvae and juvenile ADREs
 			if (!elarvae_model){
@@ -141,14 +146,22 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
 			}
 		}
+time_overhead += (MPI_Wtime() - t0)*param->sp_nb_cohort_jv[sp]/(param->sp_nb_cohort_jv[sp]+1);
 
 		//1.0 Forage scaling
+		//As forage is age-independent, the code below is executed 
+		//before the age loop in the serial version. Here it is
+		//executed at each time/age step. Need to create a 3D
+		//dvarForage(t,x,y) and rewrite the function to fill it once 
+		//after we read all data. For this, need to call reset(x) 
+		//earlier, in OnRunFirstStep.
+t0 = MPI_Wtime();
 		func.Forage_Scaling(*param, mat, map, sp, tcur);
+time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_cohorts[sp];
 
-		//!!!NOT YET DONE: No need to precompute accessibility for all ages, can be done at each time step for a given age
-		//Function below feels dvarZ_access and dvarF_access across param.sp_a0_adult[sp]:param.sp_nb_cohorts[sp] at time tcur. Need to write another one, which will compute accessibility for current age-time.  
-		//1.1 Accessibility by adults (all age classes)
-		func.Faccessibility(*param, mat, map, sp, jday, tcur, pop_built, false, tags_age_habitat);//checked
+		//1.1 Accessibility by age class
+		if (age >= param->sp_a0_adult[sp])
+			func.Faccessibility_age(*param, mat, map, sp, age, jday, tcur, pop_built, false, tags_age_habitat);//checked
 
 		if (age==0){
 			//2.0 If activated, the Early Larvae Model (ELM) solved over elarvae_age
@@ -201,9 +214,10 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 			func.Mortality_Sp(*param, mat, map, Mortality, Habitat, sp, mean_age, age, tcur);
 			pop.Precalrec_juv(map,  mat, Mortality, tcur, 1);
 			pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, 1);
+		
 		}			
 
-		if (age > param->sp_nb_cohort_jv[sp] && age <= param->sp_nb_cohort_jv[sp]+param->sp_nb_cohort_ad[sp]){
+		if (age > param->sp_nb_cohort_lv[sp] + param->sp_nb_cohort_jv[sp] && age <= param->sp_nb_cohorts[sp]){
 			//4. Transport and mortality of adult cohort
 
 			//NOTE: currently current averaging doesn't depend on seasonal migrations

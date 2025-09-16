@@ -35,6 +35,7 @@ public:
 	void Hj_cannibalism_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hj, const dmatrix& total_pop, double a, double b, double c, const int t);
 	void Forage_Scaling(VarParamCoupled& param, VarMatrices& mat, const PMap& map,  int sp, const int t_count);
 	void Faccessibility(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, const int jday, const int t_count, const int pop_built, const int tags_only, const ivector tags_age_solve);
+	void Faccessibility_age(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, const int age, const int jday, const int t_count, const int pop_built, const int tags_only, const ivector tags_age_solve);
 	void Vars_at_age_precomp(CParam& param, const int sp);
 	double Topt_at_age_comp(CParam& param, const double teta_min, const double teta_max, const int sp, const int age);
 	void Faccessibility_comp(VarParamCoupled& param, VarMatrices& mat, const PMap& map, double teta_max, double oxy_teta, double oxy_cr, const int sp, const int age, const int jday, const int t);
