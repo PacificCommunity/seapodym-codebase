@@ -17,7 +17,7 @@ SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
-double tik, tak, time_init, time_calc, time_mpi;
+double tik, tak, time_init = 0.0, time_init2 = 0.0, time_calc = 0.0, time_mpi = 0.0;
 
 SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 
@@ -49,6 +49,8 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     DistDataCollector* dataCollector,
     SeapodymCohort* cohort)
 {
+    tik = MPI_Wtime();
+
     //initialize variables of optimization
     const int nvar = cohort->nvarcalc();
     independent_variables x(1, nvar);
@@ -57,12 +59,13 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     int cohort_id = task_id;
     cohort->restart(cohort_id);
     //initialize cohort either from restart or from spawning
-    tik = MPI_Wtime();
     cohort->init_cohort(x,*dataCollector);
 
     std::vector<double> localData(numData);
     
-    // advance the cohort 
+    // advance the cohort
+    tak = MPI_Wtime();
+    time_init2 += tak - tik;
     for (auto step = stepBeg; step < stepEnd; ++step) {
 
         cohort->stepForward(false);
@@ -85,9 +88,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
         time_mpi += MPI_Wtime() - tik_mpi;
     }
 
-    tak = MPI_Wtime();
-    time_calc += tak - tik;
-
+    time_calc += MPI_Wtime() - tak;
 }
 
 int main(int argc, char** argv) {
@@ -200,8 +201,8 @@ int main(int argc, char** argv) {
         worker.run();
     }
 
-    printf("[%d] Timings calc/init/comm: %10.3lf/%10.3lf/%10.3lf\n", workerId, 
-        time_calc, time_init, time_mpi);
+    printf("[%d] Timings calc/init/init2/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
+        time_calc, time_init, time_init2, time_mpi);
 
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
