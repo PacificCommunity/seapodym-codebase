@@ -154,12 +154,14 @@ int main(int argc, char** argv) {
 
     if (workerId == 0) {
         // Manager
+        double tik = MPI_Wtime();
         TaskStepManager manager(MPI_COMM_WORLD, numCohorts, stepBegMap, stepEndMap, dependencyMap);
         auto results = manager.run();
+        double time_manager = MPI_Wtime() - tik;
         double* data = dataCollect.getCollectedDataPtr();
         // print check sum
         double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
-        printf("Checksum = %15.5lf\n", checksum);
+        printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
     } else {
         // Worker
 
