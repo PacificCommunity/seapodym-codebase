@@ -18,7 +18,7 @@ SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
-double tik, tak, time_init, time_calc;
+double tik, tak, time_init, time_calc, time_mpi;
 
 SeapodymCohort xinit_prerun_wrapper(const char* parfile){
 
@@ -72,13 +72,19 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
         // Send the data to the manager.
         std::vector<double> localData = cohort->GetCohortDensity();
         int chunk_id = cohort->getChunkId(step);
+
+        double tik_mpi = MPI_Wtime();
         dataCollector->put(chunk_id, localData.data());
+        time_mpi += MPI_Wtime() - tik_mpi;
 
         int success = task_id;
         // send message to the manager that the step is complete
         int output[3] = {task_id, step, success};
         const int endTaskTag = 1;
+
+        tik_mpi = MPI_Wtime();
         MPI_Send(output, 3, MPI_INT, 0, endTaskTag, comm);
+        time_mpi += MPI_Wtime() - tik_mpi;
     }
 
     tak = MPI_Wtime();
@@ -212,6 +218,9 @@ int main(int argc, char** argv) {
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
         worker.run();
     }
+
+    std::cerr << "[" << workerId << "] Timings compute, init, mpi: " << 
+        time_calc << ',' << time_init << ',' << time_mpi << '\n';
 
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
