@@ -363,27 +363,28 @@ void SeapodymCoupled::ReadHabitat()
 		file_input = param->strdir_output + param->sp_name[0] + "_feeding_habitat_input_age1.dym";
 	}
 
-    rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
+	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
 
 	int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
-	if (nlevel != nb_larvae_input_agg_groups && param->larvae_input_aggregated_flag[0]){
-		cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file." << endl;
-		exit(1);
-	}
-
-	if (!param->fit_spawning_habitat_raw){
-		if (nlon!=nlon_input || nlat != nlat_input){
-			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Spatial resolution of \"" << file_input << " does not match the model resolution. Coarser resolution of <file_larvae_data> habitat input is not implemented yet. Use either <fit_spawning_habitat_raw> = \"1\" or <file_larvae_data> that match model resolution." << endl;
+	if (!param->habitat_run_type){
+		if (nlevel != nb_larvae_input_agg_groups && param->larvae_input_aggregated_flag[0]){
+			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file." << endl;
 			exit(1);
+		}
+	
+		if (!param->fit_spawning_habitat_raw){
+			if (nlon!=nlon_input || nlat != nlat_input){
+				cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Spatial resolution of \"" << file_input << " does not match the model resolution. Coarser resolution of <file_larvae_data> habitat input is not implemented yet. Use either <fit_spawning_habitat_raw> = \"1\" or <file_larvae_data> that match model resolution." << endl;
+				exit(1);
+			}
 		}
 	}
 
-
 	//equivalent to mat.createMatHabitat_input:
 	mat.habitat_input.allocate(0,param->nb_habitat_run_age-1);
-    for (int n=0; n<param->nb_habitat_run_age; n++){
+	for (int n=0; n<param->nb_habitat_run_age; n++){
 		mat.habitat_input[n].allocate(1,nbt_total);
-	    for (int t=1; t<=nbt_total; t++){
+		for (int t=1; t<=nbt_total; t++){
 			mat.habitat_input[n][t].allocate(1, nlon_input, 1, nlat_input);
 			mat.habitat_input[n][t].initialize();
 		}
@@ -439,7 +440,7 @@ void SeapodymCoupled::ReadHabitat()
 			} else {
 				for (int n=0; n<param->nb_habitat_run_age; n++){
 					std::ostringstream ostr;
-               		ostr << n+1;
+					ostr << n+1;
 					file_input = param->strdir_output + param->sp_name[0] + 
 						"_feeding_habitat_input_age" + ostr.str() + ".dym";
 					//rw.rbin_input2d(file_input, map, mat.habitat_input[n][t_count], nbi, nbj, nbytetoskip);
@@ -450,8 +451,8 @@ void SeapodymCoupled::ReadHabitat()
 					}
 					litbin.seekg(nbytetoskip, ios::cur);
 					const int sizeofDymInputType = sizeof(float);
-		            float buf;
-		            for (int j=0;j<nlat_input;j++){
+					float buf;
+					for (int j=0;j<nlat_input;j++){
 						for (int i=0;i<nlon_input;i++){
 							litbin.read(( char *)&buf,sizeofDymInputType);
 							mat.habitat_input[n][t_count][i+1][j+1]= buf;
@@ -463,7 +464,7 @@ void SeapodymCoupled::ReadHabitat()
 		}
 	}
 	t_count = t_count_init;
-	if (!param->fit_spawning_habitat_raw && param->larvae_input_aggregated_flag[0]){
+	if (!param->habitat_run_type && !param->fit_spawning_habitat_raw && param->larvae_input_aggregated_flag[0]){
 		// Vector of non-NA observed density
 		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
 			if (iAgg <= (int) index_habitat_input.size()){
