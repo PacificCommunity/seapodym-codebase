@@ -289,6 +289,7 @@ public:
 	IMATRIX mask_fishery_sp;
 	IMATRIX mask_fishery_sp_no_effort;
 	IMATRIX mask_fishery_sp_like;
+	IMATRIX catch_treso_likelihood;
 	//IMATRIX mask_mpa_fishery;
 	int nb_fishery_type;		// nb de types differents de pecheries.
 	ivector fisheries_no_effort_exist;//vector of flags [sp]

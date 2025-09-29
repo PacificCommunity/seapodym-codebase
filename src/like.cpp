@@ -1,7 +1,7 @@
 #include "SeapodymCoupled.h"
 #include "NishikawaLike.h"
 
-void fillmatrices(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dmatrix& data_obs, dvar_matrix& data_est, bool cpue, double cpue_mult, const double catch_scaling_factor);
+void fillmatrices(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dmatrix& data_obs, dvar_matrix& data_est, bool cpue, double cpue_mult, const double catch_scaling_factor, const int cdata_temp_reso, const int month);
 dvariable SumSquare(const PMap& map, dvar_matrix& data_est);
 void Concentrated(const dmatrix& data_obs, dvar_matrix& data_est, dvariable& likelihood, const int nobs);
 void Normal(const dmatrix& data_obs, dvar_matrix& data_est, dvariable& likelihood, const double sigma_2);
@@ -23,58 +23,61 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 				 // and assign values outside of this routine
 
 	dvariable likelihood = 0.0;
-	dmatrix data_obs;
-	dvar_matrix data_est;
 	dvariable beta, prob, sigma;
-	data_obs.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	data_est.allocate(map.imin, map.imax, map.jinf, map.jsup);
+
+	int cdata_temp_reso = param->catch_treso_likelihood[sp][f];
 
 	bool cpue = param->cpue;
 	int like_type = param->like_types[sp][k];
 	const double sigma_2 = pow(5.0,-2);  
 
 	fillmatrices(map, mat.effort(f), mat.catch_obs(sp,k), mat.dvarCatch_est(sp,k), 
-		     data_obs, data_est, cpue, param->cpue_mult(f),catch_mult);
+		     cdata_obs[f], cdata_est[f], cpue, param->cpue_mult(f),
+		     catch_mult, cdata_temp_reso, month);
  
-	switch (like_type) {
-	
-		case 1: Normal(data_obs,data_est,likelihood,sigma_2);
-			break;
-
-		case 2: sigma = param->dvarsLike_param(sp,k);
-			LogNormal(map,data_obs,data_est,likelihood,nobs,sigma);
-			break;
+	if (cdata_temp_reso==1 || (cdata_temp_reso==3 && (month==3 || month==6 || month==9 || month==12))){
+		switch (like_type) {
 		
-		case 3: likelihood = Poisson(map,data_obs,data_est);
-			break;
+			case 1: Normal(cdata_obs[f],cdata_est[f],likelihood,sigma_2);
+				break;
+
+			case 2: sigma = param->dvarsLike_param(sp,k);
+				LogNormal(map,cdata_obs[f],cdata_est[f],likelihood,nobs,sigma);
+				break;
+		
+			case 3: likelihood = Poisson(map,cdata_obs[f],cdata_est[f]);
+				break;
 	
-		case 4: beta = param->dvarsLike_param(sp,k);
-			likelihood = NegBinomial(map,data_obs,data_est,beta);
-			break;
+			case 4: beta = param->dvarsLike_param(sp,k);
+				likelihood = NegBinomial(map,cdata_obs[f],cdata_est[f],beta);
+				break;
 
-		case 5: beta = param->dvarsLike_param(sp,k);
-			prob = param->dvarsProb_zero(sp,k);
-			likelihood = ZINegBinomial(map,data_obs,data_est,beta,prob);
-			break;
+			case 5: beta = param->dvarsLike_param(sp,k);
+				prob = param->dvarsProb_zero(sp,k);
+				likelihood = ZINegBinomial(map,cdata_obs[f],cdata_est[f],beta,prob);
+				break;
 
-		case 6: likelihood = TruncatedPoisson(map,data_obs,data_est);
-			break;
+			case 6: likelihood = TruncatedPoisson(map,cdata_obs[f],cdata_est[f]);
+				break;
 
-		case 7: likelihood = SumSquare(map,data_est);
-			break;
+			case 7: likelihood = SumSquare(map,cdata_est[f]);
+				break;
 
-		case 8: likelihood = Exponential(map,data_obs,data_est);
-			break;
+			case 8: likelihood = Exponential(map,cdata_obs[f],cdata_est[f]);
+				break;
 
-		case 9: likelihood = Weibull(map,data_obs,data_est);
-			break;
+			case 9: likelihood = Weibull(map,cdata_obs[f],cdata_est[f]);
+				break;
 
-		case 10: Concentrated(data_obs,data_est,likelihood,nobs);
-			 break;
+			case 10: Concentrated(cdata_obs[f],cdata_est[f],likelihood,nobs);
+				 break;
 
-        }
-	likelihood = 0.05*likelihood;
-	clike_fishery[f] += value(likelihood);
+        	}
+
+		likelihood = 0.05*likelihood;
+		clike_fishery[f] += value(likelihood);
+	}
+
 
 	//length frequency likelihood
 	if (param->frq_like[sp] && (month==3 || month==6 || month==9 || month==12)){
@@ -492,16 +495,25 @@ dvariable LFsum_sq(dvar3_array& dvarLF_est, const int nb_ages, const int nb_regi
 
 }
 
-void fillmatrices(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dmatrix& data_obs, dvar_matrix& data_est, bool cpue, double cpue_mult,const double catch_scaling_factor)
+void fillmatrices(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dmatrix& data_obs, dvar_matrix& data_est, bool cpue, double cpue_mult,const double catch_scaling_factor, const int cdata_temp_reso, const int month)
 {
-	data_obs.initialize();
-	data_est.initialize();
-
-	const int imin = map.imin; 
-	const int imax = map.imax;
-
+	if ((cdata_temp_reso==1) || 
+			((cdata_temp_reso==3) && (month==1 || month==4 || month==7 || month==10))){
+		data_obs.initialize();
+		data_est.initialize();
+	}
+	
 	double sf = catch_scaling_factor;
+	data_obs += sf*catch_obs;
+	data_est += sf*catch_est;
+
+	//Until needed, CPUE will only be used with 1-dt resolution
+	//As it requires catch_obs and effort be on the quarterly resolution
 	if (cpue){
+		data_obs.initialize();
+		data_est.initialize();
+		const int imin = map.imin; 
+		const int imax = map.imax;
 		double m = cpue_mult; // cpue multiplier
 		for (int i = imin; i <= imax; i++){
 			const int jmin = map.jinf[i];
@@ -514,9 +526,6 @@ void fillmatrices(const PMap& map, const dmatrix effort, const dmatrix catch_obs
 
 			}
 		}	
-	} else {
-		data_obs = sf*catch_obs;
-		data_est = sf*catch_est;
 	}
 }
 

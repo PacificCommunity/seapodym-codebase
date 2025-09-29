@@ -1043,6 +1043,31 @@ bool VarParamCoupled::read(const string& parfile)
 				}
 			}
 		}
+		catch_treso_likelihood.allocate(0, nb_species - 1, 0, nb_fishery - 1);
+		catch_treso_likelihood = 1; //default value
+		if (!doc.get("/catch_treso_likelihood").empty()){
+			for (int sp=0;sp<nb_species;sp++) {
+				if (!doc.get(string("/catch_treso_likelihood/") + sp_name[sp]).empty()){
+					for (int f=0;f<nb_fishery;f++) {
+						catch_treso_likelihood[sp][f] = doc.getInteger(string("/catch_treso_likelihood/") + sp_name[sp], f);
+						if (catch_treso_likelihood[sp][f]!=1 && catch_treso_likelihood[sp][f]!=3){
+							cerr << "Configuration Error: only values 1 or 3 are expected in catch_treso_likelihood! Will exit now." << endl; exit(1); 
+						}
+						if (catch_treso_likelihood[sp][f]>1 && mask_fishery_sp_no_effort[sp][f]){
+							cerr << endl << "Configuration Error: " << list_fishery_name[f] << " is a catch-removal fishery, its temporal resolution = resolution of the model, so must be the resolution of the likelihood. Value catch_treso_likelihood is reset to 1 for this fishery." << endl << endl;
+							catch_treso_likelihood[sp][f] = 1;
+						}
+						if (catch_treso_likelihood[sp][f]>1 && cpue){
+							cerr << endl << "Configuration Error: flag like_c_cpue is set to CPUE, but can't aggregate CPUEs to quarterly resolution. Reset all catch_treso_likelihood to 1. " << endl;
+							catch_treso_likelihood[sp][f] = 1;
+						}
+						
+					}
+				}
+			}
+		}
+
+
 /*
 		mask_mpa_fishery.allocate(0, nb_species - 1, 0, nb_fishery - 1);
 		mask_mpa_fishery = 1;	
