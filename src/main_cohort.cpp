@@ -17,7 +17,8 @@ SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
-double tik, tak, time_init = 0.0, time_init2 = 0.0, time_calc = 0.0, time_mpi = 0.0;
+
+double tik, tak, time_init = 0.0, time_init2 = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
 
 SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 
@@ -68,7 +69,9 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     time_init2 += tak - tik;
     for (auto step = stepBeg; step < stepEnd; ++step) {
 
+    	double tik_step = MPI_Wtime();
         cohort->stepForward(false);
+	    time_step += MPI_Wtime() - tik_step;
 
         // Send the data to the manager.
         std::vector<double> localData = cohort->GetCohortDensity();
@@ -199,19 +202,17 @@ int main(int argc, char** argv) {
 
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
         worker.run();
+	time_overhead = cohort.time_overhead;
     }
 
-    printf("[%d] Timings calc/init/init2/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
-        time_calc, time_init, time_init2, time_mpi);
+
+    printf("[%d] Timings calc/step/overhead/init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
+        time_calc, time_step, time_overhead, time_init, time_mpi);
 
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
     dataCollect.free();
     MPI_Finalize();
-
-    // What time_init, time_calc are we printing here? Each MPI rank has its own 
-    // values...
-    TTTRACE(time_init,time_calc,time_calc/(time_calc+time_init))
 
     return 0;
 }

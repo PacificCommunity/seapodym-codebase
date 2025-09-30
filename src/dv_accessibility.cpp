@@ -114,6 +114,90 @@ void VarSimtunaFunc::Faccessibility(VarParamCoupled& param, VarMatrices& mat, co
 	}
 }
 
+void VarSimtunaFunc::Faccessibility_age(VarParamCoupled& param, VarMatrices& mat, const PMap& map, const int sp, int age, const int jday, const int t_count, const int pop_built, const int tags_only, const ivector tags_age_solve)
+{
+	if (param.age_compute_habitat[sp][age]!=param.age_compute_habitat[sp][age-1]){
+		if (!tags_only || tags_age_solve(age)){
+	
+			const int nb_forage  = param.get_nbforage();
+			const int nb_layer   = param.nb_layer;
+
+			dvariable temp_max = param.dvarsB_sst_spawning[sp];
+			dvariable temp_min = param.dvarsB_sst_habitat[sp];
+			dvariable oxy_teta = param.dvarsA_oxy_habitat[sp];
+			dvariable oxy_cr   = param.dvarsB_oxy_habitat[sp]; 
+			dvariable temp_age_slope = param.dvarsT_age_size_slope[sp];
+
+			if (param.gaussian_thermal_function[sp]){
+				dvariable sigma_ha = param.dvarsA_sst_habitat[sp];
+				dvmatr3 = sigma_ha;
+				dvariable sigma_hs = param.dvarsA_sst_spawning[sp];
+				dvmatr7 = sigma_hs;
+			}
+			if (!param.gaussian_thermal_function[sp]){
+				dvariable delta3 = param.dvarsThermal_func_delta[2][sp];
+				dvmatr3 = delta3;
+		
+				dvariable delta1 = param.dvarsThermal_func_delta[0][sp];
+				dvariable delta2 = param.dvarsThermal_func_delta[1][sp];
+				dvmatr7 = delta1;
+				dvmatr8 = delta2;
+			}
+			dvmatr1 = temp_max;
+			dvmatr2 = temp_min;
+			dvmatr4 = oxy_teta;
+			dvmatr5 = oxy_cr;
+			dvmatr6 = temp_age_slope;
+
+
+			Faccessibility_comp(param,mat,map,value(temp_max),value(oxy_teta),value(oxy_cr),sp,age,jday,t_count);
+
+			save_identifier_string2((char*)"Faccessibility_comp_begin");
+			temp_max.save_prevariable_value();
+			dvmatr1.save_dvar_matrix_position();
+			temp_min.save_prevariable_value();
+			dvmatr2.save_dvar_matrix_position();
+			dvmatr3.save_dvar_matrix_position();
+			oxy_teta.save_prevariable_value();
+			dvmatr4.save_dvar_matrix_position();
+			oxy_cr.save_prevariable_value();
+			dvmatr5.save_dvar_matrix_position();
+			temp_age_slope.save_prevariable_value();
+			dvmatr6.save_dvar_matrix_position();
+			dvmatr7.save_dvar_matrix_position();
+			if (!param.gaussian_thermal_function[sp]){
+				dvmatr8.save_dvar_matrix_position();
+			}
+			if (param.scale_forage_ave_currents[sp]){
+				for (int n=0; n<nb_forage; n++)
+					mat.dvarForage(n).save_dvar_matrix_position();
+			}
+			for (int n=0; n<nb_forage; n++)
+				mat.dvarF_access(n,age).save_dvar_matrix_position();
+			for (int l=0; l<nb_layer; l++)
+				mat.dvarZ_access(l,age).save_dvar_matrix_position();
+			unsigned long int cmat   = (unsigned long int)&mat;
+			save_long_int_value(cmat);
+			unsigned long int cparam = (unsigned long int)&param;
+			save_long_int_value(cparam);
+			unsigned long int pmap   = (unsigned long int)&map;
+			save_long_int_value(pmap);
+			save_int_value(jday);
+			save_int_value(t_count);
+			//save_int_value(pop_built);
+			save_int_value(sp);
+			save_int_value(age);
+			save_identifier_string2((char*)"Faccessibility_comp_end");
+			if (param.gaussian_thermal_function[sp]){
+				if (param.scale_forage_ave_currents[sp])
+					gradient_structure::GRAD_STACK1->set_gradient_stack(dv_accessibility_comp);
+				else 
+					gradient_structure::GRAD_STACK1->set_gradient_stack(dv_accessibility_noeFcurrents_comp);
+			} else 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_accessibility_ftype2_comp);
+		}
+	}
+}
+
 void VarSimtunaFunc::Average_currents(VarParamCoupled& param, VarMatrices& mat, const PMap& map, int age, const int t_count, const int pop_built)
 {
 	const int nb_layer  = param.nb_layer;

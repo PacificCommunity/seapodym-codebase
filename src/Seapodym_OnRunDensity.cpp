@@ -1,3 +1,4 @@
+#include <chrono>
 #include "SeapodymCoupled.h"
 
 void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood);
@@ -5,6 +6,8 @@ void SeapodymCoupled::prerun_model()
 {
 	OnRunFirstStep();
 	ReadDensity();
+	
+density_time_calc = 0;	
 }
 
 ///This is the main loop for the model without fishing and fitting of density. 
@@ -137,7 +140,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	////------------------------------------------------------------/////
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////
-
+time_t time_sec;
 	//Spin-up control: to be removed from functions
 	int pop_built = 1;
 	for (;t_count <= nbt_total; t_count++)
@@ -183,6 +186,9 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				ReadClimatologyOxy(tcur, qtr);
 			}
 		}
+
+using clock = std::chrono::steady_clock; 
+auto time0 = clock::now();
 		//------------------------------------------------------------------------------//
 		//	TRANSPORT OF TUNA AGE CLASSES AND PREDICTED CATCH COMPUTATION		//
 		//------------------------------------------------------------------------------//
@@ -378,6 +384,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 			Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
 		}//end of 'sp' loop
 
+density_time_calc += std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - time0).count();
 		//------------------------------------------------------//
 		//		COMPUTING LIKELIHOOD			//
 		//------------------------------------------------------//	

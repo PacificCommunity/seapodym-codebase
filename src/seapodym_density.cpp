@@ -157,6 +157,8 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 	sc.run_density((dvar_vector)x, true);
 	sc.write(newparfile.c_str());
 
+cout << "\n Total STEPS calc time is " << sc.density_time_calc << endl;
+
 	remove(tempparfile.c_str());
 
 	//writes new parameters on the screen

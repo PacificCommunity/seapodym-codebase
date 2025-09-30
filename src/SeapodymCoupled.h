@@ -70,6 +70,8 @@ friend class tag_release;
 	int get_maxfn(){return param->maxfn;}
 	double get_crit(){return param->crit;}
 
+	float density_time_calc;
+
 protected:
 	double dnum1, t_yrdd;
 	double cell_area;
