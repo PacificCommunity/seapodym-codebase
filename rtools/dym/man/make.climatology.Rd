@@ -22,7 +22,22 @@ Optionally, returns a list with dimensional variables, x and y, as well as z, a 
 Function reads DYM file and generates the climatology (average) over selected time period and months. The output DYM file will be written in the same directory and name of the input DYM file with added suffix 'clm_' and either 'monthly' (default), 'quarterly', 'seasonal' or 'other', depending on the selection of months.
 }
 \examples{
-dym.in   <- paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5-np_1x30d-glo/forage/Fbiom_epi.dym")
-seasons  <- c(12,3,6,9)  # making climatology over calendar seasons: dec-feb, mar-may, un-aug, sep-nov.
-dat <- gen.climatology(dym.in,seasons,out=TRUE); # writing to the DYM file Fbiom_epi_clm_seasonal.dym and returning result
+Example 1. Make monthly climatology of skipjack density 
+dym.in <- system.file("extdata", "skj.dym", package = "dym")
+make.climatology(dym.in) 
+
+Example 2. Make climatology over calendar seasons (dec-feb, mar-may, jun-aug, sep-nov) of primary production. SEAPODYM environment is needed to run this example.
+setwd(paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5np_1x30d-po/"))
+dym.in  <- list.files(pattern="_pp_")
+dym.in  <- unique(gsub("_clm_seasonal","",dym.in))
+seasons <- c(12,3,6,9)
+dat <- make.climatology(dym.in,seasons,out=TRUE); # writing to the DYM file [dym.in]_epi_clm_seasonal.dym and returning result
+# Plot seasonal distributions showing values > 75 mmolC/m2/day in black
+x <- dat$x; y <- dat$y
+par(mfrow=c(2,2),mar=c(2,2,2,2),mgp=c(3,0.3,0),tck=0.02)
+for (n in 1:4)
+	image(x,y,dat$z[n,,],zlim=c(0,75),
+			col=c(hcl.colors(hcl.pals("sequential")[24],n=15),1),
+			main=paste(months(as.Date(paste0("2009-",seasons[n],"-1"))),"-",
+						months(as.Date(paste0("2009-",seasons[c(2:4,1)][n]-1,"-1")))))
 }

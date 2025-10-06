@@ -7,32 +7,47 @@
 read.var.dym(
   file.in,
   t0.user = NULL,
-  tfin.user,
+  tfin.user = NULL,
   region = c(NA, NA, NA, NA),
   dt = 30,
   apply.mask = FALSE,
-  t.date.format = FALSE,
+  t.format = "Date",
   verbose = TRUE
 )
 }
 \arguments{
 \item{file.in}{the DYM file accessible with provided path}
 
-\item{t0.user}{the date provided as c(year,month,day) to be used the first date for extraction. If not specified, start from the first time step written in the DYM file.}
+\item{t0.user, tfin.user}{dates which can be provided either as c(year,month,day) or in the Date format, to be used as the first and the last dates for extraction. If t0.user or tfin.user are not provided, then function reads the file starting the first DYM date, or reads it until the last DYM date respectively.}
 
-\item{tfin.user}{the date provided as c(year,month,day) to be used the last date for extraction. If not specified, stop at last time step written in the DYM file.}
+\item{region}{a set of four values c(x1,x2,y1,y2) defining east-west and south-north coordinates respectively.}
 
-\item{region}{the set of four values c(x1,x2,y1,y2) defining east-west and south-north coordinates respectively.}
+\item{dt}{temporal resolution in days. Default value is 30 days.}
+
+\item{apply.mask}{logical argument controling whether the data on land should be set to NA.}
+
+\item{t.format}{format of the time vector returned by the function, can be "Date", "Dym", "dym" or "seapodym", with the latter three being the decimal SEAPODYM format. The default value is "Date".}
 
 \item{verbose}{flag (default value is TRUE) controlling the prompt for the nominal function execution.}
 }
 \value{
-The list of variables written in the DYM file, that is a vector of longitudes, x, latitudes, y, time steps, t, the land mask matrix, landmask and the data 3d matrices, var[t,x,y].
+The list of variables written in the DYM file, that is a vector of longitudes, x, and latitudes, y, pointing to the centers of grid cells, times, t (by default in the Date format, as decimal if t.format is set to "DYM" or "dym"), corresponding to the center of the time step, the land mask matrix, landmask and the data 3d matrices, var[t,x,y].
 }
 \description{
 Reads 3d variable from the DYM file, which has dimensions (time,longitude,latitude), and returns the list with time vector, coordinates, land mask and variable data.
 }
 \examples{
-data <- read.var.dym("sst.dym");
-var<-data$var; tt<-data$t; x<-data$x; y<-data$y
+# Example 1. Reading DYM file with skipjack biomass without subsetting
+dym.in <- system.file("extdata", "skj.dym", package = "dym")
+data <- read.var.dym(dym.in);
+var <- data$var; 
+# File dimensions: 
+data$t; #vector of time in Date format
+data$x; data$y; # longitude and latitude
+# Read the file keeping the decimal date as it is in the DYM file
+data <- read.var.dym(dym.in,t.format="dym");
+tt<-data$t;
+# Example 2. Reading DYM file, subsetting time from January 2010 to the last date, and space from 140E to 140W and 10S to 10N
+data <- read.var.dym(dym.in,t0.user=as.Date("2010-01-01"),region=c(140,-140,-10,10));
+tt<-data$t; #decimals as written in the DYM file
 }

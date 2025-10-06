@@ -4,26 +4,34 @@
 \alias{subset.dyms}
 \title{Subsetting one or multiple DYM files}
 \usage{
-\method{subset}{dyms}(dyms.in, dyms.out = NULL, ts = NULL, xs = NULL, ys = NULL)
+\method{subset}{dyms}(
+  dyms.in,
+  dyms.out = NULL,
+  ts = NULL,
+  xs = NULL,
+  ys = NULL,
+  subset.name = "subset"
+)
 }
 \arguments{
 \item{dyms.in}{the vector of strings containing the full names (with full path or relative to home directory) of the input DYM files.}
 
-\item{dyms.out}{the name of the output DYM file. If not specified, then the same names will be used for the subsetted files.}
+\item{dyms.out}{the name of the output DYM file. If not specified, then the same names will be used for the subsetted files, and saved into a separate folder.}
 
-\item{ts}{the set of two dates in Date format c(t1,t2) for subsetting. If left undefined, the original time period will be used.}
+\item{ts}{the set of two dates in the Date format c(t1,t2) for subsetting. If left undefined, the original time period will be used.}
 
-\item{xs}{the set of longitudes c(x1,x2) for subsetting. If lest undefined, the original longitudinal range will be used.}
+\item{xs}{the set of longitudes c(x1,x2) for subsetting. If left undefined, the original longitudinal range will be used.}
 
 \item{ys}{the set of latitudes in format c(y1,y2) for subsetting. If left undefined, the original latitudinal range will be used.}
 }
 \description{
-Function subsets multiple DYM files with identical dimensions. It will subset each file and write the new set of DYMs with the same names, unless the new names are specified, into the following folder 'subset-year1-year2_x1-x2_y1-y2', where dim1 is the first and dim2 is the last dimensional variable.
+Function subsets multiple DYM files with identical dimensions. It will subset each file and write the new set of DYMs with the names given in dyms.out. If the latter is not provided, the files with the same names will be saved to the folder 'subset.name-year1-year2_x1-x2_y1-y2'.
 }
 \examples{
-t.range <- c(as.Date("1980-1-1"),as.Date("2020-12-31"))
-x.range <- c(100,180)
+#Example 1. Subset the global forcing directory 'forcing_dir_global' for the Western and Central Pacific Ocean and 30-years time period. SEAPODYM environment is needed to run this example.
+t.range <- c(as.Date("1991-1-1"),as.Date("2020-12-31"))
+x.range <- c(100,210)
 y.range <- c(-50,50)
-dyms.in <- list.files(paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5-np_1x30d-glo"),full.names=TRUE,pattern=".dym")
-subset.dyms(dyms.in,ts=t.range,xs=x.range,ys=y.range);
+dyms.in <- list.files(paste0(Sys.getenv("SEA_FORCING_HOME"),forcing_dir_global,"/"),full.names=TRUE,pattern=".dym")
+subset.dyms(dyms.in,ts=t.range,xs=x.range,ys=y.range,subset.name="wcpo");
 }

@@ -26,9 +26,10 @@ Returns a list with two array variables, t being the time vector and y being the
 Function reads DYM file, computes the sum (default) or the average over selected region and returns the time series. The sum always implies conversion to the mass content and sensible only for biomass densities. For averaging, it can return a simple average without modifying the units of the DYM data, or convert the data to the mass content (e.g., for biomass densities) by multiplying by the cell area before averaging, or a weighted average with weights being the grid cell areas (e.g., for temperature).
 }
 \examples{
-t.range <- c(as.Date("1980-1-1"),as.Date("2020-12-31"))
+dym.in <- system.file("extdata", "skj.dym", package = "dym")
+txy <- read.txy.dym(dym.in)
+txy
 x.range <- c(100,180)
 y.range <- c(-25,25)
-dym.in  <- paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5-np_1x30d-glo/forage/Fbiom_epi.dym")
-dat <- get.ts.dym(dym.in,ts=t.range,xs=x.range,ys=y.range); 
+dat <- get.ts.dym(dym.in,xs=x.range,ys=y.range); 
 }

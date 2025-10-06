@@ -30,13 +30,13 @@ Sum up multiple DYM files with identical dimensions, writing the result to new D
 
 }}
 \examples{
-Example 1. Get the epipelagic forage at night
-dir.in <- paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5-np_1x30d-glo/forage/")
+# Example 1. Get the epipelagic forage at night
+dir.in <- paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5np_1x30d-po/forage/")
 dyms.in <- paste0(dir.in,"Fbiom_",c("epi","mmeso","hmbathy"),".dym")
 dym.out <- gsub("epi","epi_night",dyms.in[1])
 sum.dyms(dyms.in,dym.out); # writing the result to DYM file
 
-Example 2. Get the density of recruits to be compared with MFCL class
+# Example 2. Get the density of recruits to be compared with MFCL class
 setwd(paste0(Sys.getenv("SKJ_HOME"),"/REF/output/"))
 dyms.in <- paste0("skj_age",4:6,".dym")
 dym.out <- "skj_recruits.dym"

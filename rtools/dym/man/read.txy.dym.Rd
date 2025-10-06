@@ -16,6 +16,7 @@ A list with t, x and y, where time vector returned in decimal format, as written
 Reads dimensional vectors from the DYM file
 }
 \examples{
-dym <- read.txy.dym("skj_adult.dym");
-summary(dym)
+dym.in <- system.file("extdata", "skj.dym", package = "dym");
+txy <- read.txy.dym(dym.in)
+summary(txy)
 }

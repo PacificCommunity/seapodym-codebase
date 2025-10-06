@@ -20,10 +20,25 @@ Optionally, returns a list with dimensional variables, t, x and y, as well as z,
 Function computes the difference between two DYM files 'dym1-dym2' and either writes it to another DYM file or returns the result.
 }
 \examples{
-setwd(paste0(Sys.getenv("BET_HOME"),"/REF/output/output_F0/"))
-dym1 <- "bet_age25.dym"
-dym2 <- "bet_age36.dym"
-dym.out <- "bet_natloss_year.dym"
-diff.dyms(dym1,dym2,dym.out);
-out <- diff.dyms(dym1, dym2, dym.out, out=TRUE);
+# Example 1. Compare seasonal dynamics between two years 
+dym.in <- system.file("extdata", "skj.dym", package = "dym")
+txy <- read.txy.dym(dym.in)
+yy <- unique(floor(txy$t))
+seasons <- c(1,4,7,10) # first months to split year to seasons
+fyy <- paste0(yy,".dym")
+for (f in fyy){
+	y <- unlist(strsplit(basename(f),".",fixed=T))[1]
+	ts <- c(as.Date(paste0(y,"-01-01")),as.Date(paste0(y,"-12-31")))
+	subset.dyms(dym.in,f,ts)
+	make.climatology(f,imonths=seasons)
+} # two files with seasonal means named [f]_clm_quarterly.dym created
+ff.seasonal <- gsub(".dym","_clm_quarterly.dym",fyy)
+dat <- diff.dyms(ff.seasonal[1],ff.seasonal[2],out=TRUE)
+# Now plot the results
+x <- dat$x; y <- dat$y
+par(mfrow=c(2,2),mar=c(2,2,2,2),mgp=c(3,0.3,0),tck=0.02)
+for (n in 1:4)
+	image(x,y,dat$z[n,,],zlim=range(dat$z,na.rm=T),
+			col=hcl.colors(hcl.pals("diverging")[3],n=15),
+			main=paste("Quarter",n))
 }

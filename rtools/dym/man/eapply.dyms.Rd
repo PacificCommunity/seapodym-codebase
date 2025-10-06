@@ -17,14 +17,15 @@ eapply.dyms(dyms.in, dyms.out, FUN, ...)
 Function applies a function to every element of DYM file(s) and writes the result to dyms.out with the same dimensions.
 }
 \examples{
-dir.in  <- paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5-np_1x30d-po/")
-#1. multiply all elements of micronekton input data by 0.5:
+# Example 1. Multiply all elements of micronekton input data by 0.5. Run this example once the SEAPODYM environment is fully set up and below variables are known
+dir.in  <- paste0(Sys.getenv("SEA_FORCING_HOME"),my_forcing_dir,"/")
 dir.out <- paste0(dir.in,"forage_x",mult,"/")
 if (!dir.exists) dir.create(dir.out)
 dyms.in  <- list.files(paste0(dir.in,"forage/"),pattern="Fbiom",full.names=TRUE)
 dyms.out <- paste0(dir.out,basename(dyms.in))
 eapply.dyms(dyms.in,dyms.out,function(x)mult*x);
-#2. compute the gaussian function of sea surface temperature
+
+#Example 2. compute the gaussian function of sea surface temperature
 dym.in  <- list.files(dir.in,pattern="sst",full.names=TRUE)
 dym.out <- gsub("sst","gauss-sst",dym.in)
 gauss <- function(x,a,b) exp(-((x-a)^2)/(2*b*b))

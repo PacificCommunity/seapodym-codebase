@@ -25,5 +25,7 @@ write.var.dym(file.out, tvect, x, y, mask, data, verbose = TRUE)
 Writes 3d data to DYM file, dimensions being (time,longitude,latitude).
 }
 \examples{
-write.var.dym("sst.dym",tt,x,y,mask,var);
+dym.in <- system.file("extdata", "skj.dym", package = "dym")
+data <- read.var.dym(dym.in);
+write.var.dym("./skj.dym",data$t,data$x,data$y,data$landmask,data$var)
 }

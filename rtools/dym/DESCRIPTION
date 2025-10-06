@@ -1,14 +1,14 @@
 Package: dym
-Version: 1.2
+Version: 1.3
 Title: Read and write DYM files
 Author: Inna Senina <innas@spc.int>
 Maintainer: Inna Senina <innas@spc.int>
 Depends: R (>= 1.0.0)
 Description: This small package provides functions to read, write and manipulate DYM files, including subsetting, arithmetic operations and aggregations. DYM files are the inbuilt binary files of the SEAPODYM model containing 3d variables with dimensions (time,longitude,latitude) or (age,longitude,latitude).
 Encoding: UTF-8
-License: TBD
+License: BSD-3
 SystemRequirements: none
 URL: TBD
 NeedsCompilation: no
-Date: 2024-03-14
-RoxygenNote: 7.3.1
+Date: 2025-02-27
+RoxygenNote: 7.2.3

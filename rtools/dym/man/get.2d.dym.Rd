@@ -38,18 +38,19 @@ Optionally, returns a list with x, y coordinates and z, a matrix of values of th
 Function reads DYM file, computes the average (default) or the sum over selected time period and returns the result as a 2d array and/or writes it to a DYM1 file. Note, the only purpose of writing DYM1 file is to visualize it in SeapodymView.
 }
 \examples{
-Example 1. Subsetting and computing average decadal distribution, returning the result.
-setwd(paste0(Sys.getenv("SKJ_HOME"),"/REF/output/"))
-dym.in  <- "skj_Ha_first_maturity.dym"
-t.range <- c(as.Date("1981-1-1"),as.Date("1990-12-31"))
-x.range <- c(90,290)
-y.range <- c(-40,45)
-dat <- get.2d.dym(dym.in,ts=t.range,xs=x.range,ys=y.range); 
-Example 2. Average primary production, removing cells with invalid values.
-setwd(paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5-np_1x30d-glo/"))
+# Example 1. Subsetting and computing average distribution, returning the result.
+dym.in <- system.file("extdata", "skj.dym", package = "dym");
+dat <- get.2d.dym(dym.in); 
+image(dat$x,dat$y,dat$z,zlim=range(dat$z,na.rm=T),col=hcl.colors(hcl.pals("sequential")[11],n=15))
+# Example 2. Get decadal average of primary production, removing cells with invalid values. SEAPODYM environment is needed for this example.
+setwd(paste0(Sys.getenv("SEA_FORCING_HOME"),"/run-era5np_1x30d-po/"))
 dym.in <- list.files(pattern="_pp_")
-dat <- get.2d.dym(dym.in,ts=t.range,xs=x.range,ys=y.range,ivalue=-999);
+t.range <- c(as.Date("1981-1-1"),as.Date("1990-12-31"))
+dat <- get.2d.dym(dym.in,ts=t.range,ivalue=-999);
+image(dat$x,dat$y,dat$z,zlim=range(dat$z,na.rm=T))
+# Plot with seamaps
 require(seamaps)
 image(dat$x,dat$y,dat$z,xlab='',ylab='',xaxt='n',yaxt='n',main="Primary production, 1981-1990")
-nice.map.over(x.range,y.range)
+par(mgp=c(3,0.3,0),tck=0.02)
+nice.map.over(range(dat$x)+c(-.5,.5),range(dat$y)+c(-.5,.5))
 }
