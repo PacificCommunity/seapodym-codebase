@@ -121,11 +121,29 @@ void Taylor_derivative_test(const char* parfile)
 	//analytical derivatives
 	dvector adv(1, nvar); adv.initialize();
 
-	//finite difference derivatives at step
-	const int nbs = 15;
-	dvector step(0,nbs);
+	//finite difference derivatives at steps 1e-10,..,1e-0
+	int nbs = 11;
+	do {
+		cout << "Will compute derivatives with 11 steps. Press ENTER if you want to continue, otherwise enter number 1, 3, or 6 and press ENTER." << endl;
+		if (cin.peek() != '\n')
+    			cin >> nbs;
+	} while (cin.get() != '\n');
+
+	if (nbs != 1 && nbs != 3 && nbs != 6 && nbs != 11){
+		cerr << "Need to enter correct number of steps. Exit now!" << endl;
+		exit(1);
+	}
+
+	int k = 1;
+	dvector step(0,nbs-1);
+	if (nbs == 3) k = 4;
+	if (nbs == 6) k = 2;
 	for (int n=0; n<nbs; n++)
-		step(n) = pow(10,0.5*(n-(nbs+1)));//1e-8,..,1e-1
+		step(n) = pow(10,n*k - 10);
+	
+	if (nbs == 1) step(0) = 1e-6;
+	int err_skip = 0;
+	if (nbs == 11) err_skip = 1;
 
 	dmatrix fdv;
 	fdv.allocate(1,nvar,0,nbs-1); fdv.initialize();
@@ -137,7 +155,7 @@ void Taylor_derivative_test(const char* parfile)
 	clock_t time1 = clock();
 
 	cout << "\nEntering Taylor derivative test" << endl;
-	cout << "\n1. Computing analytical derivative(s)" << endl;
+	cout << "\n1. Computing analytical derivative(s) and finite differences with " << nbs << " step(s)" << endl;
 
 	dvector g(1, nvar); g.initialize();
 
@@ -151,10 +169,10 @@ void Taylor_derivative_test(const char* parfile)
 	cout << setw(4) <<  left << " # "
                      << setw(10) << "X value" << " "
                      << setw(10) << "Analytical" << " ";
-	for (int n=0; n<nbs; n+=2)
+	for (int n=0; n<nbs; n+=(err_skip+1))
 		cout << left << "rel.err"<<setw(7) << step(n) <<" ";
 	cout << endl;
-	for (int n=0; n<nbs; n+=2)
+	for (int n=0; n<nbs; n+=(err_skip+1))
 		cout << "-----------------";
 	cout << endl;
 
@@ -259,7 +277,7 @@ void Taylor_derivative_test(const char* parfile)
 		cout << setw(4)  << left << xindex
                      << setw(10) << xval << " "
                      << setw(10) << adv[i] << " ";
-		for (int n=0; n<nbs; n+=2)
+		for (int n=0; n<nbs; n+=(err_skip+1))
 			cout << setw(14) << left << err(i,n) << " ";
 		cout << endl;
 
