@@ -98,6 +98,7 @@ private:
 
 	i3_array position, numrec;
 	i3_array position_rm, numrec_rm;
+	i3_array numrec_model;
 
 	int all_rec;
 	int nrec_oceanmask;
@@ -221,7 +222,7 @@ public:
 	void get_fishery_data_mpa(PMap&, CParam&, d3_array&, d4_array&, d3_array&, d3_array&, int, int);
 	void mpa_areas_comp(PMap&, CParam&);
 	void inc_obs_catch_mpa(PMap& map, CParam& param, dmatrix& catch_obs, const int sp);
-	int get_numrec(const int f, const int y, const int m){ return numrec(f,y,m); }
+	int get_numrec(const int f, const int y, const int m){ return numrec_model(f,y,m); }
 
 	void read_lf_WCPO(CParam& param, string filename, const float startdate, const float enddate, const int sp);
 	void read_lf_EPO(CParam& param, string filename, const float startdate, const float enddate, const int sp);

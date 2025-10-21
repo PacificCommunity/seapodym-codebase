@@ -499,7 +499,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 	clock_t time1 = clock();
 
 	if (sftype==0){
-		sc.param->like_types[0] = 7;
+		sc.param->like_types[0] = 12;
 		//cout << "\nstarting computing sensitivities using model predictions only" << endl;
 
 		cout << "\nstarting computing sensitivities using likelihood and gradient comp" << endl;

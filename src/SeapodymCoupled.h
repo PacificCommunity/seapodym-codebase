@@ -108,10 +108,8 @@ private:
 	double elarvae_dt;
 	
 	//catch and length
-	d3_array cdata_obs;
-	dvar3_array cdata_est;
 
-	double lflike; // double value of lf_like
+	//double lflike; // double value of lf_like
 	dvector lflike_fishery;
 	dvector clike_fishery;
 

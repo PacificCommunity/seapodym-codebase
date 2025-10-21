@@ -23,7 +23,6 @@ int nrec_oceanmask_original = 0;
 void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt, const int jday_spinup)
 {
 
-
 	//IMPORTANT: data for each fishery should be sorted by date!
 	const int nb_fishery = param.get_nbfishery();
 	const int nb_species = param.get_nbspecies();
@@ -60,8 +59,16 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 	fishery_reso.allocate(0,nb_fishery-1);
 	fishery_reso.initialize(); 
 	param.fishery_reso = fishery_reso;
+	
+	ivector zero_obs_fishery;
+	zero_obs_fishery.allocate(0,nb_fishery-1);
+	zero_obs_fishery.initialize();
+
 
 	double SUM = 0.0;
+
+	//ATTN: this function works only for nb_species = 1
+	int sp = 0; 
 
 	ifstream littxt(filename.c_str());
 	if (littxt){
@@ -84,7 +91,7 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 		string gear;
 
 		for (int f=0; f<nb_fishery; f++){
-			if (param.mask_fishery_sp[0][f]){
+			if (param.mask_fishery_sp[sp][f]){
 				position(f).allocate(0,nby-1,1,12);
 				numrec(f).allocate(0,nby-1, 1,12);
 				position(f).initialize();
@@ -127,10 +134,11 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 			ostr << fishery;
 			string fishery_name = gear+ostr.str();
 
-			int f = 0;
+			int f = 0; int k = 0;
 			for (;f<nb_fishery; f++)
-			    if (param.mask_fishery_sp[0][f]){
+			    if (param.mask_fishery_sp[sp][f]){
 				if (fishery_name == param.list_fishery_name[f]){
+				
 					fishery_reso(f) = freso;
 
 					int date = year*10000 + month*100;
@@ -146,6 +154,17 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 						//cout << "Scale fishing effort by " << (double)param.deltaT / 30 << endl;
 						eff  *= (double)param.deltaT / 30;
 						harv *= (double)param.deltaT / 30;
+
+						//check for conflicts with likelihood definitions
+						if (eff && harv[sp] == 0){
+							zero_obs_fishery(f) = 1;
+							if (param.like_types[sp][k] == 6){
+								cerr << "\nERROR: log-normal likelihood definition conflicts with the presence of true zeros in the data for fishery " << fishery_name << "; Change to zero-inflated log-normal (type 7) or replace zeros with small epsilon if this is appropriate. Will exit for now..." << endl;
+								exit(1);
+							}
+						}
+							
+
 						//const 
 						int i = param.lontoi(lon);
 						//const 
@@ -172,6 +191,7 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 						}
 					}
 				}
+				k++;
 			}
 			rec++;
 		}
@@ -189,7 +209,7 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 				<< " They are in fisheries: " << ostr.str() << endl << endl;
 		}
 
-		if (! DataExist && sum(param.mask_fishery_sp(0))!=0){
+		if (! DataExist && sum(param.mask_fishery_sp(sp))!=0){
 			param.mask_fishery_sp.initialize();
 			cout << "WARNING: no fishery data found: fishery mask forced to zero" << endl;
 		}
@@ -198,19 +218,25 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 
 		for (int f=0; f<nb_fishery; f++)
 			mean_fishery_cpue(f) /= nrec_fishery(f);
-
-		for (int f=0; f<nb_fishery; f++){
-			double fact = 1.0;
-			if (param.sp_name[0].find("bet")==0) fact = 0.4;
-			if (param.sp_name[0].find("alb")==0) fact = 25.0;
-			param.cpue_mult(f) = fact*max(mean_fishery_cpue)/mean_fishery_cpue(f);
-		}
 		cout << "Mean cpue by fishery: "<< mean_fishery_cpue << endl;
-		cout << "weights for fisheries: "<< param.cpue_mult << endl;
+		
 	} else {
 		cout << endl << "WARNING : Cannot read file " << filename.c_str() << ". Will exit now!" << endl;
 		exit(1);
 	}
+
+	int k = 0;
+	for (int f=0; f<nb_fishery; f++){
+		if (param.mask_fishery_sp[sp][f]){
+			if (zero_obs_fishery(f)==0 && (param.like_types[sp][k] == 7 || param.like_types[sp][k] == 9)){
+				cerr << "\nERROR: zero-inflated likelihood formulation for fishery << " << param.list_fishery_name[f] 
+				     <<" conflicts with the absence of true zeros in this fishery data. Change to simple case (6 for log-normal or 8 for negative binomial). Will exit for now..." << endl;
+				exit(1);
+			}
+			k++;
+		}
+	}
+
 	cout << "Number of cells with fishing data: " << nrec_oceanmask << ", sumt(Ct): " << SUM << endl;
 	nrec_oceanmask_original = nrec_oceanmask;
 
@@ -232,7 +258,18 @@ void CReadWrite::rtxt_fishery_data(CParam& param, const PMap& map, const int nbt
 	if (sum(param.mask_fishery_sp_no_effort))
 		set_frec_rm_no_effort_fisheries(param,map,nbt,jday_spinup);		
 
-	//2.
+	//2. Array numrec_model will keep effective number of observations
+	// on model grid and given the choices for fisheries data redistribution. 
+	//Note, it will be updated in case if some fisheries will be degraded.
+	numrec_model.allocate(0,nb_fishery-1);
+	for (int f=0; f<nb_fishery; f++){
+		if (param.mask_fishery_sp[0][f]){
+			numrec_model(f).allocate(0,nby-1, 1,12);
+			numrec_model(f) = numrec(f);
+		}
+	}	
+
+	//3.
 	if (param.mpa_simulation || param.nb_EEZ){
 		set_frec_rm(param,map,nbt,jday_spinup);		
 		param.fdata_rm = 1;
@@ -272,6 +309,9 @@ void CReadWrite::degrade_fishery_reso(CParam& param, PMap& map, const int nbt, c
 	if (deltaX>=1) cout << "Centers of degraded C-cells: \n" << flon[0] << ", " << flon[1] << ",..., " << flon[nflon-1] << endl << 
 							    	    flat[0] << ", " << flat[1] << ",..., " << flat[nflat-1] << endl; 
 
+	ivector unique_ij;
+	unique_ij.allocate(0,nflon*nflat-1);
+
 	int year, month, day, jday, xx;
 	for (int f=0; f<nb_fishery; f++){
 	   int count = 0;
@@ -290,21 +330,25 @@ void CReadWrite::degrade_fishery_reso(CParam& param, PMap& map, const int nbt, c
 						int nstart = position(f,y,m);
 						int nend = nstart+numrec(f,y,m);
 						m_old = m;
+						unique_ij.initialize();
 						for (int p=nstart; p<nend; p++){
 							double lon = frec[p].get_efflon();
 							double lat = frec[p].get_efflat();
 				
-							//int fi = (int)((lon-(cwest+0.5*creso))/creso);
-							//int fj = (int)((cnorth-0.5*creso-lat)/creso);
 							int fi = (int)((lon-cwest)/creso);
 							int fj = (int)((cnorth-lat)/creso);
 							int i = param.lontoi(flon[fi]);
 							int j = param.lattoj(flat[fj]);
 
 							//NOTICE: some records may be lost if the C-cell center is on land
-							if (map.carte(i,j)==0) { i = -1;count++;}
+							if (map.carte(i,j))
+								unique_ij[fi+nflon*fj] = 1;
+							
+							if (map.carte(i,j)==0) { i = -1; count++;}
 							frec[p].change_coord(flon[fi],flat[fj],i,j);
+
 						}
+						numrec_model(f,y,m) = sum(unique_ij);
 					}
 				}
 			}
@@ -789,7 +833,6 @@ void CReadWrite::set_frec_rm_no_effort_fisheries(CParam& param, const PMap& map,
 	delete [] frec_tmp;	
 }
 
-
 void CReadWrite::get_fishery_data(CParam& param, D3_ARRAY& effort, D4_ARRAY& catch_obs, D3_ARRAY& efflon, D3_ARRAY& efflat, int y, const int m)
 {	
 	y -= (int)param.save_first_yr;
@@ -811,12 +854,6 @@ void CReadWrite::get_fishery_data(CParam& param, D3_ARRAY& effort, D4_ARRAY& cat
 				efflon(f,i,j) = frec[p].get_efflon();
 				efflat(f,i,j) = frec[p].get_efflat();
 				catch_obs(0,k,i,j) += frec[p].get_catch();
-				//int nb_species = nbsp_file[f];	
-				//dvector harv(0,nb_species-1);
-				//harv = frec[p].get_catch(); 
-				//for (int sp=0; sp<nb_species; sp++){
-				//	catch_obs(sp,k,i,j) += harv[sp];
-				//}	
 			} k++;
 		}
 	}

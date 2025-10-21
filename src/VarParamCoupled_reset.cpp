@@ -444,40 +444,33 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 		}
 	}
 
-	if (doc.get("/likelihood_parameters/variables", "use") == "true") {
-		for (int i=0; i<nb_species; i++) {
-			int ifx = 0;
-			for (int f = 0; f < nb_fishery; f++) {
-				if (mask_fishery_sp[i][f]){
-					//if (like_types[i][ifx]==2 || like_types[i][ifx]==4 || like_types[i][ifx]==5){
-					if (/*like_types[i][ifx]==2 || */like_types[i][ifx]==4 || like_types[i][ifx]==5){
-					dvarsLike_param[i][ifx] = boundp(x[idx], dvarpars_min[idx], dvarpars_max[idx], penalty);
-					like_param[i][ifx] = value(dvarsLike_param[i][ifx]);
-					dvarpars[idx] = like_param[i][ifx];
-					++idx;
-					} ifx++;
-				}
-			}
-		}
-	}
-
 	for (int i=0; i<nb_species; i++) {
 		int ifx = 0;
 		for (int f = 0; f < nb_fishery; f++) {
 			if (mask_fishery_sp[i][f]){
-				if (like_types[i][ifx]==5 && doc.get("/likelihood_parameters/variables", "use") == "true"){ 
+				if (like_types[i][ifx]==5 || like_types[i][ifx]==6 || like_types[i][ifx]==7 || like_types[i][ifx]==8 || like_types[i][ifx]==9){
+					if (doc.get("/likelihood_parameters/variables", "use") == "true") {
+						dvarsLike_param[i][ifx] = boundp(x[idx], dvarpars_min[idx], dvarpars_max[idx], penalty);
+						like_param[i][ifx] = value(dvarsLike_param[i][ifx]);
+						dvarpars[idx] = like_param[i][ifx];
+						++idx;
+					} 
+				}
 
-					dvarsProb_zero[i][ifx] = boundp(x[idx], dvarpars_min[idx], dvarpars_max[idx], penalty);
-					prob_zero[i][ifx] = value(dvarsProb_zero[i][ifx]);
-					dvarpars[idx] = prob_zero[i][ifx];
-					++idx; 
-				} ifx++;
+				if (like_types[i][ifx]==7 || like_types[i][ifx]==9){
+					if (doc.get("/prob_zero/variables", "use") == "true"){ 
+
+						dvarsProb_zero[i][ifx] = boundp(x[idx], dvarpars_min[idx], dvarpars_max[idx], penalty);
+						prob_zero[i][ifx] = value(dvarsProb_zero[i][ifx]);
+						dvarpars[idx] = prob_zero[i][ifx];
+						++idx; 
+					} 
+				}
+				ifx++;
 			}
 		}
 	}
-//cout << dvarpars << endl;
-//cout << statpars << endl;
-//exit(1);
+
 	if (!scalc())
 		cout << value(penalty) << "; ";
 	return penalty;

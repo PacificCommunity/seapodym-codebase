@@ -75,17 +75,9 @@ int SeapodymCoupled::EditRunCoupled(const char* parfile)
 		mat.createMatEffort(map,nbi,nbj,nb_fishery);
 		mat.CreateMatCatch(map,nbi,nbj,nb_species, param->nb_fishery_by_sp,a0_adult,aN_adult,param->nb_region_sp_B);
 	}
-	cdata_obs.allocate(0,nb_fishery-1);
-	cdata_est.allocate(0,nb_fishery-1);
-	for (int f=0; f<nb_fishery; f++){
-		cdata_obs[f].allocate(map.imin, map.imax, map.jinf, map.jsup);
-		cdata_est[f].allocate(map.imin, map.imax, map.jinf, map.jsup);
-	}
 
 	lflike_fishery.allocate(0,nb_fishery-1);
 	clike_fishery.allocate(0,nb_fishery-1);
-	lflike_fishery.initialize();
-	clike_fishery.initialize();
 
 	param->init_param_dym();
 

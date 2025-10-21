@@ -810,6 +810,13 @@ bool VarParamCoupled::read(const string& parfile)
 			if (!doc.get("/larvae_likelihood_years","last_year").empty())
 				larvae_like_lastyear = doc.getInteger("/larvae_likelihood_years","last_year");
 
+			//if simulation time and larvae data time do not overlap, set the likelihood OFF and issue warning
+			if (larvae_like_firstyear > save_last_yr || larvae_like_lastyear < save_first_yr){
+
+				larvae_like[sp] = 0;
+				cout << "WARNING: Simulation time period and larval data time period do not overlap, will NOT compute larval likelihood!" << endl;
+			}
+
 			if (!doc.get("/larvae_mortality_sst",sp_name[sp]).empty())
 				larvae_mortality_sst[sp] = doc.getInteger("/larvae_mortality_sst",sp_name[sp]);
 			if (!doc.get("/larvae_input_categorical",sp_name[sp]).empty())
@@ -932,8 +939,8 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/degrade_fishery_reso_deg","value").empty()){
 			catch_reso = doc.getDouble("/degrade_fishery_reso_deg", "value");
 		}
-		cpue_mult.allocate(0,nb_fishery-1);	//cpue multiplier in the likelihood (Inna 18/11/2010)
-		cpue_mult.initialize();
+		cpue_units_converter.allocate(0,nb_fishery-1);	//cpue multiplier in the likelihood (Inna 18/11/2010)
+		cpue_units_converter = 1.0;
 
 		//fishery name (code with 1 letter and 1 number; e.g., L1 for long-line or S2 for purse-seine)
 		list_fishery_name = Utilities::create1d(list_fishery_name, nb_fishery);
@@ -1087,19 +1094,7 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/eff_units_converter").empty())
 			for (int f=0;f<nb_fishery;f++) 
 				eff_units_converter(f) = doc.getDouble("/eff_units_converter",f);
-		
-		like_types.allocate(0,nb_species-1);
-		for (int sp=0;sp<nb_species;sp++){
-			like_types[sp].allocate(0,nb_fishery_by_sp[sp]-1);
-			int k = 0;
-			for (int f=0;f<nb_fishery;f++){
-				int type = doc.getInteger(string("/likelihood_types/")+sp_name[sp], f);
-				if (mask_fishery_sp[sp][f]){
-					like_types[sp][k] = type;
-					k++;
-				}
-			}
-		}
+
 
 		//MPA simulations
                 if (mpa_simulation){
@@ -1144,6 +1139,7 @@ bool VarParamCoupled::read(const string& parfile)
 		total_like = 0;
 		if (!doc.get("/total_likelihood","value").empty())
 			total_like = doc.getDouble("/total_likelihood","value");
+		
 
 		//1. CATCH/CPUE likelihood
 		//the data that will be used in the likelihood: local catch or cpue
@@ -1156,6 +1152,47 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 		}
 
+		//catch units conversion in the likelihood only!
+		catch_units_converter.allocate(0,nb_fishery-1);
+		catch_units_converter = 0.5;//temporal, to match current defaults, should be 1
+
+		if (!doc.get("/catch_units_converter").empty())
+			for (int f=0;f<nb_fishery;f++) 
+				catch_units_converter(f) = doc.getDouble("/catch_units_converter",f);
+		
+		like_types.allocate(0,nb_species-1);
+		for (int sp=0;sp<nb_species;sp++){
+			like_types[sp].allocate(0,nb_fishery_by_sp[sp]-1);
+			int k = 0;
+			for (int f=0;f<nb_fishery;f++){
+				int type = doc.getInteger(string("/likelihood_types/")+sp_name[sp], f);
+				if (mask_fishery_sp[sp][f]){
+					like_types[sp][k] = type;
+					k++;
+				}
+			}
+		}
+
+		poisson_like_min_catch = 2.0; //default value, observed catches below 1(kg, X kg, mt, depending on the catch_units_converter) will not be used in the Poisson likelihood
+		if (!doc.get("/poisson_like_min_catch","value").empty())
+			poisson_like_min_catch = doc.getDouble("/poisson_like_min_catch","value");
+
+		//Catch likelihood weights
+		catch_like_weight.allocate(0,nb_fishery-1);
+		catch_like_weight = 0.05; //default value
+		for (int sp=0;sp<nb_species;sp++){
+			int k = 0;
+			for (int f=0;f<nb_fishery;f++){
+				if (like_types[sp][k]==1)
+					catch_like_weight[f] = 0.00025;
+				k++;
+			}
+		}
+		
+		if (!doc.get("/catch_like_weight").empty())
+			for (int f=0;f<nb_fishery;f++) 
+				catch_like_weight(f) = doc.getDouble("/catch_like_weight",f);  		
+
 		//2. LF likelihood
 		frq_like.allocate(0,nb_species-1);
 		frq_like.initialize();
@@ -1166,6 +1203,13 @@ bool VarParamCoupled::read(const string& parfile)
 				cout << "WARNING: LF likelihood is forced to OFF in NO FISHING run" << endl;
 			}
 		}
+		
+		length_like_weight.allocate(0,nb_fishery-1);
+		length_like_weight = 0.2; //default value to match current code
+		if (!doc.get("/length_like_weight").empty())
+			for (int f=0;f<nb_fishery;f++) 
+				length_like_weight(f) = doc.getDouble("/length_like_weight",f);
+
 
 		//3. TAGs likelihood: further options here (see above the code for main flags)
 		tag_gauss_kernel_on = 1;
@@ -1184,6 +1228,17 @@ bool VarParamCoupled::read(const string& parfile)
 			        } else remove(test.c_str());	
 			}
 		}
+		tag_like_weight.allocate(0,nb_species-1);
+		elife_like_weight.allocate(0,nb_species-1);
+		tag_like_weight = 1.0; //default value
+		elife_like_weight = 1.0; //default value
+		for (int sp=0; sp<nb_species; sp++){
+			if (!doc.get("/tag_like_weight",sp_name[sp]).empty())		  
+				tag_like_weight[sp] = doc.getInteger("/tag_like_weight",sp_name[sp]);
+			if (!doc.get("/elife_like_weight",sp_name[sp]).empty())		  
+				elife_like_weight[sp] = doc.getInteger("/elife_like_weight",sp_name[sp]);
+		}
+
 
 		//4. STOCK likelihood
 		stock_like.allocate(0,nb_species-1);
@@ -1220,10 +1275,38 @@ bool VarParamCoupled::read(const string& parfile)
 			int k=0;
 			for (int f=0; f< nb_fishery; f++)
 				if (mask_fishery_sp[sp][f]){
-					if (like_types(sp,k)==2 || like_types(sp,k)==4 || like_types(sp,k)==5)
+					like_param(sp,k) = 5.0;
+					if (!doc.get("/likelihood_parameters").empty()){
 						like_param[sp][k] = doc.getDouble(string("/likelihood_parameters/") + list_fishery_name[f], sp_name[sp]);
+					}
+					if ((like_types(sp,k)==5 || like_types(sp,k)==6 || 
+						like_types(sp,k)==7 || like_types(sp,k)==8 || 
+						like_types(sp,k)==9) && (doc.get("/likelihood_parameters").empty() ||
+						doc.get("/likelihood_parameters/variables","use")!="true")){
+						cout << "WARNING: Need to estimate likelihood parameter with likelihood type " << like_types(sp,k) << " for fishery " <<  list_fishery_name[f] << "!" << endl;
+
+					}
 					k++;
 				}
+		}
+		//likelihood parameters: probability of zero observation 
+		prob_zero.allocate(0,nb_species-1);
+		for (int sp=0;sp<nb_species;sp++){
+			prob_zero(sp).allocate(0,nb_fishery_by_sp[sp]-1);
+			int k = 0;
+			for (int f=0; f<nb_fishery;f++){
+			 	if (mask_fishery_sp[sp][f]){
+					prob_zero[sp][k] = 0.0;
+					if (!doc.get("/prob_zero").empty())
+						prob_zero[sp][k] = doc.getDouble(string("/prob_zero/") + list_fishery_name[f],sp_name[sp]);
+
+					if ((like_types(sp,k)==7 || like_types(sp,k)==9) &&
+						(doc.get("/prob_zero").empty() || doc.get("/prob_zero/variables","use")!="true"))
+								cout << "WARNING: Need to estimate probability of zeros with likelihood type " 
+								<< like_types(sp,k) << " for fishery " <<  list_fishery_name[f] << "!" << endl;
+					k++;
+				}	
+			}
 		}
 
 		for (int sp=0;sp<nb_species;sp++){
@@ -1280,22 +1363,6 @@ bool VarParamCoupled::read(const string& parfile)
 					cout << "WARNING: TAG DATA ARE ABSENT" << endl; 
 					file_tag_data.push_back("");
 				}
-			}
-		}
-
-
-		//likelihood parameters: probability of zero observation 
-		prob_zero.allocate(0,nb_species-1);
-		for (int sp=0;sp<nb_species;sp++){
-			prob_zero(sp).allocate(0,nb_fishery_by_sp[sp]-1);
-			int k = 0;
-			for (int f=0; f<nb_fishery;f++){
-			 	if (mask_fishery_sp[sp][f]){
-					prob_zero[sp][k] = 0.5;
-					if (!doc.get("/prob_zero").empty())
-						prob_zero[sp][k] = doc.getDouble(string("/prob_zero/") + list_fishery_name[f],sp_name[sp]);
-					k++;
-				}	
 			}
 		}
 	
@@ -1667,39 +1734,35 @@ bool VarParamCoupled::read(const string& parfile)
 		}
 	}
 
-	if (doc.get("/likelihood_parameters/variables","use") == "true"){
-		for (int sp=0; sp<nb_species; sp++){
-			int k = 0;
-			for (int f=0; f< nb_fishery; f++)
-				if (mask_fishery_sp[sp][f]) {
-					if (like_types[sp][k]==4||like_types[sp][k]==5)
+	for (int sp=0; sp<nb_species; sp++){
+		int k = 0;
+		for (int f=0; f< nb_fishery; f++){
+			if (mask_fishery_sp[sp][f]) {
+				if (like_types[sp][k]==5 || like_types[sp][k]==6
+				 || like_types[sp][k]==7 || like_types[sp][k]==8
+				 || like_types[sp][k]==9){
+					if (doc.get("/likelihood_parameters/variables","use") == "true"){
 						_nvarcalc++;
-					else if (like_types[sp][k]==2) {
+					}
+					else {
 						statpar_names_temp[nni] = "likelihood parameter(" + str(sp) +","+ str(k) + ")";
 						statpars_temp[nni] = like_param[sp][k];
 						nni++;
-					}	
-					k++;
+					}
 				}
-		}
-		
-	} else {
-		for (int sp=0;sp<nb_species;sp++){
-			int k = 0;
-			for (int f = 0; f < nb_fishery; f++) 
-				if (mask_fishery_sp[sp][f]) {
-					statpar_names_temp[nni] = "likelihood parameter(" + str(sp) +","+ str(k) + ")"; 
-					statpars_temp[nni] = like_param[sp][k]; 
-					nni++;
-					k++;
+				if (like_types[sp][k]==7 || like_types[sp][k]==9){
+					if (doc.get("/prob_zero/variables","use") == "true")
+						_nvarcalc++;
+					else {
+						statpar_names_temp[nni] = "prob_zero(" + str(sp) +","+ str(k) + ")";
+						statpars_temp[nni] = like_param[sp][k];
+						nni++;
+					}
 				}
+				k++;
+			}
 		}
-	}
-
-	for (int sp=0; sp<nb_species; sp++)
-		for (int k=0; k<nb_fishery_by_sp[sp]; k++)
-			if (like_types[sp][k]==5 && doc.get("/likelihood_parameters/variables","use") == "true")
-				_nvarcalc++;
+	}	
 	
 	if (_nvarcalc==0) {cerr << "ERROR: at least one control variable required!!! Will exit now..."<< endl; exit(1);}
 
@@ -1751,7 +1814,7 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",0,1000);
 	par_read(likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",0,20);
 	par_read(likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",0,10);
-	par_read(likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",0,10);
+	par_read(likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",0,1);
 	par_read(inv_M_max_min,inv_M_max_max,"/inv_M_max",0,1000);
 	par_read(inv_M_rate_min,inv_M_rate_max,"/inv_M_rate",0,1000);
 	par_read(age_larvae_before_sst_mortality_min,age_larvae_before_sst_mortality_max,"/age_larvae_before_sst_mortality",1,30);

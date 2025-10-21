@@ -1,80 +1,98 @@
 #include "SeapodymCoupled.h"
 #include "NishikawaLike.h"
 
-void fillmatrices(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dmatrix& data_obs, dvar_matrix& data_est, bool cpue, double cpue_mult, const double catch_scaling_factor, const int cdata_temp_reso, const int month);
-dvariable SumSquare(const PMap& map, dvar_matrix& data_est);
-void Concentrated(const dmatrix& data_obs, dvar_matrix& data_est, dvariable& likelihood, const int nobs);
-void Normal(const dmatrix& data_obs, dvar_matrix& data_est, dvariable& likelihood, const double sigma_2);
-void LogNormal(PMap& map, const dmatrix& data_obs, dvar_matrix& data_est, dvariable& likelihood, const int nobs, dvariable& sigma);
-dvariable Poisson(PMap& map, const dmatrix data_obs, dvar_matrix& data_est);
-dvariable TruncatedPoisson(PMap& map, const dmatrix data_obs, dvar_matrix& data_est);
-dvariable Exponential(PMap& map, const dmatrix data_obs, dvar_matrix& data_est);
-dvariable Weibull(PMap& map, const dmatrix data_obs, dvar_matrix& data_est);
-double Poisson(PMap& map, const dmatrix data_obs, const dmatrix data_est);
-dvariable NegBinomial(PMap& map, const dmatrix data_obs, dvar_matrix& data_est, dvariable& beta);
-dvariable ZINegBinomial(PMap& map, const dmatrix data_obs, dvar_matrix& data_est, dvariable& beta, dvariable& p);
-dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, const int a0, const int nb_ages, const int nb_regions_sp, const int k, double& alike);
-dvariable LFsum_sq(dvar3_array& dvarLF_est, const int nb_ages, const int nb_regions_sp, const int k, double& alike);
-double log_factorial(const double x);
+void mat2vect(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dvector& data_obs, dvar_vector& data_est, bool cpue, double c_units, const int catch_removal_fishery, const int cdata_temp_reso, const int month);
+dvariable SumSquare(dvar_vector& data_est);
+void LeastSquares(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood);
+void Concentrated(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, const int nobs);
+void Normal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, const int nobs);
+void LogNormal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, const int nobs);
+void ZILogNormal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, dvariable& prob, const int nobs);
+dvariable Poisson(const dvector data_obs, dvar_vector& data_est, const double min_obs_catch, const int nobs);
+dvariable TruncatedPoisson(const dvector data_obs, dvar_vector& data_est, const int nobs);
+dvariable Exponential(const dvector data_obs, dvar_vector& data_est, const int nobs);
+dvariable Weibull(const dvector data_obs, dvar_vector& data_est, const int nobs);
+dvariable NegBinomial(const dvector data_obs, dvar_vector& data_est, dvariable& beta, const int nobs);
+dvariable ZINegBinomial(const dvector data_obs, dvar_vector& data_est, dvariable& beta, dvariable& p, const int nobs);
+dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, const int a0, const int nb_ages, const int nb_regions_sp, const int k);
+dvariable LFsum_sq(dvar3_array& dvarLF_est, const int nb_ages, const int nb_regions_sp, const int k);
+
+int number_data_like;
+const double twopi = 2.0*3.141592654;
 
 dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const int nobs)
 {
-        double catch_mult = 0.25; // need to make it a vector of length nb_fishery 
-				 // and assign values outside of this routine
-
 	dvariable likelihood = 0.0;
 	dvariable beta, prob, sigma;
+
+	dvector cdata_obs;
+	dvar_vector cdata_est;
+	cdata_obs.allocate(0,nobs-1);
+	cdata_est.allocate(0,nobs-1);
 
 	int cdata_temp_reso = param->catch_treso_likelihood[sp][f];
 
 	bool cpue = param->cpue;
+	double c_units = param->catch_units_converter(f);
+	if (cpue)
+		c_units = param->cpue_units_converter(f);
+	
 	int like_type = param->like_types[sp][k];
-	const double sigma_2 = pow(5.0,-2);  
+	const double fw_catch  = param->catch_like_weight(f);  
+	const double fw_length = param->length_like_weight(f);  
 
-	fillmatrices(map, mat.effort(f), mat.catch_obs(sp,k), mat.dvarCatch_est(sp,k), 
-		     cdata_obs[f], cdata_est[f], cpue, param->cpue_mult(f),
-		     catch_mult, cdata_temp_reso, month);
+	mat2vect(map, mat.effort(f), mat.catch_obs(sp,k), mat.dvarCatch_est(sp,k), cdata_obs, cdata_est, 
+		cpue, c_units, param->mask_fishery_sp_no_effort(sp,f),cdata_temp_reso, month);
  
 	if (cdata_temp_reso==1 || (cdata_temp_reso==3 && (month==3 || month==6 || month==9 || month==12))){
 		switch (like_type) {
+
+			case 1: LeastSquares(cdata_obs,cdata_est,likelihood);
+				break;
+			
+			case 2: Concentrated(cdata_obs,cdata_est,likelihood,nobs);
+				break;
 		
-			case 1: Normal(cdata_obs[f],cdata_est[f],likelihood,sigma_2);
+			case 3: likelihood = Poisson(cdata_obs,cdata_est,param->poisson_like_min_catch,nobs);
 				break;
 
-			case 2: sigma = param->dvarsLike_param(sp,k);
-				LogNormal(map,cdata_obs[f],cdata_est[f],likelihood,nobs,sigma);
-				break;
-		
-			case 3: likelihood = Poisson(map,cdata_obs[f],cdata_est[f]);
-				break;
-	
-			case 4: beta = param->dvarsLike_param(sp,k);
-				likelihood = NegBinomial(map,cdata_obs[f],cdata_est[f],beta);
+			case 4: likelihood = TruncatedPoisson(cdata_obs,cdata_est,nobs);
+				break;	
+				
+			case 5: sigma = param->dvarsLike_param(sp,k);
+				Normal(cdata_obs,cdata_est,likelihood,sigma,nobs);
 				break;
 
-			case 5: beta = param->dvarsLike_param(sp,k);
+			case 6: sigma = param->dvarsLike_param(sp,k);
+				LogNormal(cdata_obs,cdata_est,likelihood,sigma,nobs);
+				break;
+
+			case 7: sigma = param->dvarsLike_param(sp,k);
 				prob = param->dvarsProb_zero(sp,k);
-				likelihood = ZINegBinomial(map,cdata_obs[f],cdata_est[f],beta,prob);
+				ZILogNormal(cdata_obs,cdata_est,likelihood,sigma,prob,nobs);
+				break;					
+					
+			case 8: beta = param->dvarsLike_param(sp,k);
+				likelihood = NegBinomial(cdata_obs,cdata_est,beta,nobs);
+				break;
+			
+			case 9: beta = param->dvarsLike_param(sp,k);
+				prob = param->dvarsProb_zero(sp,k);
+				likelihood = ZINegBinomial(cdata_obs,cdata_est,beta,prob,nobs);
 				break;
 
-			case 6: likelihood = TruncatedPoisson(map,cdata_obs[f],cdata_est[f]);
+			case 10: likelihood = Exponential(cdata_obs,cdata_est,nobs);
 				break;
 
-			case 7: likelihood = SumSquare(map,cdata_est[f]);
+			case 11: likelihood = Weibull(cdata_obs,cdata_est,nobs);
 				break;
 
-			case 8: likelihood = Exponential(map,cdata_obs[f],cdata_est[f]);
-				break;
-
-			case 9: likelihood = Weibull(map,cdata_obs[f],cdata_est[f]);
-				break;
-
-			case 10: Concentrated(cdata_obs[f],cdata_est[f],likelihood,nobs);
+			case 12: likelihood = SumSquare(cdata_est);
 				 break;
 
         	}
 
-		likelihood = 0.05*likelihood;
+		likelihood = fw_catch * likelihood;
 		clike_fishery[f] += value(likelihood);
 	}
 
@@ -84,15 +102,18 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 		const int a0 = a0_adult(sp);
 		const int nb_ages = aN_adult(sp);
 		const int nb_regions_sp = param->nb_region_sp_B(sp);
-		if (like_type==7){//first type of sensitivity analysis
-			likelihood += LFsum_sq(mat.dvarLF_est(sp),nb_ages,nb_regions_sp,k,lflike);
+		if (like_type == 12){//first type of sensitivity analysis
+			dvariable lf_like = LFsum_sq(mat.dvarLF_est(sp),nb_ages,nb_regions_sp,k);
+			likelihood += lf_like;
+			//lflike += value(lf_like);
 			return(likelihood);
 		}
 
 		//LF likelihood value for fishery 'f'
-		dvariable lf_like = LFlike_robust(mat.LF_qtr_obs(sp),mat.dvarLF_est(sp),
-						  a0,nb_ages,nb_regions_sp,k,lflike);
+		dvariable lf_like = fw_length * LFlike_robust(mat.LF_qtr_obs(sp),mat.dvarLF_est(sp),
+						  a0,nb_ages,nb_regions_sp,k);
 		lflike_fishery[f] += value(lf_like);
+		//lflike += value(lf_like);
 
 		likelihood += lf_like;
 	} 
@@ -109,8 +130,9 @@ double SeapodymCoupled::get_stock_like(dvariable& total_stock, dvariable& likeli
 			if (!param->scalc()) cout << "stock size: " << total_stock << endl;
 			double mean_total_stock_obs = param->mean_stock_obs[sp];  
 			if (total_stock > mean_total_stock_obs){
-			    likelihood += 0.5*(total_stock-mean_total_stock_obs)*(total_stock-mean_total_stock_obs);
-			    stocklike += 0.5*value((total_stock-mean_total_stock_obs)*(total_stock-mean_total_stock_obs));
+				dvariable slike = 0.5*pow(total_stock-mean_total_stock_obs,2);
+				likelihood += slike;
+				stocklike  += value(slike);
 			}
 		}
 	}
@@ -422,10 +444,9 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 	return taglike;
 }
 
-dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, const int a0, const int nb_ages, const int nb_regions_sp, const int k, double& alike)
+dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, const int a0, const int nb_ages, const int nb_regions_sp, const int k)
 {//for explanation of this robustified likelihood see MFCL documentation
 	dvariable likelihood = 0;
-	const double twopi = 2.0*3.141592654;
 	const double PL      = 3.0;
 	const double PLconst = 350.0;   // PL*PLconst should be > 1000 (= maximal sample size!)
 	int I; 				// number of bins with data contributes to the likelihood weights
@@ -462,13 +483,12 @@ dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, cons
 			}
 		}
 	}
-	likelihood = 0.2*likelihood;		
-	alike += value(likelihood);
+	likelihood = likelihood;		
 
 	return(likelihood);
 }
 
-dvariable LFsum_sq(dvar3_array& dvarLF_est, const int nb_ages, const int nb_regions_sp, const int k, double& alike)
+dvariable LFsum_sq(dvar3_array& dvarLF_est, const int nb_ages, const int nb_regions_sp, const int k)
 {
 	dvariable likelihood = 0;
 
@@ -489,276 +509,185 @@ dvariable LFsum_sq(dvar3_array& dvarLF_est, const int nb_ages, const int nb_regi
 			likelihood += norm(lf_est);
 		}
 	}
-	alike += value(likelihood);
 
 	return(likelihood);
 
 }
 
-void fillmatrices(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dmatrix& data_obs, dvar_matrix& data_est, bool cpue, double cpue_mult,const double catch_scaling_factor, const int cdata_temp_reso, const int month)
+void mat2vect(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dvector& data_obs, dvar_vector& data_est, bool cpue, double c_units, const int catch_removal_fishery, const int cdata_temp_reso, const int month)
 {
 	if ((cdata_temp_reso==1) || 
 			((cdata_temp_reso==3) && (month==1 || month==4 || month==7 || month==10))){
 		data_obs.initialize();
 		data_est.initialize();
 	}
-	
-	double sf = catch_scaling_factor;
-	data_obs += sf*catch_obs;
-	data_est += sf*catch_est;
 
-	//Until needed, CPUE will only be used with 1-dt resolution
-	//As it requires catch_obs and effort be on the quarterly resolution
-	if (cpue){
-		data_obs.initialize();
-		data_est.initialize();
-		const int imin = map.imin; 
-		const int imax = map.imax;
-		double m = cpue_mult; // cpue multiplier
-		for (int i = imin; i <= imax; i++){
-			const int jmin = map.jinf[i];
-			const int jmax = map.jsup[i];
-			for (int j = jmin ; j <= jmax; j++){
-				if (effort(i,j)){
-					data_obs(i,j) = m*catch_obs(i,j)/effort(i,j);
-					data_est(i,j) = m*catch_est(i,j)/effort(i,j);
-				}
-
-			}
-		}	
-	}
-}
-
-dvariable SumSquare(const PMap& map, dvar_matrix& data_est)
-{
-	dvariable likelihood = 0;
-
+	int n=0;
 	const int imin = map.imin; 
-	const int imax = map.imax; 
+	const int imax = map.imax;
 	for (int i = imin; i <= imax; i++){
 		const int jmin = map.jinf[i];
 		const int jmax = map.jsup[i];
 		for (int j = jmin ; j <= jmax; j++){
 			if (map.carte[i][j]){
-				dvariable pred = data_est(i,j);
-				if (pred>0)
-					likelihood += pred*pred;
+				if (catch_removal_fishery){
+					if (catch_obs(i,j)){
+						data_obs[n] = c_units*catch_obs(i,j);
+						data_est[n] = c_units*catch_est(i,j);
+						n++;
+					}
+				} else {
+					if (effort(i,j)){
+						if (!cpue){
+							data_obs[n] = c_units*catch_obs(i,j);
+							data_est[n] = c_units*catch_est(i,j);
+							n++;
+						} else {
+							data_obs[n] = c_units*catch_obs(i,j)/effort(i,j);
+							data_est[n] = c_units*catch_est(i,j)/effort(i,j);
+							n++;
+						}
+					}
+				}
 			}
 		}
-	}
+	}	
+}
+
+dvariable SumSquare(dvar_vector& data_est)
+{
+	dvariable likelihood = norm2(data_est);
+
 	return(likelihood);
 }
 
-void Concentrated(const dmatrix& data_obs, dvar_matrix& data_est, dvariable& likelihood, const int nobs)
+void LeastSquares(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood)
+{
+	likelihood = norm2(data_obs-data_est);
+}
+
+
+void Concentrated(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, const int nobs)
 {
 	if (nobs)
 		likelihood = 0.5*nobs*log(norm2(data_obs-data_est));
 }
 
-void Normal(const dmatrix& data_obs, dvar_matrix& data_est, dvariable& likelihood, const double sigma_2)
+void Normal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, const int nobs)
+{	
+	likelihood = 0.5*nobs*log(twopi*sigma*sigma) + norm2(data_obs-data_est)/(2.0*sigma*sigma);
+}
+
+void LogNormal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, const int nobs)
 {
-	likelihood = 0.5*sigma_2*norm2(data_obs-data_est);
+	if (nobs)
+		likelihood = nobs*(log(sigma) + 0.5*log(twopi)) + sum(log(data_obs)) + norm2(log(data_obs)-log(data_est)+0.5*sigma*sigma)/(2.0*sigma*sigma);
 }
 
 
-void LogNormal(PMap& map, const dmatrix& data_obs, dvar_matrix& data_est, dvariable& likelihood, const int nobs, dvariable& sigma)
+void ZILogNormal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, dvariable& prob, const int nobs)
 {
-	const int imin = map.imin; 
-	const int imax = map.imax; 
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
-		for (int j = jmin ; j <= jmax; j++){
-			if (map.carte[i][j]){
-				const double obs = data_obs(i,j);
-				dvariable pred   = data_est(i,j);
-				likelihood += 0.5/(sigma*sigma)*pow(log(obs+1.0)-log(pred+1.0),2);
-			}
+
+	for (int n=0; n<nobs; n++){
+		const double obs = data_obs(n);
+		dvariable est   = data_est(n);
+		if (est>0){
+			if (obs>0){
+				likelihood += (1-prob)*(log(sigma) + 0.5*log(twopi) + log(obs) + pow(log(obs)-log(est)+0.5*sigma*sigma,2)/(2.0*sigma*sigma));
+			} else if (obs==0)
+				likelihood -= log(prob);
 		}
 	}
-	likelihood += nobs*log(sigma);
 }
 
-dvariable Poisson(PMap& map, const dmatrix data_obs, dvar_matrix& data_est)
+dvariable Poisson(const dvector data_obs, dvar_vector& data_est, const double min_obs_catch, const int nobs)
 {
 	dvariable likelihood = 0;
-	dvariable like_test = 0;
-	double sf = 2.0;
-	const int imin = map.imin; 
-	const int imax = map.imax; 
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
-		for (int j = jmin ; j <= jmax; j++){
-			if (map.carte[i][j]){
-				dvariable pred = sf*data_est(i,j);
-				const double obs = sf*data_obs(i,j);
-				if (pred>0){
-					if (obs>2) {
-						likelihood += pred - obs*log(pred) + gammln(obs+1.0);
-					}
-				}
-			}
+	
+	for (int n=0; n<nobs; n++){
+		dvariable pred = data_est(n);
+		const double obs = data_obs(n);
+		if (pred>0 && obs>min_obs_catch){
+			likelihood += pred - obs*log(pred) + gammln(obs+1.0);
 		}
 	}
 	return(likelihood);
 }
 
-dvariable TruncatedPoisson(PMap& map, const dmatrix data_obs, dvar_matrix& data_est)
+dvariable TruncatedPoisson(const dvector data_obs, dvar_vector& data_est, const int nobs)
 {
 	dvariable likelihood = 0;
-	dvariable like_test = 0;
 
-	const int imin = map.imin; 
-	const int imax = map.imax; 
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
-		for (int j = jmin ; j <= jmax; j++){
-			if (map.carte[i][j]){
-				dvariable pred = data_est(i,j);
-				const double obs = data_obs(i,j);
-				if (obs>1){
-					if (pred>1)
-						likelihood += pred - obs*log(pred) + gammln(obs+1.0)+log(1-exp(-pred));
-				}
-			}
+	for (int n=0; n<nobs; n++){
+		dvariable pred = data_est(n);
+		const double obs = data_obs(n);
+		if (obs>1){
+			if (pred>1)
+				likelihood += pred - obs*log(pred) + gammln(obs+1.0)+log(1-exp(-pred));
 		}
 	}
 	return(likelihood);
 }
 
-dvariable Exponential(PMap& map, const dmatrix data_obs, dvar_matrix& data_est)
+dvariable Exponential(const dvector data_obs, dvar_vector& data_est, const int nobs)
 {
         dvariable likelihood = 0;
 	double sigma = 2.0;
 
-        const int imin = map.imin;
-        const int imax = map.imax;
-        for (int i = imin; i <= imax; i++){
-                const int jmin = map.jinf[i];
-                const int jmax = map.jsup[i];
-                for (int j = jmin ; j <= jmax; j++){
-                        if (map.carte[i][j]){
-                                dvariable pred = data_est(i,j);
-                                const double obs = data_obs(i,j);
-                                if (pred <= obs)
-                                	likelihood += log(sigma) + obs/sigma - pred/sigma;
-                        }
-                }
-        }
+	for (int n=0; n<nobs; n++){
+		dvariable pred = data_est(n);
+		const double obs = data_obs(n);
+		if (pred <= obs)
+			likelihood += log(sigma) + obs/sigma - pred/sigma;
+	}
         return(likelihood);
 }
 
-dvariable Weibull(PMap& map, const dmatrix data_obs, dvar_matrix& data_est)
+dvariable Weibull(const dvector data_obs, dvar_vector& data_est, const int nobs)
 {
         dvariable likelihood = 0;
 	double ks = 1.05;
 
-        const int imin = map.imin;
-        const int imax = map.imax;
-        for (int i = imin; i <= imax; i++){
-                const int jmin = map.jinf[i];
-                const int jmax = map.jsup[i];
-                for (int j = jmin ; j <= jmax; j++){
-                        if (map.carte[i][j]){
-                                dvariable pred = data_est(i,j);
-                                const double obs = data_obs(i,j);
-				if (obs>0)
-                                	likelihood += -log(ks)-(ks-1)*log(obs)+ks*log(pred)+pow(obs/pred,ks);
-                        }
-                }
-        }
+	for (int n=0; n<nobs; n++){
+		dvariable pred = data_est(n);
+		const double obs = data_obs(n);
+		if (obs>0)
+			likelihood += -log(ks)-(ks-1)*log(obs)+ks*log(pred)+pow(obs/pred,ks);
+	}
         return(likelihood);
 }
 
-dvariable NegBinomial(PMap& map, const dmatrix data_obs, dvar_matrix& data_est, dvariable& beta)
+dvariable NegBinomial(const dvector data_obs, dvar_vector& data_est, dvariable& beta, const int nobs)
 {
 	dvariable likelihood = 0;
 
-	const int imin = map.imin; 
-	const int imax = map.imax; 
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
-		for (int j = jmin ; j <= jmax; j++){
-			if (map.carte[i][j]){
-				dvariable pred = data_est(i,j);
-				const double obs = data_obs(i,j);
-				if (pred>0)
-					likelihood -= gammln(beta*pred+obs) - gammln(beta*pred) -gammln(obs+1.0) 
-							+ beta*pred*log(beta)-log(beta+1.0)*(beta*pred+obs);
+	for (int n=0; n<nobs; n++){
+		dvariable pred = data_est(n);
+		const double obs = data_obs(n);
+		if (pred>0)
+			likelihood -= gammln(beta*pred+obs) - gammln(beta*pred) -gammln(obs+1.0) 
+				+ beta*pred*log(beta)-log(beta+1.0)*(beta*pred+obs);
+	}
+	return(likelihood);
+}	
+
+dvariable ZINegBinomial(const dvector data_obs, dvar_vector& data_est, dvariable& beta, dvariable& p, const int nobs)
+{
+	dvariable likelihood = 0;
+
+	for (int n=0; n<nobs; n++){
+		dvariable pred = data_est(n);
+		const double obs = data_obs(n);
+		if (pred>0){
+			if (obs>0){
+				dvariable mu = pred/(1-p);
+				likelihood -= log(1-p) + gammln(beta*mu+obs) - gammln(beta*mu) -gammln(obs+1.0) + beta*mu*log(beta)-log(beta+1.0)*(beta*mu+obs);
+			} else if (obs==0){
+				dvariable pwr = beta*pred/(1-p);
+				likelihood -= log(p+(1-p)*pow(beta/(1.0+beta),pwr));
 			}
 		}
 	}
 	return(likelihood);
 }	
-
-dvariable ZINegBinomial(PMap& map, const dmatrix data_obs, dvar_matrix& data_est, dvariable& beta, dvariable& p)
-{
-	dvariable likelihood = 0;
-	const int imin = map.imin; 
-	const int imax = map.imax; 
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
-		for (int j = jmin ; j <= jmax; j++){
-			if (map.carte[i][j]){
-				dvariable pred = data_est(i,j);
-				const double obs = data_obs(i,j);
-				if (pred>0){
-					if (obs>0){
-						dvariable mu = pred/(1-p);
-						likelihood -= log(1-p) + gammln(beta*mu+obs) - gammln(beta*mu) -gammln(obs+1.0) + beta*mu*log(beta)-log(beta+1.0)*(beta*mu+obs);
-					} else if (obs==0){
-						dvariable pwr = beta*pred/(1-p);
-						likelihood -= log(p+(1-p)*pow(beta/(1.0+beta),pwr));
-					}
-				} //else if (pred==0 && obs>0)
-				//	likelihood -= log(1-p) + gammln(obs) - gammln(1e-10) - gammln(obs+1.0) - obs*log(beta+1.0);
-				
-			}
-		}
-	}
-	return(likelihood);
-}	
-
-double Poisson(PMap& map, const dmatrix data_obs, const dmatrix data_est)
-{
-	double likelihood = 0;
-
-	const int imin = map.imin; 
-	const int imax = map.imax; 
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf[i];
-		const int jmax = map.jsup[i];
-		for (int j = jmin ; j <= jmax; j++){
-			if (map.carte[i][j]){
-				double pred = data_est(i,j);
-				const double obs = data_obs(i,j);
-
-				likelihood += pred - obs*log(pred+1e-10) + log_factorial(obs);
-			}
-		}
-	}
-	return(likelihood);
-}
-
-
-double log_factorial(const double x)
-{//function works properly for values smaller than 170 only! fix later
-	if (x < 1) 
-		return 0;
-
-	double fact = 1.0;
-	int n = (int) x;
-
-	if (n > 170) //beyond double precision
-		n = 170;
-
-	for (int i=1; i<=n; i++)
-		fact *= i;
-		
-	return log(fact+1);
-}
 

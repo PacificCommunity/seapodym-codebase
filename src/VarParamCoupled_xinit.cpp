@@ -207,72 +207,51 @@ void VarParamCoupled::xinit(dvector& x, adstring_array& x_names)
 	}
 	
 	dvarsLike_param.allocate(0,nb_species-1);
+	dvarsProb_zero.allocate(0,nb_species-1);
 	for (int i=0; i<nb_species; i++) {
 		const int fmax = nb_fishery_by_sp[i];
 		dvarsLike_param(i).allocate(0,fmax-1);
 		dvarsLike_param(i).initialize();
-		if (doc.get("/likelihood_parameters/variables","use") == "true") {
-			int k = 0;
-			for (int f = 0; f < nb_fishery; f++) {
-				if (mask_fishery_sp[i][f]){
-					//if (like_types[i][k]==2 || like_types[i][k]==4 || like_types[i][k]==5){
-					if (/*like_types[i][k]==2 ||*/ like_types[i][k]==4 || like_types[i][k]==5){
+		dvarsProb_zero(i).allocate(0,fmax-1);
+		dvarsProb_zero(i).initialize();
+
+		double eps = 1e-10;//to avoid log(0) in zero-inflated formulations
+		int k = 0;
+		for (int f = 0; f < nb_fishery; f++) {
+			if (mask_fishery_sp[i][f]){
+				if (like_types[i][k]==5 || like_types[i][k]==6 || like_types[i][k]==7 || like_types[i][k]==8 || like_types[i][k]==9){
+					if (doc.get("/likelihood_parameters/variables","use") == "true") {
 						double value = like_param(i,k);
-						dvarpars_min[idx] = 0;
+						dvarpars_min[idx] = eps;
 						dvarpars_max[idx] = 30.0;
-						if (like_types[i][k]==2) dvarpars_max[idx] = 2.0;
 
 						x[idx] = boundpin(value, dvarpars_min[idx], dvarpars_max[idx]);
 						x_names[idx] = "likelihood parameter(" + str(i) + "," + str(k) + ")"; 
 						dvarpars[idx] = value;
 						parfile_names[idx-1] = "/likelihood_parameters/"+list_fishery_name[f];
 						++idx;
-					}
-					else if (like_types[i][k]==2) dvarsLike_param[i][k] = like_param[i][k];
-					k++;
+					} else 
+						dvarsLike_param[i][k] = like_param[i][k];
 				}
-			}
-		} 
-		else {
-			int k = 0;
-			for (int f = 0; f < nb_fishery; f++) {
-				if (mask_fishery_sp[i][f]){
-					dvarsLike_param[i][k] = like_param[i][k];
-					k++;
-				}
-			}
-		}
-	}
-//cout << __LINE__ << endl;
-	dvarsProb_zero.allocate(0,nb_species-1);
-	for (int i=0; i<nb_species; i++){
-		const int fmax = nb_fishery_by_sp[i];
-		dvarsProb_zero(i).allocate(0,fmax-1);
-		dvarsProb_zero(i).initialize();
-		int k = 0;
-		for (int f = 0; f < nb_fishery; f++) {
-			if (mask_fishery_sp[i][f]){
-				if (like_types[i][k]==5) {
-					if (doc.get("/likelihood_parameters/variables","use") == "true"){
+
+				if (like_types[i][k]==7 || like_types[i][k]==9) {
+					if (doc.get("/prob_zero/variables","use") == "true"){
 						double value = prob_zero(i,k);
-						dvarpars_min[idx] = 0;
-						dvarpars_max[idx] = 1.0;
+						dvarpars_min[idx] = eps;
+						dvarpars_max[idx] = 1.0-eps;
 	
 						x[idx] = boundpin(value, dvarpars_min[idx], dvarpars_max[idx]);
 						x_names[idx] = "probability of zero(" + str(i) + "," + str(k) + ")"; 
 						dvarpars[idx] = value;
 						parfile_names[idx-1] = "/prob_zero/"+list_fishery_name[f];
 						++idx;
-					}
-					else dvarsProb_zero[i][k] = prob_zero[i][k];
+					} else 
+						dvarsProb_zero[i][k] = prob_zero[i][k];
 				}
 				k++;
 			}
-		}
+		} 
 	}
-//cout << __LINE__ << endl;
-//cout << dvarpars << endl;
-//cout << statpars << endl;
 
 	outp_param(x_names,idx-1);	
 }
