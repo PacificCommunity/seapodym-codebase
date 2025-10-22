@@ -53,9 +53,9 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     SeapodymCohort* cohort)
 {
     tik = MPI_Wtime();
-    logger->info("Starting task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
+    logger->info("> task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 
-    logger->info("Starting initialization of task id {}", task_id);
+    logger->info("    >> initialization of task id {}", task_id);
     //initialize variables of optimization
     const int nvar = cohort->nvarcalc();
     independent_variables x(1, nvar);
@@ -65,7 +65,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     cohort->restart(cohort_id);
     //initialize cohort either from restart or from spawning
     cohort->init_cohort(x,*dataCollector);
-    logger->info("Finished initialization of task id {}", task_id);
+    logger->info("    << initialization of task id {}", task_id);
     
     // advance the cohort
     tak = MPI_Wtime();
@@ -73,35 +73,35 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     for (auto step = stepBeg; step < stepEnd; ++step) {
 
     	double tik_step = MPI_Wtime();
-        logger->info("Starting step {step} of task id {}", step, task_id);
+        logger->info("        >>> step {} of task id {}", step, task_id);
         cohort->stepForward(false);
-        logger->info("Finished step {step} of task id {}", step, task_id);
+        logger->info("        <<< step {} of task id {}", step, task_id);
 	    time_step += MPI_Wtime() - tik_step;
 
         // Send the data to the manager.
-        logger->info("Sending data for step {step} of task id {}", step, task_id);
+        logger->info("        >>> send data for step {} of task id {}", step, task_id);
         std::vector<double> localData = cohort->GetCohortDensity();
         int chunk_id = cohort->getChunkId(step);
 
         double tik_mpi = MPI_Wtime();
         dataCollector->put(chunk_id, localData.data());
         time_mpi += MPI_Wtime() - tik_mpi;
-        logger->info("Finished sending data for step {step} of task id {}", step, task_id);
+        logger->info("        <<< send data for step {} of task id {}", step, task_id);
 
         int success = task_id;
         // send message to the manager that the step is complete
         int output[3] = {task_id, step, success};
         const int endTaskTag = 1;
 
-        logger->info("Notifying manager of completion of step {step} of task id {}", task_id);
+        logger->info("        >>> notify manager after step {} of task id {}", task_id);
         tik_mpi = MPI_Wtime();
         MPI_Send(output, 3, MPI_INT, 0, endTaskTag, comm);
         time_mpi += MPI_Wtime() - tik_mpi;
-        logger->info("Done with step {step} of task id {}", task_id);
+        logger->info("        <<< notify manager after step {} of task id {}", task_id);
     }
 
     time_calc += MPI_Wtime() - tak;
-    logger->info("Finished task id {}", task_id);
+    logger->info("< task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 }
 
 int main(int argc, char** argv) {
