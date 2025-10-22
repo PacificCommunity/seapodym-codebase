@@ -100,9 +100,8 @@ int main(int argc, char** argv) {
     time_calc = 0;	
     // MPI initialization
     MPI_Init(&argc, &argv);
-    int numWorkers, size;
+    int size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    numWorkers = size - 1;
     int workerId;
     MPI_Comm_rank(MPI_COMM_WORLD, &workerId);
     if (size < 2) {
@@ -157,7 +156,6 @@ int main(int argc, char** argv) {
     // analyze the cohort Id task dependencies
     SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps);
     int numCohorts = taskDeps.getNumberOfCohorts();
-    int numCohortSteps = taskDeps.getNumberOfCohortSteps();
     std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
     std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
     std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
