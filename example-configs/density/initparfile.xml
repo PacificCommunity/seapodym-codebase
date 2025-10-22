@@ -93,7 +93,7 @@
 <!--MODEL INPUT-OUTPUT-->
 <!--================= -->
 <!-- Forcing Directory -->
-<strdir value="/home/pletzera/seapodym-pletzer/example-configs/skipjack/data/forcings/INTERIM-2x30d-PO/"/>
+<strdir value="../skipjack/data/forcings/INTERIM-2x30d-PO/"/>
 
 <!--Land mask and topo index files-->
 <str_file_mask value="po_interim_2deg_mask_short_noIO.txt"/>

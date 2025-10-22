@@ -12,6 +12,8 @@
 #include "SeapodymCohort.h"
 #include <CmdLineArgParser.h>
 #include "ctrace.h"
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
 SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
@@ -45,8 +47,8 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 
 
 void 
-taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm, 
-    const char* parfile, int numData, 
+taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
+    const std::shared_ptr<spdlog::logger>& logger,
     DistDataCollector* dataCollector,
     SeapodymCohort* cohort)
 {
@@ -61,8 +63,6 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     cohort->restart(cohort_id);
     //initialize cohort either from restart or from spawning
     cohort->init_cohort(x,*dataCollector);
-
-    std::vector<double> localData(numData);
     
     // advance the cohort
     tak = MPI_Wtime();
@@ -125,6 +125,12 @@ int main(int argc, char** argv) {
         cmdLine.help();
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
+
+    // logger
+    // Use true to let logs be overwritten, otherwise the logs will be appended
+    std::string sworkerId = std::to_string(workerId);
+    auto logger = spdlog::basic_logger_mt(sworkerId, "log_worker" + sworkerId + ".txt", true);
+    logger->set_level(spdlog::level::debug);
 
     std::string parfile = cmdLine.get<std::string>("-s");
  
@@ -195,8 +201,7 @@ int main(int argc, char** argv) {
             std::placeholders::_2, // stepBeg
             std::placeholders::_3, // stepEnd
             std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
-            parfile.c_str(),
-            numData,
+            logger,
             &dataCollect,
             &cohort);
 
