@@ -7,35 +7,60 @@
 ///invalidated through the parameter value.
 
 
+double logistic_thresholds(const double x, const double xmin, const double xmax, const double ek1, const double ek2);
 double pred_surface_comp(dvector forage, const double DL, const int nb_forage, ivector day_layer, ivector night_layer);
-double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double e, const double ssv);
-double normal(const double x, const double mu, const double sigma);
+double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double e, const double f, const double g, const double ssv, const int fsst_type);
+double gaussian(const double x, const double mu, const double sigma);
+double agaussian(const double x, const double mu, const double sigma_left, const double sigma_right);
 double lognormal(const double x, const double mu, const double sigma);
-double sigmoid1(const double x, const double tau, const double delta);
+double sigmoid1(const double tau, const double delta);
 
 
 const double pi = 3.1415926536;
 
-void VarSimtunaFunc::Hs_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, double a, double b, double c, double d, double e, const double ssv, const int jday, int t_count)
+void VarSimtunaFunc::Hs_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, const double ssv, const int sp, const int jday, int t_count)
 {
 	const int nb_forage = param.get_nbforage();
 	ivector dlayer   = param.day_layer;
 	ivector nlayer = param.night_layer;
 	dvector F(0,nb_forage-1); F.initialize();
 	const double pp_transform = param.pp_transform;
+	const int fsst = param.fsst_type[sp];
+
+	double a,b,c,d,e,f,g;
+	if (!param.uncouple_sst_larvae[sp]){
+		a = param.a_sst_spawning[sp];
+		b = param.b_sst_spawning[sp];
+	}
+	else {
+		a = param.a_sst_larvae[sp];
+		b = param.b_sst_larvae[sp];
+	}
+
+	f = a; g = b; //if fsst=1 they won't be used
+	if (fsst != 1){
+		f = param.c_sst_larvae[sp];
+		if (fsst == 3)
+			g = param.d_sst_larvae[sp];		
+	}
+
+	c = param.alpha_hsp_prey[sp];
+	d = param.alpha_hsp_predator[sp];
+	e = param.beta_hsp_predator[sp];
+	
 	for (int i = map.imin; i <= map.imax; i++){
 		const int jmin = map.jinf[i];
 		const int jmax = map.jsup[i];
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
-				Hs.elem_value(i,j) = Hs_comp_elem(mat,F,pp_transform,a,b,c,d,e,ssv,nb_forage,dlayer,nlayer,jday,t_count,i,j);
+				Hs.elem_value(i,j) = Hs_comp_elem(mat,F,pp_transform,a,b,c,d,e,f,g,ssv,fsst,nb_forage,dlayer,nlayer,jday,t_count,i,j);
 			}
 		}
 	} 
 }
 
 
-double VarSimtunaFunc::Hs_comp_elem(CMatrices& mat, dvector F, const double pp_transform, const double a, const double b, const double c, const double d, const double e, const double ssv, const int nb_forage, ivector day_layer, ivector night_layer, const int jday, const int t, const int i, const int j)
+double VarSimtunaFunc::Hs_comp_elem(CMatrices& mat, dvector F, const double pp_transform, const double a, const double b, const double c, const double d, const double e, const double f, const double g, const double ssv, const int fsst, const int nb_forage, ivector day_layer, ivector night_layer, const int jday, const int t, const int i, const int j)
 {
 	double Hs = 0.0;
 	double pp = mat.np1(t,i,j); 
@@ -63,7 +88,7 @@ double VarSimtunaFunc::Hs_comp_elem(CMatrices& mat, dvector F, const double pp_t
 	//oxygen function - for the moment static species-wise parameters
 	double f_oxy = 1.0/(1.0+pow(0.01,O2_l2-0.1)); 
 	//spawning habitat - product of sst, prey, predator and oxygen functions
-	Hs = hs_comp(SST,preys,predators,a,b,c,d,e,ssv) * f_oxy;
+	Hs = hs_comp(SST,preys,predators,a,b,c,d,e,f,g,ssv,fsst) * f_oxy;
 	return Hs;		
 }
 
@@ -87,20 +112,53 @@ double lognormal(const double x, const double mu, const double sigma)
 	return(f_x);
 }
 
-double normal(const double x, const double mu, const double sigma)
+double gaussian(const double x, const double mu, const double sigma)
 {
 	double f_x = exp(-pow(x-mu,2.0)/(2.0*sigma*sigma));
 	return(f_x);
 }
 
+double agaussian(const double x, const double mu, const double sigma_left, const double sigma_right)
+{
+	double f_x;
+	if (x<mu)
+		f_x = exp(-pow(x-mu,2.0)/(2.0*sigma_left*sigma_left));
+	else
+		f_x = exp(-pow(x-mu,2.0)/(2.0*sigma_right*sigma_right));
+	return(f_x);
+}
 
-double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double e, const double ssv)
+double sigmoid1(const double tau, const double delta)
+{
+        double f = 1.0/(1.0+pow(tau,delta));
+        return(f);
+}
+
+double logistic_thresholds(const double x, const double kmin, const double xmin, const double kmax, const double xmax)
+{
+	double f_x = sigmoid1(kmin,x-xmin)*sigmoid1(kmax,xmax-x);
+	return(f_x);
+}
+
+double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double e, const double f, const double g, const double ssv, const int fsst_type)
 {
 	double Hs = 0.0;
+	double f_sst  = 0.0;
 
 	//SST function
-	double f_sst = normal(SST,b,a*ssv);
-	//Holling type II
+	switch (fsst_type){
+
+		case 1: f_sst = gaussian(SST,b,a*ssv);
+			break;
+
+		case 2: f_sst = agaussian(SST,b,a*ssv,f);
+			break;
+
+		case 3: f_sst = logistic_thresholds(SST,a,b,f,g);
+			break;
+	}
+
+	//Holling type III
 	double f_prey = preys*preys*(1.0+c)/(c+preys*preys);
 	//Optional - normal or log-normal: to do later
 	//double f_pred = normal(predators,d,e);//YFT INTERIM

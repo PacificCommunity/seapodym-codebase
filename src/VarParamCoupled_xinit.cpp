@@ -25,6 +25,11 @@ void VarParamCoupled::xinit(dvector& x, adstring_array& x_names)
 	par_init(dvarsB_sst_spawning,b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",x,x_names,idx);
 	par_init(dvarsA_sst_larvae,a_sst_larvae,a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",x,x_names,idx);
 	par_init(dvarsB_sst_larvae,b_sst_larvae,b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",x,x_names,idx);
+	if (fsst_type[0] != 1){//Violation of multi-species!
+		par_init(dvarsC_sst_larvae,c_sst_larvae,c_sst_larvae_min,c_sst_larvae_max,"/c_sst_larvae",x,x_names,idx);
+		if (fsst_type[0] == 3)
+			par_init(dvarsD_sst_larvae,d_sst_larvae,d_sst_larvae_min,d_sst_larvae_max,"/d_sst_larvae",x,x_names,idx);
+	}
 	par_init(dvarsAlpha_hsp_prey,alpha_hsp_prey,alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",x,x_names,idx);
 	par_init(dvarsAlpha_hsp_predator,alpha_hsp_predator,alpha_hsp_predator_min,alpha_hsp_predator_max,"/alpha_hsp_predator",x,x_names,idx);
 	par_init(dvarsBeta_hsp_predator,beta_hsp_predator,beta_hsp_predator_min,beta_hsp_predator_max,"/beta_hsp_predator",x,x_names,idx);

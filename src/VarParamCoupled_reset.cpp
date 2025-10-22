@@ -185,6 +185,24 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 		}
 	}
 
+	if (doc.get("/c_sst_larvae/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsC_sst_larvae[i] = boundp(x[idx], c_sst_larvae_min, c_sst_larvae_max, penalty);
+			c_sst_larvae[i] = value(dvarsC_sst_larvae[i]);
+			dvarpars[idx] = c_sst_larvae[i];
+			++idx;
+		}
+	}
+	
+	if (doc.get("/d_sst_larvae/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsD_sst_larvae[i] = boundp(x[idx], d_sst_larvae_min, d_sst_larvae_max, penalty);
+			d_sst_larvae[i] = value(dvarsD_sst_larvae[i]);
+			dvarpars[idx] = d_sst_larvae[i];
+			++idx;
+		}
+	}
+
 	if (doc.get("/alpha_hsp_prey/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {
 			dvarsAlpha_hsp_prey[i] = boundp(x[idx], alpha_hsp_prey_min, alpha_hsp_prey_max, penalty);

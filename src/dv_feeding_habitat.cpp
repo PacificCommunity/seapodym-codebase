@@ -16,10 +16,9 @@ void dv_Ha_comp(void);
 void dv_Hf_comp(void);
 double f_accessibility_layer(const double O, const double T,double twosigsq, double temp_mean, double oxy_teta, double oxy_cr);
 double f_accessibility_layer(const double O2, const double T, double temp_age, double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr);
-double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double e, const double ssv);
+double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double f, const double g, const double e, const double ssv, const int fsst_type);
 double pred_surface_comp(dvector forage, const double DL, const int nb_forage, ivector day_layer, ivector night_layer);
 int save_identifier_string2(char* str);
-void dfspawning_habitat_seasonality(double& dfa, double& dfb, double& dfc, double& dfH, const double a, const double b, const double c, const double pf_ratio, const double SST, const double itopo);
 void dfsst_habitat(double& dfa, double& dfb, double& dfH, const double a, const double b, const double SST, const double itopo);
 void dfsigma_hss_comp(dvector& length, double temp_min, double temp_max, const int sp_nb_cohorts, const int age, const int jday);
 void verify_identifier_string2(char* str);
@@ -440,6 +439,15 @@ void dv_Ha_comp(void)
 	double c_hs = param->alpha_hsp_prey[sp];
 	double d_hs = param->alpha_hsp_predator[sp];
 	double e_hs = param->beta_hsp_predator[sp];
+
+	const int fsst = param->fsst_type[sp];
+	double f_hs = a_hs; 
+	double g_hs = b_hs;
+	if (fsst != 1){
+		f_hs = param->c_sst_larvae[sp];
+		if (fsst == 3)
+			g_hs = param->d_sst_larvae[sp];	
+	}
 	double sigma_season = mat->sigma_season(sp,jday,age);//sigma_hss_comp(temp_age,temp_max, age,jday);
 
 	const int Tfunc_Gaussian = param->gaussian_thermal_function[sp];
@@ -513,7 +521,7 @@ void dv_Ha_comp(void)
 				double O2_l2  = oxygen(1,i,j);
 				double f_oxy = 1.0/(1.0+pow(0.01,O2_l2-0.1));
 				
-				double Hs = hs_comp(sst(i,j),preys,predators,a_hs,b_hs,c_hs,d_hs,e_hs,sigma_season)*f_oxy;
+				double Hs = hs_comp(sst(i,j),preys,predators,a_hs,b_hs,c_hs,d_hs,e_hs,f_hs,g_hs,sigma_season,fsst)*f_oxy;
 
                                 double Hf = 0;
                                 //dvector l_access(0,nlayer-1);

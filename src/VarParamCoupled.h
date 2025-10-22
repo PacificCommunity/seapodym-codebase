@@ -155,7 +155,7 @@ public:
         double b_sst_spawning_max;
         dvar_vector dvarsB_sst_spawning;
 
-//9-10. dv_spawning_habitat.cpp, dv_juvenile_habitat.cpp:
+//9-12. Optional: dv_spawning_habitat.cpp:
         double a_sst_larvae_min;
         double a_sst_larvae_max;
         dvar_vector dvarsA_sst_larvae;
@@ -164,7 +164,15 @@ public:
         double b_sst_larvae_max;
         dvar_vector dvarsB_sst_larvae;
 
-//11-13. dv_spawning_habitat.cpp, dv_feeding_habitat.cpp:
+        double c_sst_larvae_min;
+        double c_sst_larvae_max;
+        dvar_vector dvarsC_sst_larvae;
+
+	double d_sst_larvae_min;
+        double d_sst_larvae_max;
+        dvar_vector dvarsD_sst_larvae;	
+
+//13-15. dv_spawning_habitat.cpp, dv_feeding_habitat.cpp:
         double alpha_hsp_prey_min;
         double alpha_hsp_prey_max;
         dvar_vector dvarsAlpha_hsp_prey;
@@ -177,22 +185,22 @@ public:
         double beta_hsp_predator_max;
         dvar_vector dvarsBeta_hsp_predator;
 
-//14. dv_accessibility.cpp:
+//16. dv_accessibility.cpp:
         double a_sst_habitat_min;
         double a_sst_habitat_max;
         dvar_vector dvarsA_sst_habitat;
 
-//15. dv_accessibility.cpp:
+//17. dv_accessibility.cpp:
         double b_sst_habitat_min;
         double b_sst_habitat_max;
         dvar_vector dvarsB_sst_habitat;
 
-//16. dv_accessibility.cpp:
+//18. dv_accessibility.cpp:
         double T_age_size_slope_min;
         double T_age_size_slope_max;
         dvar_vector dvarsT_age_size_slope;
 
-//17-19.dv_accessibility.cpp	
+//19. Optional: dv_accessibility.cpp	
         dvector thermal_func_delta_min;
         dvector thermal_func_delta_max;
         dvar_matrix dvarsThermal_func_delta;

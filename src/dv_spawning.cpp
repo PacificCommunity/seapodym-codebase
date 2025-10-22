@@ -8,7 +8,7 @@
 
 
 double pred_surface_comp(dvector forage, const double DL, const int nb_forage, ivector day_layer, ivector night_layer);
-double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double e, const double ssv);
+double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double f, const double g, const double e, const double ssv, const int fsst_type);
 void dv_spawning_in_hs_comp();
 void dv_spawning_adult_func_comp();
 int save_identifier_string2(char* str);
@@ -31,15 +31,6 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 	dvariable a_adults_spawning = param->dvarsA_adults_spawning[sp];
 	dvar_matrix A_sp(map.imin,map.imax,map.jinf,map.jsup); 
 	A_sp = a_adults_spawning;
-
-	double a_sst, b_sst;
-	if (!param->uncouple_sst_larvae[sp]){
-		a_sst = param->a_sst_spawning[sp];
-		b_sst = param->b_sst_spawning[sp];
-	} else {
-		a_sst = param->a_sst_larvae[sp];
-		b_sst = param->b_sst_larvae[sp];
-	}
 
 	if (param->elarvae_model[sp] || param->spawning_adult_func_only[sp]){
 		spawning_adult_func_comp(J_c,N_mat,value(nb_recruitment),value(a_adults_spawning));
@@ -74,11 +65,6 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 		Nmature.save_dvar_matrix_value();//TODO: recompute using density_after
 		Nmature.save_dvar_matrix_position();
 		J.save_dvar_matrix_position();
-		save_double_value(a_sst);
-		save_double_value(b_sst);
-		save_double_value(param->alpha_hsp_prey(sp));
-		save_double_value(param->alpha_hsp_predator(sp));
-		save_double_value(param->beta_hsp_predator(sp));
 		save_int_value(jday);
 		save_int_value(t_count);	
                 unsigned long int cparam = (unsigned long int)*&param;
@@ -87,6 +73,7 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 		save_long_int_value(pmap);
 		unsigned long int pmat   = (unsigned long int)&mat;
 		save_long_int_value(pmat);
+        	save_int_value(sp);
 		save_identifier_string2((char*)"spawning_in_hs_end");
 
 		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_spawning_in_hs_comp);
@@ -144,16 +131,12 @@ void dv_spawning_adult_func_comp()
 void dv_spawning_in_hs_comp()
 {
 	verify_identifier_string2((char*)"spawning_in_hs_end");
+	const int sp = restore_int_value();
 	unsigned long int pos_mat   = restore_long_int_value();
 	unsigned long int pos_map   = restore_long_int_value();
 	unsigned long int pos_param = restore_long_int_value();
 	unsigned t_count = restore_int_value();
 	unsigned jday    = restore_int_value();
-	double e_hs = restore_double_value();
-	double d_hs = restore_double_value();
-	double c_hs = restore_double_value();
-	double b_hs = restore_double_value();
-	double a_hs = restore_double_value();
 	const dvar_matrix_position J_pos  = restore_dvar_matrix_position();
 	const dvar_matrix_position Nm_pos = restore_dvar_matrix_position();
 	dmatrix Nm = restore_dvar_matrix_value(Nm_pos);
@@ -178,6 +161,25 @@ void dv_spawning_in_hs_comp()
 	const unsigned int nbf = param->get_nbforage();
 	ivector dlayer(0,nbf-1); dlayer = param->day_layer;
 	ivector nlayer(0,nbf-1); nlayer = param->night_layer;
+
+	double a_hs = param->a_sst_larvae[sp];
+	double b_hs = param->b_sst_larvae[sp];
+	if (!param->uncouple_sst_larvae[sp]){
+		a_hs = param->a_sst_spawning[sp];
+		b_hs = param->b_sst_spawning[sp];
+	}
+	double c_hs = param->alpha_hsp_prey[sp];
+	double d_hs = param->alpha_hsp_predator[sp];
+	double e_hs = param->beta_hsp_predator[sp];
+
+	const int fsst = param->fsst_type[sp];
+	double f_hs = a_hs; 
+	double g_hs = b_hs;
+	if (fsst != 1){
+		f_hs = param->c_sst_larvae[sp];
+		if (fsst == 3)
+			g_hs = param->d_sst_larvae[sp];		
+	}
 
 	const int imax = map->imax;
 	const int imin = map->imin;
@@ -212,7 +214,7 @@ void dv_spawning_in_hs_comp()
 					F(n) = forage(n,i,j);		
 				double predators = pred_surface_comp(F,DL,nbf,dlayer,nlayer);	
 				double f_oxy = 1.0/(1.0+pow(0.01,O2_l2(i,j)-0.1));
-				double Hs = hs_comp(SST(i,j),preys,predators,a_hs,b_hs,c_hs,d_hs,e_hs,1.0) * f_oxy;
+				double Hs = hs_comp(SST(i,j),preys,predators,a_hs,b_hs,c_hs,d_hs,e_hs,f_hs,g_hs,1.0,fsst) * f_oxy;
 
 				double adult = Nm(i,j);
 				double expr0 = 1.0+b*adult;		

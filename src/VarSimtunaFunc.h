@@ -19,8 +19,8 @@ public:
 
 	//adjoint code
 	void Spawning_Habitat(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, const double sigma_sp_var, int sp, const int t_count, const int jday);
-	void Hs_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, double a, double b, double c, double d, double e, const double sigma_sp_var, const int jday, int t_count);
-	double Hs_comp_elem(CMatrices& mat, dvector F, const double pp_transform, const double a, const double b, const double c, const double d, const double e, const double sigma_sp_var, const int nb_forage, ivector day_layer, ivector night_layer, const int jday, const int t, const int i, const int j);
+	void Hs_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, const double sigma_sp_var, const int sp, const int jday, int t_count);
+	double Hs_comp_elem(CMatrices& mat, dvector F, const double pp_transform, const double a, const double b, const double c, const double d, const double e, const double f, const double g, const double sigma_sp_var, const int fsst, const int nb_forage, ivector day_layer, ivector night_layer, const int jday, const int t, const int i, const int j);
 	//void Hs_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, double a, double b, double c, const int jday, int t_count);
 	//void Hs_comp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& Hs, double a, double b, double c, double d, double e, const int jday, int t_count);
 	//double Hs_comp_elem(CMatrices& mat, dvector F, const double pp_transform, const double a, const double b, const double c, const int nb_forage, ivector day_layer, ivector night_layer, const int jday, const int t, const int i, const int j);

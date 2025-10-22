@@ -338,6 +338,7 @@ bool VarParamCoupled::read(const string& parfile)
 		M_range_age_slope.allocate(0, nb_species - 1);
 		food_requirement_in_mortality.allocate(0,nb_species-1);
 		residual_competition.allocate(0,nb_species-1);
+		fsst_type.allocate(0,nb_species-1);
 		uncouple_sst_larvae.allocate(0,nb_species-1);
 		a_sst_spawning.allocate(0, nb_species - 1);
 		b_sst_spawning.allocate(0, nb_species - 1);
@@ -416,6 +417,31 @@ bool VarParamCoupled::read(const string& parfile)
 			doc.set("/b_sst_larvae/variable","use","false");		
 		}
 
+		//type of fsst function in HS: 1 - Gaussian, 2 - asymmetric Gaussian, 3 - logistic thresholds (asymmetric hat)
+		fsst_type = 1; //default choice is Gaussian function
+		if (!doc.get("/fsst_type",sp_name[sp]).empty()){
+			fsst_type[sp] = doc.getInteger("/fsst_type", sp_name[sp]);
+			if (fsst_type[sp] < 1 || fsst_type[sp] > 3){
+				cerr << "\nWrong type of fsst function. Can only be 1 (Gaussian), 2 (asymmetric Gaussian) or 3 (logistic thresholds). Will exit now..." << endl; 
+				exit(1);
+			}
+			if (fsst_type[sp] != 1){
+				c_sst_larvae.allocate(0, nb_species - 1);
+		               	c_sst_larvae[sp] = doc.getDouble("/c_sst_larvae", sp_name[sp]);
+			
+				if (fsst_type[sp] == 3){
+					d_sst_larvae.allocate(0, nb_species - 1);
+			               	d_sst_larvae[sp] = doc.getDouble("/d_sst_larvae", sp_name[sp]);
+				}
+			}
+		}
+		if (fsst_type[sp] == 1){
+			doc.set("/c_sst_larvae/variable","use","false");		
+			doc.set("/d_sst_larvae/variable","use","false");		
+		}
+		if (fsst_type[sp] == 2){
+			doc.set("/d_sst_larvae/variable","use","false");		
+		}
 
 		////////////////
 		//  HABITATS  //   
@@ -1563,6 +1589,11 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(age_larvae_before_sst_mortality,age_larvae_before_sst_mortality_min,age_larvae_before_sst_mortality_max,"/age_larvae_before_sst_mortality",nni);
 	par_read_bounds(a_sst_larvae,a_sst_larvae_min,a_sst_larvae_max,"/a_sst_larvae",nni);
 	par_read_bounds(b_sst_larvae,b_sst_larvae_min,b_sst_larvae_max,"/b_sst_larvae",nni);
+	if (fsst_type[0] != 1){//ATTN: 0 for sp, so Violation of multi-species!
+		par_read_bounds(c_sst_larvae,c_sst_larvae_min,c_sst_larvae_max,"/c_sst_larvae",nni);
+		if (fsst_type[0] == 3)
+			par_read_bounds(d_sst_larvae,d_sst_larvae_min,d_sst_larvae_max,"/d_sst_larvae",nni);
+	}
 	par_read_bounds(alpha_hsp_prey,alpha_hsp_prey_min,alpha_hsp_prey_max,"/alpha_hsp_prey",nni);
 	par_read_bounds(alpha_hsp_predator,alpha_hsp_predator_min,alpha_hsp_predator_max,"/alpha_hsp_predator",nni);
 	par_read_bounds(beta_hsp_predator,beta_hsp_predator_min,beta_hsp_predator_max,"/beta_hsp_predator",nni);

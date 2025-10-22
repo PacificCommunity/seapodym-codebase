@@ -57,6 +57,7 @@ public:
 	double crit;
 	
 	//Flags for alternative model mechanisms:
+	ivector fsst_type;
 	ivector vert_movement;		   //average currents through vertical layers accessible to fish
 	ivector scale_forage_ave_currents; //use eF scaler when computing the time spent in the layer
 	ivector seasonal_migrations;	   //activate seasonal spawning migrations
@@ -253,8 +254,10 @@ public:
 	dvector spawning_season_start;  // day/night length ratio defining the beginning of spawning migrations
 	DVECTOR a_sst_spawning;		// coefficient of curvature for spawning temperature function [sp]
  	DVECTOR b_sst_spawning;		// SST mean for spawning temperature function [sp]
-	DVECTOR a_sst_larvae;		// a coefficent of the larvae habitat temperature in case uncouple_sst_larvae=1, [sp]
-	DVECTOR b_sst_larvae;		// b coefficent of the larvae habitat temperature in case uncouple_sst_larvae=1, [sp]
+	DVECTOR a_sst_larvae;		// a coefficent of the larvae sst function in case uncouple_sst_larvae=1, [sp]
+	DVECTOR b_sst_larvae;		// b coefficent of the larvae sst function in case uncouple_sst_larvae=1, [sp]
+	DVECTOR c_sst_larvae;		// c coefficent of the larvae agaussian or logistic-thresholds sst function in case uncouple_sst_larvae=1, [sp]
+	DVECTOR d_sst_larvae;		// d coefficent of the larvae logistic-thresholds sst function in case uncouple_sst_larvae=1, [sp]
 	DVECTOR alpha_hsp_prey;		// previously alpha_spawning became two parameters - one for the prey function
 	DVECTOR alpha_hsp_predator;	// and another two for predators function (which can be either normal or lognormal function
 	DVECTOR beta_hsp_predator;	// with alpha (mean) and beta (sigma) parameters). Names are chosen generic in case the 

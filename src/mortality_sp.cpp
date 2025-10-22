@@ -5,12 +5,6 @@
 ///rate and variable component, depending on habitat indices defined for the life stage
 double sigmoid1(const double tau, const double delta);
 
-double sigmoid1(const double tau, const double delta)
-{
-        double f = 1.0/(1.0+pow(tau,delta));
-        return(f);
-}
-
 void VarSimtunaFunc::M_early_sp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const dmatrix& sst, const dmatrix& pp, const int sp)
 {
 	double mort_min = param.elarvae_mortality_min[sp];
