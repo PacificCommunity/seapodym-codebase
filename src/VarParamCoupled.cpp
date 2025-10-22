@@ -1151,7 +1151,6 @@ bool VarParamCoupled::read(const string& parfile)
 				cpue = true;
 			}
 		}
-
 		//catch units conversion in the likelihood only!
 		catch_units_converter.allocate(0,nb_fishery-1);
 		catch_units_converter = 0.5;//temporal, to match current defaults, should be 1
@@ -1159,7 +1158,7 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/catch_units_converter").empty())
 			for (int f=0;f<nb_fishery;f++) 
 				catch_units_converter(f) = doc.getDouble("/catch_units_converter",f);
-		
+
 		like_types.allocate(0,nb_species-1);
 		for (int sp=0;sp<nb_species;sp++){
 			like_types[sp].allocate(0,nb_fishery_by_sp[sp]-1);
@@ -1183,9 +1182,11 @@ bool VarParamCoupled::read(const string& parfile)
 		for (int sp=0;sp<nb_species;sp++){
 			int k = 0;
 			for (int f=0;f<nb_fishery;f++){
-				if (like_types[sp][k]==1)
-					catch_like_weight[f] = 0.00025;
-				k++;
+				if (mask_fishery_sp[sp][f]){
+					if (like_types[sp][k]==1)
+						catch_like_weight[f] = 0.00025;
+					k++;
+				}
 			}
 		}
 		
@@ -1209,7 +1210,6 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/length_like_weight").empty())
 			for (int f=0;f<nb_fishery;f++) 
 				length_like_weight(f) = doc.getDouble("/length_like_weight",f);
-
 
 		//3. TAGs likelihood: further options here (see above the code for main flags)
 		tag_gauss_kernel_on = 1;
