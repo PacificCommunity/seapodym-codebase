@@ -2,7 +2,6 @@
 #include "NishikawaLike.h"
 
 void mat2vect(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dvector& data_obs, dvar_vector& data_est, bool cpue, double c_units, const int catch_removal_fishery, const int cdata_temp_reso, const int month);
-dvariable SumSquare(dvar_vector& data_est);
 void LeastSquares(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood);
 void Concentrated(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, const int nobs);
 void Normal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, const int nobs);
@@ -15,7 +14,6 @@ dvariable Weibull(const dvector data_obs, dvar_vector& data_est, const int nobs)
 dvariable NegBinomial(const dvector data_obs, dvar_vector& data_est, dvariable& beta, const int nobs);
 dvariable ZINegBinomial(const dvector data_obs, dvar_vector& data_est, dvariable& beta, dvariable& p, const int nobs);
 dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, const int a0, const int nb_ages, const int nb_regions_sp, const int k);
-dvariable LFsum_sq(dvar3_array& dvarLF_est, const int nb_ages, const int nb_regions_sp, const int k);
 
 int number_data_like;
 const double twopi = 2.0*3.141592654;
@@ -87,11 +85,7 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 			case 11: likelihood = Weibull(cdata_obs,cdata_est,nobs);
 				break;
 
-			case 12: likelihood = SumSquare(cdata_est);
-				 break;
-
         	}
-
 		likelihood = fw_catch * likelihood;
 		clike_fishery[f] += value(likelihood);
 	}
@@ -102,12 +96,6 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 		const int a0 = a0_adult(sp);
 		const int nb_ages = aN_adult(sp);
 		const int nb_regions_sp = param->nb_region_sp_B(sp);
-		if (like_type == 12){//first type of sensitivity analysis
-			dvariable lf_like = LFsum_sq(mat.dvarLF_est(sp),nb_ages,nb_regions_sp,k);
-			likelihood += lf_like;
-			//lflike += value(lf_like);
-			return(likelihood);
-		}
 
 		//LF likelihood value for fishery 'f'
 		dvariable lf_like = fw_length * LFlike_robust(mat.LF_qtr_obs(sp),mat.dvarLF_est(sp),
@@ -482,36 +470,9 @@ dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, cons
 						      pow(lf_obs(a)-lf_est(a),2.0)/(2.0*tau*tau*(ksi+inv_I));
 			}
 		}
-	}
-	likelihood = likelihood;		
+	}	
 
 	return(likelihood);
-}
-
-dvariable LFsum_sq(dvar3_array& dvarLF_est, const int nb_ages, const int nb_regions_sp, const int k)
-{
-	dvariable likelihood = 0;
-
-	dvar_vector lf_est(0,nb_ages-1);
-	lf_est.initialize();
-
-	for (int r=0; r<nb_regions_sp; r++){
-		dvariable sum_lf_est = 0;
-		for (int age=0; age<nb_ages; age++){
-			lf_est(age) = dvarLF_est(age,k,r);
-			sum_lf_est += lf_est(age);
-		}
-
-		if (sum_lf_est>0){
-			for (int age=0; age<nb_ages; age++){
-				lf_est(age) /= sum_lf_est;
-			}
-			likelihood += norm(lf_est);
-		}
-	}
-
-	return(likelihood);
-
 }
 
 void mat2vect(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dvar_matrix catch_est, dvector& data_obs, dvar_vector& data_est, bool cpue, double c_units, const int catch_removal_fishery, const int cdata_temp_reso, const int month)
@@ -552,13 +513,6 @@ void mat2vect(const PMap& map, const dmatrix effort, const dmatrix catch_obs, dv
 			}
 		}
 	}	
-}
-
-dvariable SumSquare(dvar_vector& data_est)
-{
-	dvariable likelihood = norm2(data_est);
-
-	return(likelihood);
 }
 
 void LeastSquares(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood)

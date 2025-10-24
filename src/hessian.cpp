@@ -1,6 +1,7 @@
 #include <fvar.hpp>
 #include "SeapodymCoupled.h"
 
+string get_path(const char* full_path);
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar);
 double run_sim(SeapodymCoupled& sc, dvar_vector x);
 
@@ -101,6 +102,165 @@ void Hessian_comp(const char* parfile)
 	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
 
 }
+
+///3. Options for parametric sensitivity analyses: FLAG 0 - local sensitivity, 1 - edge sensitivity, 2 - OAT of global sensitivity analysis, 3 - AAT of global sensitivity analysis.
+void Sensitivity_analysis(const char* parfile, const int sftype)
+{
+
+	SeapodymCoupled sc(parfile);
+	sc.param->set_scalc(true);
+	
+	//values to solve for
+	const int nvar = sc.nvarcalc();
+	independent_variables x(1, nvar);
+	adstring_array x_names(1,nvar);
+	sc.xinit(x, x_names);
+	cout << "Total number of variables: " << nvar << '\n'<<'\n';
+
+	sc.prerun_model();	
+
+	dvector s(1, nvar); s.initialize();
+
+	clock_t time1 = clock();
+
+	if (sftype == 0){
+
+		cout << "\nComputing local sensitivities using likelihood gradient" << endl;
+		dvector g(1, nvar); g.initialize();
+
+		
+		double func_predict = run_model(sc,x,g,nvar);
+		cout << "\nLikelihood at current parameters: " << func_predict << endl;
+
+		dvector parderivative = sc.param->dpar_dx(x,nvar);
+			
+		s = elem_prod(parderivative, g) / func_predict;
+
+		cout << endl << "N \t" << "parameter \t" << "\trelative sensitivity" << endl;
+		cout << "-------------------------------------------------------" << endl;
+	
+		for (int i=1; i<=nvar; i++){
+			int l = length(x_names[i]);
+			string tab = "\t";
+			if (l<16) tab += "\t";
+			if (l<7) tab += "\t";
+			cout << i <<  " \t" << x_names[i] << tab << s[i]<< endl;	
+		}	
+	}
+	else if (sftype==1){//Edge sensitivity metric
+		
+		cout << "\nComputing likelihood change at parameters boundaries, L_at_boundary - L_cur" << endl;
+
+		const double eps = 1e-3;
+		gradient_structure::set_NO_DERIVATIVES();
+
+		double like_cur = run_sim(sc,x);
+		cout << "Likelihood at current parameters: " << like_cur << endl;
+		cout << endl;
+
+		int wname = 24;
+		int wnum  = 14;
+		cout << setw(2) << left << "N" << " " 
+			<< setw(wname) << "parameter "
+			<< right
+			<< setw(wnum) << "lower dL" << " "
+			<< setw(wnum) << "upper dL" << " " 
+			<< setw(wnum) << "max(|dL|)/Lcur" << endl;
+		int wline = wname + 3*wnum + 5;
+		cout << string(wline, '-') << '\n';
+
+		for (int i=1; i<=nvar; i++){
+			double xs = x(i);
+			x(i) = sc.param->par_init_lo(i,eps);
+			double like = run_sim(sc,x);
+			double s_lo = like - like_cur;
+
+			x(i) = sc.param->par_init_up(i,eps);
+			like = run_sim(sc,x);
+			double s_up = like - like_cur;
+
+			x(i) = xs;
+
+			//get the relative sensitivity
+			s(i) = max(abs(s_lo),abs(s_up))/like_cur;
+
+			int l = length(x_names[i]);
+			string tab = " ";
+			for (int k=1; k<wname-l; k++) tab += " ";
+			cout << setw(2) << left << i << " "
+				<< x_names[i] << tab 
+				<< right << setprecision(6)
+				<< setw(wnum) << s_lo << " "
+				<< setw(wnum) << s_up << " "
+				<< setprecision(4)
+				<< setw(wnum) << s(i) << endl;
+		}	
+		cout << string(wline, '-') << '\n';
+	}
+	else if (sftype==2){//ONE-AT-a-TIME sensitivity analysis
+
+		cout << "\nstarting computing likelihoods for OAT sensitivity analysis" << endl;
+		string dirout = get_path(parfile);
+		string newparfile  = dirout +"/newparfile.xml";
+
+		gradient_structure::set_NO_DERIVATIVES();
+		dvector xr;
+		int nxr = 25;//used 50 for first experiments with tags, it's too much
+		xr.allocate(0,nxr);
+		xr.initialize();
+		double like = 1e2*sc.param->get_parval(1);//to be used for the seed
+		double fmin = 1e10; //uncomment to always have non-increasing (<=) fmin between iterations
+
+		for (int i=1; i<=nvar; i++){
+		//for (int i=nvar; i>=1; i--){
+		//for (int i=1; i<=2; i++){
+		
+			//double fmin = 1e10; //uncomment to allow increase in function value in iterations
+			
+			double xmin = x(i);//parameter value at start
+			int n=(int)like;
+			random_number_generator r(n);
+			randu(r);
+			xr.fill_randu(r);
+
+			for (int k=0; k<nxr; k++){
+			//for (int k=0; k<1; k++){
+				x(i) = sc.param->par_init_step(i,xr[k]);
+
+				like = run_sim(sc,x);
+				if (fmin>like){
+					fmin = like;
+					xmin = x(i);
+				}
+				cout << i << "." << k+1 << " \t" << x_names[i] << " \t" << sc.param->get_parval(i) << " " << like << endl;
+			}
+			x(i) = xmin; //if fmin not improved, xmin contains value at start 	
+		}
+		//Note, in case if xmin wasn't updated in the last iteration, 
+		//the instruction 'x(i)=xmin' is useless, then need to reset 
+		//parameters, i.e. to pass them to the VarParam class:
+		sc.param->reset(x);
+		//parameters corresponding to the minimal function value:
+		sc.param->outp_param(x_names,nvar);
+		cout << "Minimal function value: " << fmin << endl; 
+		//write parfile with "best" parameters:
+		sc.param->total_like = fmin;
+		sc.write(newparfile.c_str());
+	}
+	else if (sftype==3){//just a forward run, usually to be used in ALL-AT-a-TIME sensitivity analysis
+
+		gradient_structure::set_NO_DERIVATIVES();
+		cout << "\nComputing likelihood only: " << endl << endl;
+		double like = run_sim(sc,x);//sc.run_coupled((dvar_vector)x);
+		cout << like << endl;	
+
+	}	
+	
+	time_t time2 = clock();
+	double total_elapsed_time = (double)((time2-time1)/CLOCKS_PER_SEC)/60.0;
+	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
+}
+
 
 ///4. Option for Taylor derivative test
 void Taylor_derivative_test(const char* parfile)

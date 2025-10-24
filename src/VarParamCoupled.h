@@ -60,6 +60,7 @@ public:
 	void get_param_index(ivector& ix, dmatrix& xy, dmatrix& pars);
 	double par_init_lo(int ix, double eps);
 	double par_init_up(int ix, double eps);
+	dvector dpar_dx(dvar_vector x, const int nvar);
 	double par_init_step(int ix, double delta);
 	double par_init_step_left(int ix);
 	double par_init_step_right(int ix);

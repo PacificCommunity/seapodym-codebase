@@ -61,12 +61,15 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	//----------------------------------------------//
 	// 	LIKELIHOOD INITIALISATION SECTION       //
 	//----------------------------------------------//	
-	lflike = 0.0;
+	double clike = 0.0;
+	double lflike = 0.0;
 	double taglike = 0;
 	double stocklike = 0.0;
 	double larvaelike = 0.0;
 	dvariable likelihood = 0.0;
 	dvariable total_stock = 0.0;
+	lflike_fishery.initialize();
+	clike_fishery.initialize();
 	//Reset model parameters:
 	reset(x);
 
@@ -635,7 +638,8 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		cout << "total catch in simulation: " << SUM_CATCH << endl;
 	}
 	param->total_like = value(likelihood);
-	double clike = value(likelihood)-lflike-taglike-stocklike;
+	clike = sum(clike_fishery);
+	lflike = sum(lflike_fishery);
 	if (!param->scalc()) // all but sensitivity analysis
 		cout << "end of forward run, likelihood: " << defaultfloat <<
 		clike << " " << lflike << " " << taglike << " " << stocklike << endl;

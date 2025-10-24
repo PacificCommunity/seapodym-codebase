@@ -5,6 +5,7 @@ string get_path(const char* full_path);
 void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x);
 void Taylor_derivative_test(const char* parfile);
 void Hessian_comp(const char* parfile);
+void Sensitivity_analysis(const char* parfile, const int sftype);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
@@ -22,7 +23,7 @@ This is the main routine that calls upper-level functions such as
    f) computing 2d projection of likelihood function the pair of parameters (should be specified in parfile).
 */
 
-int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buffers)
+int seapodym_densities(const char* parfile, int cmp_regime, int FLAG, const bool reset_buffers)
 {
 	time_t time_sec;
 	time(&time_sec);
@@ -48,9 +49,12 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 
 	cout << "\nstarting time: " << ctime(&time_sec) << endl;
 
-	//if mode 2 or 4, redirecting to respective routine and exit.
+	//if mode 2-4, redirecting to respective routine and exit.
 	if (cmp_regime == 2){
 		Hessian_comp(parfile);
+		return 0;
+	} else if (cmp_regime == 3){
+		Sensitivity_analysis(parfile,FLAG);
 		return 0;
 	} else if (cmp_regime == 4){
 		Taylor_derivative_test(parfile);

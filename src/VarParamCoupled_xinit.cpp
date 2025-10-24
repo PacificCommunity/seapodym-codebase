@@ -416,6 +416,21 @@ double VarParamCoupled::par_init_up(int ix, double eps)
 	return x;	
 }
 
+dvector VarParamCoupled::dpar_dx(dvar_vector x, const int nvar)
+{
+	double pi = 3.141592654;
+	dvector dpdx;
+	dpdx.allocate(1,nvar);
+	dpdx.initialize();
+	dpdx = 0.25*pi*elem_prod(dvarpars_max-dvarpars_min,cos(0.5*pi*value(x)));
+//dvariable penalty = 0.0;
+//	for (int i=1; i<nvar; i++)
+//		dpdx[i] = value(boundp(x[i], dvarpars_min[i], dvarpars_max[i], penalty));
+	
+	return dpdx;	
+}
+
+
 //initialize parameter within min-max boundaries using the given step: for SA-OAT
 double VarParamCoupled::par_init_step(int ix, double delta)
 {
@@ -424,8 +439,6 @@ double VarParamCoupled::par_init_step(int ix, double delta)
 	x = boundpin(x_new, dvarpars_min[ix], dvarpars_max[ix]);
 	return x;	
 }
-
-
 
 //initialize parameter by stepping left half distance to lower boundary
 double VarParamCoupled::par_init_step_left(int ix)

@@ -639,7 +639,6 @@ Mortality.initialize();
 	param->total_like = value(likelihood);
 	clike = sum(clike_fishery);
 	lflike = sum(lflike_fishery);
-	//double clike = value(likelihood)-lflike-taglike-stocklike-larvaelike;
 	if (!param->scalc()){ // all but sensitivity analysis
 		cout << "end of forward run, likelihood: " << defaultfloat << clike << " " << 
 			lflike << " " << taglike << " " << stocklike << " " << larvaelike << endl;
