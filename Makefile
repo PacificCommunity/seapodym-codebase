@@ -20,6 +20,7 @@ VarSimtunaFunc.h \
 NishikawaLike.h
 
 SRCS= \
+cmdopt.cpp \
 main_simulation.cpp \
 ad_buffers.cpp \
 XMLDocument2.cpp \

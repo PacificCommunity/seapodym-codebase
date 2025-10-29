@@ -1,9 +1,11 @@
 #include <iostream>
 #include <cstring>
-#include <cstdlib>
+#include <sys/stat.h>
 using std::cout;
+
 void help(char* argv0);
-int OptionToCode(char* argv0, char* Option, int& sub_option);
+void CheckInfo(char* Option, char* argv0);
+int OptionToCode(char* Option, int& sub_option);
 int seapodym_habitats(const char* parfile, const int cmp_regime, const int sub_option, const bool reset_buffers);
 bool read_memory_options(int argc, char** argv, const bool grad_calc);
 
@@ -11,20 +13,33 @@ bool read_memory_options(int argc, char** argv, const bool grad_calc);
 int main(int argc, char** argv) {
 
 	if (argc==1) help(argv[0]);
-	int cmp_regime = -1;
+
+	char *cmdop = argv[1];
+	if (argc==2) CheckInfo(cmdop,argv[0]);
+
+	int cmp_regime = -1;//optimization
 	int sub_option = 0;
 	bool reset_buffers = false;
-	
-	int k=1;
-	char *cmdLineOption = argv[k];
-	cmp_regime = OptionToCode(argv[0],cmdLineOption,sub_option);
-	if (cmp_regime==-1) k=0;
-	if (cmp_regime==-3) help(argv[0]);
-	if (argc < k+2) {
-		cout << "Parfile can't be omited... \n"; 
+	bool file_exists = false;
+
+	struct stat buffer;  
+	if (stat(argv[argc-1], &buffer)==0)
+		file_exists = true;
+
+	if (!file_exists){
+		cout << "The last argument must be existing parfile...\n";
 		help(argv[0]);
 	}
-	if ((cmp_regime==-1 && argc>2) || (cmp_regime>=0 && argc>3)){
+//	if (argc==2 && !file_exists)
+//		help(argv[0]);
+	if (argc>2 && file_exists) 
+		cmp_regime = OptionToCode(cmdop,sub_option);
+	if (cmp_regime == -11){
+		cout << "This option is not supported! Exit now...\n";
+		exit(0);
+	}
+
+	if (((cmp_regime==-1 && argc>2) || (cmp_regime>=0 && argc>3)) && file_exists){
 		bool grad_calc = false;
 		if (cmp_regime == -1 || cmp_regime == 2)
 			grad_calc = true;
@@ -32,48 +47,5 @@ int main(int argc, char** argv) {
 	}
 	return seapodym_habitats(argv[argc-1],cmp_regime,sub_option,reset_buffers);
 }
-
-int OptionToCode(char* argv0, char* op, int& sub_option) {
-
-	const int N = 18;
-	const char *cmdop[N] = {"-s","-p","-H","-sa","-t","-h","-v","--simulation", "--likelihood-projection","--hessian","--local-sensitivity","--taylor-test","--help","--version","-sa=0","-sa=1","-sa=2","-sa=3"};
-	int cmpCode[N] = {0,1,2,3,4,-3,-2,0,1,2,3,4,-3,-2,3,3,3,3};
-	for (int i=0; i<N; i++)
-		if (strcmp(op,cmdop[i])==0){
-			if (i>=N-3) sub_option = 1;
-			if (i==N-2) sub_option = 2;
-			if (i==N-1) sub_option = 3;			
-			if (cmpCode[i]==-2) {
-				cout << "SEAPODYM habitats with parameter estimation 4.0 \n";
-				cout << "Copyright (C) 2025, SPC, CLS, University of Hawaii.\n";
-				exit(0);
-			}
-			return cmpCode[i];
-		} 
-	
-	cout << "\nWrong entry: no such option.\n\n";
-	help(argv0);
-
-	return -1;//by default - optimization
-}
-
-void help(char* argv0) {
-
-	cout << "Usage:" << argv0 << " [option] parfile \n";
-	cout << "      IMPORTANT!!! If [option] is omitted, then application will start optimization run! \n"; 
-	cout << "Options: \n";
-	cout << "  -h, --help \t\t\t Print this message and exit.\n";
-	cout << "  -H, --hessian \t\t Compute Hessian matrix.\n";
-	cout << "  -p, --projection \t\t Compute 2D-projection of the likelihood on a grid specified in parfile.\n";
-	cout << "  -t, --taylor-test   \t\t Perform Taylor derivative test with central differencing.\n";
-	cout << "  -s, --simulation \t\t Run simulation without optimization.\n";
-	cout << "  -sa[=0], --local-sensitivity\t By default[FLAG=0] computes local sensitivities.\n";
-	cout << "  -sa=1 \t\t\t Computes likelihood changes within parameter boundaries.\n";
-	cout << "  -sa=2 \t\t\t Runs ONE-AT-A-TIME sensitivity simulations.\n";
-	cout << "  -sa=3 \t\t\t Performs one ALL-AT-A-TIME simulation for GSA.\n";	
-	cout << "  -v, --version \t\t Print version number and exit.\n";
-	exit(0);
-}
-
 
 

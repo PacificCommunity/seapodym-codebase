@@ -271,7 +271,6 @@ void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x)
 
         sc.param->get_param_index(ix, xvalues, pars);
 
-        sc.OnRunFirstStep();
         clock_t time1 = clock();
         cout << "\nstarting hyperspace projection computation for ";
         for (int n=0; n<sc.param->nb_varproj; n++) cout << sc.param->varproj[n] << " ";

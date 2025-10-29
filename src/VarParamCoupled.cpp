@@ -1829,6 +1829,15 @@ bool VarParamCoupled::read(const string& parfile)
 			varproj.push_back(doc.get("/hyperspace_projection/" + ostr.str(),"name"));
 			varproj_nsteps[n] = doc.getInteger("/hyperspace_projection/"+ ostr.str(), "nsteps");
 		}	
+	} else {
+		cout << "\nDeclare two variables for computing hyperspace projection:" <<endl;
+		cout << "<hyperspace_projection>" << endl;
+		cout << "    <variables nb=\"2\"/>" << endl;
+		cout << "    <var1 name=\"selected_parameter_name\" nsteps=\"number_of_steps\"/>" << endl;
+		cout << "    <var2 name=\"selected_parameter_name\" nsteps=\"number_of_steps\"/>" << endl;
+		cout << "</hyperspace_projection>" << endl;
+		cout << "Exit now..." <<endl;
+		exit(1);
 	}
 	return true;
 }
