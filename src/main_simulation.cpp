@@ -35,6 +35,8 @@ int main(int argc, char** argv) {
 		cout << "\n!!!SEAPODYM without parameter estimation. Running in simulation mode!!!\n"; 
 		cmp_regime = 0;
 	}
+	if (cmp_regime==3 && sub_option==0)
+		sub_option = 1;
 
 	if (((cmp_regime==0 && argc>2) || (cmp_regime>=0 && argc>3)) && file_exists){
 		bool grad_calc = false;
