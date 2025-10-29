@@ -177,64 +177,6 @@ int seapodym_densities(const char* parfile, int cmp_regime, int FLAG, const bool
 	return 0;
 }
 
-///1. Option for computing likelihood projection in 2D parametric space.
-void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x)
-{
-//	sc.param->set_gradcalc(false);
-	const int Npars = sc.param->nb_varproj-1;
-	ivector ix(0,Npars); ix.initialize(); 
-	int n1 = sc.param->varproj_nsteps[0];
-	int n2 = sc.param->varproj_nsteps[1];
-	int nmax = max(n1,n2)-1;  
-	dmatrix xvalues(0,Npars,0,nmax); xvalues.initialize();
-	dmatrix pars(0,Npars,0,nmax); pars.initialize();
-	dmatrix Lproj(0,n1-1,0,n2-1); 
-	Lproj.initialize();
-
-	sc.param->get_param_index(ix, xvalues, pars);
-
-	clock_t time1 = clock();
-	cout << "\nstarting hyperspace projection computation for ";
-	for (int n=0; n<sc.param->nb_varproj; n++) cout << sc.param->varproj[n] << " ";
-	cout << endl;
-
-	ofstream ofs;
-	const char* filename = "hyperproj.out";
-	ofs.open(filename, ios::out);
-	for (int n=0; n<sc.param->nb_varproj; n++)
-		ofs << sc.param->varproj[n] << " ";
-	ofs << "\n" << n1 << " " << n2 << "\n"; 
-	for (int n=0; n<=Npars; n++){
-		for (int i=0; i<sc.param->varproj_nsteps(n); i++)
-			ofs << pars(n,i)<< " ";
-		ofs << "\n";
-	}
-	ofs.close();
-		
-	for (int i=0; i<n1; i++){
-		for (int j=0; j<n2; j++){
-			cout << j+i*n2+1<< ": ";
-			for (int n=0; n<=Npars; n++){
-				int k;
-				if (n==0)  k = i; 
-				if (n==1)  k = j;
-				x[ix(n)] = xvalues(n,k); cout << pars(n,k) << " "; 
-			}
-			Lproj(i,j) = sc.run_density(x);
-		}
-		ofs.open(filename, ios::app);
-		for (int j=0; j<n2; j++)
-			ofs << Lproj(i,j) << " ";
-		ofs << "\n";
-		ofs.close();
-	}
-
-	time_t time2 = clock();
-	double total_elapsed_time = (double)((time2-time1)/CLOCKS_PER_SEC)/60.0;
-	cout << "\ntotal time: " << total_elapsed_time << " minutes" << endl;
-	//cleanup_temporary_files();
-}
-
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 {
 	double like = 0.0;

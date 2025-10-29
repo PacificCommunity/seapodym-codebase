@@ -74,6 +74,10 @@ public:
 		getparam();
 		doc.write(parfile);
 	}
+	bool get_doc_empty_status(const string name){
+		return doc.get(name).empty();
+	}
+	
 //	void rbin_input2d(string file_in, const imatrix& carte, DMATRIX& mat2d, int nbi, int nbj, int nbytetoskip){
 //		rw.rbin_input2d(file_in, carte, mat2d, nbi, nbj, nbytetoskip);
 //	}
