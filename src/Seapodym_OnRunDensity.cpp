@@ -1,10 +1,13 @@
 #include "SeapodymCoupled.h"
 
-void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood);
+void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood, const double weight);
 void SeapodymCoupled::prerun_model()
 {
 	OnRunFirstStep();
-	ReadDensity();
+	if (param->density_like_data)
+		ReadDensityAges();
+	else
+		ReadBiomassDensity();
 }
 
 ///This is the main loop for the model without fishing and fitting of density. 
@@ -81,13 +84,22 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	dvar_matrix ISR_denom; 
 	dvar_matrix FR_pop;
 	dvar_matrix Mortality; 
-	dvar_matrix Density_pred; 
+	dvar3_array Density_pred; 
 
 	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
 	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	Density_pred.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+
+	int ndim1 = nb_species;
+	if (param->density_like_data)
+		ndim1 = param->sp_nb_cohorts[0];
+
+	Density_pred.allocate(0,ndim1-1);
+	for (int n=0; n < ndim1; n++){
+		Density_pred[n].allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	}
+	Density_pred.initialize();
 
 	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
@@ -340,9 +352,14 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 				}
 				age++;
 			}
-			Density_pred.initialize();
-			for (int age= a0_adult[sp]; age<aN_adult[sp]; age++){
-				Density_pred += mat.dvarDensity[sp][age]* param->weight[sp][age] * 0.001;
+			if (param->density_like_data){
+				for (int age=0; age<param->sp_nb_cohorts[sp]; age++)	
+					Density_pred[age] = mat.dvarDensity[sp][age] * param->weight[sp][age];
+			} else {
+				Density_pred.initialize();
+				for (int age= a0_adult[sp]; age<aN_adult[sp]; age++){
+					Density_pred[sp] += mat.dvarDensity[sp][age]* param->weight[sp][age] * 0.001;
+				}
 			}
 			
 			//store fish density after transport and mortality
@@ -380,9 +397,14 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 		if (t_count == nbt_total)
 			stocklike += get_stock_like(total_stock, likelihood);
 		//Biomass density likelihood. Note, degrade it to the resolution of the density_input
-		if (t_count > nbstoskip)
-			update_density_like(Density_pred, mat.density_input(t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood);
-
+		if (t_count > nbstoskip){
+			if (param->density_like_data){
+				for (int age=0; age<param->sp_nb_cohorts[0]; age++){
+					update_density_like(Density_pred[age], mat.density_input(age,t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood, param->density_like_weight);
+				}
+			} else 
+				update_density_like(Density_pred[0], mat.density_input(0,t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood, param->density_like_weight);
+		}
 
 		if (writeoutputfiles){
 			if (!param->gcalc())	
@@ -393,7 +415,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
                         for (int i=map.imin; i <= map.imax; i++){
                                 for (int j=map.jinf[i] ; j<=map.jsup[i] ; j++){
                                         if (map.carte[i][j]){
-                                                mat2d(i-1,j-1) = value(Density_pred(i,j));
+                                                mat2d(i-1,j-1) = value(Density_pred(0,i,j));
                                         }
                                 }
                         }
@@ -420,7 +442,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 }
 
 //potentially to be moved to like.cpp
-void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood){
+void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood, const double weight){
 
 	int rr_x = (int)nlon/nlon_input; 
 	int rr_y = (int)nlat/nlat_input; 
@@ -451,14 +473,109 @@ void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input,
 				}
 				
 				if (Btot>0)	 
-	                      		likelihood += (rr_x*rr_y*density_input(i,j)-Btot)*
-					      	      (rr_x*rr_y*density_input(i,j)-Btot);
+	                      		likelihood += weight*pow(rr_x*rr_y*density_input(i,j)-Btot,2);
 			}
 		}
 	}
 }
 
-void SeapodymCoupled::ReadDensity()
+void SeapodymCoupled::ReadDensityAges()
+{
+	cout << "Reading input density-at-age files... ";
+	int jday = 0;
+	int t_count_init = t_count;		
+	string file_input;
+	int sp = 0;
+	int nlevel_input = 0;
+	int nb_ages = param->sp_nb_cohorts[sp];
+	dvector zlevel_input; 
+
+
+	//First, check the dimensions from the first age file header and allocate arrays
+	std::ostringstream ostr;
+	ostr << 1;
+	file_input = param->strdir_output + param->sp_name[sp] + "_age" + ostr.str() + ".dym";
+	
+
+	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel_input);
+
+	cout << "Input density dimensions (nt, nx, ny): " << nlevel_input << " " << nlon_input << " "<< nlat_input << endl;
+	zlevel_input.allocate(0, nlevel_input - 1);
+	rw.rbin_headpar_dates(file_input, nlon_input, nlat_input, nlevel_input, zlevel_input);
+	
+	if (zlevel_input[0] < mat.zlevel[0] || zlevel_input[param->nlevel-1] > mat.zlevel[param->nlevel]){
+		cout << "WARNING: the date range in file density_input in outside of the forcing data dates! " <<endl;
+	}
+
+	if (zlevel_input[0] > mat.zlevel[nbt_start_series] || zlevel_input[nlevel_input-1] < mat.zlevel[nbt_start_series+nbt_total-1]){
+		cout << "The date range in file density_input does not overlap with selected date range! Exit now..." <<endl;
+		exit(1);
+	}
+		
+
+	int date0_offset = 0;
+	while (zlevel_input[date0_offset]<mat.zlevel[nbt_start_series]){
+		date0_offset ++;
+	}
+
+	mat.density_input.allocate(0,nb_ages-1);
+	for (int age=0; age<nb_ages; age++){
+		mat.density_input[age].allocate(1,nbt_total);
+		for (int t=1; t<=nbt_total; t++){
+			mat.density_input[age][t].allocate(0, nlon_input, 0, nlat_input);
+			mat.density_input[age][t].initialize();
+		}
+	}
+
+	//Now DATA READING
+	for (int age=0; age<nb_ages; age++){
+	
+		std::ostringstream ostr;
+		ostr << age+1;
+		file_input = param->strdir_output + param->sp_name[sp] + "_age" + ostr.str() + ".dym";
+
+		for (; t_count<=nbt_total; t_count++){
+			getDate(jday);
+		
+			//TIME SERIES 
+			t_series = t_count + date0_offset;
+		
+			//----------------------------------------------//
+			//	READING DENSITY DATA			//
+			//----------------------------------------------//
+			int nbytetoskip = (9 +(3* nlat_input * nlon_input) + nlevel_input + ((nlat_input *nlon_input)* (t_series-1))) * 4;
+			
+			ifstream litbin(file_input.c_str(), ios::binary | ios::in);
+			if (!litbin)
+			{
+				cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
+				exit(1);
+			}
+
+			//---------------------------------------
+			// Reading the 2d matrix
+			//---------------------------------------
+			litbin.seekg(nbytetoskip, ios::cur);
+
+		 	const int sizeofDymInputType = sizeof(float);
+			float buf;
+			for (int j=0;j<nlat_input;j++)
+			{
+				for (int i=0;i<nlon_input;i++)
+				{
+					litbin.read(( char *)&buf,sizeofDymInputType);
+					//convert to biomass density in kg/sq.km
+					mat.density_input[age][t_count][i+1][j+1]= buf * param->weight[sp][age];
+				}
+			}
+		
+			litbin.close();
+		}
+		t_count = t_count_init;
+	}
+}
+
+void SeapodymCoupled::ReadBiomassDensity()
 {
 	cout << "Reading input density file... ";
 	int jday = 0;
@@ -489,10 +606,14 @@ void SeapodymCoupled::ReadDensity()
 		date0_offset ++;
 	}
 
-	mat.density_input.allocate(1,nbt_total);
+	//added species dimension to be able to re-use it without for ages in case of density_likelihood_data=1
+	//but since we don't need it, just keep it of length 1.
+	int sp = 0;
+	mat.density_input.allocate(0,nb_species-1);
+	mat.density_input[sp].allocate(1,nbt_total);
 	for (int t=1; t<=nbt_total; t++){
-		mat.density_input[t].allocate(0, nlon_input, 0, nlat_input);
-		mat.density_input[t].initialize();
+		mat.density_input[sp][t].allocate(0, nlon_input, 0, nlat_input);
+		mat.density_input[sp][t].initialize();
 	}
 
 	for (; t_count<=nbt_total; t_count++){
@@ -525,7 +646,7 @@ void SeapodymCoupled::ReadDensity()
 			for (int i=0;i<nlon_input;i++)
 			{
 				litbin.read(( char *)&buf,sizeofDymInputType);
-				mat.density_input[t_count][i+1][j+1]= buf;
+				mat.density_input[sp][t_count][i+1][j+1]= buf;
 			}
 		}
 		

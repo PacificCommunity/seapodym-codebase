@@ -1293,6 +1293,15 @@ bool VarParamCoupled::read(const string& parfile)
 				stock_latmax[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"ltmax"); 
 			}
 		}
+
+		density_like_data = 0;
+		density_like_weight = 0.001;
+		if (!doc.get("/density_likelihood_data","value").empty())
+			density_like_data = doc.getInteger("/density_likelihood_data","value");
+		if (!doc.get("/density_likelihood_weight","value").empty())
+			density_like_data = doc.getInteger("/density_likelihood_weight","value");
+		if (!density_like_data) density_like_weight = 1.0;
+
 		//likelihood parameters: variance, beta binomial 
 		like_param.allocate(0, nb_species-1);
 		for (int sp=0; sp<nb_species; sp++){

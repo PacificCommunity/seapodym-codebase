@@ -82,7 +82,7 @@ public:
 	D3_ARRAY PEB;		// Population Exploitable Biomass: sum of age classes B x average selectivity function 
 
 	D4_ARRAY habitat_input;
-	D3_ARRAY density_input;	
+	D4_ARRAY density_input;	
 	D3_ARRAY larvae_input;
 
 	std::vector<double> aggregated_larvae_input_vectors[12];// Vector of non-NA observed larvae densities

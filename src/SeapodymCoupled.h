@@ -52,7 +52,8 @@ friend class tag_release;
 	void ReadHabitat();
 
 	double OnRunDensity(dvar_vector x, const bool writeoutputfiles = false);
-	void ReadDensity();	
+	void ReadDensityAges();	
+	void ReadBiomassDensity();	
 
 	void OnRunFirstStep();
 	void OnBuildForage();
