@@ -1260,9 +1260,9 @@ bool VarParamCoupled::read(const string& parfile)
 		elife_like_weight = 1.0; //default value
 		for (int sp=0; sp<nb_species; sp++){
 			if (!doc.get("/tag_like_weight",sp_name[sp]).empty())		  
-				tag_like_weight[sp] = doc.getInteger("/tag_like_weight",sp_name[sp]);
+				tag_like_weight[sp] = doc.getDouble("/tag_like_weight",sp_name[sp]);
 			if (!doc.get("/elife_like_weight",sp_name[sp]).empty())		  
-				elife_like_weight[sp] = doc.getInteger("/elife_like_weight",sp_name[sp]);
+				elife_like_weight[sp] = doc.getDouble("/elife_like_weight",sp_name[sp]);
 		}
 
 
@@ -1299,7 +1299,7 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/density_likelihood_data","value").empty())
 			density_like_data = doc.getInteger("/density_likelihood_data","value");
 		if (!doc.get("/density_likelihood_weight","value").empty())
-			density_like_data = doc.getInteger("/density_likelihood_weight","value");
+			density_like_weight = doc.getDouble("/density_likelihood_weight","value");
 		if (!density_like_data) density_like_weight = 1.0;
 
 		//likelihood parameters: variance, beta binomial 
