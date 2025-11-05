@@ -25,6 +25,7 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 
 	dvector cdata_obs;
 	dvar_vector cdata_est;
+	
 	cdata_obs.allocate(0,nobs-1);
 	cdata_est.allocate(0,nobs-1);
 
@@ -110,7 +111,6 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 
 double SeapodymCoupled::get_stock_like(dvariable& total_stock, dvariable& likelihood)
 {//returns double value of stock likelihood.
-
 	double stocklike  = 0.0;
 	for (int sp=0; sp < nb_species; sp++){
 		if (!param->stock_like[sp]) return 0;
@@ -138,6 +138,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_
 	}
 
 	double larvaelike  = 0.0;
+	double elike_weight = param->elife_like_weight[0];
 	for (int sp=0; sp < nb_species; sp++){
 		int like_type = param->larvae_likelihood_type[sp];
 		for (int iAgg=0; iAgg<param->nb_larvae_input_agg_groups; iAgg++){
@@ -154,8 +155,8 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_
 					double L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
 					lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
 				}
-				likelihood += lkhd;
-				larvaelike += value(lkhd);
+				likelihood += elike_weight*lkhd;
+				larvaelike += elike_weight*value(lkhd);
 			}
 		}
 	}
@@ -173,6 +174,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 	}
 
 	double larvaelike  = 0.0;
+	double elike_weight = param->elife_like_weight[0];
 	for (int sp=0; sp < nb_species; sp++){
 		int like_type = param->larvae_likelihood_type[sp];
 		const int imin = map.imin;
@@ -192,8 +194,8 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 						double L_obs  = larvae_input(t,i,j);
 						lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
 					}
-					likelihood += lkhd;
-					larvaelike += value(lkhd);
+					likelihood += elike_weight*lkhd;
+					larvaelike += elike_weight*value(lkhd);
 				}
 			}
 		}
@@ -298,7 +300,8 @@ void SeapodymCoupled::get_catch_lf_like(dvariable& likelihood)
 				if (param->mask_fishery_sp_like[sp][f]){
 					int y = year-(int)param->save_first_yr;
 					int nobs = rw.get_numrec(f,y,month);
-					likelihood += like(sp,k,f,nobs);
+					if (nobs)
+						likelihood += like(sp,k,f,nobs);
 				}
 				k++;
 			}
@@ -413,9 +416,10 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		}
 	}
 
+	double tlike_weight = param->tag_like_weight[0];
 	if ((t_count>t_count_rec[0]) && (month==3 || month==6 || month==9 || month==12)){
 		//spatial 2d
-		const double ww = 0.0001;
+		const double ww = tlike_weight*0.0001;
 
 		taglike += ww*value(norm2(rec_obs_like-rec_pred_like));
 		likelihood += ww*norm2(rec_obs_like-rec_pred_like);
