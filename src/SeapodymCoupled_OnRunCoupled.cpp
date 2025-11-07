@@ -71,10 +71,10 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	// 	LIKELIHOOD INITIALISATION SECTION       //
 	//----------------------------------------------//	
 	double clike = 0.0;
-	double lflike = 0.0;
-	double taglike = 0;
-	double stocklike = 0.0;
-	double larvaelike = 0.0;
+	lflike = 0.0;
+	taglike = 0;
+	stocklike = 0.0;
+	larvaelike = 0.0;
 	dvariable likelihood = 0.0;
 	dvariable total_stock = 0.0;
 	lflike_fishery.initialize();

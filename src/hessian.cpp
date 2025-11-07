@@ -320,7 +320,22 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 		gradient_structure::set_NO_DERIVATIVES();
 		cout << "\nComputing likelihood only: " << endl << endl;
 		double like = run_sim(sc,x);//sc.run_coupled((dvar_vector)x);
-		cout << like << endl;	
+		//cout << like << endl;	
+		
+		// Get likelihood components
+		double clike = sc.get_clike();
+		double lflike = sc.get_lflike();
+		double stocklike = sc.get_stocklike();
+		double taglike = sc.get_taglike();
+		double larvaelike = sc.get_larvaelike();
+
+		// Likelihood breakdown
+		cout << "Total:	 " << like << endl;
+		cout << "Catch:	 " << clike << endl;
+		cout << "LF:	 " << lflike << endl;
+		cout << "Stock:	 " << stocklike << endl;
+		cout << "Tags:	 " << taglike << endl;
+		cout << "Larvae: " << larvaelike << endl;
 
 	}	
 	

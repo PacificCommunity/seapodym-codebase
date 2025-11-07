@@ -22,6 +22,12 @@ public:
 	}
 	virtual ~SeapodymCoupled(){/*DoesNothing*/};
 
+	double get_clike() { return sum(clike_fishery); }
+	double get_lflike() { return lflike; }
+	double get_stocklike() { return stocklike; }
+	double get_larvaelike() { return larvaelike; }
+	double get_taglike() { return taglike; }
+
 friend class tag_release;
 
 	int nvarcalc() const { return param->nvarcalc();};
@@ -100,6 +106,7 @@ private:
 	imatrix nb_rel;
 	ivector t_count_rec;
 	i3_array tagpop_age_solve;
+	double taglike;
 
 	//larvae
 	dvar_matrix Larvae_density_pred;
@@ -107,10 +114,12 @@ private:
 	ivector kinf, ksup;
 	ivector ntime_agg;
 	double elarvae_dt;
+	double larvaelike;
 	
 	//catch and length
 
-	//double lflike; // double value of lf_like
+	double lflike; // double value of lf_like
+	double stocklike;
 	dvector lflike_fishery;
 	dvector clike_fishery;
 
