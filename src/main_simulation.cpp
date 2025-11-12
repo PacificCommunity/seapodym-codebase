@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
 	}
 	if (argc>2 && file_exists) 
 		cmp_regime = OptionToCode(cmdop,sub_option);
-	if (cmp_regime==-1 || cmp_regime==-11){
+	if (cmp_regime==-1 || cmp_regime==-11 || cmp_regime==4){
 		cout << "\n!!!SEAPODYM without parameter estimation. Running in simulation mode!!!\n"; 
 		cmp_regime = 0;
 	}
