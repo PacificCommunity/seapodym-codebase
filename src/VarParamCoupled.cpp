@@ -789,6 +789,12 @@ bool VarParamCoupled::read(const string& parfile)
 	elarvae_sst_high.allocate(0,nb_species-1);
 	elarvae_sst_low.initialize();
 	elarvae_sst_high.initialize();
+	elarvae_a_sst.allocate(0,nb_species-1);
+	elarvae_b_sst.allocate(0,nb_species-1);
+	elarvae_hs_fsst_fixed.allocate(0,nb_species-1);
+	elarvae_a_sst.initialize();
+	elarvae_b_sst.initialize();
+	elarvae_hs_fsst_fixed.initialize();//by default use a_sst_larvae and b_sst_larvae of HS
 
 	//non-species specific parameters
 	//Does plankton net catchability depend on MLD?
@@ -823,8 +829,17 @@ bool VarParamCoupled::read(const string& parfile)
 				elarvae_sst_low[sp] = doc.getDouble(vstr, "sst_low");
 				elarvae_slope_high[sp] = doc.getDouble(vstr, "slope_high");
 				elarvae_sst_high[sp] = doc.getDouble(vstr, "sst_high");
+				vstr = str + "/hs_sst_func_coefs";
+				elarvae_a_sst[sp] = doc.getDouble(vstr, "a_sst");
+				elarvae_b_sst[sp] = doc.getDouble(vstr, "b_sst");	
+				elarvae_hs_fsst_fixed[sp] = doc.getInteger(vstr, "flag");	
 			}
 		} 
+		if (fsst_type[sp] != 1 && !elarvae_hs_fsst_fixed[sp]){
+			cout << "WARNING: Only Gaussian SST function is implemented in early larval mortality! Either set elarvae_hs_fsst_fixed to 1 or use Gaussian SST function in larval habitat. Switching to fixed fsst parameters in early larval mortality! " << endl << endl;
+			doc.set("/early_larvae_model/"+sp_name[sp]+ "/hs_sst_func_coefs","flag",1);
+			elarvae_hs_fsst_fixed[sp] = 1;
+		}
 		if (!doc.get("/larvae_likelihood",sp_name[sp]).empty()){
 			larvae_like[sp] = doc.getInteger("/larvae_likelihood",sp_name[sp]);
 		}else{

@@ -32,6 +32,23 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 	}
 }
 
+void VarSimtunaFunc::Early_Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, const int sp, const int tcur)
+{
+	M.initialize();
+
+	dvariable a,b;
+	a = param.dvarsA_sst_larvae[sp];
+	b = param.dvarsB_sst_larvae[sp];
+	if (param.elarvae_hs_fsst_fixed[sp]){
+		a = param.elarvae_a_sst[sp];
+		b = param.elarvae_b_sst[sp];
+	}	
+
+	M_early_sp_comp(param,map,M,value(a),value(b),mat.sst[tcur],mat.np1[tcur]*param.pp_transform,sp);
+}
+
+
+
 void VarSimtunaFunc::Scaling_factor_sstdep_larvae_mortality(VarParamCoupled& param, const dmatrix& sst, const PMap& map, dvar_matrix& S, const int sp)
 {
 	int deltaT = param.deltaT;

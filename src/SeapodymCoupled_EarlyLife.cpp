@@ -170,9 +170,7 @@ void SeapodymCoupled::elarvae_model_run(dvar_matrix& M, const int sp, const int 
 	pop.precaldia(*param, map, mat);
 	pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
 
-
-	//Early larvae's mortality rate
-	func.M_early_sp(*param, map, M,mat.sst[tcur],mat.np1[tcur]*param->pp_transform,sp);
+	func.Early_Mortality_Sp(*param, mat, map, M, sp, tcur);
 
 	//Add mortality to central diagonal 
 	pop.Precalrec_juv(map, mat, M, tcur,elarvae_dt);//checked

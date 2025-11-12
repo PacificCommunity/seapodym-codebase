@@ -53,7 +53,8 @@ public:
 
 	void Mortality_Sp( VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, dvar_matrix& H, int sp, double mean_age_in_dtau, const int age, const int t_count);
 	void M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double, double, double, double, double, const double, const double, double);
-	void M_early_sp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const dmatrix& sst, const dmatrix& pp, const int sp);
+	void M_early_sp_comp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const double a, const double b, const dmatrix& sst, const dmatrix& pp, const int sp);
+	void Early_Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, const int sp, const int tcur);	
 
 	void M_PH_juv_comp(VarParamCoupled& param, const PMap& map, CMatrices& mat, dvar_matrix& M, const dmatrix& PH, double mean_age_in_dtau);
 	void Scaling_factor_sstdep_larvae_mortality_comp(const PMap& map, dvar_matrix& Scaling_factor, const dmatrix& sst, dvariable inv_M_max, dvariable inv_M_rate, dvariable age_larvae_before_sst_mortality, int deltaT);

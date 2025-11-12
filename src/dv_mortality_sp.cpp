@@ -10,7 +10,9 @@
 
 
 void dv_M_sp_comp(void);
+void dv_M_early_sp_comp(void);
 void dv_Scaling_factor_sstdep_larvae_mortality_comp(void);
+double sigmoid1(const double tau, const double delta);
 void save_long_int_value(unsigned long int x);
 unsigned long int restore_long_int_value(void);
 
@@ -78,8 +80,44 @@ void VarSimtunaFunc::Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const 
 	save_identifier_string((char*)"M_sp_comp_end");
 
 	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_M_sp_comp);
-
 }
+
+void VarSimtunaFunc::Early_Mortality_Sp(VarParamCoupled& param, CMatrices& mat, const PMap& map, dvar_matrix& M, const int sp, const int tcur)
+{
+	M.initialize();
+
+	dvariable a,b;
+	a = param.dvarsA_sst_larvae[sp];
+	b = param.dvarsB_sst_larvae[sp];
+	if (param.elarvae_hs_fsst_fixed[sp]){
+		a = param.elarvae_a_sst[sp];
+		b = param.elarvae_b_sst[sp];
+	}
+	
+	dvmatr1 = a;
+	dvmatr2 = b;
+
+	M_early_sp_comp(param,map,M,value(a),value(b),mat.sst[tcur],mat.np1[tcur]*param.pp_transform,sp);
+
+	save_identifier_string((char*)"M_early_sp_comp_begin");
+	b.save_prevariable_value();
+	dvmatr2.save_dvar_matrix_position();
+	a.save_prevariable_value();
+	dvmatr1.save_dvar_matrix_position();
+	M.save_dvar_matrix_position();
+	save_int_value(sp);
+	save_int_value(tcur);
+	unsigned long int pmap = (unsigned long int)&map;
+	save_long_int_value(pmap);
+	unsigned long int cparam = (unsigned long int)&param;
+	save_long_int_value(cparam);
+	unsigned long int cmat = (unsigned long int)&mat;
+	save_long_int_value(cmat);
+	save_identifier_string((char*)"M_early_sp_comp_end");
+
+	gradient_structure::GRAD_STACK1->set_gradient_stack(dv_M_early_sp_comp);
+}
+
 
 void dv_M_sp_comp(void)
 {
@@ -182,6 +220,68 @@ void dv_M_sp_comp(void)
 	dfMsm.save_dmatrix_derivatives(Msmax_pos);
 	dfRng.save_dmatrix_derivatives(Range_pos);
 	dfH.save_dmatrix_derivatives(Hpos);
+	dfM.save_dmatrix_derivatives(Mpos);
+}
+
+
+void dv_M_early_sp_comp(void)
+{
+	verify_identifier_string((char*)"M_earlysp_comp_end");
+	unsigned long int pos_mat = restore_long_int_value();
+	unsigned long int pos_param = restore_long_int_value();
+	unsigned long int pos_map = restore_long_int_value();
+	unsigned int tcur  = restore_int_value();
+	unsigned int sp    = restore_int_value();
+	const dvar_matrix_position Mpos = restore_dvar_matrix_position();
+	const dvar_matrix_position apos  = restore_dvar_matrix_position();
+	double a = restore_prevariable_value();
+	const dvar_matrix_position bpos  = restore_dvar_matrix_position();
+	double b = restore_prevariable_value();
+	verify_identifier_string((char*)"M_early_sp_comp_begin");
+
+	dmatrix dfM 	= restore_dvar_matrix_derivatives(Mpos);
+	dmatrix dfa 	= restore_dvar_matrix_derivatives(apos);
+	dmatrix dfb 	= restore_dvar_matrix_derivatives(bpos);
+
+	PMap* map  	= (PMap*) pos_map;
+	CParam* param   = (CParam*) pos_param;
+	CMatrices* mat  = (CMatrices*) pos_mat;
+
+	double mort_inc = param->elarvae_mortality_inc[sp];
+	double sst_low  = param->elarvae_sst_low[sp];
+	double sst_high = param->elarvae_sst_high[sp];
+	double slp_low  = param->elarvae_slope_low[sp];
+	double slp_high = param->elarvae_slope_high[sp];
+	
+	const int imax  = map->imax;
+	const int imin  = map->imin;
+
+	dmatrix sst(imin, imax, map->jinf, map->jsup);
+	sst = mat->sst(tcur);
+//	dmatrix np1(imin, imax, map->jinf, map->jsup);
+//	np1 = mat->np1(tcur)*param->pp_transform;
+	
+	for (int i = imax; i >= imin; i--){
+		const int jmin = map->jinf[i];
+		const int jmax = map->jsup[i];
+		for (int j = jmax; j >= jmin; j--){
+			if (map->carte(i,j)){	
+				double f_sst1  = sigmoid1(slp_low,sst(i,j)-sst_low) * sigmoid1(slp_high,sst_high-sst(i,j));
+				double f_sst2 = exp(-pow(sst(i,j)-b,2.0)/(2.0*a*a));
+
+				double expr0 =  mort_inc * f_sst1 * f_sst2;
+				double expr1 =  sst(i,j) - b;
+				double expr2 =  expr1/(a*a);
+				
+				//M(i,j) = mort_min + mort_inc*(1-f_sst1*f_sst2);
+				dfa(i,j) -= expr0 * (expr1*expr2/a) * dfM(i,j);
+				dfb(i,j) -= expr0 * expr2 * dfM(i,j);
+				dfM(i,j) = 0.0;
+			}
+		}
+	}
+	dfa.save_dmatrix_derivatives(apos); 
+	dfb.save_dmatrix_derivatives(bpos);
 	dfM.save_dmatrix_derivatives(Mpos);
 }
 

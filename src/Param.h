@@ -207,15 +207,9 @@ public:
 	dvector elarvae_age;
 	dvector elarvae_mortality_min, elarvae_mortality_inc;
 	dvector elarvae_slope_low, elarvae_slope_high, elarvae_sst_low, elarvae_sst_high;
+	dvector elarvae_a_sst, elarvae_b_sst;
+	ivector elarvae_hs_fsst_fixed;
 	
-///	IVECTOR sp_nb_age_class_ad;	// number of age classes for each species [sp]
-///	IVECTOR sp_unit_age_class_ad;	// time step used for the population of the species [sp] (0= pas de calcul de pop; 1=month;2=quarter )
-///	IMATRIX sp_unit_age_class;	// time step (in days) used for the population of the species [sp] and cohort [a]
-
-///	IVECTOR sp_nb_age_class_jv;	// number of age classes for each species [sp]
-///	IVECTOR sp_unit_age_class_jv;	// time step used for the population of the species [sp] (0= pas de calcul de pop; 1=month;2=quarter )
-///	int	max_age_class;		// max number of age classes over all species
-
 	vector<string> life_stage;
 	ivector sp_nb_cohort_life_stage;
 	ivector sp_nb_cohorts; 
@@ -223,8 +217,6 @@ public:
 	ivector sp_a0_adult;
 	imatrix sp_unit_cohort;
 	
-///	DMATRIX juv_length;		// length by age for each species (cm) for the first three months of live
-///	DMATRIX juv_weight;		// weight by age for each species (kg) for the first three months of live
 	DMATRIX length;			// length by age for each species (cm) [sp][sp_nb_age_class[sp]]
 	DMATRIX length_bins;		// length by age for each species (cm) [sp][sp_nb_age_class[sp]]
 	DMATRIX weight;			// weight by age for each species (kg) [sp][sp_nb_age_class[sp]]

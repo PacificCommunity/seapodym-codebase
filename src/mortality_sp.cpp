@@ -5,7 +5,7 @@
 ///rate and variable component, depending on habitat indices defined for the life stage
 double sigmoid1(const double tau, const double delta);
 
-void VarSimtunaFunc::M_early_sp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const dmatrix& sst, const dmatrix& pp, const int sp)
+void VarSimtunaFunc::M_early_sp_comp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const double a, const double b, const dmatrix& sst, const dmatrix& pp, const int sp)
 {
 	double mort_min = param.elarvae_mortality_min[sp];
 	double mort_inc = param.elarvae_mortality_inc[sp];
@@ -20,12 +20,12 @@ void VarSimtunaFunc::M_early_sp(VarParamCoupled& param, const PMap& map, dvar_ma
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
 				//1. eggs survival function derived from observations
-				double f_sst  = sigmoid1(slp_low,sst(i,j)-sst_low) + sigmoid1(slp_high,sst_high-sst(i,j))-1;
+				double f_sst  = sigmoid1(slp_low,sst(i,j)-sst_low) * sigmoid1(slp_high,sst_high-sst(i,j));
 				//2. early larvae mortality due to thermal factor as in Hs
 				//To be added with variable parameters if proven necessary (Nov2024)   
-				double f_sst2 = exp(-pow(sst(i,j)-35.0,2.0)/(2.0*40.3225));
+				double f_sst2 = exp(-pow(sst(i,j)-b,2.0)/(2.0*a*a));
 
-				//3. other factors influencing early larvae survival
+				//3. other factors influencing observed early larvae survival
 				double f_prey = 1.0;//no other factors
 
 				M.elem_value(i,j) = mort_min + mort_inc*(1-f_prey*f_sst*f_sst2);
@@ -33,6 +33,7 @@ void VarSimtunaFunc::M_early_sp(VarParamCoupled& param, const PMap& map, dvar_ma
 		}
 	}
 }
+
 
 void VarSimtunaFunc::M_sp_comp(const PMap& map, dvar_matrix& M, const dmatrix& H, double Mp_max, double Ms_max, double Mp_exp, double Ms_slope, double range, const double Rage, const double Hval, const double mean_age_in_dtau)
 {
