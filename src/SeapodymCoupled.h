@@ -124,7 +124,7 @@ private:
 	dvector clike_fishery;
 
 	void get_catch_lf_like(dvariable& likelihood);
-	double get_stock_like(dvariable& total_stock, dvariable& likelihood);
+	double get_stock_like(dvariable total_stock, dvariable& likelihood);
 	double get_tag_like(dvariable& likelihood, bool writeoutputs);
 	double get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_larvae_density_at_obs);
 	double get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_pred, D3_ARRAY larvae_input, int t);

@@ -588,18 +588,20 @@ void dv_categorical_zip_comp(){
 
 // Functions to compute the likelihood of a larvae density observed on a continuous scale
 
-dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
-    dvariable h = param.dvarsQ_sp_larvae[sp];
+dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
+
+	dvariable h = param.dvarsQ_sp_larvae[sp];
 	dvariable L_pred = N_pred * h;
-    dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
-    dvariable lkhd = 0.0;
-    if (L_obs==0.0){
-        lkhd = weight_Lobszero*L_pred*L_pred/(2*pow(sigma, 2)) ;
-        //lkhd = L_pred*L_pred/(2*pow(sigma, 2)) ;
-    }else{
-        lkhd = pow(L_obs-L_pred, 2)/(2 * pow(sigma, 2));
-    }
-    return 1000.0*lkhd;
+	dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
+	dvariable lkhd = 0.0;
+
+
+	if (N_obs==0.0)
+		lkhd = weight_Lobszero*L_pred*L_pred/(2.0*pow(sigma, 2.0)) ;
+	else
+		lkhd = pow(N_obs-L_pred, 2.0)/(2.0 * pow(sigma, 2.0));
+	
+	return 1000.0*lkhd;
 }
 
 dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){

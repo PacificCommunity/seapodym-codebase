@@ -109,7 +109,7 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 	return likelihood;
 }
 
-double SeapodymCoupled::get_stock_like(dvariable& total_stock, dvariable& likelihood)
+double SeapodymCoupled::get_stock_like(dvariable total_stock, dvariable& likelihood)
 {//returns double value of stock likelihood.
 	double stocklike  = 0.0;
 	for (int sp=0; sp < nb_species; sp++){
