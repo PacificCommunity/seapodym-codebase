@@ -86,8 +86,8 @@ public:
 
 	dvector catch_like_weight;
 	dvector length_like_weight;
-	dvector tag_like_weight;
-	dvector elife_like_weight;
+	double tag_like_weight;
+	double elife_like_weight;
 	double poisson_like_min_catch;
 	double  total_like;
 	int fdata_rm;
