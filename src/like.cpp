@@ -138,7 +138,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_
 	}
 
 	double larvaelike  = 0.0;
-	double elike_weight = param->elife_like_weight[0];
+	double elike_weight = param->elife_like_weight;
 	for (int sp=0; sp < nb_species; sp++){
 		int like_type = param->larvae_likelihood_type[sp];
 		for (int iAgg=0; iAgg<param->nb_larvae_input_agg_groups; iAgg++){
@@ -174,7 +174,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 	}
 
 	double larvaelike  = 0.0;
-	double elike_weight = param->elife_like_weight[0];
+	double elike_weight = param->elife_like_weight;
 	for (int sp=0; sp < nb_species; sp++){
 		int like_type = param->larvae_likelihood_type[sp];
 		const int imin = map.imin;
@@ -416,7 +416,7 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		}
 	}
 
-	double tlike_weight = param->tag_like_weight[0];
+	double tlike_weight = param->tag_like_weight;
 	if ((t_count>t_count_rec[0]) && (month==3 || month==6 || month==9 || month==12)){
 		//spatial 2d
 		const double ww = tlike_weight*0.0001;

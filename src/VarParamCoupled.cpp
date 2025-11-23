@@ -1269,17 +1269,12 @@ bool VarParamCoupled::read(const string& parfile)
 			        } else remove(test.c_str());	
 			}
 		}
-		tag_like_weight.allocate(0,nb_species-1);
-		elife_like_weight.allocate(0,nb_species-1);
 		tag_like_weight = 1.0; //default value
 		elife_like_weight = 1.0; //default value
-		for (int sp=0; sp<nb_species; sp++){
-			if (!doc.get("/tag_like_weight",sp_name[sp]).empty())		  
-				tag_like_weight[sp] = doc.getDouble("/tag_like_weight",sp_name[sp]);
-			if (!doc.get("/elife_like_weight",sp_name[sp]).empty())		  
-				elife_like_weight[sp] = doc.getDouble("/elife_like_weight",sp_name[sp]);
-		}
-
+		if (!doc.get("/tag_like_weight").empty())		  
+			tag_like_weight = doc.getDouble("/tag_like_weight");
+		if (!doc.get("/elife_like_weight").empty())		  
+			elife_like_weight = doc.getDouble("/elife_like_weight");
 
 		//4. STOCK likelihood
 		stock_like.allocate(0,nb_species-1);
