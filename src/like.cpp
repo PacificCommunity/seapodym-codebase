@@ -23,29 +23,33 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 	dvariable likelihood = 0.0;
 	dvariable beta, prob, sigma;
 
-	dvector cdata_obs;
-	dvar_vector cdata_est;
-	
-	cdata_obs.allocate(0,nobs-1);
-	cdata_est.allocate(0,nobs-1);
-
-	int cdata_temp_reso = param->catch_treso_likelihood[sp][f];
-
-	bool cpue = param->cpue;
-	double c_units = param->catch_units_converter(f);
-	if (cpue)
-		c_units = param->cpue_units_converter(f);
-	
-	int like_type = param->like_types[sp][k];
 	const double fw_catch  = param->catch_like_weight(f);  
 	const double fw_length = param->length_like_weight(f);  
 
-	mat2vect(map, mat.effort(f), mat.catch_obs(sp,k), mat.dvarCatch_est(sp,k), cdata_obs, cdata_est, 
-		cpue, c_units, param->mask_fishery_sp_no_effort(sp,f),cdata_temp_reso, month);
- 
-	if (cdata_temp_reso==1 || (cdata_temp_reso==3 && (month==3 || month==6 || month==9 || month==12))){
-		switch (like_type) {
 
+	//temporal aggregation of catch is not working in this version due to vectorization of catch_obs and catch_est
+	int cdata_temp_reso = param->catch_treso_likelihood[sp][f];
+
+	int like_type = param->like_types[sp][k];
+
+	if (nobs){
+		bool cpue = param->cpue;
+		double c_units = param->catch_units_converter(f);
+		if (cpue)
+			c_units = param->cpue_units_converter(f);
+	
+		dvector cdata_obs;
+		dvar_vector cdata_est;
+	
+		cdata_obs.allocate(0,nobs-1);
+		cdata_est.allocate(0,nobs-1);
+
+		mat2vect(map, mat.effort(f), mat.catch_obs(sp,k), mat.dvarCatch_est(sp,k), cdata_obs, cdata_est, 
+			cpue, c_units, param->mask_fishery_sp_no_effort(sp,f),cdata_temp_reso, month);
+ 
+		//if (cdata_temp_reso==1 || (cdata_temp_reso==3 && (month==3 || month==6 || month==9 || month==12))){
+		switch (like_type) {
+	
 			case 1: LeastSquares(cdata_obs,cdata_est,likelihood);
 				break;
 			
@@ -54,7 +58,7 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 		
 			case 3: likelihood = Poisson(cdata_obs,cdata_est,param->poisson_like_min_catch,nobs);
 				break;
-
+			
 			case 4: likelihood = TruncatedPoisson(cdata_obs,cdata_est,nobs);
 				break;	
 				
@@ -89,6 +93,7 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
         	}
 		likelihood = fw_catch * likelihood;
 		clike_fishery[f] += value(likelihood);
+		//}
 	}
 
 
@@ -300,8 +305,7 @@ void SeapodymCoupled::get_catch_lf_like(dvariable& likelihood)
 				if (param->mask_fishery_sp_like[sp][f]){
 					int y = year-(int)param->save_first_yr;
 					int nobs = rw.get_numrec(f,y,month);
-					if (nobs)
-						likelihood += like(sp,k,f,nobs);
+					likelihood += like(sp,k,f,nobs);
 				}
 				k++;
 			}
