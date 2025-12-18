@@ -552,6 +552,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 			for (int f=0; f<nb_fishery; f++){
 				for (int sp=0;sp<nb_species;sp++){
 					if (param.mask_fishery_sp[sp][f]){
+						int no_catch_record = (numrec(f,yr2-(int)param.save_first_yr,mois2) == 0);
 	  
 						// observed fishing effort
 						// calcule et enregistre l'effort total de la pecherie
@@ -562,6 +563,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 									total += mat.effort[f][i][j];
 							}
 						}
+						if (no_catch_record) total = -999;
 						ecritSumDym << total << '\t';
 //cout <<"total effort by fishery "<<f<< " " << total << endl;
 
@@ -575,6 +577,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 									total += mat.catch_obs(sp,k,i,j);
 							}
 						}
+						if (no_catch_record) total = -999;
 						ecritSumDym << total << '\t';
 	
 						// predicted catch
@@ -607,6 +610,7 @@ void CReadWrite::SaveSepodymFileTxt(CParam& param, CMatrices& mat, PMap& map,
 						}
 						if (N>0) cpue = total/N;
 //cout << f << " OBSERVED: "<< N << " CPUE: " << total << " MEAN: " << total/(N+1) << " " << cpue;
+						if (no_catch_record) cpue = -999;
 						ecritSumDym << cpue << '\t';
 						//ecritSumDym << total << '\t';
 	
