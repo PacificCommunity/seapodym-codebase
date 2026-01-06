@@ -11,6 +11,7 @@ double pred_surface_comp(dvector forage, const double DL, const int nb_forage, i
 double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double f, const double g, const double e, const double ssv, const int fsst_type);
 void dv_spawning_in_hs_comp();
 void dv_spawning_adult_func_comp();
+void dv_spawning_BH_Allee_func_comp();
 int save_identifier_string2(char* str);
 void verify_identifier_string2(char* str);
 void save_long_int_value(unsigned long int x);
@@ -37,7 +38,8 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 		
 		J = nograd_assign(J_c);
 
-		save_identifier_string2((char*)"spawning_adult_func_begin");
+		//save_identifier_string2((char*)"spawning_adult_func_begin");
+		save_identifier_string2((char*)"spawning_BH_Allee_func_begin");
 		nb_recruitment.save_prevariable_value();
 		Nbr.save_dvar_matrix_position();
 		a_adults_spawning.save_prevariable_value();
@@ -47,9 +49,11 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 		J.save_dvar_matrix_position();
 		unsigned long int pmap   = (unsigned long int)&map;
 		save_long_int_value(pmap);
-		save_identifier_string2((char*)"spawning_adult_func_end");
+		//save_identifier_string2((char*)"spawning_adult_func_end");
+		save_identifier_string2((char*)"spawning_BH_Allee_func_end");
 
-		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_spawning_adult_func_comp);
+		//gradient_structure::GRAD_STACK1->set_gradient_stack(dv_spawning_adult_func_comp);
+		gradient_structure::GRAD_STACK1->set_gradient_stack(dv_spawning_BH_Allee_func_comp);
 
 	} else {
 
@@ -117,6 +121,56 @@ void dv_spawning_adult_func_comp()
 				//double f_adults = 1000.0*R*adult/(1.0+b*adult);
 				dfNbr(i,j) += 1000.0*(adult/expr0) * dfJ(i,j);
 				dfNm(i,j)  += (R_nb/expr1) * dfJ(i,j);
+				dfBsp(i,j) -= (R_nb*adult*adult/expr1) * dfJ(i,j);
+				dfJ(i,j) = 0.0;
+			}
+		}
+	}
+	dfNbr.save_dmatrix_derivatives(Nbr_pos); 
+	dfNm.save_dmatrix_derivatives(Nm_pos); 
+	dfBsp.save_dmatrix_derivatives(Bsp_pos); 
+	dfJ.save_dmatrix_derivatives(J_pos);
+}
+
+void dv_spawning_BH_Allee_func_comp()
+{
+	verify_identifier_string2((char*)"spawning_BH_Allee_func_end");
+	unsigned long int pos_map   = restore_long_int_value();
+	const dvar_matrix_position J_pos  = restore_dvar_matrix_position();
+	const dvar_matrix_position Nm_pos = restore_dvar_matrix_position();
+	dmatrix Nm = restore_dvar_matrix_value(Nm_pos);
+	const dvar_matrix_position Bsp_pos = restore_dvar_matrix_position();
+	const double b = restore_prevariable_value();
+	const dvar_matrix_position Nbr_pos = restore_dvar_matrix_position();
+	const double R = restore_prevariable_value();
+	verify_identifier_string2((char*)"spawning_BH_Allee_func_begin");
+
+	PMap* map = (PMap*) pos_map;
+
+	dmatrix dfNbr = restore_dvar_matrix_derivatives(Nbr_pos);
+	dmatrix dfNm = restore_dvar_matrix_derivatives(Nm_pos);
+	dmatrix dfBsp = restore_dvar_matrix_derivatives(Bsp_pos);
+	dmatrix dfJ   = restore_dvar_matrix_derivatives(J_pos);
+
+	const int imax = map->imax;
+	const int imin = map->imin;
+
+	const double R_nb = 1000.0*R; //units of R are thous. nb.
+	const double a = 0.7;
+	for (int i = imax; i >= imin; i--){
+		const int jmin = map->jinf[i];
+		const int jmax = map->jsup[i];
+		for (int j = jmax; j >= jmin; j--){
+			if (map->carte(i,j)){	
+
+				double adupa = pow(Nm(i,j),a);
+				double adult = adupa*Nm(i,j);
+				double expr0 = 1.0+b*adult;		
+				double expr1 = pow(expr0,2.0);		
+
+				//double f_adults = 1000.0*R*adult/(1.0+b*adult);
+				dfNbr(i,j) += 1000.0*(adult/expr0) *  dfJ(i,j);
+				dfNm(i,j)  += (R_nb/expr1) * (1+a) * adupa * dfJ(i,j);
 				dfBsp(i,j) -= (R_nb*adult*adult/expr1) * dfJ(i,j);
 				dfJ(i,j) = 0.0;
 			}

@@ -205,7 +205,7 @@ public:
 
 	ivector elarvae_model;        // flag to activate/desactivate early larvae model
 	dvector elarvae_age;
-	dvector elarvae_mortality_min, elarvae_mortality_inc;
+	dvector elarvae_mortality_min, elarvae_mortality_inc, elarvae_mortality_inc2;
 	dvector elarvae_slope_low, elarvae_slope_high, elarvae_sst_low, elarvae_sst_high;
 	dvector elarvae_a_sst, elarvae_b_sst;
 	ivector elarvae_hs_fsst_fixed;

@@ -17,6 +17,8 @@ void SeapodymCoupled::spawning_adult_func_comp(dmatrix& J, const dmatrix Nmature
         //nb_recruitment, here R: thousand of larvae per km^2 being survived
         //Units of adults, i.e. Nmature(i,j): Nb. of ind. per km^2
         //Units of J(i,j): Nb. of ind. per km^2
+	
+	double a = 0.7;//Allee effect parameter
         for (int i = map.imin; i <= map.imax; i++){
                 const int jmin = map.jinf[i];
                 const int jmax = map.jsup[i];
@@ -24,7 +26,8 @@ void SeapodymCoupled::spawning_adult_func_comp(dmatrix& J, const dmatrix Nmature
                         if (map.carte(i,j)){
 
                                         double Nm = Nmature(i,j);
-                                        double f_adults = 1000.0*R*Nm/(1.0+b*Nm);
+                                        //double f_adults = 1000.0*R*Nm/(1.0+b*Nm);
+                                        double f_adults = 1000.0*R*pow(Nm,1.0+a)/(1.0+b*pow(Nm,1.0+a));
                                         J(i,j) = f_adults;
                         }
                 }

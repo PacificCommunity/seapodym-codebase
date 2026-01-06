@@ -781,6 +781,8 @@ bool VarParamCoupled::read(const string& parfile)
 	elarvae_mortality_inc.allocate(0,nb_species-1);
 	elarvae_mortality_min.initialize();
 	elarvae_mortality_inc.initialize();
+	elarvae_mortality_inc2.allocate(0,nb_species-1);
+	elarvae_mortality_inc2.initialize();
 	elarvae_slope_low.allocate(0,nb_species-1);
 	elarvae_slope_high.allocate(0,nb_species-1);
 	elarvae_slope_low.initialize();
@@ -832,6 +834,7 @@ bool VarParamCoupled::read(const string& parfile)
 				vstr = str + "/hs_sst_func_coefs";
 				elarvae_a_sst[sp] = doc.getDouble(vstr, "a_sst");
 				elarvae_b_sst[sp] = doc.getDouble(vstr, "b_sst");	
+				elarvae_mortality_inc2[sp] = doc.getDouble(vstr, "inc");
 				elarvae_hs_fsst_fixed[sp] = doc.getInteger(vstr, "flag");	
 			}
 		} 

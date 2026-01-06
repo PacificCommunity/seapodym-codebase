@@ -447,7 +447,10 @@ dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, cons
 	const double PLconst = 350.0;   // PL*PLconst should be > 1000 (= maximal sample size!)
 	int I; 				// number of bins with data contributes to the likelihood weights
 	double inv_I;
-
+//double negterm = 0;
+//double ave_ksi = 0;
+//double ave_inv_I = 0;
+//int nneg = 0;
 	dvector lf_obs(a0,nb_ages-1);
 	dvar_vector lf_est(a0,nb_ages-1);
 	lf_obs.initialize();
@@ -473,12 +476,16 @@ dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, cons
 				lf_est(a) /= sum_lf_est;
 				double ksi = lf_obs(a)*(1.0-lf_obs(a));
 
+//if (0.5*log(twopi*(ksi+inv_I))<0){negterm -= 0.5*log(twopi*(ksi+inv_I)); ave_ksi += ksi; ave_inv_I += inv_I; nneg++;}
+
 				if (lf_est(a) != 0)
-					likelihood += 0.5*log(twopi*(ksi+inv_I))+
+					likelihood += 0.5*log(twopi*(ksi+inv_I)) +
 						      pow(lf_obs(a)-lf_est(a),2.0)/(2.0*tau*tau*(ksi+inv_I));
 			}
 		}
 	}	
+//if (negterm>0)		
+//	cout << negterm << " " << ave_ksi/nneg << " " << ave_inv_I/nneg << endl;		
 
 	return(likelihood);
 }

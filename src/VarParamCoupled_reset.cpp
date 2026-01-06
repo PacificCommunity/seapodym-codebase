@@ -488,6 +488,7 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 			}
 		}
 	}
+	penalty *= 10000.0;
 
 	if (!scalc())
 		cout << value(penalty) << "; ";
