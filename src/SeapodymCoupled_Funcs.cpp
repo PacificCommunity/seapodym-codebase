@@ -254,12 +254,23 @@ void SeapodymCoupled::CalcSums()
 					if (param->tag_like[sp]){
 						for (int aa=a0_adult[sp]; aa<aN_adult[sp]; aa++){
 							double total_tags = 0.0;
-							for (int pop=1; pop<=param->nb_tag_files;pop++)
-								total_tags += value(mat.dvarDensity(pop,aa,i,j));
+							for (int pop=1; pop<=param->nb_tag_files;pop++){
+
+								int add_to_total_tags = 0;
+								if (!param->use_tag_masks){
+									add_to_total_tags = 1;
+								}else if ((i > tagmaps[pop-1].imin1 && i < tagmaps[pop-1].imax1 && j > tagmaps[pop-1].jinf[i] && j < tagmaps[pop-1].jsup[i]))
+								{
+									add_to_total_tags = 1;
+								}
+								if (add_to_total_tags){
+									total_tags += value(mat.dvarDensity(pop,aa,i,j));
+
+									if (pop==1 && value(mat.dvarDensity(pop,aa,i,j))<0)  cerr << "NEGATIVE BIOMASS for " << aa << " "  << value(mat.dvarDensity(pop,aa,i,j)) << endl;
+								}
+							}
 
 							mat.recruit[0][i][j] += total_tags; 
-							if (value(mat.dvarDensity(1,aa,i,j))<0) cerr << "NEGATIVE BIOMASS for " << aa << " " 
-												     << value(mat.dvarDensity(1,aa,i,j)) << endl;
 						}
 					}
 					//mat.sum_B_recruit[sp] += value(mat.dvarDensity[sp][age_recruits][i][j])*W_mt(age_recruits)*lat_corrected_area;

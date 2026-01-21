@@ -75,9 +75,9 @@ public:
 
 			for (int age = 0; age < agemax_sp; age++) {
 				dvarDensity(sp, age).allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-				dvarDensity(sp, age).initialize();
 			}
 		}
+
 /*
 		const int age_max_1 = 48-1;
 		dvarDensity_age.allocate(0,age_max-1);
@@ -87,6 +87,27 @@ public:
 		}
 */
 
+	}
+
+	void CreateMatSpecies(PMap& map, vector<PMap> tagmaps, int t0, int nbt, int nbi, int nbj, int nb_species, const ivector a0_adult, const ivector& sp_nb_cohorts) {
+		//CMatrices::createMatSpecies(map, t0, nbt, nbi, nbj, nb_species, a0_adult, sp_nb_cohorts);
+		CMatrices::createMatSpecies(map, t0, nbt, nbi, nbj, 1, a0_adult, sp_nb_cohorts);
+		dvarDensity.allocate(0, nb_species - 1);
+		for (int sp = 0; sp < nb_species; sp++) {
+			//const int agemax_sp = sp_nb_cohorts(sp);
+			const int agemax_sp = sp_nb_cohorts(0);
+			dvarDensity(sp).allocate(0, agemax_sp - 1);
+			dvarDensity(sp).initialize();
+
+			for (int age = 0; age < agemax_sp; age++) {
+				if (sp==0){
+					dvarDensity(sp, age).allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+				}else{
+					dvarDensity(sp, age).allocate(tagmaps[sp-1].imin1, tagmaps[sp-1].imax1, tagmaps[sp-1].jinf1, tagmaps[sp-1].jsup1);
+				}
+				dvarDensity(sp, age).initialize();
+			}
+		}
 	}
 
 	void CreateMatCatch(PMap& map, int nbi, int nbj, int nb_species, const IVECTOR& nb_fleet, const ivector a0_adult, const IVECTOR& nb_cohorts, const IVECTOR& nb_region) {

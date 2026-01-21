@@ -143,13 +143,20 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		//int nb_obs = 0;
 		if (t_count==t_count_rec(p)){
 
-			const int imin = map.imin; 
-			const int imax = map.imax; 
+			PMap* map_ptr=nullptr;
+			if (param->use_tag_masks){
+				if (p < static_cast<int>(tagmaps.size()))
+					map_ptr = &tagmaps[p]; 
+			}else{
+				map_ptr = &map;
+			}
+			const int imin = map_ptr->imin; 
+			const int imax = map_ptr->imax; 
 			for (int i = imin; i <= imax; i++){
-				const int jmin = map.jinf[i];
-				const int jmax = map.jsup[i];
+				const int jmin = map_ptr->jinf[i];
+				const int jmax = map_ptr->jsup[i];
 				for (int j = jmin ; j <= jmax; j++){
-					if (map.carte[i][j]){
+					if (map_ptr->carte[i][j]){
 										
 						double xx = param->itolon(i);
 						double yy = param->jtolat(j);
@@ -166,10 +173,10 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 				}
 				//temporally write recaptures to catch matrix (comment in CalcSums)
 				for (int i = imin; i <= imax; i++){
-					const int jmin = map.jinf[i];
-					const int jmax = map.jsup[i];
+					const int jmin = map_ptr->jinf[i];
+					const int jmax = map_ptr->jsup[i];
 					for (int j = jmin ; j <= jmax; j++){
-						if (map.carte[i][j]){
+						if (map_ptr->carte[i][j]){
 							double xx = param->itolon(i);
 							double yy = param->jtolat(j);
 							if (writeoutputs){

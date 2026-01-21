@@ -162,8 +162,9 @@ private:
 	//void Age_class_survivals(dvar_matrix& N_a, const dmatrix N_a_1, const int nt_a, const int nt_a_1);
 	///void Survival(dvar_matrix& N_a, dvar_matrix& N_a_1, dvar_matrix& Mort_a, dvar_matrix& Mort_a_1, const int a, const int sp, const bool adult);
 	void Survival(dvar_matrix& N_a, dvar_matrix& N_a_1, const int a, const int sp);
-	void Ageing(dvar_matrix& N_a, dvar_matrix& N_a_1);
-        void AgePlus(dvar_matrix& N_a, dvar_matrix& N_a_1);
+	void Survival_tagpop(dvar_matrix& N_a, dvar_matrix& N_a_1, const int a, const int sp, const int tagpop);
+	void Ageing(dvar_matrix& N_a, dvar_matrix& N_a_1, PMap& map);
+    void AgePlus(dvar_matrix& N_a, dvar_matrix& N_a_1, PMap& map);
 
 	void Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& N_a, const int jday, const int sp, const int pop_built, const int t_count);
 	void spawning_spinup_comp(dmatrix& J, dmatrix& Hs, dmatrix& SST, double nb_recruitment, double Tmin);

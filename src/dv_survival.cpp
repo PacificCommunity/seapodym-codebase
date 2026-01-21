@@ -16,19 +16,27 @@ unsigned long int restore_long_int_value(void);
 void SeapodymCoupled::Survival(dvar_matrix& N_a, dvar_matrix& N_a_1, const int a, const int sp)
 {
 	int nb_cohorts = param->sp_nb_cohorts[sp];
+	PMap* map_ptr=&map;
 
 	if (a<nb_cohorts-1)
-
-		Ageing(N_a, N_a_1);
+		Ageing(N_a, N_a_1, *map_ptr);
 	else 
-
-		AgePlus(N_a, N_a_1);
-	
-	
-
+		AgePlus(N_a, N_a_1, *map_ptr);
 } 
 
-void SeapodymCoupled::Ageing(dvar_matrix& N_a, dvar_matrix& N_a_1)
+void SeapodymCoupled::Survival_tagpop(dvar_matrix& N_a, dvar_matrix& N_a_1, const int a, const int sp, const int tagpop)
+{
+	int nb_cohorts = param->sp_nb_cohorts[sp];
+	PMap* map_ptr = &tagmaps[tagpop];
+
+	if (a<nb_cohorts-1)
+		Ageing(N_a, N_a_1, *map_ptr);
+	else 
+		AgePlus(N_a, N_a_1, *map_ptr);
+} 
+
+
+void SeapodymCoupled::Ageing(dvar_matrix& N_a, dvar_matrix& N_a_1, PMap& map)
 {
 	for (int i = map.imin; i <= map.imax; i++){	
 		const int jmin = map.jinf[i];
@@ -51,7 +59,7 @@ void SeapodymCoupled::Ageing(dvar_matrix& N_a, dvar_matrix& N_a_1)
 
 }
 
-void SeapodymCoupled::AgePlus(dvar_matrix& N_a, dvar_matrix& N_a_1)
+void SeapodymCoupled::AgePlus(dvar_matrix& N_a, dvar_matrix& N_a_1, PMap& map)
 {
 	N_a.save_dvar_matrix_position();
 	save_identifier_string2((char*)"before_ageplus");

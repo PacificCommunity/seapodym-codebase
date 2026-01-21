@@ -141,6 +141,13 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 
 	int nbtot_tags_files = 0;
 	for (int p=0; p<nb_tagpops; p++){
+		PMap* map_ptr=nullptr;
+		if (param->use_tag_masks){
+			if (p < static_cast<int>(tagmaps.size()))
+				map_ptr = &tagmaps[p];
+		}else{
+			map_ptr = &map;
+		}
 
 		string file_in = param->file_tag_data[p];
 		//date of all recaptures in the cohort will be read from the name of the file
@@ -208,7 +215,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 				j_mod = param->lattoj(lat_rec);	
 				if (lon_rec>xlon[0] && lon_rec<=xlon[nx_obs] 
 				    && lat_rec<=ylat[0] && lat_rec>ylat[ny_obs]){
-					if (map.carte(i_mod,j_mod))
+					if (map_ptr->carte(i_mod,j_mod))
 						rec_added = 1;
 				}
 
@@ -217,7 +224,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 				i_mod = param->lontoi(lon);
 				j_mod = param->lattoj(lat);
 				if (i_mod>=map.imin && i_mod<=map.imax && j_mod>=map.jmin && j_mod<=map.jmax){
-					if (map.carte(i_mod,j_mod))
+					if (map_ptr->carte(i_mod,j_mod))
 						rel_added = 1;
 					//attn: generic way is to search over 8 surrounding cells
 					//if (!map.carte(i_mod,j_mod) && map.carte(i_mod,j_mod-1)) { 
@@ -244,7 +251,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 							cout << "WARNING: tag recapture is on land: " << 
 								p << " " << id << " " << yy_rec << " "<< mm_rec 
 								<< " " << lat_rec << " " << lon_rec << "; mask: " 
-								<< map.carte(i,j)<< endl;
+								<< map_ptr->carte(i,j)<< endl;
 						} else 
 							cout<< "WARNING: tag recapture out of observational space: " << 
 								p << " " << id << " " << yy_rec << " "<< mm_rec 
@@ -258,7 +265,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 						cout<< "WARNING: tag release out of model domain: " << 
 							p << " " << id << " " << yy << " " << mm << " "
 							<< lat << " " << lon << "; mask: " 
-							<< map.carte(i_mod,j_mod) << endl;
+							<< map_ptr->carte(i_mod,j_mod) << endl;
 					continue;
 				}
 				//One more check might be necessary: discrepancy between length(age) at recapture
@@ -325,7 +332,7 @@ void SeapodymCoupled::ReadTaggingData(imatrix& nb_rel, ivector& t_count_rec)
 							int jto   = jfrom + yr_tags;
 							for (int i=ifrom; i<ito; i++){
 								for (int j=jfrom; j<jto; j++){
-									if (map.carte[i][j]){
+									if (map_ptr->carte[i][j]){
 										rec_obs(p,ii,jj) += gkernel(i,j);
 										tlib_obs(p,ii,jj) += gkernel(i,j)*dtlib;
 									}

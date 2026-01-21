@@ -26,6 +26,7 @@ public:
 	VarParamCoupled* param;	// objet param derive de la classe CParam 
 	VarMatrices mat;	// objet mat derive de la classe CMatrices
 	PMap map;		// objet map derive de la classe CMap
+	vector<PMap> tagmaps;		// tableau de maps for tag populations
 	VarSimtunaFunc func;	// objet func derive de la classe CSimtunafunc
 	CNumfunc nfunc; 	// objet nfunc derive de la classe CNumfunc
 	CSaveTimeArea save;	// objet save derive de la classe CSaveTimeArea
