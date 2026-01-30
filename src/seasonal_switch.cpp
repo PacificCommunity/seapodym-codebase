@@ -5,7 +5,6 @@
 
 
 double daylength_comp(double lat, double jday, double pi);
-double daylength_twilight(double lat, double jday, double pi);
 double tetafunc(double arg, const double teta);
 
 
@@ -106,31 +105,6 @@ void VarSimtunaFunc::Seasonal_switch_comp(VarParamCoupled& param, VarMatrices& m
 			}
 		}
 	}
-}
-
-double daylength_twilight(double lat, double jday, double pi)
-{  // The CBM model of Forsythe et al, Ecological Modelling 80 (1995) 87-95
-
-	//trvolution angle for the day of the year
-	double theta = 0.2163108 + 2*(atan(0.9671396 * tan(0.00860*(jday-186))));
-
-	//sun's declination angle, or the angular distance at solar noon between the 
-	//Sun and the equator, from the Eartch orbit revolution angle
-	double phi = asin(0.39795 * cos (theta));
-
-	//angle between the sun position and the horizon, in degrees
-	//6  - civil twilight
-	//12 - nautical twilight
-	//18 - astronomical twilight
-	double p = 6; 
-
-	//daylength computed according to 'p'
-	double arg = (sin(pi*p/180)+sin(lat*pi/180)*sin(phi))/(cos(lat*pi/180)*cos(phi));
-	if (arg>1.0)  arg = 1.0;
-	if (arg<-1.0) arg = -1.0;
-	double DL = 24.0-(24.0/pi)*acos(arg);
-
-	return DL;
 }
 
 
