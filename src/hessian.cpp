@@ -296,11 +296,12 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 				x(i) = sc.param->par_init_step(i,xr[k]);
 
 				like = run_sim(sc,x);
+				double stocklike = sc.get_stocklike();
 				if (fmin>like){
 					fmin = like;
 					xmin = x(i);
 				}
-				cout << i << "." << k+1 << " \t" << x_names[i] << " \t" << sc.param->get_parval(i) << " " << like << endl;
+				cout << i << "." << k+1 << " \t" << x_names[i] << " \t" << sc.param->get_parval(i) << " " << like << " " << stocklike << endl;
 			}
 			x(i) = xmin; //if fmin not improved, xmin contains value at start 	
 		}
