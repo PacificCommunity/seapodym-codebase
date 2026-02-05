@@ -1,14 +1,14 @@
 #include <iostream>
 #include <cstring>
 #include <sys/stat.h>
+#include "ad_options.h"
 using std::cout;
 
 void help(char* argv0);
 void CheckInfo(char* Option, char* argv0);
 int OptionToCode(char* Option,int &sub_option);
-int seapodym_coupled(const char* parfile, const int cmp_regime, const int sub_option, const bool reset_buffers);
+int seapodym_coupled(const char* parfile, const int cmp_regime, const int sub_option, const int sub_option2, const bool reset_buffers);
 int seapodym_phases(const char* parfile);
-bool read_memory_options(int argc, char** argv, const bool grad_calc);
 
 int main(int argc, char** argv) {
 
@@ -19,6 +19,7 @@ int main(int argc, char** argv) {
 	
 	int cmp_regime = -1;
 	int sub_option = 0;
+	int sub_option2 = 0;
 	bool reset_buffers = false;
 	bool file_exists = false;
 
@@ -40,8 +41,12 @@ int main(int argc, char** argv) {
 		reset_buffers = read_memory_options(argc, argv, grad_calc);	
 	}
 
+	if (cmp_regime==3 && file_exists){
+		sub_option2 = read_sub_option2(argc, argv, cmp_regime);
+	}
+
 	if (cmp_regime!=-11)
-		return seapodym_coupled(argv[argc-1],cmp_regime,sub_option,reset_buffers);
+		return seapodym_coupled(argv[argc-1],cmp_regime,sub_option,sub_option2,reset_buffers);
 	else //not supported for now, will not work
 		return seapodym_phases(argv[argc-1]);
 }

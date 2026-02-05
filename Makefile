@@ -1,4 +1,5 @@
 HEADERS= \
+ad_options.h \
 XMLDocument2.h \
 calpop.h \
 Map.h \
@@ -22,7 +23,7 @@ NishikawaLike.h
 SRCS= \
 cmdopt.cpp \
 main_simulation.cpp \
-ad_buffers.cpp \
+ad_options.cpp \
 XMLDocument2.cpp \
 VarParamCoupled.cpp \
 seapodym_coupled.cpp \

@@ -20,9 +20,9 @@ void CheckInfo(char* cmdop, char* argv0) {
 
 int OptionToCode(char* op, int& sub_option) {
 
-	const int N = 19;
-	const char *cmdop[N] = {"-ph","-s","-p","-H","-sa","-t","-mv","-mc","-mg","--phases","--simulation", "--likelihood-projection","--hessian","--local-sensitivity","--taylor-test","-sa=0","-sa=1","-sa=2","-sa=3"};
-	int cmpCode[N] = {-11,0,1,2,3,4,-1,-1,-1,-11,0,1,2,3,4,3,3,3,3};
+	const int N = 21;
+	const char *cmdop[N] = {"-ph","-s","-p","-H","-sa","-na","-t","-mv","-mc","-mg","--phases","--simulation", "--likelihood-projection","--hessian","--local-sensitivity","--taylor-test","--number-aat","-sa=0","-sa=1","-sa=2","-sa=3"};
+	int cmpCode[N] = {-11,0,1,2,3,-1,4,-1,-1,-1,-11,0,1,2,3,4,-1,3,3,3,3};
 	for (int i=0; i<N; i++)
 		if (strcmp(op,cmdop[i])==0){
 			if (i>=N-3) sub_option = 1;
@@ -50,7 +50,8 @@ void help(char* argv0) {
 	cout << "  -sa[=0], --local-sensitivity\t By default[FLAG=0] computes local sensitivities.\n";
 	cout << "  -sa=1 \t\t\t Computes likelihood changes within parameter boundaries.\n";
 	cout << "  -sa=2 \t\t\t Runs ONE-AT-A-TIME sensitivity simulations.\n";
-	cout << "  -sa=3 \t\t\t Performs one ALL-AT-A-TIME simulation for GSA.\n";	
+	cout << "  -sa=3 \t\t\t Performs ALL-AT-A-TIME simulations for GSA.\n";	
+	cout << "  -na, --number-aat <integer_number> \t\t Number of ALL-AT-A-TIME simulations for GSA (Default: 1). \n";	
 	cout << "\nIf ADDITIONAL MEMORY is needed, add after the main option (after binary name for optimization run): \n"; 
 	cout << "  -mv <integer_number> \t\t Size of gs_var_buffer - the buffer for model variables. \n";	
 	cout << "  -mg <integer_number> \t\t Size of gradstack_buffer - the buffer for automatic differentiation.\n";	
@@ -70,7 +71,8 @@ void help_sim(char* argv0) {
 	cout << "  -s, --simulation \t\t Run a simulation with fixed parameters.\n";
 	cout << "  -sa[=1], --edge-sensitivity\t By default[FLAG=1] computes likelihood changes within parameter boundaries.\n";
 	cout << "  -sa=2 \t\t\t Runs ONE-AT-A-TIME sensitivity simulations.\n";
-	cout << "  -sa=3 \t\t\t Performs one ALL-AT-A-TIME simulation for GSA.\n";	
+	cout << "  -sa=3 \t\t\t Performs ALL-AT-A-TIME simulations for GSA.\n";	
+	cout << "  -na, --number-aat <integer_number> \t\t Number of ALL-AT-A-TIME simulations for GSA (Default: 1). \n";	
 	cout << "\nIf ADDITIONAL MEMORY is needed, add after the main option: \n"; 
 	cout << "  -mv <integer_number> \t\t Size of gs_var_buffer - the buffer for model variables. \n";	
 	exit(0);

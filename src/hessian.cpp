@@ -172,7 +172,7 @@ void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x)
 }
 
 ///3. Options for parametric sensitivity analyses: FLAG 0 - local sensitivity, 1 - edge sensitivity, 2 - OAT of global sensitivity analysis, 3 - AAT of global sensitivity analysis.
-void Sensitivity_analysis(const char* parfile, const int sftype)
+void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aat)
 {
 
 	SeapodymCoupled sc(parfile);
@@ -319,24 +319,49 @@ void Sensitivity_analysis(const char* parfile, const int sftype)
 
 		gradient_structure::set_NO_DERIVATIVES();
 		cout << "\nComputing likelihood only: " << endl << endl;
-		double like = run_sim(sc,x);//sc.run_coupled((dvar_vector)x);
-		//cout << like << endl;	
-		
-		// Get likelihood components
-		double clike = sc.get_clike();
-		double lflike = sc.get_lflike();
-		double stocklike = sc.get_stocklike();
-		double taglike = sc.get_taglike();
-		double larvaelike = sc.get_larvaelike();
+		double like = 1e2*sc.param->get_parval(1);//to be used for the seed
+		int n=(int)like;
+		random_number_generator r(n);
 
-		// Likelihood breakdown
-		cout << "Total:	 " << like << endl;
-		cout << "Catch:	 " << clike << endl;
-		cout << "LF:	 " << lflike << endl;
-		cout << "Stock:	 " << stocklike << endl;
-		cout << "Tags:	 " << taglike << endl;
-		cout << "Larvae: " << larvaelike << endl;
+		// Randomize parameter values for the AAT experiments
+		dmatrix xr;
+		xr.allocate(1,nvar+1, 0, nb_aat);
+		xr.initialize();
+		for (int i=1; i<=nvar; i++){
+			randu(r);
+			xr[i].fill_randu(r);
+		}
 
+		// Table column names
+		cout << "exp_id";
+		for (int i=1; i<=nvar; i++){
+			cout << "\t" << x_names[i];
+		}
+		cout << "\tlike\tclike\tlflike\tstocklike\ttaglike\tearlylike" << endl;
+		//cout << left;
+		//cout << setw(6) << "like" << setw(25) << "clike" << setw(25) << "lflike" << setw(25) << "stocklike" << setw(25) << "taglike" << setw(25) << "earlylike" << endl;
+
+		// Run the AAT experiments
+		cout << right;
+		for (int k=0; k<nb_aat; k++){
+			cout << k+1;
+			for (int i=1; i<=nvar; i++){
+				x(i) = sc.param->par_init_step(i,xr[i][k]);
+				cout << "\t" << sc.param->get_parval(i);
+			}
+			double like = run_sim(sc,x);//sc.run_coupled((dvar_vector)x);
+
+			// Get likelihood components
+			double clike = sc.get_clike();
+			double lflike = sc.get_lflike();
+			double stocklike = sc.get_stocklike();
+			double taglike = sc.get_taglike();
+			double larvaelike = sc.get_larvaelike();
+
+			// Likelihood breakdown
+			cout << "\t" << like << "\t" << clike << "\t" << lflike << "\t" << stocklike << "\t" << taglike << "\t" << larvaelike << endl;
+			//cout << setw(6) << like << setw(25) << clike << setw(25) << lflike << setw(25) << stocklike << setw(25) << taglike << setw(25) << larvaelike << endl;
+		}
 	}	
 	
 	time_t time2 = clock();

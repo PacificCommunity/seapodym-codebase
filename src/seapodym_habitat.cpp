@@ -4,7 +4,7 @@
 string get_path(const char* full_path);
 void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x);
 void Hessian_comp(const char* parfile);
-void Sensitivity_analysis(const char* parfile, const int sftype);
+void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aat);
 void Taylor_derivative_test(const char* parfile);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
@@ -19,7 +19,7 @@ This is the main routine that calls upper-level functions such as
    b) simulation computing either spawning or feeding habitat functions;
    c) Hessian calculation;
 */
-int seapodym_habitats(const char* parfile, int cmp_regime, int FLAG, const bool reset_buffers)
+int seapodym_habitats(const char* parfile, int cmp_regime, int FLAG, int FLAG2, const bool reset_buffers)
 {
 	time_t time_sec;
 	time(&time_sec);
@@ -50,7 +50,7 @@ int seapodym_habitats(const char* parfile, int cmp_regime, int FLAG, const bool 
 		Hessian_comp(parfile);
 		return 0;
 	} else if (cmp_regime == 3){
-		Sensitivity_analysis(parfile,FLAG);
+		Sensitivity_analysis(parfile,FLAG,FLAG2);
 		return 0;
 	} else if (cmp_regime == 4){
 		Taylor_derivative_test(parfile);
