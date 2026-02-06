@@ -212,7 +212,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 			string tab = "\t";
 			if (l<16) tab += "\t";
 			if (l<7) tab += "\t";
-			cout << i <<  " \t" << x_names[i] << tab << s[i]<< endl;	
+			cout << i <<  "\t" << x_names[i] << tab << s[i]<< endl;	
 		}	
 	}
 	else if (sftype==1){//Edge sensitivity metric
@@ -301,7 +301,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 					fmin = like;
 					xmin = x(i);
 				}
-				cout << i << "." << k+1 << " \t" << x_names[i] << " \t" << sc.param->get_parval(i) << " " << like << " " << stocklike << endl;
+				cout << i << "." << k+1 << "\t" << x_names[i] << "\t" << sc.param->get_parval(i) << " " << like << " " << stocklike << endl;
 			}
 			x(i) = xmin; //if fmin not improved, xmin contains value at start 	
 		}
