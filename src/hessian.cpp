@@ -1,5 +1,6 @@
 #include <fvar.hpp>
 #include "SeapodymCoupled.h"
+#include "Cmdopt.h"
 
 string get_path(const char* full_path);
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar);
@@ -171,8 +172,8 @@ void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x)
 	//cleanup_temporary_files();
 }
 
-///3. Options for parametric sensitivity analyses: FLAG 0 - local sensitivity, 1 - edge sensitivity, 2 - OAT of global sensitivity analysis, 3 - AAT of global sensitivity analysis.
-void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aat)
+///3. Options for parametric sensitivity analyses: cmdopt.sftype 0 - local sensitivity, 1 - edge sensitivity, 2 - OAT of global sensitivity analysis, 3 - AAT of global sensitivity analysis.
+void Sensitivity_analysis(const char* parfile, Cmdopt* cmdopt)
 {
 
 	SeapodymCoupled sc(parfile);
@@ -191,7 +192,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 
 	clock_t time1 = clock();
 
-	if (sftype == 0){
+	if (cmdopt->sftype == 0){
 
 		cout << "\nComputing local sensitivities using likelihood gradient" << endl;
 		dvector g(1, nvar); g.initialize();
@@ -215,7 +216,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 			cout << i <<  "\t" << x_names[i] << tab << s[i]<< endl;	
 		}	
 	}
-	else if (sftype==1){//Edge sensitivity metric
+	else if (cmdopt->sftype==1){//Edge sensitivity metric
 		
 		cout << "\nComputing likelihood change at parameters boundaries, L_at_boundary - L_cur" << endl;
 
@@ -265,7 +266,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 		}	
 		cout << string(wline, '-') << '\n';
 	}
-	else if (sftype==2){//ONE-AT-a-TIME sensitivity analysis
+	else if (cmdopt->sftype==2){//ONE-AT-a-TIME sensitivity analysis
 
 		cout << "\nstarting computing likelihoods for OAT sensitivity analysis" << endl;
 		string dirout = get_path(parfile);
@@ -316,7 +317,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 		sc.param->total_like = fmin;
 		sc.write(newparfile.c_str());
 	}
-	else if (sftype==3){//just a forward run, usually to be used in ALL-AT-a-TIME sensitivity analysis
+	else if (cmdopt->sftype==3){//just a forward run, usually to be used in ALL-AT-a-TIME sensitivity analysis
 
 		gradient_structure::set_NO_DERIVATIVES();
 		cout << "\nComputing likelihood only: " << endl << endl;
@@ -326,7 +327,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 
 		// Randomize parameter values for the AAT experiments
 		dmatrix xr;
-		xr.allocate(1,nvar+1, 0, nb_aat);
+		xr.allocate(1,nvar+1, 0, cmdopt->nb_aat);
 		xr.initialize();
 		for (int i=1; i<=nvar; i++){
 			randu(r);
@@ -344,7 +345,7 @@ void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aa
 
 		// Run the AAT experiments
 		cout << right;
-		for (int k=0; k<nb_aat; k++){
+		for (int k=0; k<cmdopt->nb_aat; k++){
 			cout << k+1;
 			for (int i=1; i<=nvar; i++){
 				x(i) = sc.param->par_init_step(i,xr[i][k]);

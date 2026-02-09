@@ -1,7 +1,12 @@
-#include "ad_options.h"
+#include <iostream>
+#include <cstring>
+#include <cstdlib>
+#include <algorithm>
+
+char* getCmdOption(char ** begin, char ** end, const std::string & option);
+bool cmdOptionExists(char** begin, char** end, const std::string & option);
 void buffers_get(const long int mv, const long int mg, const long int mc);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
-bool read_memory_options(int argc, char** argv, const bool grad_calc);
 
 //Default settings are for:
 //PO-2deg bigeye config, 22-years simulation (1.6Gb) 
@@ -82,19 +87,3 @@ bool cmdOptionExists(char** begin, char** end, const std::string& option)
 }
 
 
-int read_sub_option2(int argc, char** argv, int cmp_regime)
-{
-	// Here this funcitons was initially coded to read the nb_aat argument for AAT experiments
-	// But this can be also used in the future for other arguments
-	if (cmp_regime==3){
-		int nb_aat = 1;
-		if(cmdOptionExists(argv, argv+argc, "-na")){
-			nb_aat = atol(getCmdOption(argv, argv + argc -1, "-na"));
-		}else if(cmdOptionExists(argv, argv+argc, "--number-aat")){
-			nb_aat = atol(getCmdOption(argv, argv + argc -1, "--number-aat"));
-		}
-
-		return nb_aat;
-	}
-	return 0;
-}

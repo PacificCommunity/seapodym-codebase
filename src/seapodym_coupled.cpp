@@ -1,12 +1,13 @@
 #include <fvar.hpp>
 #include "SeapodymCoupled.h"
+#include "Cmdopt.h"
 //#include <functional> // to pass function as an argument 
 
 string get_path(const char* full_path);
 //void prerun_model(SeapodymCoupled& sc);
 void Hyperspace_projection(SeapodymCoupled& sc, dvar_vector x);
 void Taylor_derivative_test(const char* parfile);
-void Sensitivity_analysis(const char* parfile, const int sftype, const int nb_aat);
+void Sensitivity_analysis(const char* parfile, Cmdopt* cmdopt);
 void Hessian_comp(const char* parfile);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
@@ -24,7 +25,7 @@ This is the main routine that calls upper-level functions such as
    e) sensitivity analysis;
    f) computing 2d projection of likelihood function the pair of parameters (should be specified in parfile).
 */
-int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, int FLAG2, const bool reset_buffers)
+int seapodym_coupled(const char* parfile, Cmdopt* cmdopt)
 {
 	time_t time_sec;
 	time(&time_sec);
@@ -33,9 +34,9 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, int FLAG2, c
 	gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
 	long int gradstack_buffer, cmpdif_buffer, gs_var_buffer;
 	bool grad_calc = false;
-	if (cmp_regime==-1 || cmp_regime==2 || cmp_regime==4) grad_calc = true;
+	if (cmdopt->cmp_regime==-1 || cmdopt->cmp_regime==2 || cmdopt->cmp_regime==4) grad_calc = true;
 	buffers_init(gs_var_buffer, gradstack_buffer, cmpdif_buffer, grad_calc);
-	if (reset_buffers)
+	if (cmdopt->reset_buffers)
 		buffers_set(gs_var_buffer, gradstack_buffer, cmpdif_buffer);
 
 	gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
@@ -46,13 +47,13 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, int FLAG2, c
 	cout << "\nstarting time: " << ctime(&time_sec) << endl;
 
 	//redirect to other run modes
-	if (cmp_regime == 2){
+	if (cmdopt->cmp_regime == 2){
 		Hessian_comp(parfile);
 		return 0;
-	} else if (cmp_regime == 3){
-		Sensitivity_analysis(parfile,FLAG, FLAG2);
+	} else if (cmdopt->cmp_regime == 3){
+		Sensitivity_analysis(parfile, cmdopt);
 		return 0;
-	} else if (cmp_regime == 4){
+	} else if (cmdopt->cmp_regime == 4){
 		Taylor_derivative_test(parfile);
 		return 0;
 	}
@@ -85,7 +86,7 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, int FLAG2, c
 	int compute_gradient = 1;
 
 	//coupled simulation for tuna-predator model, no minimization
-	if (cmp_regime == 0 || sc.param->flag_coupling){
+	if (cmdopt->cmp_regime == 0 || sc.param->flag_coupling){
 		if (sc.param->flag_coupling && compute_gradient!=0){
 			cout << "Warning: COUPLING regime is ON, no parameter estimation will be performed!" << endl;
 		}
@@ -108,7 +109,7 @@ int seapodym_coupled(const char* parfile, int cmp_regime, int FLAG, int FLAG2, c
 
 	//simulation regime to compute 2d projection of likelihood function
 	//over any two variable parameters (should be specified through parfile)
-	if (cmp_regime == 1){
+	if (cmdopt->cmp_regime == 1){
 		//sc.param->set_gradcalc(false);
 		gradient_structure::set_NO_DERIVATIVES();
 		Hyperspace_projection(sc,(dvar_vector)x);
