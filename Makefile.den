@@ -1,5 +1,5 @@
 HEADERS= \
-ad_options.h \
+Cmdopt.h \
 XMLDocument2.h \
 calpop.h \
 Map.h \
@@ -21,9 +21,9 @@ VarSimtunaFunc.h \
 NishikawaLike.h
 
 SRCS= \
-cmdopt.cpp \
+Cmdopt.cpp \
 main_densities.cpp \
-ad_options.cpp \
+ad_buffers.cpp \
 XMLDocument2.cpp \
 VarParamCoupled.cpp \
 seapodym_density.cpp \
