@@ -320,10 +320,9 @@ void Sensitivity_analysis(const char* parfile, Cmdopt* cmdopt)
 	else if (cmdopt->sftype==3){//just a forward run, usually to be used in ALL-AT-a-TIME sensitivity analysis
 
 		gradient_structure::set_NO_DERIVATIVES();
-		cout << "\nComputing likelihood only: " << endl << endl;
-		double like = 1e2*sc.param->get_parval(1);//to be used for the seed
-		int n=(int)like;
-		random_number_generator r(n);
+		int seed=(int)time1;// Use time stamp for the random seed
+		random_number_generator r(seed);
+		cout << "\nRandomisation of parameter starting values using seed = " << seed << endl;
 
 		// Randomize parameter values for the AAT experiments
 		dmatrix xr;
@@ -333,6 +332,8 @@ void Sensitivity_analysis(const char* parfile, Cmdopt* cmdopt)
 			randu(r);
 			xr[i].fill_randu(r);
 		}
+
+		cout << "\nComputing likelihood only: " << endl << endl;
 
 		// Table column names
 		cout << "exp_id";
