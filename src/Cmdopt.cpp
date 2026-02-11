@@ -52,15 +52,18 @@ void Cmdopt::CheckInfo(char* cmdop, char* argv0) {
 
 void Cmdopt::OptionToCode(char* op) {
 
+	bool done = false;
 	const int N = 17;
 	const char *cmdop[N] = {"-ph","-s","-p","-H","-sa","-na","-t","-mv","-mc","-mg","--phases","--simulation", "--likelihood-projection","--hessian","--local-sensitivity","--taylor-test","--number-aat"};
 	int cmpCode[N] = {-11,0,1,2,3,-1,4,-1,-1,-1,-11,0,1,2,3,4,-1};
 	for (int i=0; i<N; i++)
 		if (strcmp(op,cmdop[i])==0){	
+			done = true
 			cmp_regime = cmpCode[i];
 		}
 	
-	cout << "\nWRONG ENTRY: no such option - will run a simulation...\n";
+	if (!done)
+		cout << "\nWRONG ENTRY: no such option - will run a simulation...\n";
 }
 
 
