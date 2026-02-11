@@ -1174,7 +1174,7 @@ bool VarParamCoupled::read(const string& parfile)
 			maxfn = doc.getInteger("/max_nb_function_evaluations","value");
 
 		if (!doc.get("convergence_criterion","value").empty())
-			maxfn = doc.getDouble("/convergence_criterion","value");
+			crit = doc.getDouble("/convergence_criterion","value");
 		//end of Optimization control:
 
 		total_like = 0;
