@@ -58,7 +58,7 @@ void Cmdopt::OptionToCode(char* op) {
 	int cmpCode[N] = {-11,0,1,2,3,-1,4,-1,-1,-1,-11,0,1,2,3,4,-1};
 	for (int i=0; i<N; i++)
 		if (strcmp(op,cmdop[i])==0){	
-			done = true
+			done = true;
 			cmp_regime = cmpCode[i];
 		}
 	
@@ -78,8 +78,8 @@ void Cmdopt::help(char* argv0) {
 	cout << "  -p, --projection \t\t Compute 2D-projection of the likelihood on a grid specified in parfile.\n";
 	cout << "  -t, --taylor-test   \t\t Perform Taylor derivative test with central differencing.\n";
 	cout << "  -s, --simulation \t\t Run simulation without optimization.\n";
-	cout << "  -sa <int> \t\t\t 0 - Computes local sensititivy analysis (Default)\n\t\t\t\t 1 - Computes likelihood changes within parameter boundaries\n\t\t\t\t 2 - Runs ONE-AT-A-TIME sensitivity simulations\n\t\t\t\t 3 - Performs ALL-AT-A-TIME simulations for GSA.\n";
-	cout << "  --local-sensitivity\t\t Computes local sensitivities. Equivalent to -sa 0.\n";
+	cout << "  -sa <int> \t\t\t grad - Computes local sensititivy analysis (Default)\n\t\t\t\t edge - Computes likelihood changes within parameter boundaries\n\t\t\t\t oat - Runs ONE-AT-A-TIME sensitivity simulations\n\t\t\t\t aat - Performs ALL-AT-A-TIME simulations for GSA.\n";
+	cout << "  --local-sensitivity\t\t Computes local sensitivities. Equivalent to -sa grad.\n";
 	cout << "  -na, --number-aat <int> \t Number of ALL-AT-A-TIME simulations for GSA (Default: 1). \n";	
 	cout << "\nIf ADDITIONAL MEMORY is needed, add after the main option (after binary name for optimization run): \n"; 
 	cout << "  -mv <integer_number> \t\t Size of gs_var_buffer - the buffer for model variables. \n";	
@@ -98,8 +98,8 @@ void Cmdopt::help_sim(char* argv0) {
 	cout << "  -v, --version \t\t Print version number and exit.\n";
 	cout << "  -p, --projection \t\t Compute 2D-projection of the likelihood on a grid specified in parfile.\n";
 	cout << "  -s, --simulation \t\t Run a simulation with fixed parameters.\n";
-	cout << "  -sa <int> \t\t\t 0 - Computes local sensititivy analysis (Default)\n\t\t\t\t 1 - Computes likelihood changes within parameter boundaries\n\t\t\t\t 2 - Runs ONE-AT-A-TIME sensitivity simulations\n\t\t\t\t 3 - Performs ALL-AT-A-TIME simulations for GSA.\n";
-	cout << "  --local-sensitivity\t\t Computes local sensitivities. Equivalent to -sa 0.\n";
+	cout << "  -sa <int> \t\t\t grad - Computes local sensititivy analysis (Default)\n\t\t\t\t edge - Computes likelihood changes within parameter boundaries\n\t\t\t\t oat - Runs ONE-AT-A-TIME sensitivity simulations\n\t\t\t\t aat - Performs ALL-AT-A-TIME simulations for GSA.\n";
+	cout << "  --local-sensitivity\t\t Computes local sensitivities. Equivalent to -sa grad.\n";
 	cout << "  -na, --number-aat <int> \t Number of ALL-AT-A-TIME simulations for GSA (Default: 1). \n";	
 	cout << "\nIf ADDITIONAL MEMORY is needed, add after the main option: \n"; 
 	cout << "  -mv <integer_number> \t\t Size of gs_var_buffer - the buffer for model variables. \n";	
@@ -124,7 +124,16 @@ void Cmdopt::read_sa_options(int argc, char** argv)
 {
 	if (cmp_regime==3){
 
-		sftype = atol(getCmdOption(argv, argv + argc -1, "-sa"));
+		char *op = getCmdOption(argv, argv + argc -1, "-sa");
+		const int N = 4;
+		const char *sfop[N] = {"grad","edge","oat","aat"};
+		int sftypes[N] = {0,1,2,3};
+		for (int i=0; i<N; i++)
+			if (strcmp(op,sfop[i])==0){	
+				sftype = sftypes[i];
+			}
+		cerr << "sftype = " << sftype << endl;
+
 
 		// Read number of AAT
 		if (sftype==3){
