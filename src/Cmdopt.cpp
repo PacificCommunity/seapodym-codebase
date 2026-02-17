@@ -132,8 +132,6 @@ void Cmdopt::read_sa_options(int argc, char** argv)
 			if (strcmp(op,sfop[i])==0){	
 				sftype = sftypes[i];
 			}
-		cerr << "sftype = " << sftype << endl;
-
 
 		// Read number of AAT
 		if (sftype==3){
