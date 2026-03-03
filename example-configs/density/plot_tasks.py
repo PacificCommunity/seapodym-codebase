@@ -90,7 +90,8 @@ def parse_logs():
 
     summary = df.groupby("task_id").apply(agg_task).reset_index().sort_values("task_id")
     # Ensure proper dtypes
-    summary = summary.astype({"num_steps": int})
+    summary = summary.astype({"num_steps": int, "worker_id": int})
+
 
     print(summary)
     return summary
@@ -107,7 +108,7 @@ def plot_task_times(summary):
     ax.set_yticks(y_pos)
     ax.set_yticklabels(summary["task_id"], fontsize=6)
     ax.set_xlabel('Time (seconds)')
-    ax.set_title('Gantt Chart of Task Execution')
+    ax.set_title('Task Execution Times')
     ax.legend()
 
     plt.tight_layout()
