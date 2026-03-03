@@ -52,7 +52,11 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		for (int aa=param->age_mature[sp]; aa<nb_age_class; aa++){
 			int chunk_id = (tstart_cohort-1)*nb_age_class + aa;
 			int index = 0;
-			std::vector<double> data = dataCollector.get(chunk_id);
+			std::vector<double> data( dataCollector.getNumSize() );
+			dataCollector.startEpoch();
+			dataCollector.getAsync(chunk_id, data.data());
+			dataCollector.flush();
+			dataCollector.endEpoch();
 			for (int i = map.imin1; i <= map.imax1; i++){
 				const int jmin1 = map.jinf1[i];
 				const int jmax1 = map.jsup1[i];
