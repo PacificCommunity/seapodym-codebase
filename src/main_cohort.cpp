@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
     // logger
     // Use true to let logs be overwritten, otherwise the logs will be appended
     std::string sworkerId = std::to_string(workerId);
-    auto logger = spdlog::basic_logger_mt(sworkerId, "log_worker" + sworkerId + ".txt", true);
+    auto logger = spdlog::basic_logger_mt("log" + sworkerId, "log_taskfunc" + sworkerId + ".txt", true);
     logger->set_level(spdlog::level::debug);
 
     std::string parfile = cmdLine.get<std::string>("-s");
