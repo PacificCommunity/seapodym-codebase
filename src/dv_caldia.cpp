@@ -247,8 +247,10 @@ void dv_caldia()
 	const double unit_x = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dx;
 	const double unit_y = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dy;
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
+
+	const double Dinf_size_slope = param->Dinf_size_slope[sp];
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
-	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
+	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dmax   = sigma_species*Dinf;
 
 	const int imax = map->imax;
@@ -663,7 +665,8 @@ void dv_caldia_UV()
 	const double unit_y = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dy;
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
-	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
+	const double Dinf_size_slope = param->Dinf_size_slope[sp];
+	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dmax   = sigma_species*Dinf;
 	const double rmax   = param->rmax_currents[sp];
 

@@ -266,7 +266,8 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 	diffusion_y.initialize();
 
 	//PRECALDIA SECTION
-	const double MSS_size_slope = param.MSS_size_slope[sp];
+	const double MSS_size_slope  = param.MSS_size_slope[sp];
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 	const double length  = param.length[sp][age]*0.01;
 	const double lmax    = param.length[sp][param.sp_nb_cohorts[sp]-1]*0.01;
 	const double dx	     = param.deltaX;
@@ -276,7 +277,7 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
 
 
 	const double Dmax    = sigma_species*Dinf;
@@ -387,7 +388,8 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 
 
 	//PRECALDIA SECTION
-	const double MSS_size_slope = param.MSS_size_slope[sp];
+	const double MSS_size_slope  = param.MSS_size_slope[sp];
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 	const double length  = param.length[sp][age]*0.01;
 	const double lmax    = param.length[sp][param.sp_nb_cohorts[sp]-1]*0.01;
 	const double dx	     = param.deltaX;
@@ -397,7 +399,7 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
 
 	const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
@@ -508,7 +510,8 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 	advection_y.initialize();
 
 	//PRECALDIA SECTION
-	const double MSS_size_slope = param.MSS_size_slope[sp];
+	const double MSS_size_slope  = param.MSS_size_slope[sp];
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 	const double length  = param.length[sp][age]*0.01;
 	const double lmax    = param.length[sp][param.sp_nb_cohorts[sp]-1]*0.01;
 	const double dx	     = param.deltaX;
@@ -518,7 +521,7 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
@@ -679,7 +682,8 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	//end of accessiblity parameters section
 
 	//PRECALDIA SECTION
-	const double MSS_size_slope= param.MSS_size_slope[sp];
+	const double MSS_size_slope  = param.MSS_size_slope[sp];
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 	const double length  = param.length[sp][age]*0.01;
 	const double lmax    = param.length[sp][param.sp_nb_cohorts[sp]-1]*0.01;
 	const double dx	     = param.deltaX;
@@ -690,7 +694,7 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 

@@ -16,6 +16,8 @@ void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, con
 	mat.advection_x.initialize();
 	mat.advection_y.initialize();
 
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
+
 	CBord bord;
 	const double length  = param.length[sp][age]*0.01; //convert to meters;
 	const int    agemax  = param.sp_nb_cohorts[sp]-1;
@@ -31,7 +33,7 @@ void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, con
 	const double CHI_x   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dx;
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;//fixed, given in 'body length' units
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 	double rho_x = 0.0;

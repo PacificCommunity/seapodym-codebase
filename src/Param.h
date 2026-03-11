@@ -278,9 +278,12 @@ public:
 	DVECTOR sigma_species;		// max diffusion coefficient for each species in nm2/mo [sp]
 	DVECTOR MSS_species;		// max ustained speed for each species in FL/mo [sp]
 	DVECTOR MSS_size_slope;		// scaling exponent of the power low to compute sustainable speed MSS*L^slope
+	DVECTOR Dinf_size_slope;	// scaling exponent of the power low to compute maximal diffusion and age Dspeed*L^slope
 	DVECTOR c_diff_fish;		// coefficient for the diffusion-Habitat function [sp]
 	dvector rmax_currents;		// maximal reduction of current velocity due to vertical migrations effect, rmax = 0.0 - no reduction
 
+	dmatrix sigma_ha_left;		//Gaussian std in adult habitat by sp and age
+	dmatrix sigma_ha_right;		//Gaussian std in adult habitat by sp and age
 	dmatrix sigma_ha;		//Gaussian std in adult habitat by sp and age
 	dmatrix temp_age;		//optimal temperature by sp and age
 
@@ -326,6 +329,7 @@ public:
 	vector<string>  file_tag_data;
 	int nb_catch_files, nb_frq_files, nb_tag_files;
 	int tag_gauss_kernel_on;
+	int use_tlib_as_weight;
 	float dx_tags, dy_tags; 	// setup of the grid to aggregate tagging data
 	float lonmin_tags,lonmax_tags, latmin_tags, latmax_tags;
 	float tags_tlib_min, tags_tlib_max;// range of time at liberty (in days) of tags to use

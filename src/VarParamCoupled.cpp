@@ -372,7 +372,11 @@ bool VarParamCoupled::read(const string& parfile)
 		MSS_size_slope.allocate(0, nb_species - 1);
 		c_diff_fish.allocate(0, nb_species - 1);
 
+		Dinf_size_slope.allocate(0, nb_species - 1);
+
 		sigma_ha.allocate(0, nb_species - 1);
+		sigma_ha_left.allocate(0, nb_species - 1);
+		sigma_ha_right.allocate(0, nb_species - 1);
 		temp_age.allocate(0, nb_species - 1);
 		rmax_currents.allocate(0, nb_species - 1);
 	}
@@ -551,6 +555,10 @@ bool VarParamCoupled::read(const string& parfile)
 		//scaling exponent in power low giving the species sustainable speed
 		//in m/sec, i.e. V_mss = MSS_species * pow(L,MSS_size_slope)
 		MSS_size_slope[sp] = doc.getDouble("/MSS_size_slope", sp_name[sp]);
+
+		Dinf_size_slope[sp] = 0.6; 
+		if (!doc.get("/Dinf_size_slope",sp_name[sp]).empty())
+			Dinf_size_slope[sp] = doc.getDouble("/Dinf_size_slope", sp_name[sp]);
 	
 		//Adding rmax to the parfile as a fixed parameter. 
 		//Note, if not present in the parfile, then set to default value:
@@ -587,6 +595,12 @@ bool VarParamCoupled::read(const string& parfile)
 		sp_unit_cohort[sp].allocate(0,sp_nb_cohorts[sp]-1);
 
 		sigma_ha[sp].allocate(sp_a0_adult[sp],sp_nb_cohorts[sp]-1);
+
+		sigma_ha_left[sp].allocate(sp_a0_adult[sp],sp_nb_cohorts[sp]-1);
+		sigma_ha_right[sp].allocate(sp_a0_adult[sp],sp_nb_cohorts[sp]-1);
+		sigma_ha_left.initialize();
+		sigma_ha_right.initialize();
+
 		temp_age[sp].allocate(sp_a0_adult[sp],sp_nb_cohorts[sp]-1);
 		sigma_ha.initialize();
 		temp_age.initialize();
@@ -1256,12 +1270,17 @@ bool VarParamCoupled::read(const string& parfile)
 				length_like_weight(f) = doc.getDouble("/length_like_weight",f);
 
 		//3. TAGs likelihood: further options here (see above the code for main flags)
+		//defaults:
 		tag_gauss_kernel_on = 1;
+		use_tlib_as_weight  = 1;
 		strout_tags = "./tags/";
 		for (int sp=0;sp<nb_species;sp++){
 			if (tag_like[sp]){
 				if (!doc.get("/tag_gauss_kernel_on","value").empty()){
 					tag_gauss_kernel_on = doc.getInteger("/tag_gauss_kernel_on","value");
+				}
+				if (!doc.get("/use_tags_tlib_as_weight","value").empty()){
+					use_tlib_as_weight = doc.getInteger("/use_tags_tlib_as_weight","value");
 				}
 				//TODO: make a small function to check and create unexisting folder (three times in the code now)
 				string test = strout_tags + "/test";
@@ -1272,6 +1291,7 @@ bool VarParamCoupled::read(const string& parfile)
 			        } else remove(test.c_str());	
 			}
 		}
+
 		tag_like_weight = 1.0; //default value
 		elife_like_weight = 1.0; //default value
 		if (!doc.get("/tag_like_weight").empty())		  

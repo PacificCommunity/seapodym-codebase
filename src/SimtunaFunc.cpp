@@ -11,8 +11,26 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-
+//rewrote function to enable it with non-dt age structure
 void CSimtunaFunc::mortality_range_age_comp(CParam& param, CMatrices& mat, const int sp)
+{
+
+        double p = param.M_range_age_max[sp];
+        double q = param.M_range_age_slope[sp];
+        double mean_age0 = 0.5; //always half of dt for the dt-unit age structure
+	double mean_age = mean_age0 * param.sp_unit_cohort[sp][0];
+        for (int age=0; age<param.sp_nb_cohorts[sp]; age++){
+
+		if (age==param.sp_nb_cohorts[sp]-1)
+			mean_age += .5*param.sp_unit_cohort[sp][age]-param.sp_unit_cohort[sp][age-1];
+
+		mat.mortality_range_age[sp][age] = p*(1.0 + pow(mean_age0,q))/(1.0 + pow(mean_age,q));
+		
+		mean_age +=  param.sp_unit_cohort[sp][age];
+        }
+}
+
+/*void CSimtunaFunc::mortality_range_age_comp(CParam& param, CMatrices& mat, const int sp)
 {
 
         double p = param.M_range_age_max[sp];
@@ -21,9 +39,12 @@ void CSimtunaFunc::mortality_range_age_comp(CParam& param, CMatrices& mat, const
         for (int age=0; age<param.sp_nb_cohorts[sp]; age++){
 
 		double mean_age =  age * param.sp_unit_cohort[sp][age-1] + 0.5*param.sp_unit_cohort[sp][age];
+		cout << mean_age << ", ";
 		mat.mortality_range_age[sp][age] = p*(1.0 + pow(mean_age0,q))/(1.0 + pow(mean_age,q));
         }
-}
+	cout << endl << mat.mortality_range_age << endl;
+	exit(1);
+}*/
 
 double CSimtunaFunc::function_lambda(CParam& param, CMatrices& mat, int n, int i, int j)
 {

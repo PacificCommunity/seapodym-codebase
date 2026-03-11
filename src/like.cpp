@@ -322,6 +322,8 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		rec_obs_like.initialize();
 		rec_pred_like.initialize();
 	}
+
+	int use_tlib = param->use_tlib_as_weight;
 	for (int p=0; p<nb_tagpops; p++){
 //if (sum(mat.dvarDensity(p+1))>0)		
 //TTRACE(p+1,sum(mat.dvarDensity(p+1)))		
@@ -354,10 +356,13 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 				tagpop_age_solve(p,t_count).initialize();
 
 				//append to the aggregated predictions and observations
-				rec_obs_like  += elem_prod(rec_obs(p),tlib_obs(p));
-				rec_pred_like += elem_prod(rec_pred(p),tlib_obs(p));
-				//rec_obs_like  += rec_obs(p);
-				//rec_pred_like += rec_pred(p);
+				if (use_tlib){
+					rec_obs_like  += elem_prod(rec_obs(p),tlib_obs(p));
+					rec_pred_like += elem_prod(rec_pred(p),tlib_obs(p));
+				} else {
+					rec_obs_like  += rec_obs(p);
+					rec_pred_like += rec_pred(p);
+				}
 /*		
 				//1. Concentrated
 				taglike += value(norm2(rec_obs(p)-rec_pred(p)));
@@ -401,7 +406,10 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					if (wtxt){
 						wtxt << xlon << endl;
 						wtxt << ylat << endl;
-						wtxt << trans(value(rec_pred(p))) << endl;
+						if (use_tlib)
+							wtxt << trans(value(elem_prod(rec_pred(p),tlib_obs(p)))) << endl;
+						else
+							wtxt << trans(value(rec_pred(p))) << endl;
 					}
 					wtxt.close();
 			
@@ -411,7 +419,10 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					if (wtxt){
 						wtxt << xlon << endl;
 						wtxt << ylat << endl;
-						wtxt << trans(rec_obs(p)) << endl;
+						if (use_tlib)
+							wtxt << trans(elem_prod(rec_obs(p),tlib_obs(p))) << endl;
+						else
+							wtxt << trans(rec_obs(p)) << endl;
 					}
 					wtxt.close();
 			
