@@ -13,7 +13,7 @@
 <deltaT value="30"/>
 <iterationNumber value="15"/>
 <!-- earliest is 1958 -->
-<save_first_date year="1990" month="1"/>
+<save_first_date year="1983" month="1"/>
 <save_last_date year="2022" month="12"/>
 <nb_step_to_skip value="48"/>
 
