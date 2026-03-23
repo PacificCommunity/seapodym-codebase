@@ -141,7 +141,7 @@
 <!--MODEL INPUT-OUTPUT-->
 <!--================= -->
 <!-- Forcing Directory -->
-<strdir value="/home/innas/SEAPODYM/data/forcings/run-jra55np_1x30d-ipo/"/>
+<strdir value="../../../seapodym-data/run-jra55np_1x30d-ipo/"/>
 
 <!--Land mask and topo index files-->
 <str_file_mask value="mask_jra55np_1deg_ipo_cor_NSlimits.txt"/>

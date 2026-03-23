@@ -8,9 +8,10 @@ import matplotlib.pyplot as plt
 
 # MPI benchmarking configurations
 #N_VALUES = [2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,28,29,30,31,32]
-N_VALUES = [2,3,4,5,7,10,12,16,20,24,32]
+N_VALUES = [2,3,4,8] # 5,7,8,10,12,16,20,24,32]
 REPEATS = range(0,6)
-HOSTS = ["milan", "genoa"]
+#HOSTS = ["milan", "genoa"]
+HOSTS = ["genoa",]
 
 # -----------------------------
 # Top-level workflow
@@ -38,8 +39,22 @@ rule run_mpi:
         mkdir -p results
         # record SLURM job ID
         echo "jobid=$SLURM_JOB_ID" > {output}
+        # create a tmp directory to run at the same level
+        cd ..
+        hash=$(echo "$RANDOM" | sha256sum | cut -d' ' -f1)
+        rundir="tmp-$hash"
+        rm -rf $rundir
+        mkdir $rundir
+        cd $rundir
+        # copy the input file
+        cp ../density_skj_fat/skj_fat.xml .
         # run MPI program using Slurm
-        srun {params.exe} -s {params.parfile} >> {output} 2>&1
+        srun {params.exe} -s {params.parfile} >> ../density_skj_fat/{output} 2>&1
+        cd ../
+        # clean up
+        rm -rf $rundir
+        # back to where we started
+        cd density_skj_fat
         """
 
 # -----------------------------
