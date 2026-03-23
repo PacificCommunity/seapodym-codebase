@@ -51,7 +51,7 @@ def main(*, input_file: str='results/timings.csv', output_file: str='results/sca
             #print(df_max["nprocs"])
             #print(df_max["speedup"])
             
-        plt.plot([2,20], np.array([2,20]) - 1, 'k--', label='ideal')
+        plt.plot([2,20], np.array([2-1,20-1]) - 1, 'k--', label='ideal')
 
         plt.xlabel("Number of processes (nprocs)")
         plt.ylabel("Speedup (relative to nprocs=2)")
