@@ -1,0 +1,154 @@
+import re
+import csv
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# snakemake --jobs 50 
+
+# MPI benchmarking configurations
+N_VALUES = [2,3,4,5,7,10,14,20,25,32]
+REPEATS = range(0,6)
+HOSTS = ["milan", "genoa"]
+
+# -----------------------------
+# Top-level workflow
+# -----------------------------
+rule all:
+    input:
+        "results/speedup.png"
+
+# -----------------------------
+# Run MPI jobs (submitted to Slurm)
+# -----------------------------
+rule run_mpi:
+    output:
+        "results/run_{n}_{r}_{h}.out"
+    params:
+        exe="../../bin/seapodym_cohort",
+        parfile="initparfile.xml"
+    threads:
+        lambda wc: int(wc.n)
+    shell:
+        r"""
+        cd ~/seapodym_scaling/seapodym-codebase-phase3/
+        source sourceme.sh
+        cd example-configs/density
+        mkdir -p results
+        # record SLURM job ID
+        echo "jobid=$SLURM_JOB_ID" > {output}
+        # run MPI program using Slurm
+        srun {params.exe} -s {params.parfile} >> {output} 2>&1
+        """
+
+# -----------------------------
+# Collect results into CSV (interactive)
+# -----------------------------
+rule collect_results:
+    input:
+        expand("results/run_{n}_{r}_{h}.out", n=N_VALUES, r=REPEATS, h=HOSTS)
+    output:
+        "results/timings.csv"
+    run:
+        pattern = re.compile(r"time manager\s*=\s*([0-9.]+)")
+        rows = []
+
+        for f in input:
+            parts = f.split("/")[-1].replace(".out","").split("_")
+            n = int(parts[1])
+            r = int(parts[2])
+            host = parts[3]
+
+            jobid = None
+            manager_time = None
+
+            with open(f) as fh:
+                for line in fh:
+                    if line.startswith("jobid="):
+                        jobid = line.split("=")[1].strip()
+                    m = pattern.search(line)
+                    if m:
+                        manager_time = float(m.group(1))
+
+            rows.append((n, jobid, host, manager_time))
+
+        rows.sort()
+
+        with open(output[0], "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(["nprocs","jobid","host","manager_time"])
+            writer.writerows(rows)
+
+# -----------------------------
+# Plot speedup (interactive)
+# -----------------------------
+rule plot_speedup:
+    input:
+        "results/timings.csv"
+    output:
+        "results/speedup.png"
+    run:
+        import os
+        import pandas as pd
+        import matplotlib.pyplot as plt
+
+        # Check if CSV exists
+        if not os.path.exists(input[0]):
+            print(f"ERROR: input CSV '{input[0]}' not found. Cannot plot speedup.")
+            return
+
+        # Load CSV
+        df = pd.read_csv(input[0])
+
+        # Check if CSV has any data
+        if df.empty:
+            print(f"ERROR: input CSV '{input[0]}' is empty. Cannot plot speedup.")
+            return
+
+        # Ensure manager_time column exists
+        if "manager_time" not in df.columns:
+            print(f"ERROR: 'manager_time' column not found in CSV. Cannot plot speedup.")
+            return
+
+        # Drop rows with missing manager_time
+        df = df.dropna(subset=["manager_time"])
+        if df.empty:
+            print(f"ERROR: No valid 'manager_time' values found. Cannot plot speedup.")
+            return
+
+        # Take minimum manager_time per (nprocs, host)
+        df_min = df.groupby(["nprocs","host"])["manager_time"].min().reset_index()
+
+        # Compute speedup relative to nprocs=2 for each host
+        df_speedup_list = []
+        for host in df_min["host"].unique():
+            host_df = df_min[df_min["host"] == host].copy()
+            if not 2 in host_df["nprocs"].values:
+                print(f"WARNING: nprocs=2 missing for host '{host}', skipping speedup calculation for this host.")
+                continue
+            t2 = host_df.loc[host_df["nprocs"]==2, "manager_time"].values[0]
+            host_df["speedup"] = t2 / host_df["manager_time"]
+            df_speedup_list.append(host_df)
+
+        if not df_speedup_list:
+            print("ERROR: No valid hosts with nprocs=2. Cannot plot speedup.")
+            return
+
+        df_speedup = pd.concat(df_speedup_list)
+
+        # Plot curves for Milan & Genoa
+        plt.figure(figsize=(8,6))
+        for host in ["milan","genoa"]:
+            host_df = df_speedup[df_speedup["host"]==host]
+            if not host_df.empty:
+                plt.plot(host_df["nprocs"], host_df["speedup"], marker='o', label=host.capitalize())
+
+        plt.xlabel("Number of processes (nprocs)")
+        plt.ylabel("Speedup (relative to nprocs=2)")
+        plt.title("Seapodym cohort speedup")
+        plt.xticks(sorted(df_speedup["nprocs"].unique()))
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(output[0])
+        print(f"Speedup plot saved to {output[0]}")
+
