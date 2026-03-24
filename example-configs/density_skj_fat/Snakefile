@@ -3,7 +3,7 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# snakemake --jobs 50 --cluster "sbatch --mem-per-cpu=10g --nodes=1 --ntasks={threads} --time=00:30:00 --extra-node-info=1:*:1 --distribution=*:block:* --mem-bind=local"
+# snakemake --jobs 10 --cluster "sbatch --mem-per-cpu=20g --nodes=1 --ntasks={threads} --time=00:30:00 --extra-node-info=1:*:1 --distribution=*:block:* --mem-bind=local"
 # 
 
 # MPI benchmarking configurations
