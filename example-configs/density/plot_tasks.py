@@ -14,7 +14,7 @@ def parse_logs():
     re_step_end   = re.compile(r"\[(.*?)\].*<<< step (\d+) of task id (\d+)")
     re_send_start = re.compile(r"\[(.*?)\].*>>> send data for step (\d+) of task id (\d+)")
     re_send_end   = re.compile(r"\[(.*?)\].*<<< send data for step (\d+) of task id (\d+)")
-    re_worker_id  = re.compile(r"log_worker(\d+).txt")
+    re_worker_id  = re.compile(r"log_taskfunc(\d+).txt")
 
     # --- Helper to convert timestamps ---
     def parse_time(s):
@@ -24,7 +24,7 @@ def parse_logs():
     # --- Collect raw data ---
     records = []
 
-    for fname in sorted(glob("log_worker*.txt")):
+    for fname in sorted(glob("log_taskfunc*.txt")):
 
         worker_id = None
         if m := re_worker_id.search(fname):
