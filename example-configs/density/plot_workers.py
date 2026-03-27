@@ -22,8 +22,9 @@ def parse_logs():
     records = []
     all_times = []
 
-    for fname in sorted(glob("log_worker*.txt")):
-        worker_match = re.search(r"log_worker(\d+)", os.path.basename(fname))
+    for fname in sorted(glob("log_taskfunc*.txt")):
+
+        worker_match = re.search(r"log_taskfunc(\d+)", os.path.basename(fname))
         worker_id = int(worker_match.group(1)) if worker_match else None
 
         with open(fname) as f:
