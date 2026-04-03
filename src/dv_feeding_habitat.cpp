@@ -15,6 +15,7 @@ void dv_F_scaling_comp(void);
 void dv_Ha_comp(void);
 void dv_Hf_comp(void);
 double f_accessibility_layer(const double O, const double T,double twosigsq, double temp_mean, double oxy_teta, double oxy_cr);
+double f_accessibility_layer_agauss(const double O2, const double T, double sigl, double sigr, double temp_mean, double oxy_teta, double oxy_cr);
 double f_accessibility_layer(const double O2, const double T, double temp_age, double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr);
 double hs_comp(double SST, double preys, double predators, const double a, const double b, const double c, const double d, const double f, const double g, const double e, const double ssv, const int fsst_type);
 double pred_surface_comp(dvector forage, const double DL, const int nb_forage, ivector day_layer, ivector night_layer);
@@ -223,6 +224,10 @@ void dv_Hf_comp(void)
 	const double delta2   = param->thermal_func_delta[1][sp];
 	const double delta3   = param->thermal_func_delta[2][sp];
 
+	const double sigl = param->sigma_ha_left[sp][age];
+	const double sigr = param->sigma_ha_right[sp][age];
+	
+
 	const int Tfunc_Gaussian = param->gaussian_thermal_function[sp];
 
 	const int imax = map->imax;
@@ -288,7 +293,8 @@ void dv_Hf_comp(void)
 				//for (int l=0; l<nlayer; l++){
 				for (int l=0; l<nbl; l++){
 					if (Tfunc_Gaussian){
-						l_access(l)  = f_accessibility_layer(oxygen(l,i,j),T(l),twosigsq,
+						//l_access(l)  = f_accessibility_layer(oxygen(l,i,j),T(l),twosigsq,
+						l_access(l)  = f_accessibility_layer_agauss(oxygen(l,i,j),T(l),sigl,sigr,
 								temp_age,oxy_teta,oxy_cr);
 					} else {
 						l_access(l)  = f_accessibility_layer(oxygen(l,i,j),T(l),temp_age,
@@ -430,6 +436,9 @@ void dv_Ha_comp(void)
         const double delta2   = param->thermal_func_delta[1][sp];
         const double delta3   = param->thermal_func_delta[2][sp];
 
+	const double sigl = param->sigma_ha_left[sp][age];
+	const double sigr = param->sigma_ha_right[sp][age];
+
 	double a_hs = param->a_sst_larvae[sp];
 	double b_hs = param->b_sst_larvae[sp];
 	if (!param->uncouple_sst_larvae[sp]){
@@ -530,11 +539,10 @@ void dv_Ha_comp(void)
                                 //for (int l=0; l<nlayer; l++){
                                 for (int l=0; l<nbl; l++){
                                         if (Tfunc_Gaussian){
-                                                //l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,
-                                                l_access(l)  = f_accessibility_layer(oxygen(l,i,j),T(l),twosigsq,
+                                                //l_access(l)  = f_accessibility_layer(oxygen(l,i,j),T(l),twosigsq,
+                                                l_access(l)  = f_accessibility_layer_agauss(oxygen(l,i,j),T(l),sigl,sigr,
                                                                         temp_age,oxy_teta,oxy_cr);
                                         } else {
-                                                //l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),temp_age,
                                                 l_access(l)  = f_accessibility_layer(oxygen(l,i,j),T(l),temp_age,
                                                                         temp_max,delta1,delta2,delta3,oxy_teta,oxy_cr);
                                         }

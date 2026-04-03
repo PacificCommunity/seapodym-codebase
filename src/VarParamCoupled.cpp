@@ -352,6 +352,7 @@ bool VarParamCoupled::read(const string& parfile)
 		a_sst_larvae.allocate(0, nb_species - 1);
 		b_sst_larvae.allocate(0, nb_species - 1);
 		gaussian_thermal_function.allocate(0,nb_species-1);
+		set_access_temp.allocate(0,nb_species-1);
 		a_sst_habitat.allocate(0, nb_species - 1);
 		b_sst_habitat.allocate(0, nb_species - 1);
 		T_age_size_slope.allocate(0, nb_species - 1);
@@ -486,6 +487,18 @@ bool VarParamCoupled::read(const string& parfile)
 		gaussian_thermal_function[sp] = 1; //default value
 		if (!doc.get("/gaussian_thermal_function",sp_name[sp]).empty()){
 			gaussian_thermal_function[sp] = doc.getInteger("/gaussian_thermal_function", sp_name[sp]);
+		}
+     		
+		set_access_temp[sp] = 0;
+		if (!doc.get("/accessible_temperature",sp_name[sp]).empty()){
+			set_access_temp[sp] = doc.getInteger("/accessible_temperature", sp_name[sp]);
+		}
+		access_temp_min = -1e3;
+		access_temp_max = 1e3;
+		if (set_access_temp[sp]){
+			string sv = "/accessible_temperature";
+			access_temp_min = doc.getDouble(sv + "/limits", "min");
+			access_temp_max = doc.getDouble(sv + "/limits", "max");
 		}
 			
 		//standard deviation in Gaussian temperature function
@@ -1622,6 +1635,8 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(M_mean_range,M_mean_range_min,M_mean_range_max,"/M_mean_range",nni);
 	par_read_bounds(a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",nni);
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);
+	if (b_sst_spawning_min < access_temp_min) b_sst_spawning_min = access_temp_min;
+	if (b_sst_spawning_max > access_temp_max) b_sst_spawning_max = access_temp_max;
 	par_read_bounds(q_sp_larvae,q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",nni);
 	par_read_bounds(likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",nni);
 	par_read_bounds(likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",nni);
@@ -1641,6 +1656,8 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(beta_hsp_predator,beta_hsp_predator_min,beta_hsp_predator_max,"/beta_hsp_predator",nni);
 	par_read_bounds(a_sst_habitat,a_sst_habitat_min,a_sst_habitat_max,"/a_sst_habitat",nni);
 	par_read_bounds(b_sst_habitat,b_sst_habitat_min,b_sst_habitat_max,"/b_sst_habitat",nni);
+	if (b_sst_habitat_min < access_temp_min) b_sst_habitat_min = access_temp_min;
+	if (b_sst_habitat_max > access_temp_max) b_sst_habitat_max = access_temp_max;
 	par_read_bounds(T_age_size_slope,T_age_size_slope_min,T_age_size_slope_max,"/T_age_size_slope",nni);
 	thermal_func_delta_min.allocate(0,2);
 	thermal_func_delta_max.allocate(0,2);

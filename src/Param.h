@@ -65,6 +65,7 @@ public:
 	ivector food_requirement_in_mortality;
 	ivector uncouple_sst_larvae;	
 	ivector gaussian_thermal_function;	
+	ivector set_access_temp;
 	ivector cannibalism;	
 	string	idformat;	//Patrick 21Oct04
 	int	idfunc ;	//Patrick 21Oct04
@@ -282,6 +283,7 @@ public:
 	DVECTOR c_diff_fish;		// coefficient for the diffusion-Habitat function [sp]
 	dvector rmax_currents;		// maximal reduction of current velocity due to vertical migrations effect, rmax = 0.0 - no reduction
 
+	double access_temp_min, access_temp_max; // temperatures with zero accessibility, for now same for all species
 	dmatrix sigma_ha_left;		//Gaussian std in adult habitat by sp and age
 	dmatrix sigma_ha_right;		//Gaussian std in adult habitat by sp and age
 	dmatrix sigma_ha;		//Gaussian std in adult habitat by sp and age
@@ -384,6 +386,8 @@ public:
 	double func_limit_one(const double m);
 	double dffunc_limit_one(const double x, const double dfy);
 	//double dffunc_limit_one(const double m);
+	double f1_smooth(const double x);
+	double df1_smooth(const double x);
 	void afcoef(const double lon, const double lat, dmatrix& a, int& ki, int& kj, const int reso);
 
 	double selectivity_comp(const int sp, const int age, const int f, const int k);

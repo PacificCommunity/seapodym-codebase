@@ -1,6 +1,7 @@
 #include "calpop.h"
 
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double twosigsq, double temp_age, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
+void f_accessibility_agauss(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double sigl, double sigr, double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double temp_mean, 
 		double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr, const int nl, 
 		const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
@@ -698,6 +699,10 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
+	const double sigma_left  = param.sigma_ha_left[sp][age];
+	const double sigma_right = param.sigma_ha_right[sp][age];
+
+
 	CBord bord;	
 
 	for (int i = map.imin; i <= map.imax; i++){	
@@ -767,8 +772,10 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 				//need to recompute average currents, attn, accessibility is computed for 
 				//ages param.age_compute_habitat[sp][age] only (passed here as age)
 				if (Tfunc_Gaussian){
-					f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
+					//f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
+					f_accessibility_agauss(l_access,lf_access,F,O2,T,sigma_left,sigma_right,temp_age,oxy_teta,oxy_cr,
 							nb_layer,nb_forage,day_layer,night_layer,DL);
+
 				} else {
 					f_accessibility(l_access,lf_access,F,O2,T,temp_age,temp_max,delta1,delta2,delta3,oxy_teta,oxy_cr,
 							nb_layer,nb_forage,day_layer,night_layer,DL);

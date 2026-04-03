@@ -41,9 +41,8 @@ void VarSimtunaFunc::Vars_at_age_precomp(CParam& param, const int sp)
 	const double W_max = param.weight[sp][param.sp_nb_cohorts[sp]-1];
 	const double L_max = param.length[sp][param.sp_nb_cohorts[sp]-1];
 
-	const double temp_lethal_min = 5.0;
-	const double temp_lethal_max = 33.0;
-
+	const double Tmin = param.access_temp_min;
+	const double Tmax = param.access_temp_max;
 
 	for (int age=a0; age<nb_ages; age++){
 		const double W_age = param.weight[sp][age];
@@ -52,19 +51,10 @@ void VarSimtunaFunc::Vars_at_age_precomp(CParam& param, const int sp)
 		double R = pow(L_age/L_max,temp_age_slope);	
 		double temp_sp_age = R * (temp_min-temp_max) + temp_max;
 
-		if (temp_sp_age < temp_lethal_min) 
-			temp_sp_age = temp_lethal_min;
-		if (temp_sp_age > temp_lethal_max) 
-			temp_sp_age = temp_lethal_max;
-
 		double sigma_ha = (sigma_max-sigma_min)*W_age/W_max+sigma_min;
-		//double sigma_ha = (sigma_max-sigma_min)*L_age/L_max+sigma_min;
-		double sigma_left = sigma_ha;
-		double sigma_right = sigma_ha;
-		if (sigma_left>(temp_sp_age-temp_lethal_min)/3.0)
-			sigma_left = (temp_sp_age-temp_lethal_min)/3.0;
-		if (sigma_right>(temp_lethal_max-temp_sp_age)/3.0)
-			sigma_right = (temp_lethal_max-temp_sp_age)/3.0;
+		
+		double sigma_right = (Tmax-temp_sp_age)*param.f1_smooth(3.0*sigma_ha/(Tmax-temp_sp_age))/3.0; 
+		double sigma_left  = (temp_sp_age-Tmin)*param.f1_smooth(3.0*sigma_ha/(temp_sp_age-Tmin))/3.0;  
 
 		param.sigma_ha[sp][age] = sigma_ha;
 		param.sigma_ha_left[sp][age] = sigma_left;
@@ -123,8 +113,8 @@ void VarSimtunaFunc::Faccessibility_comp(VarParamCoupled& param, VarMatrices& ma
 				}
 
 				if (Tfunc_Gaussian){
-					//f_accessibility_agauss(l_access,lf_access,F,O2,T,sigma_left,sigma_right,temp_age,oxy_teta,oxy_cr,
-					f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
+					f_accessibility_agauss(l_access,lf_access,F,O2,T,sigma_left,sigma_right,temp_age,oxy_teta,oxy_cr,
+					//f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
 							nb_layer,nb_forage,day_layer,night_layer,DL);
 				} else {
 					f_accessibility(l_access,lf_access,F,O2,T,temp_age,temp_max,delta1,delta2,delta3,

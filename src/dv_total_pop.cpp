@@ -5,6 +5,7 @@ void dv_total_pop_comp();
 void dv_spawning_biomass_comp();
 void dv_total_stock_comp();
 double f_accessibility_layer(const double O2, const double T,double twosigsq, double temp_mean, double oxy_teta, double oxy_cr);
+double f_accessibility_layer_agauss(const double O2, const double T, double sigl, double sigr, double temp_mean, double oxy_teta, double oxy_cr);
 double f_accessibility_layer(const double O2, const double T, double temp_age, double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr);
 int save_identifier_string2(char* str);
 void verify_identifier_string2(char* str);
@@ -348,6 +349,9 @@ void dv_total_pop_comp()
 	const double delta2   = param->thermal_func_delta[1][sp];
 	const double delta3   = param->thermal_func_delta[2][sp];
 
+	const double sigl = param->sigma_ha_left[sp][age];
+	const double sigr = param->sigma_ha_right[sp][age];
+
 	const int Tfunc_Gaussian = param->gaussian_thermal_function[sp];
 
 	d3_array tempn,oxygen,forage;
@@ -381,7 +385,8 @@ void dv_total_pop_comp()
 				//for (int l=0; l<nlayer; l++){
 				for (int l=0; l<nbl; l++){
 					if (Tfunc_Gaussian){
-						l_access  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,temp_age,oxy_teta,oxy_cr);
+						//l_access  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,temp_age,oxy_teta,oxy_cr);
+						l_access  = f_accessibility_layer_agauss(oxygen(l,i,j),tempn(l,i,j),sigl,sigr,temp_age,oxy_teta,oxy_cr);
 					} else {
 						l_access  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),temp_age,temp_max,delta1,delta2,delta3,oxy_teta,oxy_cr);
 					}

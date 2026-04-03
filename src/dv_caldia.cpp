@@ -8,6 +8,7 @@
 void dv_caldia(void);
 void dv_caldia_UV(void);
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double twosigsq, double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
+void f_accessibility_agauss(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double sigl, double sigr, double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double temp_mean, 
 		double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr, const int nl, 
 		const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
@@ -546,6 +547,9 @@ void dv_caldia_UV()
 	
 	const int Tfunc_Gaussian = param->gaussian_thermal_function[sp];
 	
+	const double sigl = param->sigma_ha_left[sp][age];
+	const double sigr = param->sigma_ha_right[sp][age];
+	
 	const int nb_forage = param->get_nbforage();
 	ivector day_layer(0,nb_forage-1); day_layer = param->day_layer;
 	ivector night_layer(0,nb_forage-1); night_layer = param->night_layer;
@@ -583,7 +587,8 @@ void dv_caldia_UV()
 				const double DL = mat->daylength(jday,j)/24.0;
 
 				if (Tfunc_Gaussian){
-					f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
+					//f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
+					f_accessibility_agauss(l_access,lf_access,F,O2,T,sigl,sigr,temp_age,oxy_teta,oxy_cr,
 							nb_layer,nb_forage,day_layer,night_layer,DL);	
 				} else {
 					f_accessibility(l_access,lf_access,F,O2,T,temp_age,temp_max,delta1,delta2,delta3,oxy_teta,oxy_cr,
