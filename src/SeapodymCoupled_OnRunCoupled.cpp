@@ -4,7 +4,10 @@ void SeapodymCoupled::prerun_model()
 {
 	OnRunFirstStep();
 	if (param->larvae_like[0]){
-		ReadLarvae();
+		ReadEarly("larvae");
+	}
+	if (param->spawning_like[0]){
+		ReadEarly("spawning");
 	}
 }
 
@@ -75,6 +78,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	taglike = 0;
 	stocklike = 0.0;
 	larvaelike = 0.0;
+	spawninglike = 0.0;
 	dvariable likelihood = 0.0;
 	dvariable total_stock = 0.0;
 	lflike_fishery.initialize();
@@ -85,13 +89,9 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	//----------------------------------------------//
 	// 	LOCAL MATRICES ALLOCATION SECTION       //
 	//----------------------------------------------//	
-	dvar_matrix Spawning_Habitat;
-	dvar_matrix Total_pop;
-	dvar_matrix Habitat; 
 	dvar_matrix IFR; 
 	dvar_matrix ISR_denom; 
 	dvar_matrix FR_pop;
-	dvar_matrix Mortality; 
 			
 	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
@@ -115,7 +115,11 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	if (param->larvae_like[0])
 		create_init_larvae_vars();		
 
-	//precompute thermal habitat parameters
+	// For spawning likelihood
+	if (param->spawning_like[0])
+		create_init_spawning_vars();		
+
+		//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
 		func.Vars_at_age_precomp(*param,sp);
 
@@ -151,6 +155,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 		param->stock_like.initialize();
 		param->frq_like.initialize();
 		param->larvae_like.initialize();
+		param->spawning_like.initialize();
 	}
 	/////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////////////////////////////////////
@@ -546,8 +551,15 @@ Mortality.initialize();
 				if (year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
 				//if (t_count > nbt_building+nbstoskip){
 					if (param->larvae_like[0]){
-						extract_larvae(sp,tcur);
+						extract_early(sp,tcur,"larvae");
 					}
+				}
+			}
+
+			//9. Extract SB x Hs
+			if (year>=param->spawning_like_firstyear && year<=param->spawning_like_lastyear){
+				if (param->spawning_like[0]){
+					extract_early(sp,tcur,"spawning");
 				}
 			}
 
@@ -566,7 +578,12 @@ Mortality.initialize();
 			//II. Early-life data likelihood: only once at last time step
 			if (param->larvae_like[0] && param->larvae_input_aggregated_flag[0]){
 				get_larvae_at_obs();
-				larvaelike += get_larvae_like(likelihood, Agg_larvae_density_pred_at_obs);
+				larvaelike += get_early_like(likelihood, Agg_larvae_density_pred_at_obs, "larvae");
+			}		
+			//II. spawning data likelihood: only once at last time step
+			if (param->spawning_like[0] && param->spawning_input_aggregated_flag[0]){
+				get_SBHs_at_obs();
+				spawninglike += get_early_like(likelihood, Agg_SBHs_pred_at_obs, "spawning");
 			}		
 		}
 		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0] && year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
@@ -574,11 +591,18 @@ Mortality.initialize();
 			int nbytetoskip = (9 +(3* nlat * nlon) + (nbt_total - nbt_building-nbstoskip) + ((nlat *nlon)* (t_count-nbt_building-nbstoskip-1))) * 4;
 			rw.rbin_input2d(param->strfile_larvae, map, mat.larvae_input[tcur], nbi, nbj, nbytetoskip);
 			// Compute likelihood
-			larvaelike += get_larvae_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur);
+			larvaelike += get_early_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur, "larvae");
 		}
 		/*if (!param->gcalc()){
 			cout << "Early stage likelihood: " << larvaelike << endl;
 		}*/
+		if (param->spawning_like[0] && !param->spawning_input_aggregated_flag[0] && year>=param->spawning_like_firstyear && year<=param->spawning_like_lastyear){
+			// Read spawning input data
+			int nbytetoskip = (9 +(3* nlat * nlon) + (nbt_total - nbt_building-nbstoskip) + ((nlat *nlon)* (t_count-nbt_building-nbstoskip-1))) * 4;
+			rw.rbin_input2d(param->strfile_spawning, map, mat.spawning_input[tcur], nbi, nbj, nbytetoskip);
+			// Compute likelihood
+			spawninglike += get_early_like(likelihood, SBHs_pred, mat.spawning_input, tcur, "spawning");
+		}
 
 
 		//III. Tag data likelihood
@@ -641,7 +665,7 @@ Mortality.initialize();
 	lflike = sum(lflike_fishery);
 	if (!param->scalc()){ // all but sensitivity analysis
 		cout << "end of forward run, likelihood: " << defaultfloat << clike << " " << 
-			lflike << " " << taglike << " " << stocklike << " " << larvaelike << endl;
+			lflike << " " << taglike << " " << stocklike << " " << larvaelike << spawninglike << endl;
 
 		if (clike+lflike && writeoutputfiles)
 			OutputLikelihoodsFishery();

@@ -53,6 +53,46 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 		}
 	}
 
+	if (doc.get("/q_sp_spawning/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsQ_sp_spawning[i] = boundp(x[idx], q_sp_spawning_min, q_sp_spawning_max, penalty);
+
+			q_sp_spawning[i] = value(dvarsQ_sp_spawning[i]);
+			dvarpars[idx] = q_sp_spawning[i];
+			++idx;
+		}
+	}
+
+	if (doc.get("/likelihood_spawning_sigma/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsLikelihood_spawning_sigma[i] = boundp(x[idx], likelihood_spawning_sigma_min, likelihood_spawning_sigma_max, penalty);
+
+			likelihood_spawning_sigma[i] = value(dvarsLikelihood_spawning_sigma[i]);
+			dvarpars[idx] = likelihood_spawning_sigma[i];
+			++idx;
+		}
+	}
+
+	if (doc.get("/likelihood_spawning_beta/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsLikelihood_spawning_beta[i] = boundp(x[idx], likelihood_spawning_beta_min, likelihood_spawning_beta_max, penalty);
+
+			likelihood_spawning_beta[i] = value(dvarsLikelihood_spawning_beta[i]);
+			dvarpars[idx] = likelihood_spawning_beta[i];
+			++idx;
+		}
+	}
+	
+	if (doc.get("/likelihood_spawning_probzero/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {			
+			dvarsLikelihood_spawning_probzero[i] = boundp(x[idx], likelihood_spawning_probzero_min, likelihood_spawning_probzero_max, penalty);
+
+			likelihood_spawning_probzero[i] = value(dvarsLikelihood_spawning_probzero[i]);
+			dvarpars[idx] = likelihood_spawning_probzero[i];
+			++idx;
+		}
+	}
+
 	if (doc.get("/inv_M_max/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {
 			dvarsInv_M_max[i] = boundp(x[idx], inv_M_max_min, inv_M_max_max, penalty);

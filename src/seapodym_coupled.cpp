@@ -187,15 +187,6 @@ int seapodym_coupled(const char* parfile, Cmdopt* cmdopt)
 	return 0;
 }
 
-/*void prerun_model(SeapodymCoupled& sc)
-{
-	sc.OnRunFirstStep();
-	if (sc.param->larvae_like[0]){
-		sc.ReadLarvae();
-	}
-}*/
-
-
 double run_model(SeapodymCoupled& sc, dvar_vector x, dvector& g, const int nvar)
 {
 	double like = 0.0;

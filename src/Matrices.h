@@ -84,10 +84,15 @@ public:
 	D4_ARRAY habitat_input;
 	D4_ARRAY density_input;	
 	D3_ARRAY larvae_input;
+	D3_ARRAY spawning_input;
 
 	std::vector<double> aggregated_larvae_input_vectors[12];// Vector of non-NA observed larvae densities
 	std::vector<int> aggregated_larvae_input_vectors_i[12];// Corresponding i indices
 	std::vector<int> aggregated_larvae_input_vectors_j[12];// Corresponding j indices
+
+	std::vector<double> aggregated_spawning_input_vectors[12];// Vector of non-NA observed spawning index
+	std::vector<int> aggregated_spawning_input_vectors_i[12];// Corresponding i indices
+	std::vector<int> aggregated_spawning_input_vectors_j[12];// Corresponding j indices
 
 	D3_ARRAY total_obs_catch;	
 	D3_ARRAY total_pred_catch;	
@@ -120,6 +125,7 @@ public:
 	//void createMatHeader(const CParam& int nlong, int nlat, int nlevel);
 	void createMatOcean(const PMap& map, int t0, int nbt, int nbi, int nbj, int nb_layer, int dt);
 	void createMatLarvae(const PMap& map, int t0, int nbt, int nbi, int nbj, int dt);
+	void createMatSpawning(const PMap& map, int t0, int nbt, int nbi, int nbj, int dt);
 	void createMatTransport(const PMap& map);//, int nbi, int nbj);
 
 	void createMatFluxes(const int nb_region, const int nb_cohort);

@@ -147,6 +147,15 @@ void CMatrices::createMatLarvae(const PMap& map, int t0, int nbt, int nbi, int n
 	larvae_input.initialize();
 }
 
+void CMatrices::createMatSpawning(const PMap& map, int t0, int nbt, int nbi, int nbj, int dt)
+{
+	spawning_input.allocate(t0, nbt);
+	for (int t=t0; t<=nbt; t++){
+		spawning_input(t).allocate(map.imin, map.imax, map.jinf, map.jsup);
+	}
+	spawning_input.initialize();
+}
+
 void CMatrices::createMatSource(int nforage, int ntr, int nbi, int nbj)
 {
 	// ntr est le nombre de pas de temps entre le temps 0 et Tr (=Tr/timestep) 

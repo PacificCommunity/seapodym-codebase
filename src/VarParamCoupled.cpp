@@ -773,6 +773,13 @@ bool VarParamCoupled::read(const string& parfile)
 	larvae_mortality_sst.allocate(0,nb_species-1);
 	larvae_mortality_sst.initialize();
 
+	spawning_like.allocate(0,nb_species-1);
+	spawning_like.initialize();
+	spawning_input_aggregated_flag.allocate(0,nb_species-1);
+	spawning_input_aggregated_flag.initialize();
+	spawning_likelihood_type.allocate(0,nb_species-1);
+	spawning_likelihood_type.initialize();
+
 	elarvae_model.allocate(0,nb_species-1);
 	elarvae_model.initialize();
 	elarvae_age.allocate(0,nb_species-1);
@@ -890,6 +897,25 @@ bool VarParamCoupled::read(const string& parfile)
 				std::exit(EXIT_FAILURE);
 			}
 		}
+
+		if (!doc.get("/spawning_likelihood",sp_name[sp]).empty()){
+			spawning_like[sp] = doc.getInteger("/spawning_likelihood",sp_name[sp]);
+		}else{
+			spawning_like[sp] = 0;
+		}	
+		if (spawning_like[sp]){
+			if (!doc.get("/spawning_input_aggregated",sp_name[sp]).empty())
+				spawning_input_aggregated_flag[sp] = doc.getInteger("/spawning_input_aggregated", sp_name[sp]);
+			if (!doc.get("/strdir_spawning","value").empty()){
+				strdir_spawning = doc.get("/strdir_spawning", "value");
+				strfile_spawning = strdir_spawning + doc.get("/file_spawning_data", "value");
+			}
+			spawning_likelihood_type[sp] = doc.getInteger("/spawning_likelihood_type", sp_name[sp]);
+			if (nb_species>1){
+				cerr << "Error: Spawning likelihood is only available for single species computing (to be coded)." << endl;
+				std::exit(EXIT_FAILURE);
+			}
+		}
 	}
 
 	if (larvae_input_aggregated_flag[0]){
@@ -907,6 +933,21 @@ bool VarParamCoupled::read(const string& parfile)
 			std::exit(EXIT_FAILURE);			
 		}
 	}
+	if (spawning_input_aggregated_flag[0]){
+		if (!doc.get("/spawning_input_aggregation_imonths").empty()){
+			string str_imonths = doc.get("/spawning_input_aggregation_imonths");
+			stringstream ss(str_imonths);
+			vector<int> imonths;
+			while (getline(ss, str_imonths, ' ')) {
+				imonths.push_back(std::stoi(str_imonths));
+			}
+			nb_spawning_input_agg_groups = (int) imonths.size();
+			spawning_input_aggregation = Utilities::monthAggregation(imonths);
+		}else{
+			cerr << "Error: <spawning_input_aggregation_imonths> field required in parfile when <spawning_input_aggregated> is 1." << endl;
+			std::exit(EXIT_FAILURE);			
+		}
+	}
 	///////////////////////////////////////////////////
 	//Variable parameters of early-life data likelihood
 	///////////////////////////////////////////////////
@@ -915,11 +956,10 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/q_sp_larvae",sp_name[sp]).empty()){
 			q_sp_larvae[sp] = doc.getDouble("/q_sp_larvae", sp_name[sp]);
 		}else{
-			if (!fit_spawning_habitat_raw && habitat_run_type==0){
+			if (!fit_spawning_habitat_raw && habitat_run_type==0 && larvae_like[sp]){
 				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <q_sp_larvae> fields." << endl; exit(1);
 			}
 		}
-
 		// sigma parameter in Gaussian kernel used for larvae likelihood
 		if (!doc.get("/likelihood_larvae_sigma",sp_name[sp]).empty()){
 			likelihood_larvae_sigma[sp] = doc.getDouble("/likelihood_larvae_sigma", sp_name[sp]);
@@ -934,6 +974,30 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/likelihood_larvae_probzero",sp_name[sp]).empty()){
 			likelihood_larvae_probzero[sp] = doc.getDouble("/likelihood_larvae_probzero", sp_name[sp]);
 		}
+
+		// Spawning index scaling factor
+		if (!doc.get("/q_sp_spawning",sp_name[sp]).empty()){
+			q_sp_spawning[sp] = doc.getDouble("/q_sp_spawning", sp_name[sp]);
+		}else{
+			if (!fit_spawning_habitat_raw && habitat_run_type==0 && spawning_like[sp]){
+				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <q_sp_spawning> fields." << endl; exit(1);
+			}
+		}
+		// sigma parameter in Gaussian kernel used for spawning likelihood
+		if (!doc.get("/likelihood_spawning_sigma",sp_name[sp]).empty()){
+			likelihood_spawning_sigma[sp] = doc.getDouble("/likelihood_spawning_sigma", sp_name[sp]);
+		}
+
+		// betaf parameter in ZINB used for spawning likelihood
+		if (!doc.get("/likelihood_spawning_beta",sp_name[sp]).empty()){
+			likelihood_spawning_beta[sp] = doc.getDouble("/likelihood_spawning_beta", sp_name[sp]);
+		}
+
+		// pf parameter in ZINB used for spawning likelihood
+		if (!doc.get("/likelihood_spawning_probzero",sp_name[sp]).empty()){
+			likelihood_spawning_probzero[sp] = doc.getDouble("/likelihood_spawning_probzero", sp_name[sp]);
+		}
+
 
 		// first parameter in sst-dependent larvae mortality function during first time step
 		if (!doc.get("/inv_M_max",sp_name[sp]).empty()){
@@ -1270,11 +1334,14 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 		}
 		tag_like_weight = 1.0; //default value
-		elife_like_weight = 1.0; //default value
+		larvae_like_weight = 1.0; //default value
+		spawning_like_weight = 1.0; //default value
 		if (!doc.get("/tag_like_weight").empty())		  
 			tag_like_weight = doc.getDouble("/tag_like_weight");
-		if (!doc.get("/elife_like_weight").empty())		  
-			elife_like_weight = doc.getDouble("/elife_like_weight");
+		if (!doc.get("/larvae_like_weight").empty())		  
+			larvae_like_weight = doc.getDouble("/larvae_like_weight");
+		if (!doc.get("/spawning_like_weight").empty())		  
+			spawning_like_weight = doc.getDouble("/spawning_like_weight");
 
 		//4. STOCK likelihood
 		stock_like.allocate(0,nb_species-1);
@@ -1603,6 +1670,10 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",nni);
 	par_read_bounds(likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",nni);
 	par_read_bounds(likelihood_larvae_probzero,likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",nni);
+	par_read_bounds(q_sp_spawning,q_sp_spawning_min,q_sp_spawning_max,"/q_sp_spawning",nni);
+	par_read_bounds(likelihood_spawning_sigma,likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",nni);
+	par_read_bounds(likelihood_spawning_beta,likelihood_spawning_beta_min,likelihood_spawning_beta_max,"/likelihood_spawning_beta",nni);
+	par_read_bounds(likelihood_spawning_probzero,likelihood_spawning_probzero_min,likelihood_spawning_probzero_max,"/likelihood_spawning_probzero",nni);
 	par_read_bounds(inv_M_max,inv_M_max_min,inv_M_max_max,"/inv_M_max",nni);
 	par_read_bounds(inv_M_rate,inv_M_rate_min,inv_M_rate_max,"/inv_M_rate",nni);
 	par_read_bounds(age_larvae_before_sst_mortality,age_larvae_before_sst_mortality_min,age_larvae_before_sst_mortality_max,"/age_larvae_before_sst_mortality",nni);
@@ -1866,6 +1937,10 @@ void VarParamCoupled::re_read_varparam(){
 	par_read(likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",0,20);
 	par_read(likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",0,10);
 	par_read(likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",0,1);
+	par_read(q_sp_spawning_min,q_sp_spawning_max,"/q_sp_spawning",0,1000);
+	par_read(likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",0,20);
+	par_read(likelihood_spawning_beta_min,likelihood_spawning_beta_max,"/likelihood_spawning_beta",0,10);
+	par_read(likelihood_spawning_probzero_min,likelihood_spawning_probzero_max,"/likelihood_spawning_probzero",0,1);
 	par_read(inv_M_max_min,inv_M_max_max,"/inv_M_max",0,1000);
 	par_read(inv_M_rate_min,inv_M_rate_max,"/inv_M_rate",0,1000);
 	par_read(age_larvae_before_sst_mortality_min,age_larvae_before_sst_mortality_max,"/age_larvae_before_sst_mortality",1,30);
