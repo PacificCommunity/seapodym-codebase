@@ -139,8 +139,7 @@ void SeapodymCoupled::create_init_spawning_vars()
 
 void SeapodymCoupled::extract_early(const int sp, const int tcur, string what)
 {//Autodif function for the moment. Need to write adjoint!!!
-	int input_aggregated_flag, nb_input_agg_groups;
-	D3_ARRAY* input = nullptr;
+	int input_aggregated_flag;
 	std::vector<double> (*aggregated_input_vectors)[12] = nullptr;
 	std::vector<int> (*aggregated_input_vectors_i)[12] = nullptr;
 	std::vector<int> (*aggregated_input_vectors_j)[12] = nullptr;
@@ -161,16 +160,12 @@ void SeapodymCoupled::extract_early(const int sp, const int tcur, string what)
 		}
 
 		input_aggregated_flag = param->larvae_input_aggregated_flag[0];
-		nb_input_agg_groups = param->nb_larvae_input_agg_groups;
-		input = &mat.larvae_input;
 		aggregated_input_vectors = &mat.aggregated_larvae_input_vectors;
 		aggregated_input_vectors_i = &mat.aggregated_larvae_input_vectors_i;
 		aggregated_input_vectors_j = &mat.aggregated_larvae_input_vectors_j;
 		ntime_agg = &ntime_agg_larvae;
 	}else if (what == "spawning"){
 		input_aggregated_flag = param->spawning_input_aggregated_flag[0];
-		nb_input_agg_groups = param->nb_spawning_input_agg_groups;
-		input = &mat.spawning_input;
 		aggregated_input_vectors = &mat.aggregated_spawning_input_vectors;
 		aggregated_input_vectors_i = &mat.aggregated_spawning_input_vectors_i;
 		aggregated_input_vectors_j = &mat.aggregated_spawning_input_vectors_j;
