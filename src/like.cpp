@@ -319,8 +319,16 @@ dvariable SeapodymCoupled::early_like(int like_type, double L_obs, dvariable N_p
 			break;
 
 		case 5: // Lognormal cost function
-			lkhd = lognormal_comp(L_obs, N_pred, *param, 0, what);
-			break;
+    if (N_pred == 0.0){
+        if (L_obs > 0){
+            lkhd = likelihood_penalty;
+        }
+    }else if (L_obs == 0.0){
+        lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0, what);
+    }else{
+        lkhd = lognormal_comp(L_obs, N_pred, *param, 0, what);
+    }
+    break;
 	}
 	return(lkhd);
 }
