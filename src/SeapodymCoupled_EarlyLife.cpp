@@ -38,7 +38,7 @@ void SeapodymCoupled::ReadEarly(string what)
 			exit(1);
 		}
 
-		input->allocate(0,nb_input_agg_groups-1);
+		(*input).allocate(0,nb_input_agg_groups-1);
 		for (int iAgg=0; iAgg<nb_input_agg_groups; iAgg++){
 			(*input)[iAgg].allocate(1, nlon_input, 1, nlat_input);
 			(*input)[iAgg].initialize();
@@ -57,7 +57,7 @@ void SeapodymCoupled::ReadEarly(string what)
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
 					litbin.read(( char *)&buf,sizeofDymInputType);
-					input[iAgg][i+1][j+1]= buf;
+					(*input)[iAgg][i+1][j+1]= buf;
 				}
 			}
 			litbin.close();
@@ -199,7 +199,7 @@ void SeapodymCoupled::extract_early(const int sp, const int tcur, string what)
 				Agg_SBHs_pred_at_obs(iAgg, k) +=  Spawning_Habitat(iv,jv)*Total_pop(iv,jv);
 			}
 		}
-		ntime_agg[iAgg] += 1;
+		(*ntime_agg)[iAgg] += 1;
 	}else{
 		for (int i = map.imin; i <= map.imax; i++){
 			const int jmin = map.jinf[i];
@@ -331,12 +331,10 @@ dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, 
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
-
 	}
 
 	dvariable L_pred = N_pred * h;
 	dvariable lkhd = 0.0;
-
 
 	if (N_obs==0.0)
 		lkhd = weight_Lobszero*L_pred*L_pred/(2.0*pow(sigma, 2.0)) ;
@@ -355,7 +353,6 @@ dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, V
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
-
 	}
 
 	const double twopi = 2.0*3.141592654;

@@ -346,6 +346,10 @@ bool VarParamCoupled::read(const string& parfile)
 		likelihood_larvae_sigma.allocate(0, nb_species - 1);
 		likelihood_larvae_beta.allocate(0, nb_species - 1);
 		likelihood_larvae_probzero.allocate(0, nb_species - 1);
+		q_sp_spawning.allocate(0, nb_species - 1);
+		likelihood_spawning_sigma.allocate(0, nb_species - 1);
+		likelihood_spawning_beta.allocate(0, nb_species - 1);
+		likelihood_spawning_probzero.allocate(0, nb_species - 1);
 		inv_M_max.allocate(0, nb_species - 1);
 		inv_M_rate.allocate(0, nb_species - 1);
 		age_larvae_before_sst_mortality.allocate(0, nb_species - 1);
@@ -904,6 +908,17 @@ bool VarParamCoupled::read(const string& parfile)
 			spawning_like[sp] = 0;
 		}	
 		if (spawning_like[sp]){
+			if (!doc.get("/spawning_likelihood_years","first_year").empty())
+				spawning_like_firstyear = doc.getInteger("/spawning_likelihood_years","first_year");
+			if (!doc.get("/spawning_likelihood_years","last_year").empty())
+				spawning_like_lastyear = doc.getInteger("/spawning_likelihood_years","last_year");
+
+			//if simulation time and spawning data time do not overlap, set the likelihood OFF and issue warning
+			if (spawning_like_firstyear > save_last_yr || spawning_like_lastyear < save_first_yr){
+
+				spawning_like[sp] = 0;
+				cout << "WARNING: Simulation time period and spawning data time period do not overlap, will NOT compute spawning likelihood!" << endl;
+			}
 			if (!doc.get("/spawning_input_aggregated",sp_name[sp]).empty())
 				spawning_input_aggregated_flag[sp] = doc.getInteger("/spawning_input_aggregated", sp_name[sp]);
 			if (!doc.get("/strdir_spawning","value").empty()){

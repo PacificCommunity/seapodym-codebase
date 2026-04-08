@@ -182,7 +182,6 @@ double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& Agg_p
 				if (input_categorical_flag){
 					int L_obs  = (*aggregated_input_vectors)[iAgg][k];
 					lkhd = early_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
-
 				}else{
 					double L_obs  = (*aggregated_input_vectors)[iAgg][k];
 					lkhd = early_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, what);
