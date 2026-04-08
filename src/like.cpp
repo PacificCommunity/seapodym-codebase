@@ -328,6 +328,10 @@ dvariable SeapodymCoupled::early_like(int like_type, double L_obs, dvariable N_p
 		case 4: // Zero-Inflated Poisson cost function
 			lkhd = zip_comp(L_obs, N_pred, *param, 0, what);
 			break;
+
+		case 5: // Lognormal cost function
+			lkhd = lognormal_comp(L_obs, N_pred, *param, 0, what);
+			break;
 	}
 	return(lkhd);
 }

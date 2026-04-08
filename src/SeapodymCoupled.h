@@ -252,5 +252,6 @@ dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, 
 dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp, string what);
 dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp, string what);
 dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp, string what);
+dvariable lognormal_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp, string what);
 
 #endif

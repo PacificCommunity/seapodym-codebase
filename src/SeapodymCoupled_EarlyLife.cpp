@@ -431,4 +431,14 @@ dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int s
     return lkhd;
 }
 
-
+dvariable lognormal_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp, string what){
+    const double twopi = 2.0*3.141592654;
+    dvariable h     = param.dvarsQ_sp_larvae[sp];
+    dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
+    dvariable L_pred = N_pred * h;
+    if (value(L_pred) <= 0.0)
+        return dvariable(50.0);
+    dvariable lkhd = pow(log(L_obs) - log(L_pred), 2.0) / (2.0 * pow(sigma, 2.0))
+                     + log(sigma) + 0.5*log(twopi) + log(L_obs);
+    return lkhd;
+}
