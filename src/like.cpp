@@ -140,11 +140,8 @@ double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& Agg_p
 	double weight_Lobszero = 0.0;
 	double like_weight = 1.0;
 	double like = 0.0;
-	int input_categorical_flag, input_aggregated_flag, nb_input_agg_groups, like_type;
-	D3_ARRAY* input = nullptr;
+	int input_categorical_flag, nb_input_agg_groups, like_type;
 	std::vector<double> (*aggregated_input_vectors)[12] = nullptr;
-	std::vector<int> (*aggregated_input_vectors_i)[12] = nullptr;
-	std::vector<int> (*aggregated_input_vectors_j)[12] = nullptr;
 
 	if (what == "larvae"){
 		if (param->fit_null_larvae[0]==1){
@@ -152,24 +149,16 @@ double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& Agg_p
 		}
 		like_weight = param->larvae_like_weight;
 		like_type = param->larvae_likelihood_type[0];
-		input_aggregated_flag = param->larvae_input_aggregated_flag[0];
 		input_categorical_flag = param->larvae_input_categorical_flag[0];
 		nb_input_agg_groups = param->nb_larvae_input_agg_groups;
-		input = &mat.larvae_input;
 		aggregated_input_vectors = &mat.aggregated_larvae_input_vectors;
-		aggregated_input_vectors_i = &mat.aggregated_larvae_input_vectors_i;
-		aggregated_input_vectors_j = &mat.aggregated_larvae_input_vectors_j;
 	}else{
 		weight_Lobszero = 1.0;
 		like_weight = param->spawning_like_weight;
 		like_type = param->spawning_likelihood_type[0];
-		input_aggregated_flag = param->spawning_input_aggregated_flag[0];
 		input_categorical_flag = 0; // categorical spawning input not implemented
 		nb_input_agg_groups = param->nb_spawning_input_agg_groups;
-		input = &mat.spawning_input;
 		aggregated_input_vectors = &mat.aggregated_spawning_input_vectors;
-		aggregated_input_vectors_i = &mat.aggregated_spawning_input_vectors_i;
-		aggregated_input_vectors_j = &mat.aggregated_spawning_input_vectors_j;
 	}
 
 	for (int sp=0; sp < nb_species; sp++){
