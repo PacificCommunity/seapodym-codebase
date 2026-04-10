@@ -325,6 +325,7 @@ bool VarParamCoupled::read(const string& parfile)
 		cannibalism.allocate(0, nb_species - 1);
 		nb_recruitment.allocate(0, nb_species - 1);
 		a_adults_spawning.allocate(0, nb_species - 1);
+		//a_allee_spawning.allocate(0, nb_species - 1);
 		alpha_hsp_prey.allocate(0, nb_species - 1);
 		alpha_hsp_predator.allocate(0, nb_species - 1);
 		beta_hsp_predator.allocate(0, nb_species - 1);
@@ -1635,8 +1636,16 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(M_mean_range,M_mean_range_min,M_mean_range_max,"/M_mean_range",nni);
 	par_read_bounds(a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",nni);
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);
-	if (b_sst_spawning_min < access_temp_min) b_sst_spawning_min = access_temp_min;
-	if (b_sst_spawning_max > access_temp_max) b_sst_spawning_max = access_temp_max;
+	if (b_sst_spawning_min < access_temp_min + 0.5) {
+		b_sst_spawning_min = access_temp_min + 0.5;
+		doc.set("/b_sst_spawning/variable", "min", b_sst_spawning_min);
+		cout << "WARNING: b_sst_spawning minimum was reset above thermal accessibility limit to " << b_sst_spawning_min << endl; 
+	}
+	if (b_sst_spawning_max > access_temp_max - 0.5) {
+		b_sst_spawning_max = access_temp_max - 0.5;
+		doc.set("/b_sst_spawning/variable", "max", b_sst_spawning_max);
+		cout << "WARNING: b_sst_spawning maximum was reset below thermal accessibility limit to " << b_sst_spawning_max << endl; 
+	}
 	par_read_bounds(q_sp_larvae,q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",nni);
 	par_read_bounds(likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",nni);
 	par_read_bounds(likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",nni);
@@ -1656,8 +1665,16 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(beta_hsp_predator,beta_hsp_predator_min,beta_hsp_predator_max,"/beta_hsp_predator",nni);
 	par_read_bounds(a_sst_habitat,a_sst_habitat_min,a_sst_habitat_max,"/a_sst_habitat",nni);
 	par_read_bounds(b_sst_habitat,b_sst_habitat_min,b_sst_habitat_max,"/b_sst_habitat",nni);
-	if (b_sst_habitat_min < access_temp_min) b_sst_habitat_min = access_temp_min;
-	if (b_sst_habitat_max > access_temp_max) b_sst_habitat_max = access_temp_max;
+	if (b_sst_habitat_min < access_temp_min + 0.5) {
+		b_sst_habitat_min = access_temp_min + 0.5;
+		doc.set("/b_sst_habitat/variable", "min", b_sst_habitat_min);
+		cout << "WARNING: b_sst_habitat minimum was reset above thermal accessibility limit to " << b_sst_habitat_min << endl; 
+	}
+	if (b_sst_habitat_max > access_temp_max - 0.5) {
+		b_sst_habitat_max = access_temp_max - 0.5;
+		doc.set("/b_sst_habitat/variable", "max", b_sst_habitat_max);
+		cout << "WARNING: b_sst_habitat maximum was reset below thermal accessibility limit to " << b_sst_habitat_max << endl; 
+	}
 	par_read_bounds(T_age_size_slope,T_age_size_slope_min,T_age_size_slope_max,"/T_age_size_slope",nni);
 	thermal_func_delta_min.allocate(0,2);
 	thermal_func_delta_max.allocate(0,2);
