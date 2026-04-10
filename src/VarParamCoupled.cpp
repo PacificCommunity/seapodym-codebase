@@ -493,8 +493,8 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/accessible_temperature",sp_name[sp]).empty()){
 			set_access_temp[sp] = doc.getInteger("/accessible_temperature", sp_name[sp]);
 		}
-		access_temp_min = -1e3;
-		access_temp_max = 1e3;
+		access_temp_min = -1e2;
+		access_temp_max = 1e2;
 		if (set_access_temp[sp]){
 			string sv = "/accessible_temperature";
 			access_temp_min = doc.getDouble(sv + "/limits", "min");
