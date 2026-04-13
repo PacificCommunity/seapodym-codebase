@@ -101,6 +101,9 @@ public:
 	double q_sp_larvae_min;
 	double q_sp_larvae_max;
 	dvar_vector dvarsQ_sp_larvae;
+	double K_sp_larvae_min;
+	double K_sp_larvae_max;
+	dvar_vector dvarsK_sp_larvae;
 	double likelihood_larvae_sigma_min;
 	double likelihood_larvae_sigma_max;
 	dvar_vector dvarsLikelihood_larvae_sigma;
@@ -124,6 +127,9 @@ public:
 	double q_sp_spawning_min;
 	double q_sp_spawning_max;
 	dvar_vector dvarsQ_sp_spawning;
+	double K_sp_spawning_min;
+	double K_sp_spawning_max;
+	dvar_vector dvarsK_sp_spawning;
 	double likelihood_spawning_sigma_min;
 	double likelihood_spawning_sigma_max;
 	dvar_vector dvarsLikelihood_spawning_sigma;

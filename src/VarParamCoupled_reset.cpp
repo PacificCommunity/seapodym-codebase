@@ -23,6 +23,16 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 		}
 	}
 
+	if (doc.get("/K_sp_larvae/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {
+			dvarsK_sp_larvae[i] = boundp(x[idx], K_sp_larvae_min, K_sp_larvae_max, penalty);
+
+			K_sp_larvae[i] = value(dvarsK_sp_larvae[i]);
+			dvarpars[idx] = K_sp_larvae[i];
+			++idx;
+		}
+	}
+
 	if (doc.get("/likelihood_larvae_sigma/variable", "use") == "true") {
 		for (int i = 0; i < nb_species; i++) {			
 			dvarsLikelihood_larvae_sigma[i] = boundp(x[idx], likelihood_larvae_sigma_min, likelihood_larvae_sigma_max, penalty);
@@ -59,6 +69,16 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 
 			q_sp_spawning[i] = value(dvarsQ_sp_spawning[i]);
 			dvarpars[idx] = q_sp_spawning[i];
+			++idx;
+		}
+	}
+	
+	if (doc.get("/K_sp_spawning/variable", "use") == "true") {
+		for (int i = 0; i < nb_species; i++) {
+			dvarsK_sp_spawning[i] = boundp(x[idx], K_sp_spawning_min, K_sp_spawning_max, penalty);
+
+			K_sp_spawning[i] = value(dvarsK_sp_spawning[i]);
+			dvarpars[idx] = K_sp_spawning[i];
 			++idx;
 		}
 	}
