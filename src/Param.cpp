@@ -271,13 +271,13 @@ double CParam::dffunc_limit_one(const double x, const double dfy)
 
 double CParam::f1_smooth(const double x){
 
-	const double k = 15.0;
+	const double k = 8.0;
 	return(x-log(1.0+exp(k*(x-1.0)))/k);
 }
 
 double CParam::df1_smooth(const double x){
 
-	const double k = 15.0;
+	const double k = 8.0;
 	return(1.0-1.0/(1.0+exp(k*(1.0-x))));
 }
 
