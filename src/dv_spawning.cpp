@@ -19,6 +19,8 @@ unsigned long int restore_long_int_value(void);
 
 void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nmature, const int jday, const int sp, const int t_count)
 {
+	const double a_allee = param->a_allee_adults[sp];
+
 	J.initialize();
 
 	dmatrix J_c = value(J);
@@ -34,7 +36,7 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 	A_sp = a_adults_spawning;
 
 	if (param->elarvae_model[sp] || param->spawning_adult_func_only[sp]){
-		spawning_adult_func_comp(J_c,N_mat,value(nb_recruitment),value(a_adults_spawning));
+		spawning_adult_func_comp(J_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);
 		
 		J = nograd_assign(J_c);
 
@@ -47,6 +49,7 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 		Nmature.save_dvar_matrix_value();//TODO: recompute using density_after
 		Nmature.save_dvar_matrix_position();
 		J.save_dvar_matrix_position();
+		save_double_value(a_allee);
 		unsigned long int pmap   = (unsigned long int)&map;
 		save_long_int_value(pmap);
 		//save_identifier_string2((char*)"spawning_adult_func_end");
@@ -57,7 +60,7 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 
 	} else {
 
-		spawning_in_hs_comp(J_c,Hs_c,N_mat,value(nb_recruitment),value(a_adults_spawning));	
+		spawning_in_hs_comp(J_c,Hs_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);	
 		J = nograd_assign(J_c);
 		
 		save_identifier_string2((char*)"spawning_in_hs_begin");
@@ -84,6 +87,7 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 	}
 } 
 
+//to delete
 void dv_spawning_adult_func_comp()
 {
 	verify_identifier_string2((char*)"spawning_adult_func_end");
@@ -136,6 +140,7 @@ void dv_spawning_BH_Allee_func_comp()
 {
 	verify_identifier_string2((char*)"spawning_BH_Allee_func_end");
 	unsigned long int pos_map   = restore_long_int_value();
+	const double a = restore_double_value();
 	const dvar_matrix_position J_pos  = restore_dvar_matrix_position();
 	const dvar_matrix_position Nm_pos = restore_dvar_matrix_position();
 	dmatrix Nm = restore_dvar_matrix_value(Nm_pos);
@@ -156,7 +161,6 @@ void dv_spawning_BH_Allee_func_comp()
 	const int imin = map->imin;
 
 	const double R_nb = 1000.0*R; //units of R are thous. nb.
-	const double a = 0.7;
 	for (int i = imax; i >= imin; i--){
 		const int jmin = map->jinf[i];
 		const int jmax = map->jsup[i];
@@ -210,6 +214,8 @@ void dv_spawning_in_hs_comp()
 	dmatrix dfBsp = restore_dvar_matrix_derivatives(Bsp_pos);
 	dmatrix dfHs  = restore_dvar_matrix_derivatives(Hs_pos);
 	dmatrix dfJ   = restore_dvar_matrix_derivatives(J_pos);
+
+	const double a = param->a_allee_adults[sp];
 
 	double pp_transform = param->pp_transform;
 	const unsigned int nbf = param->get_nbforage();
@@ -270,23 +276,25 @@ void dv_spawning_in_hs_comp()
 				double f_oxy = 1.0/(1.0+pow(0.01,O2_l2(i,j)-0.1));
 				double Hs = hs_comp(SST(i,j),preys,predators,a_hs,b_hs,c_hs,d_hs,e_hs,f_hs,g_hs,1.0,fsst) * f_oxy;
 
-				double adult = Nm(i,j);
+				double adupa = pow(Nm(i,j),a);
+				double adult = adupa*Nm(i,j);
 				double expr0 = 1.0+b*adult;		
-				double expr1 = pow(expr0,2.0);		
-
+				double expr1 = pow(expr0,2.0);	
+				
 				//recompute
 				double f_adults = R_nb*adult/expr0;
-					
+
 				//derivative in case of simple product
 				//J(i,j)  = f_adults * Hs(i,j);
 				double dffa = Hs * dfJ(i,j);
 				dfHs(i,j)  += f_adults * dfJ(i,j);
 				dfJ(i,j)    = 0.0;
-			
+				
+
 				//double f_adults = 1000.0*R*adult/(1.0+b*adult);
-				dfNbr(i,j) += 1000.0*(adult/expr0) * dffa;
-				dfNm(i,j)  += (R_nb/expr1) * dffa;
-				dfBsp(i,j) -= (R_nb*adult*adult/expr1) * dffa;
+				dfNbr(i,j) += 1000.0*(adult/expr0) *  dffa;
+				dfNm(i,j)  += (R_nb/expr1) * (1+a) * adupa * dffa;
+				dfBsp(i,j) -= (R_nb*adult*adult/expr1) * dffa;	
 			}
 		}
 	}

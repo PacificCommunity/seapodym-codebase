@@ -57,7 +57,7 @@ public:
 	double crit;
 	
 	//Flags for alternative model mechanisms:
-	ivector fsst_type;
+	ivector fsst_type;		   //type of SST function in HS
 	ivector vert_movement;		   //average currents through vertical layers accessible to fish
 	ivector scale_forage_ave_currents; //use eF scaler when computing the time spent in the layer
 	ivector seasonal_migrations;	   //activate seasonal spawning migrations
@@ -246,6 +246,7 @@ public:
 	imatrix age_compute_habitat;	// ages to compute habitat index, by default it is computed for all adult cohorts
 	DVECTOR nb_recruitment;		// nb of fish recruited by cell [sp]
 	DVECTOR a_adults_spawning;	// coefficient controlling dependence of number of spawns from number of mature fish of species [sp]
+	dvector a_allee_adults;		// Allee effect parameter in the modified Beverton-Holt function
 	dvector spawning_season_peak;	// peak of the seasonal cycle in julian day (in the North Hemisphere)
 	dvector spawning_season_start;  // day/night length ratio defining the beginning of spawning migrations
 	DVECTOR a_sst_spawning;		// coefficient of curvature for spawning temperature function [sp]

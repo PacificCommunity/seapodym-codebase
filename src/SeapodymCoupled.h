@@ -202,8 +202,8 @@ private:
         void AgePlus(dvar_matrix& N_a, dvar_matrix& N_a_1);
 
 	void Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& N_a, const int jday, const int sp, const int t_count);
-	void spawning_adult_func_comp(dmatrix& J, const dmatrix  N, double nb_recruitment, double a_adults_spawning);
-	void spawning_in_hs_comp(dmatrix& J, dmatrix& Hs, const dmatrix  N, double nb_recruitment, double a_adults_spawning);
+	void spawning_adult_func_comp(dmatrix& J, const dmatrix  N, double nb_recruitment, double a_adults_spawning, const double a);
+	void spawning_in_hs_comp(dmatrix& J, dmatrix& Hs, const dmatrix  N, double nb_recruitment, double a_adults_spawning, const double a);
 	double tetafunc(const double teta, const double arg);
 	int get_nt(const int a, const int sp, const bool adult);
 	//dvariable tetafunc(dvariable arg);

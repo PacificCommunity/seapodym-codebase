@@ -11,31 +11,27 @@ double SeapodymCoupled::tetafunc(const double teta, const double arg)
 	return 1.0/(1.0+exp(-teta*(arg)));
 }
 
-void SeapodymCoupled::spawning_adult_func_comp(dmatrix& J, const dmatrix Nmature, double R, double b)
+void SeapodymCoupled::spawning_adult_func_comp(dmatrix& J, const dmatrix Nmature, double R, double b, const double a)
 {
         //////////////////////////////////////////////////////////
         //nb_recruitment, here R: thousand of larvae per km^2 being survived
         //Units of adults, i.e. Nmature(i,j): Nb. of ind. per km^2
         //Units of J(i,j): Nb. of ind. per km^2
 	
-	double a = 0.7;//Allee effect parameter
         for (int i = map.imin; i <= map.imax; i++){
                 const int jmin = map.jinf[i];
                 const int jmax = map.jsup[i];
                 for (int j = jmin; j <= jmax; j++){
                         if (map.carte(i,j)){
 
-                                        double Nm = Nmature(i,j);
-                                        //double f_adults = 1000.0*R*Nm/(1.0+b*Nm);
-                                        double f_adults = 1000.0*R*pow(Nm,1.0+a)/(1.0+b*pow(Nm,1.0+a));
-                                        J(i,j) = f_adults;
+					double Nm = pow(Nmature(i,j),1.0+a);
+                                        J(i,j) = 1000.0*R*Nm/(1.0+b*Nm);
                         }
                 }
         }
 }
 
-
-void SeapodymCoupled::spawning_in_hs_comp(dmatrix& J, dmatrix& Hs, const dmatrix Nmature, double R, double b)
+void SeapodymCoupled::spawning_in_hs_comp(dmatrix& J, dmatrix& Hs, const dmatrix Nmature, double R, double b, const double a)
 {
 	//////////////////////////////////////////////////////////
 	//nb_recruitment, here R: thousand of larvae per km^2 being survived
@@ -47,8 +43,8 @@ void SeapodymCoupled::spawning_in_hs_comp(dmatrix& J, dmatrix& Hs, const dmatrix
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){ 
 
-					double Nm = Nmature(i,j);
-					double f_adults = 1000.0*R*Nm/(1.0+b*Nm);
+					double Nm = pow(Nmature(i,j),1.0+a);
+                                        double f_adults = 1000.0*R*Nm/(1.0+b*Nm);
 					J(i,j) = f_adults * Hs(i,j);
 			}
 		}		
