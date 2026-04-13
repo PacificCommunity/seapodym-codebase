@@ -47,16 +47,17 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		int sp = 0;
 		//int tcur = 0;
 		int tcur = t_count-1;
+		
+		std::vector<double> data( dataCollector.getNumSize() );
  
 		// Get density of all age class from dataCollector
 		for (int aa=param->age_mature[sp]; aa<nb_age_class; aa++){
+			dataCollector.startEpoch(); // should be as early as possible
+			
 			int chunk_id = (tstart_cohort-1)*nb_age_class + aa;
 			int index = 0;
-			std::vector<double> data( dataCollector.getNumSize() );
-			dataCollector.startEpoch();
 			dataCollector.getAsync(chunk_id, data.data());
-			dataCollector.flush();
-			dataCollector.endEpoch();
+			dataCollector.flush(); // now the data are ready to be used
 			for (int i = map.imin1; i <= map.imax1; i++){
 				const int jmin1 = map.jinf1[i];
 				const int jmax1 = map.jsup1[i];
@@ -65,6 +66,8 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 					index++;
 				}
 			}
+			
+			dataCollector.endEpoch(); // should be as late as possible
 		}
 		
 

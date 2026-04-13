@@ -161,6 +161,12 @@ int main(int argc, char** argv) {
 
     // set up the data collector
     int numChunks = numAgeGroups * numTimeSteps;
+
+    if (workerId == 0) {
+        printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d\n", \
+		    workerId, numData, numAgeGroups, numTimeSteps, numChunks);
+    }
+
     DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
     
     // analyze the cohort Id task dependencies

@@ -55,7 +55,7 @@ def main(*, input_file: str='results/timings.csv', output_file: str='results/sca
 
         plt.xlabel("Number of processes (nprocs)")
         plt.ylabel("Speedup (relative to nprocs=2)")
-        plt.title("Seapodym cohort speedup 1983-2022 skj_fat.xml 50 cohorts")
+        plt.title("Seapodym cohort speedup 1983-2022 skj_fat.xml ")
         plt.xticks(sorted(df["nprocs"].unique()))
         plt.grid(True)
         plt.legend()

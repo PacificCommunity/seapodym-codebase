@@ -1,145 +1,157 @@
-import pandas as pd
 import re
+import glob
+import pandas as pd
+import matplotlib.pyplot as plt
 from datetime import datetime
-from glob import glob
-import os
-from pathlib import Path
-import defopt
 
+# ---------- CONFIG ----------
+LOG_PATTERN = "log_taskfunc*.txt"
 
-# --- Regex patterns ---
-re_task_start = re.compile(
-        r"\[(.*?)\].*> task id (\d+) for steps (\d+) to (\d+)"
-    )
-re_task_end = re.compile(
-        r"\[(.*?)\].*< task id (\d+) for steps (\d+) to (\d+)"
-    )
+COLORS = {
+    "init": "green",
+    "step": "lightblue",
+    "put": "red",
+    "notify": "orange",
+}
 
-# --- Helper to parse timestamps ---
-def parse_time(s):
-    return datetime.strptime(s, "%Y-%m-%d %H:%M:%S.%f")
-
-
-def parse_logs(dir):
-
-
-    # --- Collect raw records ---
+# ---------- PARSER ----------
+def parse_logs(file_pattern):
     records = []
-    all_times = []
+    active = {}
 
-    for fname in sorted(dir.glob("log_taskfunc*.txt")):
+    files = sorted(glob.glob(file_pattern))
+    print(f"Found {len(files)} log files")
 
-        worker_match = re.search(r"log_taskfunc(\d+)", os.path.basename(fname))
-        worker_id = int(worker_match.group(1)) if worker_match else None
+    timestamp_re = r"\[(.*?)\]"
+    worker_re = r"\[log(\d+)\]"
+    task_re = r"task id (\d+)"
+    step_re = r"step (\d+)"
 
-        with open(fname) as f:
-            lines = f.readlines()
+    for file_path in files:
+        print(f"Parsing {file_path}")
 
-        task_start, task_end = {}, {}
-
-        for line in lines:
-            if m := re_task_start.search(line):
-                t, task_id, step_beg, step_end = (
-                    parse_time(m[1]),
-                    int(m[2]),
-                    int(m[3]),
-                    int(m[4]),
-                )
-                task_start[task_id] = dict(
-                    t_start=t,
-                    step_beg=step_beg,
-                    step_end=step_end,
-                )
-                all_times.append(t)
-            elif m := re_task_end.search(line):
-                t, task_id, step_beg, step_end = (
-                    parse_time(m[1]),
-                    int(m[2]),
-                    int(m[3]),
-                    int(m[4]),
-                )
-                task_end[task_id] = dict(
-                    t_end=t,
-                    step_beg=step_beg,
-                    step_end=step_end,
-                )
-                all_times.append(t)
-
-        for task_id in task_start:
-            if task_id in task_end:
-                beg = task_start[task_id]["step_beg"]
-                end = task_start[task_id]["step_end"]
-                num_steps = end - beg
-                t_start = task_start[task_id]["t_start"]
-                t_end = task_end[task_id]["t_end"]
-                records.append(
-                    dict(
-                        worker_id=worker_id,
-                        task_id=task_id,
-                        num_steps=num_steps,
-                        t_start=t_start,
-                        t_end=t_end,
-                    )
+        with open(file_path) as f:
+            for line in f:
+                # --- Timestamp ---
+                ts_match = re.search(timestamp_re, line)
+                if not ts_match:
+                    continue
+                timestamp = datetime.strptime(
+                    ts_match.group(1),
+                    "%Y-%m-%d %H:%M:%S.%f"
                 )
 
-    # --- Convert to DataFrame ---
-    df = pd.DataFrame.from_records(records).sort_values(["worker_id", "task_id"]).reset_index(drop=True)
+                # --- Worker ID ---
+                worker_match = re.search(worker_re, line)
+                if not worker_match:
+                    continue
+                worker_id = int(worker_match.group(1))
 
-    # --- Convert times to seconds since first timestamp ---
-    if not df.empty:
-        t0 = min(all_times)
-        df["t_start"] = (df["t_start"] - t0).dt.total_seconds()
-        df["t_end"] = (df["t_end"] - t0).dt.total_seconds()
+                # --- Direction ---
+                if ">>>" in line:
+                    direction = "start"
+                elif "<<<" in line:
+                    direction = "end"
+                else:
+                    continue
 
-    print(df)
+                # --- Task ID ---
+                task_match = re.search(task_re, line)
+                if not task_match:
+                    continue
+                task_id = int(task_match.group(1))
+
+                # --- Phase detection ---
+                if "initialization" in line:
+                    phase = "init"
+                    step = None
+                elif "send data" in line:
+                    phase = "put"
+                    step = int(re.search(step_re, line).group(1))
+                elif "notify manager" in line:
+                    phase = "notify"
+                    step = int(re.search(step_re, line).group(1))
+                elif ">>> step" in line or "<<< step" in line:
+                    phase = "step"
+                    step = int(re.search(step_re, line).group(1))
+                else:
+                    continue
+
+                key = (worker_id, task_id, phase, step)
+
+                if direction == "start":
+                    active[key] = timestamp
+                else:
+                    if key in active:
+                        t_start = active.pop(key)
+                        t_end = timestamp
+
+                        records.append({
+                            "worker_id": worker_id,
+                            "task_id": task_id,
+                            "phase": phase,
+                            "step": step,
+                            "t_start": t_start,
+                            "t_end": t_end,
+                            "source_file": file_path,  # 👈 useful debug
+                        })
+
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        print("Warning: No records parsed!")
+    else:
+        print(f"Parsed {len(df)} intervals")
+
     return df
 
-def plot_task_times(df):
 
-    import matplotlib.pyplot as plt
+# ---------- GANTT PLOT ----------
+def plot_gantt(df):
+    fig, ax = plt.subplots(figsize=(14, 6))
 
-    # Compute task durations
-    df["duration"] = df["t_end"] - df["t_start"]
+    # Normalize time
+    t0 = df["t_start"].min()
+    df["start_s"] = (df["t_start"] - t0).dt.total_seconds()
+    df["end_s"] = (df["t_end"] - t0).dt.total_seconds()
 
-    plt.figure(figsize=(12, 6))
-
-    # Plot a horizontal bar for each task
-    for idx, row in df.iterrows():
-        plt.barh(
-            y=row["worker_id"],            # vertical position = worker
-            width=row["duration"],         # horizontal width = task duration
-            left=row["t_start"],           # horizontal start = t_start
-            height=0.4,                    # bar thickness
-            align="center",
-            color="skyblue",
-            edgecolor="black"
-        )
-        # Optional: annotate task_id on the bar
-        plt.text(
-            x=row["t_start"] + row["duration"]/2,
+    # Plot
+    for _, row in df.iterrows():
+        ax.barh(
             y=row["worker_id"],
-            s=f'{int(row["task_id"])}', # str(row["task_id"]),
-            ha="center",
-            va="center",
-            fontsize=8,
-            color="black"
+            width=row["end_s"] - row["start_s"],
+            left=row["start_s"],
+            color=COLORS.get(row["phase"], "gray"),
         )
 
-    plt.xlabel("Time (seconds since first task)")
-    plt.ylabel("Worker ID")
-    plt.title("Task Execution Timeline per Worker")
-    plt.yticks(sorted(df["worker_id"].unique()))
-    plt.grid(axis="x", linestyle="--", alpha=0.5)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Worker ID")
+    ax.set_title("MPI Worker Timeline (All Logs)")
+
+    # Clean y-axis
+    workers = sorted(df["worker_id"].unique())
+    ax.set_yticks(workers)
+
+    # Legend
+    handles = [
+        plt.Rectangle((0, 0), 1, 1, color=c)
+        for c in COLORS.values()
+    ]
+    labels = list(COLORS.keys())
+    ax.legend(handles, labels)
+
     plt.tight_layout()
     plt.show()
-    
-def main(*, dir: Path='.'):
-    """
-    dir: directory containing the log files
-    """
-    df = parse_logs(dir)
-    plot_task_times(df)
 
 
+# ---------- MAIN ----------
 if __name__ == "__main__":
-    defopt.run(main)
+    df = parse_logs(LOG_PATTERN)
+
+    # Sort for nicer plotting
+    df = df.sort_values(["worker_id", "t_start"])
+
+    print(df.head())
+
+    plot_gantt(df)
+
