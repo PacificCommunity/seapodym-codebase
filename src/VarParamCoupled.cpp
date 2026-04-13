@@ -1363,6 +1363,10 @@ bool VarParamCoupled::read(const string& parfile)
 			density_like_weight = doc.getDouble("/density_likelihood_weight","value");
 		if (!density_like_data) density_like_weight = 1.0;
 
+		penalty_like_weight = 0.0;
+		if (!doc.get("/penalty_likelihood_parameters","value").empty())
+			penalty_like_weight = doc.getDouble("/penalty_likelihood_parameters","value");
+
 		//likelihood parameters: variance, beta binomial 
 		like_param.allocate(0, nb_species-1);
 		for (int sp=0; sp<nb_species; sp++){

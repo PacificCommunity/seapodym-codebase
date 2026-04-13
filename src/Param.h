@@ -95,6 +95,7 @@ public:
 
 	int     density_like_data;
 	double  density_like_weight;
+	double  penalty_like_weight;
 	
 	int use_lf_regstruc;
 	int use_mask_catch;

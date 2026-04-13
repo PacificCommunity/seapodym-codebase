@@ -488,7 +488,7 @@ dvariable VarParamCoupled::reset(dvar_vector x)
 			}
 		}
 	}
-	penalty *= 10000.0;
+	penalty *= penalty_like_weight;
 
 	if (!scalc())
 		cout << value(penalty) << "; ";
