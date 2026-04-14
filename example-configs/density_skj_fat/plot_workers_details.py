@@ -13,6 +13,8 @@ COLORS = {
     "notify": "orange",
 }
 
+re_init_start = re.compile(r"")
+
 # ---------------- PARSER ----------------
 def parse_logs(pattern):
 
@@ -27,10 +29,25 @@ def parse_logs(pattern):
     task_re = r"task id (\d+)"
     step_re = r"step (\d+)"
 
+    task_ids = []
+    worker_ids = []
+    phases = []
+    t_starts = []
+    t_ends = []
+    steps = []
+
     for file in files:
         print(f"Parsing {file}")
 
         with open(file) as f:
+
+            # phases
+            is_init = False
+            is_put = False
+            is_step = False
+            is_notify = False
+
+            t_start = None
 
             for line in f:
 
@@ -38,77 +55,92 @@ def parse_logs(pattern):
                 ts_m = re.search(ts_re, line)
                 if not ts_m:
                     continue
+
                 ts = datetime.strptime(ts_m.group(1), "%Y-%m-%d %H:%M:%S.%f")
-
-                # ---------- worker ----------
-                w_m = re.search(worker_re, line)
-                if not w_m:
-                    continue
-                worker = int(w_m.group(1))
-
-                # ---------- task ----------
-                t_m = re.search(task_re, line)
-                if not t_m:
-                    continue
-                task = int(t_m.group(1))
-
-                # =====================================================
-                # 1. CLASSIFY EVENT TYPE FIRST (CRITICAL FIX)
-                # =====================================================
-
-                is_init = "initialization of task" in line
-                is_put = "send data for step" in line
-                is_notify = "notify manager after step" in line
-                is_step = ("step" in line and "of task" in line and not is_put and not is_notify and not is_init)
+                worker_id = int(re.search(worker_re, line).group(1))
 
                 if is_init:
-                    phase = "init"
-                    step = None
-                    key = (worker, task, "init")
-
-                elif is_step:
-                    phase = "step"
-                    step = int(re.search(step_re, line).group(1))
-                    key = (worker, task, "step", step)
-
+                    m = re.search(r'<< initialization of task id (\d+)', line)
+                    if m:
+                        # end of init
+                        task_id = int(m.group(1))
+                        task_ids.append(task_id)
+                        worker_ids.append(worker_id)
+                        phases.append('init')
+                        t_starts.append(t_start)
+                        t_ends.append(ts)
+                        steps.append(-1)
+                        is_init = False
                 elif is_put:
-                    phase = "put"
-                    step = int(re.search(step_re, line).group(1))
-                    key = (worker, task, "put", step)
-
+                    m = re.search(r'<<< send data for step (\d+) of task id (\d+)', line)
+                    if m:
+                        # end of put
+                        task_id = int(m.group(2))
+                        task_ids.append(task_id)
+                        worker_ids.append(worker_id)
+                        phases.append('put')
+                        t_starts.append(t_start)
+                        t_ends.append(ts)
+                        steps.append(-2)
+                        is_put = False
+                elif is_step:
+                    m = re.search(r'<<< step (\d+) of task id (\d+)', line)
+                    if m:
+                        # end of step
+                        task_id = int(m.group(2))
+                        task_ids.append(task_id)
+                        worker_ids.append(worker_id)
+                        phases.append('step')
+                        t_starts.append(t_start)
+                        t_ends.append(ts)
+                        steps.append(int(m.group(1)))
+                        is_step = False
                 elif is_notify:
-                    phase = "notify"
-                    step = int(re.search(step_re, line).group(1))
-                    key = (worker, task, "notify", step)
+                    m = re.search(r'<<< notify manager after step (\d+) of task id (\d+)', line)
+                    if m:
+                        # end of notify
+                        task_id = int(m.group(2))
+                        task_ids.append(task_id)
+                        worker_ids.append(worker_id)
+                        phases.append('notify')
+                        t_starts.append(t_start)
+                        t_ends.append(ts)
+                        steps.append(-3)
+                        is_notify = False
 
-                else:
-                    continue
-
-                # ---------- direction ----------
-                if ">>>" in line:
-                    direction = "start"
-                elif "<<<" in line:
-                    direction = "end"
-                else:
-                    continue
-
-                # ---------- match ----------
-                if direction == "start":
-                    active[key] = ts
-                else:
-                    if key not in active:
+                if not is_init:
+                    m = re.search(r'>> initialization of task id (\d+)', line)
+                    if m:
+                        t_start = ts
+                        is_init = True
+                        continue
+                elif not is_put:
+                    m = re.search(r'>> send data for step (\d+) of task id (\d+)', line)
+                    if m:
+                        t_start = ts
+                        is_put = True
+                        continue
+                elif not is_step:
+                    m = re.search(r'>> step (\d+) of task id (\d+)', line)
+                    if m:
+                        t_start = ts
+                        is_step = True
+                        continue
+                elif not is_notify:
+                    m = re.search(r'>>> notify manager after step (\d+) of task id (\d+)', line)
+                    if m:
+                        t_start = ts
+                        is_notify = True
                         continue
 
-                    records.append({
-                        "worker_id": worker,
-                        "task_id": task,
-                        "phase": phase,
-                        "step": step,
-                        "t_start": active.pop(key),
-                        "t_end": ts,
-                    })
-
-    df = pd.DataFrame(records)
+    df = pd.DataFrame({
+        'task_id': task_ids,
+        'worker_id': worker_ids,
+        'phase': phases,
+        'step': steps,
+        't_start': t_starts,
+        't_end': t_ends,
+    })
 
     #print("\nPhases found:", df["phase"].unique())
     print("Total rows:", len(df))
