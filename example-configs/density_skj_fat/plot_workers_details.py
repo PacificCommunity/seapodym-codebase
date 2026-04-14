@@ -41,12 +41,7 @@ def parse_logs(pattern):
 
         with open(file) as f:
 
-            # phases
-            is_init = False
-            is_put = False
-            is_step = False
-            is_notify = False
-
+            phase = None
             t_start = None
 
             for line in f:
@@ -59,9 +54,13 @@ def parse_logs(pattern):
                 ts = datetime.strptime(ts_m.group(1), "%Y-%m-%d %H:%M:%S.%f")
                 worker_id = int(re.search(worker_re, line).group(1))
 
-                if is_init:
+                print(f'**** line = {line}')
+
+                if phase:
+
                     m = re.search(r'<< initialization of task id (\d+)', line)
                     if m:
+                        
                         # end of init
                         task_id = int(m.group(1))
                         task_ids.append(task_id)
@@ -70,8 +69,10 @@ def parse_logs(pattern):
                         t_starts.append(t_start)
                         t_ends.append(ts)
                         steps.append(-1)
-                        is_init = False
-                elif is_put:
+                        phase = None
+                        print(f'<< init detected at line: {line} ts = {ts}')
+                        continue
+
                     m = re.search(r'<<< send data for step (\d+) of task id (\d+)', line)
                     if m:
                         # end of put
@@ -82,8 +83,10 @@ def parse_logs(pattern):
                         t_starts.append(t_start)
                         t_ends.append(ts)
                         steps.append(-2)
-                        is_put = False
-                elif is_step:
+                        phase = None
+                        print(f'<<< put detected at line: {line} ts = {ts}')
+                        continue
+
                     m = re.search(r'<<< step (\d+) of task id (\d+)', line)
                     if m:
                         # end of step
@@ -94,8 +97,9 @@ def parse_logs(pattern):
                         t_starts.append(t_start)
                         t_ends.append(ts)
                         steps.append(int(m.group(1)))
-                        is_step = False
-                elif is_notify:
+                        phase = None
+                        continue
+
                     m = re.search(r'<<< notify manager after step (\d+) of task id (\d+)', line)
                     if m:
                         # end of notify
@@ -106,33 +110,37 @@ def parse_logs(pattern):
                         t_starts.append(t_start)
                         t_ends.append(ts)
                         steps.append(-3)
-                        is_notify = False
+                        phase = None
+                        continue
 
-                if not is_init:
+                else:
+                
                     m = re.search(r'>> initialization of task id (\d+)', line)
                     if m:
                         t_start = ts
-                        is_init = True
+                        phase = 'init'
+                        print(f'>> init detected at line: {line} ts = {ts}')
                         continue
-                elif not is_put:
-                    m = re.search(r'>> send data for step (\d+) of task id (\d+)', line)
+
+                    m = re.search(r'>>> send data', line)
                     if m:
                         t_start = ts
-                        is_put = True
+                        phase = 'put'
+                        print(f'>>> put detected at line: {line}')
                         continue
-                elif not is_step:
-                    m = re.search(r'>> step (\d+) of task id (\d+)', line)
+
+                    m = re.search(r'>>> step (\d+) of task id (\d+)', line)
                     if m:
                         t_start = ts
-                        is_step = True
+                        phase = 'step'
                         continue
-                elif not is_notify:
+
                     m = re.search(r'>>> notify manager after step (\d+) of task id (\d+)', line)
                     if m:
                         t_start = ts
-                        is_notify = True
+                        phase = 'notify'
                         continue
-
+ 
     df = pd.DataFrame({
         'task_id': task_ids,
         'worker_id': worker_ids,
@@ -185,10 +193,10 @@ if __name__ == "__main__":
     print(df.head(20))
     print(df.phase.unique())
 
-    if not df.empty:
-        df = df.sort_values(["worker_id", "t_start"])
+    # if not df.empty:
+    #     df = df.sort_values(["worker_id", "t_start"])
 
-    plot_gantt(df)
+    # plot_gantt(df)
 
 
 
