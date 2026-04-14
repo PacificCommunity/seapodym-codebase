@@ -3,8 +3,8 @@ import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
+import defopt
 
-LOG_PATTERN = "log_taskfunc*.txt"
 
 COLORS = {
     "init": "green",
@@ -153,10 +153,6 @@ def parse_logs(pattern):
 def plot_gantt(df):
     fig, ax = plt.subplots(figsize=(14, 6))
 
-    t0 = df["t_start"].min()
-    df["start_s"] = (df["t_start"] - t0).dt.total_seconds()
-    df["end_s"] = (df["t_end"] - t0).dt.total_seconds()
-
     for _, r in df.iterrows():
         ax.barh(
             r["worker_id"],
@@ -179,8 +175,9 @@ def plot_gantt(df):
 
 
 # ---------------- MAIN ----------------
-if __name__ == "__main__":
-    df = parse_logs(LOG_PATTERN)
+def main(*, log_pattern: str="log_taskfunc*.txt", tmin: float=0, tmax: float=-1):
+
+    df = parse_logs(log_pattern)
 
     print(df.head(20))
     print(df.phase.unique())
@@ -188,7 +185,21 @@ if __name__ == "__main__":
     if not df.empty:
         df = df.sort_values(["worker_id", "t_start"])
 
+    t0 = df["t_start"].min()
+    df["start_s"] = (df["t_start"] - t0).dt.total_seconds()
+    df["end_s"] = (df["t_end"] - t0).dt.total_seconds()
+
+    exec_time = df["end_s"].max()
+    print(f'exec time: {exec_time}')
+    if tmax < 0:
+        tmax = exec_time
+    
+    # select time interval
+    df = df[df.start_s >= tmin]
+    df = df[df.end_s < tmax]
+
     plot_gantt(df)
 
-
+if __name__ == "__main__":
+    defopt.run(main)
 
