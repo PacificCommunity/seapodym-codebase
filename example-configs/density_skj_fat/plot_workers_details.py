@@ -4,16 +4,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-LOG_PATTERN = "log_taskfunc1.txt"
+LOG_PATTERN = "log_taskfunc*.txt"
 
 COLORS = {
     "init": "green",
     "step": "lightblue",
     "put": "red",
-    "notify": "orange",
+    "notify": "blue",
 }
-
-re_init_start = re.compile(r"")
 
 # ---------------- PARSER ----------------
 def parse_logs(pattern):
@@ -54,8 +52,6 @@ def parse_logs(pattern):
                 ts = datetime.strptime(ts_m.group(1), "%Y-%m-%d %H:%M:%S.%f")
                 worker_id = int(re.search(worker_re, line).group(1))
 
-                print(f'**** line = {line}')
-
                 if phase:
 
                     m = re.search(r'<< initialization of task id (\d+)', line)
@@ -70,7 +66,6 @@ def parse_logs(pattern):
                         t_ends.append(ts)
                         steps.append(-1)
                         phase = None
-                        print(f'<< init detected at line: {line} ts = {ts}')
                         continue
 
                     m = re.search(r'<<< send data for step (\d+) of task id (\d+)', line)
@@ -84,7 +79,6 @@ def parse_logs(pattern):
                         t_ends.append(ts)
                         steps.append(-2)
                         phase = None
-                        print(f'<<< put detected at line: {line} ts = {ts}')
                         continue
 
                     m = re.search(r'<<< step (\d+) of task id (\d+)', line)
@@ -119,14 +113,12 @@ def parse_logs(pattern):
                     if m:
                         t_start = ts
                         phase = 'init'
-                        print(f'>> init detected at line: {line} ts = {ts}')
                         continue
 
                     m = re.search(r'>>> send data', line)
                     if m:
                         t_start = ts
                         phase = 'put'
-                        print(f'>>> put detected at line: {line}')
                         continue
 
                     m = re.search(r'>>> step (\d+) of task id (\d+)', line)
@@ -150,7 +142,7 @@ def parse_logs(pattern):
         't_end': t_ends,
     })
 
-    #print("\nPhases found:", df["phase"].unique())
+    print("\nPhases found:", df["phase"].unique())
     print("Total rows:", len(df))
     print(df)
 
@@ -193,10 +185,10 @@ if __name__ == "__main__":
     print(df.head(20))
     print(df.phase.unique())
 
-    # if not df.empty:
-    #     df = df.sort_values(["worker_id", "t_start"])
+    if not df.empty:
+        df = df.sort_values(["worker_id", "t_start"])
 
-    # plot_gantt(df)
+    plot_gantt(df)
 
 
 
