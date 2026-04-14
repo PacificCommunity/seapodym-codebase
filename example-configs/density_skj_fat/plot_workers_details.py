@@ -163,7 +163,7 @@ def plot_gantt(df):
 
     ax.set_xlabel("Time (s)")
     ax.set_ylabel("Worker ID")
-    ax.set_title("MPI Worker Timeline (Corrected Parser)")
+    ax.set_title("Worker Timeline")
 
     ax.set_yticks(sorted(df["worker_id"].unique()))
 
@@ -173,14 +173,19 @@ def plot_gantt(df):
     plt.tight_layout()
     plt.show()
 
+def print_summary(df):
+    total_time = df.end_s.max()
+    num_workers = df.worker_id.max()
+    for phase in df.phase.unique():
+        df2 = df[ df['phase'] == phase]
+        dt = df2['end_s'] - df2['start_s']
+        dt_sum = dt.sum()
+        print(f'{phase}\t: min={dt.min():.3f} max={dt.max():.3f} mean={dt.mean():.3f} std={dt.std():.3f} total={dt_sum:.3f} {dt_sum*100/(num_workers*total_time):.1f}%')
 
 # ---------------- MAIN ----------------
 def main(*, log_pattern: str="log_taskfunc*.txt", tmin: float=0, tmax: float=-1):
 
     df = parse_logs(log_pattern)
-
-    print(df.head(20))
-    print(df.phase.unique())
 
     if not df.empty:
         df = df.sort_values(["worker_id", "t_start"])
@@ -197,6 +202,8 @@ def main(*, log_pattern: str="log_taskfunc*.txt", tmin: float=0, tmax: float=-1)
     # select time interval
     df = df[df.start_s >= tmin]
     df = df[df.end_s < tmax]
+
+    print_summary(df)
 
     plot_gantt(df)
 
