@@ -158,6 +158,7 @@ def plot_gantt(df):
             r["worker_id"],
             r["end_s"] - r["start_s"],
             left=r["start_s"],
+            height=1.0, # fill vertical space, no gaps
             color=COLORS.get(r["phase"], "gray"),
         )
 
