@@ -225,8 +225,8 @@ int main(int argc, char** argv) {
     }
 
 
-    printf("[%d] Timings calc/step/overhead/init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
-        time_calc, time_step, time_overhead, time_init, time_mpi);
+    printf("[%d] Timings calc/step/overhead/init/step init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
+        time_calc, time_step, time_overhead, time_init, time_init2, time_mpi);
 
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
