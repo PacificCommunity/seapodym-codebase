@@ -264,7 +264,8 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 						deltaT,sp,age);
 				}
 
-				mat.adult_habitat(sp,tcur,param->age_compute_habitat[sp][age]) = value(Habitat);
+				// The following is commented-out because not necessary for now for simulation only (necessary for adjoint)
+				//mat.adult_habitat(sp,tcur,param->age_compute_habitat[sp][age]) = value(Habitat);
 
 				pop.Precalrec_Calrec_adult(map,mat,*param,rw,
 						dvarCohortDensity,Mortality,
