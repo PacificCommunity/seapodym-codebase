@@ -11,7 +11,7 @@ void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc
 //Default settings are for:
 //PO-2deg bigeye config, 22-years simulation (1.6Gb) 
 //or 6-years optimization with CL likelihood (15Gb).
-long int gs_var_size_set    = 800000000L;
+long int gs_var_size_set    = 400000000L;
 long int gradstack_size_set =   5000000L;
 long int cmpdiff_size_set   =  10000000L;
 
