@@ -3,9 +3,11 @@ import re
 from datetime import datetime
 from glob import glob
 import os
+from pathlib import Path
+import defopt
 
 
-def parse_logs():
+def parse_logs(dir):
     # --- Regex patterns ---
     re_task_start = re.compile(
         r"\[(.*?)\].*> task id (\d+) for steps (\d+) to (\d+)"
@@ -22,7 +24,7 @@ def parse_logs():
     records = []
     all_times = []
 
-    for fname in sorted(glob("log_taskfunc*.txt")):
+    for fname in sorted(dir.glob("log_taskfunc*.txt")):
 
         worker_match = re.search(r"log_taskfunc(\d+)", os.path.basename(fname))
         worker_id = int(worker_match.group(1)) if worker_match else None
@@ -127,8 +129,14 @@ def plot_task_times(df):
     plt.grid(axis="x", linestyle="--", alpha=0.5)
     plt.tight_layout()
     plt.show()
+    
+def main(*, dir: Path='.'):
+    """
+    dir: directory containing the log files
+    """
+    df = parse_logs(dir)
+    plot_task_times(df)
 
 
 if __name__ == "__main__":
-    df = parse_logs()
-    plot_task_times(df)
+    defopt.run(main)

@@ -161,6 +161,12 @@ int main(int argc, char** argv) {
 
     // set up the data collector
     int numChunks = numAgeGroups * numTimeSteps;
+
+    if (workerId == 0) {
+        printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d\n", \
+		    workerId, numData, numAgeGroups, numTimeSteps, numChunks);
+    }
+
     DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
     
     // analyze the cohort Id task dependencies
@@ -219,8 +225,8 @@ int main(int argc, char** argv) {
     }
 
 
-    printf("[%d] Timings calc/step/overhead/init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
-        time_calc, time_step, time_overhead, time_init, time_mpi);
+    printf("[%d] Timings calc/step/overhead/init/cohort init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
+        time_calc, time_step, time_overhead, time_init, time_init2, time_mpi);
 
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////

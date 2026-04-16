@@ -108,7 +108,7 @@ ARCH := $(shell uname -m)
 #DEBUG=-pg -g
 DEBUG= -g
 #production code
-CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -O3 -DOPT_LIB -Wall -Wno-deprecated -I$(ADMODEL_HOME)/include -I/usr/include/libxml2 -I$(SEA_PARALLEL)/include $(INCPATH)
+CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -g -O4 -DOPT_LIB -Wall -Wno-deprecated -I$(ADMODEL_HOME)/include -I/usr/include/libxml2 -I$(SEA_PARALLEL)/include $(INCPATH)
 
 ###### with safe library ################################
 #LFLAGS=-lm -L$(ADMODEL_HOME)/lib  -ladmb -lstdc++ -lxml2 
@@ -158,7 +158,7 @@ docs: $(SRCS) $(HEADERS)
 
 $(BINPATH)/seapodym_cohort : $(OBJECTS)
 	@make -p $(BINDIR)
-	$(LL) -o$@ $(DEBUG) $^ $(LFLAGS) 
+	$(LL) -o$@ $(DEBUG) -O4 $^ $(LFLAGS) 
 
 $(OBJPATH)/%.o : %.cpp
 	$(CC) -o$@ $(DEBUG) -c $(CFLAGS) $(filter %.cpp, $^)

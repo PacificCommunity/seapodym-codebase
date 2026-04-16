@@ -158,6 +158,7 @@ def plot_gantt(df):
             r["worker_id"],
             r["end_s"] - r["start_s"],
             left=r["start_s"],
+            height=1.0, # fill vertical space, no gaps
             color=COLORS.get(r["phase"], "gray"),
         )
 
@@ -176,14 +177,26 @@ def plot_gantt(df):
 def print_summary(df):
     total_time = df.end_s.max()
     num_workers = df.worker_id.max()
+    for worker_id in range(1, num_workers):
+        df2 = df[ df['worker_id'] == worker_id ]
+        print(f'\nWorker {worker_id}')
+        for phase in df.phase.unique():
+            df3 = df2[ df2['phase'] == phase]
+            dt = df3['end_s'] - df3['start_s']
+            dt_sum = dt.sum()
+            total_time_worker = df3.end_s.max() - df3.start_s.min()
+            print(f'{phase}\t: {dt.min():.3f} <= {dt.mean():.3f} +/- {dt.std():.3f} <= {dt.max():.3f} total={dt_sum:.3f} {dt_sum*100/(total_time_worker):.1f}%')
+    print('\nAll workers')
     for phase in df.phase.unique():
-        df2 = df[ df['phase'] == phase]
-        dt = df2['end_s'] - df2['start_s']
+        df3 = df[ df['phase'] == phase]
+        dt = df3['end_s'] - df3['start_s']
         dt_sum = dt.sum()
-        print(f'{phase}\t: min={dt.min():.3f} max={dt.max():.3f} mean={dt.mean():.3f} std={dt.std():.3f} total={dt_sum:.3f} {dt_sum*100/(num_workers*total_time):.1f}%')
+        total_time = df3.end_s.max() - df3.start_s.min()
+        print(f'{phase}\t: {dt.min():.3f} <= {dt.mean():.3f} +/- {dt.std():.3f} <= {dt.max():.3f} total={dt_sum:.3f} {dt_sum*100/(num_workers*total_time):.1f}%')
+     
 
 # ---------------- MAIN ----------------
-def main(*, log_pattern: str="log_taskfunc*.txt", tmin: float=0, tmax: float=-1):
+def main(*, log_pattern: str="log_taskfunc*.txt", tmin: float=0, tmax: float=-1, show: bool=False):
 
     df = parse_logs(log_pattern)
 
@@ -205,7 +218,8 @@ def main(*, log_pattern: str="log_taskfunc*.txt", tmin: float=0, tmax: float=-1)
 
     print_summary(df)
 
-    plot_gantt(df)
+    if show:
+    	plot_gantt(df)
 
 if __name__ == "__main__":
     defopt.run(main)
