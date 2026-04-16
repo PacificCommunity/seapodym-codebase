@@ -102,6 +102,9 @@ BINPATH=bin
 OBJPATH=objs
 ADMODEL_HOME=$(ADMB_HOME)
 
+OS := $(shell uname -s)
+ARCH := $(shell uname -m)
+
 #DEBUG=-pg -g
 DEBUG= -g
 #production code
@@ -112,6 +115,16 @@ CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -O3 -DOPT_LIB -Wall -Wno-
 
 ###### with optimized library ###########################
 LFLAGS= -L$(SEA_PARALLEL)/lib -lseapodym_api -lspdlog -lfmt -L$(ADMODEL_HOME)/lib  -ladmbo -lstdc++ -lxml2 -lm
+
+ifeq ($(OS),Darwin)
+    ifeq ($(ARCH),arm64)
+        # Check if the directory actually exists to avoid compiler warnings
+        ifneq ($(wildcard /opt/homebrew/include),)
+            CFLAGS += -I/opt/homebrew/include
+            LFLAGS += -L/opt/homebrew/lib
+        endif
+    endif
+endif
 
 CC=mpicxx
 LL=$(CC)
