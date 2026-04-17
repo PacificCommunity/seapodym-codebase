@@ -92,11 +92,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	dvar_matrix IFR; 
 	dvar_matrix ISR_denom; 
 	dvar_matrix FR_pop;
-			
-	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
-	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
-	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
 
 	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
@@ -110,14 +105,6 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Spawning_Habitat.initialize();
 	Habitat.initialize();
 	Mortality.initialize();
-
-	// For larvae likelihood
-	if (param->larvae_like[0])
-		create_init_larvae_vars();		
-
-	// For spawning likelihood
-	if (param->spawning_like[0])
-		create_init_spawning_vars();		
 
 		//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)

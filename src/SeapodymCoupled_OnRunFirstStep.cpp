@@ -35,6 +35,16 @@ void SeapodymCoupled::OnRunFirstStep()
 	past_qtr=0;
 	sumP = 0; 
 
+	if (param->larvae_like[0])
+		create_init_larvae_vars();		
+	if (param->spawning_like[0])
+		create_init_spawning_vars();
+		
+	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
+
 	for (int j=map.jmin;j<=map.jmax;j++){
 		double lat = param->lastlat(j);
 		mat.lastlat[j] = lat;
