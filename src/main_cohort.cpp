@@ -203,6 +203,8 @@ int main(int argc, char** argv) {
 
         gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
         gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
+        gradient_structure::set_NO_DERIVATIVES();
+        
         // Does every worker need a gradiant structure object? Or does every cohort object need
         // its own gradient structure?
         gradient_structure gs(gs_var_buffer);        
