@@ -316,15 +316,11 @@ void SeapodymCoupled::write_elarvae_dym(const int sp)
 }
 
 // Functions to compute the likelihood of a larvae density or SBHs observed on a continuous scale
-
-// Helper:  Holling type 1, 2 or 3 scaling depending on K value.
-static dvariable scale_pred(dvariable h, dvariable K_dvar, double K_val, dvariable N_pred) {
-    if (K_val > 0.0)
-        //return h * N_pred / (K_dvar + N_pred);  // Holling type 2
-	    return h * N_pred*N_pred / (K_dvar*K_dvar + N_pred*N_pred); //Holling type 3
-
+static dvariable scale_pred(dvariable h, dvariable N_pred, string what) {
+    if (what == "larvae")
+        return N_pred*N_pred / (h + N_pred*N_pred); // Holling type 3
     else
-        return N_pred * h;                       // linear
+        return N_pred * h;                          // linear
 }
 
 dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp, string what){
@@ -338,9 +334,7 @@ dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, 
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
 	}
 
-	dvariable K_dvar = (what=="larvae") ? param.dvarsK_sp_larvae[sp] : param.dvarsK_sp_spawning[sp];
-	double    K_val  = (what=="larvae") ? param.K_sp_larvae[sp]       : param.K_sp_spawning[sp];
-	dvariable L_pred = scale_pred(h, K_dvar, K_val, N_pred);
+	dvariable L_pred = scale_pred(h, N_pred, what);
 	dvariable lkhd = 0.0;
 
 	if (N_obs==0.0)
@@ -364,9 +358,7 @@ dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, V
 	}
 
 	const double twopi = 2.0*3.141592654;
-	dvariable K_dvar = (what=="larvae") ? param.dvarsK_sp_larvae[sp] : param.dvarsK_sp_spawning[sp];
-	double    K_val  = (what=="larvae") ? param.K_sp_larvae[sp]       : param.K_sp_spawning[sp];
-	dvariable L_pred = scale_pred(h, K_dvar, K_val, N_pred); 
+	dvariable L_pred = scale_pred(h, N_pred, what);
 	dvariable lkhd = 0.0;
 	if (L_obs==0){
 		lkhd = weight_Lobszero * (pow(L_pred,2) / (2*pow(sigma, 2)) + log(sigma) + log(twopi)/2);
@@ -384,9 +376,7 @@ dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_L
 		h = param.dvarsQ_sp_spawning[sp];
 	}
 
-	dvariable K_dvar = (what=="larvae") ? param.dvarsK_sp_larvae[sp] : param.dvarsK_sp_spawning[sp];
-	double    K_val  = (what=="larvae") ? param.K_sp_larvae[sp]       : param.K_sp_spawning[sp];
-	dvariable L_pred = 1.0 + scale_pred(h, K_dvar, K_val, N_pred);
+	dvariable L_pred = scale_pred(h, N_pred, what);
 	dvariable lkhd = 0.0;
 	L_obs += 1;
 	lkhd = L_pred - L_obs * log(L_pred) + gammln(L_obs+1) + log(1-exp(-L_pred));
@@ -410,9 +400,7 @@ dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int 
 		p = param.dvarsLikelihood_spawning_probzero[sp];
 	}
 
-	dvariable K_dvar = (what=="larvae") ? param.dvarsK_sp_larvae[sp] : param.dvarsK_sp_spawning[sp];
-	double    K_val  = (what=="larvae") ? param.K_sp_larvae[sp]       : param.K_sp_spawning[sp];
-	dvariable L_pred = scale_pred(h, K_dvar, K_val, N_pred);
+	dvariable L_pred = scale_pred(h, N_pred, what);
 	dvariable lkhd = 0.0;
 	if (L_obs==0.0){
 		dvariable pwr = beta*L_pred/(1-p);
@@ -436,9 +424,7 @@ dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int s
 		p = param.dvarsLikelihood_spawning_probzero[sp];
 	}
 
-	dvariable K_dvar = (what=="larvae") ? param.dvarsK_sp_larvae[sp] : param.dvarsK_sp_spawning[sp];
-	double    K_val  = (what=="larvae") ? param.K_sp_larvae[sp]       : param.K_sp_spawning[sp];
-	dvariable L_pred = scale_pred(h, K_dvar, K_val, N_pred);
+	dvariable L_pred = scale_pred(h, N_pred, what);
 	dvariable lkhd = 0.0;
 	if (L_obs==0.0){
 		lkhd -= log(p + (1-p) * exp(-L_pred));
@@ -461,9 +447,8 @@ dvariable lognormal_comp(double L_obs, dvariable N_pred, VarParamCoupled& param,
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
 	}
 
-	dvariable K_dvar = (what=="larvae") ? param.dvarsK_sp_larvae[sp] : param.dvarsK_sp_spawning[sp];
-	double    K_val  = (what=="larvae") ? param.K_sp_larvae[sp]       : param.K_sp_spawning[sp];
-	dvariable L_pred = scale_pred(h, K_dvar, K_val, N_pred);
+	dvariable L_pred = scale_pred(h, N_pred, what);
+	if (value(L_pred) <= 0.0) return (dvariable)50.0;
 	dvariable lkhd = pow(log(L_obs) - log(L_pred), 2.0) / (2.0 * pow(sigma, 2.0))
 		+ log(sigma) + 0.5*log(twopi) + log(L_obs);
 	return lkhd;
