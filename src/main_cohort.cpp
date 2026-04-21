@@ -182,6 +182,8 @@ int main(int argc, char** argv) {
         TaskStepManager manager(MPI_COMM_WORLD, numCohorts, stepBegMap, stepEndMap, dependencyMap);
         auto results = manager.run();
         double time_manager = MPI_Wtime() - tik;
+	// Make sure the data are ready for te final checksum
+	MPI_Barrier(MPI_COMM_WORLD);
         double* data = dataCollect.getCollectedDataPtr();
         // print check sum
         double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
@@ -224,6 +226,7 @@ int main(int argc, char** argv) {
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
         worker.run();
 	time_overhead = cohort.time_overhead;
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
 
