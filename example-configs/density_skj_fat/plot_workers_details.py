@@ -61,7 +61,7 @@ def parse_logs(pattern):
                         task_id = int(m.group(1))
                         task_ids.append(task_id)
                         worker_ids.append(worker_id)
-                        phases.append('init')
+                        phases.append('coh init')
                         t_starts.append(t_start)
                         t_ends.append(ts)
                         steps.append(-1)
@@ -187,12 +187,13 @@ def print_summary(df):
             total_time_worker = df3.end_s.max() - df3.start_s.min()
             print(f'{phase}\t: {dt.min():.3f} <= {dt.mean():.3f} +/- {dt.std():.3f} <= {dt.max():.3f} total={dt_sum:.3f} {dt_sum*100/(total_time_worker):.1f}%')
     print('\nAll workers')
+    total_time_all_phases = (df.end_s - df.start_s).sum()
     for phase in df.phase.unique():
         df3 = df[ df['phase'] == phase]
         dt = df3['end_s'] - df3['start_s']
         dt_sum = dt.sum()
         total_time = df3.end_s.max() - df3.start_s.min()
-        print(f'{phase}\t: {dt.min():.3f} <= {dt.mean():.3f} +/- {dt.std():.3f} <= {dt.max():.3f} total={dt_sum:.3f} {dt_sum*100/(num_workers*total_time):.1f}%')
+        print(f'{phase}\t: {dt.min():.3f} <= {dt.mean():.3f} +/- {dt.std():.3f} <= {dt.max():.3f} total={dt_sum:.3f} {dt_sum*100/total_time_all_phases:.1f}%')
      
 
 # ---------------- MAIN ----------------
