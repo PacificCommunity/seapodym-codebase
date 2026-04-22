@@ -2,13 +2,13 @@
 
 void SeapodymCoupled::prerun_model()
 {
-	OnRunFirstStep();
 	if (param->larvae_like[0]){
 		ReadEarly("larvae");
 	}
 	if (param->spawning_like[0]){
 		ReadEarly("spawning");
 	}
+	OnRunFirstStep();
 }
 
 ///This is the main loop function. It includes the following calls:
@@ -105,6 +105,22 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Spawning_Habitat.initialize();
 	Habitat.initialize();
 	Mortality.initialize();
+
+	if (param->larvae_like[0]){
+		ntime_agg_larvae.initialize();
+		Larvae_density_pred.initialize();
+		Agg_larvae_density_pred_at_obs.initialize();
+		kinf_larvae.initialize(); ksup_larvae.initialize();
+		ntime_agg_larvae.initialize();
+		qmld = 1.0;
+	}
+	if (param->spawning_like[0]){
+		ntime_agg_spawning.initialize();
+		SBHs_pred_pred.initialize();
+		Agg_SBHs_pred_at_obs.initialize();
+		kinf_spawning.initialize(); ksup_spawning.initialize();
+		ntime_agg_spawning.initialize();
+	}
 
 		//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++)
