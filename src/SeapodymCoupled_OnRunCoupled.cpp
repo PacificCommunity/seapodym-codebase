@@ -116,7 +116,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	}
 	if (param->spawning_like[0]){
 		ntime_agg_spawning.initialize();
-		SBHs_pred_pred.initialize();
+		SBHs_pred.initialize();
 		Agg_SBHs_pred_at_obs.initialize();
 		kinf_spawning.initialize(); ksup_spawning.initialize();
 		ntime_agg_spawning.initialize();
