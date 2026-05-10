@@ -74,19 +74,27 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 
     	double tik_step = MPI_Wtime();
         logger->info("        >>> step {} of task id {}", step, task_id);
-        cohort->stepForward(false);
+        cohort->stepForward(false, task_id, step);
         logger->info("        <<< step {} of task id {}", step, task_id);
 	    time_step += MPI_Wtime() - tik_step;
 
-        // Send the data to the manager.
+        // Prepare data to be sent to manager.
         logger->info("        >>> send data for step {} of task id {}", step, task_id);
         std::vector<double> localData = cohort->GetCohortDensity();
         int chunk_id = cohort->getChunkId(step);
 
+        // debug
+        double chksum = std::accumulate(localData.data(), localData.data() + localData.size(), 0.0);
+
         double tik_mpi = MPI_Wtime();
+
+        // Push the data to the manager.
         dataCollector->put(chunk_id, localData.data());
+
         time_mpi += MPI_Wtime() - tik_mpi;
-        logger->info("        <<< send data for step {} of task id {}", step, task_id);
+        // debug
+        printf("**** at end of task %d step %d chksum = %.8f\n", task_id, step, chksum);
+        logger->info("        <<< send data for step {} of task id {} chksum = {}", step, task_id, chksum);
 
         int success = task_id;
         // send message to the manager that the step is complete
@@ -155,7 +163,7 @@ int main(int argc, char** argv) {
     Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
     //int numTasks = numAgeGroups + numTimeSteps - 1;
 
-    // Size of map (useful to access to a specific position adress of the 4D array pointer storing density)
+    // Size of map (useful to access to a specific position address of the 4D array pointer storing density)
     map.lit_map(param);
     int numData = map.get_state_array_size();
 
@@ -177,18 +185,21 @@ int main(int argc, char** argv) {
     std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
 
     if (workerId == 0) {
+
         // Manager
+
         double tik = MPI_Wtime();
         TaskStepManager manager(MPI_COMM_WORLD, numCohorts, stepBegMap, stepEndMap, dependencyMap);
         auto results = manager.run();
         double time_manager = MPI_Wtime() - tik;
-	// Make sure the data are ready for te final checksum
-	MPI_Barrier(MPI_COMM_WORLD);
+	    // Make sure the data are ready for te final checksum
+	    MPI_Barrier(MPI_COMM_WORLD);
         double* data = dataCollect.getCollectedDataPtr();
         // print check sum
         double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
         printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
     } else {
+
         // Worker
 
         // Create SeapodymCohort object that will be shared among each worker

@@ -4,6 +4,7 @@
 #include "sys/stat.h"
 #include <chrono>
 #include "DistDataCollector.h"
+#include <cstdio>
 
 void SeapodymCohort::prerun_model()
 {
@@ -49,25 +50,32 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		int tcur = t_count-1;
 		
 		std::vector<double> data( dataCollector.getNumSize() );
+		int worker_id;
+		MPI_Comm_rank(MPI_COMM_WORLD, &worker_id);
  
 		// Get density of all age class from dataCollector
 		for (int aa=param->age_mature[sp]; aa<nb_age_class; aa++){
-			dataCollector.startEpoch(); // should be as early as possible
+
+			//dataCollector.startEpoch(); // should be as early as possible
 			
 			int chunk_id = (tstart_cohort-1)*nb_age_class + aa;
 			int index = 0;
-			dataCollector.getAsync(chunk_id, data.data());
-			dataCollector.flush(); // now the data are ready to be used
+			//dataCollector.getAsync(chunk_id, data.data());
+			dataCollector.get(chunk_id, data.data());
+			//dataCollector.flush(); // now the data are ready to be used
+			//dataCollector.endEpoch(); // should be as late as possible
+			double chksum = 0.0;
 			for (int i = map.imin1; i <= map.imax1; i++){
 				const int jmin1 = map.jinf1[i];
 				const int jmax1 = map.jsup1[i];
 				for (int j = jmin1 ; j <= jmax1; j++){
 					mat.dvarDensity(0,aa,i,j) = data[index];
+					chksum += data[index];
 					index++;
 				}
 			}
-			
-			dataCollector.endEpoch(); // should be as late as possible
+			printf("[%d] ***init cohort chksum = %.8f numSize=%d index=%d\n", worker_id, chksum, dataCollector.getNumSize(), index);
+			//dataCollector.endEpoch(); // should be as late as possible
 		}
 		
 
@@ -109,15 +117,22 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 	age = age_start;
 }
 
-void SeapodymCohort::stepForward(bool writeoutputfiles)
+void SeapodymCohort::stepForward(bool writeoutputfiles, int task_id, int step)
 {
+	if (task_id == 7 && step == 2) this->check("///0///");
 	//----------------------------------------------//
 	//              INITIALISATION                  //
 	//----------------------------------------------//
 	sumP=0;
 	sumFprime.initialize();
+	if (task_id == 7 && step == 2) this->check("///1///");
+
 	sumF.initialize();
+	if (task_id == 7 && step == 2) this->check("///2///");
+
 	mat.dvarCatch_est.initialize();
+	if (task_id == 7 && step == 2) this->check("///3///");
+
 	//----------------------------------------------//
 	//		DATE and TIME-AGE		//
 	//----------------------------------------------//
@@ -129,6 +144,8 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	for (int sp=0; sp < nb_species; sp++){
 		func.Seasonal_switch(*param,mat,map,jday,sp);	
 	}
+	if (task_id == 7 && step == 2) this->check("///4///");
+
 
 	//----------------------------------------------//
 	//	COHORT DYNAMICS WITHOUT FISHING		//
@@ -141,7 +158,7 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 		elarvae_dt = param->elarvae_age[sp]/deltaT; 
 		double sigma_fcte_save = param->sigma_fcte;
 
-double t0 = MPI_Wtime();
+        double t0 = MPI_Wtime();
 		//In the serial version the code below is executed once 
 		//for all larvae and juveniles. Here it is executed for 
 		//each age in larval and juvenile stages
@@ -153,7 +170,10 @@ double t0 = MPI_Wtime();
 				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
 			}
 		}
-time_overhead += (MPI_Wtime() - t0)*param->sp_nb_cohort_jv[sp]/(param->sp_nb_cohort_jv[sp]+1);
+		if (task_id == 7 && step == 2) this->check("///5///");
+
+		// WHAT IS THIS???????
+        time_overhead += (MPI_Wtime() - t0)*param->sp_nb_cohort_jv[sp]/(param->sp_nb_cohort_jv[sp]+1);
 
 		//1.0 Forage scaling
 		//As forage is age-independent, the code below is executed 
@@ -162,8 +182,9 @@ time_overhead += (MPI_Wtime() - t0)*param->sp_nb_cohort_jv[sp]/(param->sp_nb_coh
 		//dvarForage(t,x,y) and rewrite the function to fill it once 
 		//after we read all data. For this, need to call reset(x) 
 		//earlier, in OnRunFirstStep.
-t0 = MPI_Wtime();
+        t0 = MPI_Wtime();
 		func.Forage_Scaling(*param, mat, map, sp, tcur);
+		if (task_id == 7 && step == 2) this->check("///6///");
 time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_cohorts[sp];
 
 		//1.1 Accessibility by age class
@@ -206,6 +227,7 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
 			}
 		}
+		if (task_id == 7 && step == 2) this->check("///7///");
 
 		if (age >0 && age <=param->sp_nb_cohort_jv[sp]){
 			//2.3. Juvenile habitat	
@@ -222,7 +244,8 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 			pop.Precalrec_juv(map,  mat, Mortality, tcur, 1);
 			pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, 1);
 		
-		}			
+		}
+		if (task_id == 7 && step == 2) this->check("///8///");		
 
 		if (age > param->sp_nb_cohort_lv[sp] + param->sp_nb_cohort_jv[sp] && age <= param->sp_nb_cohorts[sp]){
 			//4. Transport and mortality of adult cohort
@@ -273,6 +296,7 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 						jday,step_fishery_count,0);//checked 20150210	
 			
 			}
+			if (task_id == 7 && step == 2) this->check("///9///");
 		}
 	}//end of 'sp' loop
 	//int year, month, day, jday, xx;		

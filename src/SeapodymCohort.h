@@ -96,10 +96,24 @@ private:
 	void InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles = false);
 
 public:
-	void stepForward(const bool writeoutputfiles = false);
+	void stepForward(const bool writeoutputfiles = false, int task_id = -1, int step = -1);
 	// Remaining to implement
 	void setStateFromArray(const std::vector<double>& array);
 	std::vector<double> getArrayFromState();
-	void save(const std::string& restartFile);	
+	void save(const std::string& restartFile);
+
+	// debug
+	void check(const std::string &preamble) const {
+		printf("**** %s chksums ", preamble.c_str());
+		printf(" Spawning_Habitat: %.10f", value(norm2(this->Spawning_Habitat)));
+		printf(" Total_pop: %.10f", value(norm2(this->Total_pop)));
+		printf(" Habitat: %.10f", value(norm2(this->Habitat)));
+		printf(" IFR: %.10f", value(norm2(this->IFR)));
+		printf(" ISR_denom: %.10f", value(norm2(this->ISR_denom)));
+		printf(" FR_pop: %.10f", value(norm2(this->FR_pop)));
+		printf(" Mortality: %.10f", value(norm2(this->Mortality)));
+		printf(" dvarCohortDensity: %.10f", value(norm2(this->dvarCohortDensity)));
+		printf("\n");
+	}
 };
 #endif
