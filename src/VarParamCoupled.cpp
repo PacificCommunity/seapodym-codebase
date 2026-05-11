@@ -764,6 +764,8 @@ bool VarParamCoupled::read(const string& parfile)
 	larvae_input_aggregated_flag.initialize();
 	larvae_likelihood_type.allocate(0,nb_species-1);
 	larvae_likelihood_type.initialize();
+	larvae_obsmodel_type.allocate(0,nb_species-1);
+	larvae_obsmodel_type.initialize();
 	fit_null_larvae.allocate(0,nb_species-1);
 	fit_null_larvae.initialize();
 	weight_null_larvae.allocate(0,nb_species-1);
@@ -899,6 +901,9 @@ bool VarParamCoupled::read(const string& parfile)
 			if (nb_species>1){
 				cerr << "Error: Larvae likelihood is only available for single species computing (to be coded)." << endl;
 				std::exit(EXIT_FAILURE);
+			}
+			if (!doc.get("/larvae_obsmodel_type", sp_name[sp]).empty()){
+				larvae_obsmodel_type = doc.getInteger("/larvae_obsmodel_type", sp_name[sp]);
 			}
 		}
 

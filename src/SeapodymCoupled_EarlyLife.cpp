@@ -322,8 +322,8 @@ void SeapodymCoupled::write_elarvae_dym(const int sp)
 }
 
 // Functions to compute the likelihood of a larvae density or SBHs observed on a continuous scale
-static dvariable scale_pred(dvariable h, dvariable N_pred, string what) {
-    if (what == "larvae")
+static dvariable scale_pred(dvariable h, dvariable N_pred, int obsmodel_type) {
+    if (obsmodel_type == 1)
         return N_pred*N_pred / (h + N_pred*N_pred); // Holling type 3
     else
         return N_pred * h;                          // linear
@@ -332,15 +332,18 @@ static dvariable scale_pred(dvariable h, dvariable N_pred, string what) {
 dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp, string what){
 	dvariable h;
 	dvariable sigma;
+	int obsmodel_type;
 	if (what == "larvae"){
 		h = param.dvarsQ_sp_larvae[sp];
 		sigma = param.dvarsLikelihood_larvae_sigma[sp];
+		obsmodel_type = param.larvae_obsmodel_type[sp];
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
+		obsmodel_type = 0;
 	}
 
-	dvariable L_pred = scale_pred(h, N_pred, what);
+	dvariable L_pred = scale_pred(h, N_pred, obsmodel_type);
 	dvariable lkhd = 0.0;
 
 	if (N_obs==0.0)
@@ -355,16 +358,19 @@ dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, 
 dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp, string what){
 	dvariable h;
 	dvariable sigma;
+	int obsmodel_type;
 	if (what == "larvae"){
 		h = param.dvarsQ_sp_larvae[sp];
 		sigma = param.dvarsLikelihood_larvae_sigma[sp];
+		obsmodel_type = param.larvae_obsmodel_type[sp];
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
+		obsmodel_type = 0;
 	}
 
 	const double twopi = 2.0*3.141592654;
-	dvariable L_pred = scale_pred(h, N_pred, what);
+	dvariable L_pred = scale_pred(h, N_pred, obsmodel_type);
 	dvariable lkhd = 0.0;
 	if (L_obs==0){
 		lkhd = weight_Lobszero * (pow(L_pred,2) / (2*pow(sigma, 2)) + log(sigma) + log(twopi)/2);
@@ -376,13 +382,16 @@ dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, V
 
 dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp, string what){
 	dvariable h;
+	int obsmodel_type;
 	if (what == "larvae"){
 		h = param.dvarsQ_sp_larvae[sp];
+		obsmodel_type = param.larvae_obsmodel_type[sp];
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
+		obsmodel_type = 0;
 	}
 
-	dvariable L_pred = scale_pred(h, N_pred, what);
+	dvariable L_pred = scale_pred(h, N_pred, obsmodel_type);
 	dvariable lkhd = 0.0;
 	L_obs += 1;
 	lkhd = L_pred - L_obs * log(L_pred) + gammln(L_obs+1) + log(1-exp(-L_pred));
@@ -396,17 +405,20 @@ dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int 
 	dvariable h;
 	dvariable beta;
 	dvariable p;
+	int obsmodel_type;
 	if (what == "larvae"){
 		h = param.dvarsQ_sp_larvae[sp];
 		beta = param.dvarsLikelihood_larvae_beta[sp];
 		p = param.dvarsLikelihood_larvae_probzero[sp];
+		obsmodel_type = param.larvae_obsmodel_type[sp];
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		beta = param.dvarsLikelihood_spawning_beta[sp];
 		p = param.dvarsLikelihood_spawning_probzero[sp];
+		obsmodel_type = 0;
 	}
 
-	dvariable L_pred = scale_pred(h, N_pred, what);
+	dvariable L_pred = scale_pred(h, N_pred, obsmodel_type);
 	dvariable lkhd = 0.0;
 	if (L_obs==0.0){
 		dvariable pwr = beta*L_pred/(1-p);
@@ -422,15 +434,18 @@ dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int 
 dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp, string what){
 	dvariable h;
 	dvariable p;
+	int obsmodel_type;
 	if (what == "larvae"){
 		h = param.dvarsQ_sp_larvae[sp];
 		p = param.dvarsLikelihood_larvae_probzero[sp];
+		obsmodel_type = param.larvae_obsmodel_type[sp];
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		p = param.dvarsLikelihood_spawning_probzero[sp];
+		obsmodel_type = 0;
 	}
 
-	dvariable L_pred = scale_pred(h, N_pred, what);
+	dvariable L_pred = scale_pred(h, N_pred, obsmodel_type);
 	dvariable lkhd = 0.0;
 	if (L_obs==0.0){
 		lkhd -= log(p + (1-p) * exp(-L_pred));
@@ -445,15 +460,18 @@ dvariable lognormal_comp(double L_obs, dvariable N_pred, VarParamCoupled& param,
 	const double twopi = 2.0*3.141592654;
 	dvariable h;
 	dvariable sigma;
+	int obsmodel_type;
 	if (what == "larvae"){
 		h     = param.dvarsQ_sp_larvae[sp];
 		sigma = param.dvarsLikelihood_larvae_sigma[sp];
+		obsmodel_type = param.larvae_obsmodel_type[sp];
 	}else{
 		h     = param.dvarsQ_sp_spawning[sp];
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
+		obsmodel_type = 0;
 	}
 
-	dvariable L_pred = scale_pred(h, N_pred, what);
+	dvariable L_pred = scale_pred(h, N_pred, obsmodel_type);
 	if (value(L_pred) <= 0.0) return (dvariable)50.0;
 	dvariable lkhd = pow(log(L_obs) - log(L_pred), 2.0) / (2.0 * pow(sigma, 2.0))
 		+ log(sigma) + 0.5*log(twopi) + log(L_obs);

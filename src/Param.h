@@ -198,6 +198,7 @@ public:
 	ivector larvae_input_categorical_flag;//if file_larvae_data data is categorical
 	ivector larvae_input_aggregated_flag;//if file_larvae_data data is aggregated data
 	ivector larvae_likelihood_type; // Likelihood function for larvae densities
+	ivector larvae_obsmodel_type; // Observation model for larvae densities (0: linear; 1: holling type 3)
 	ivector fit_null_larvae; // Whether to fit to null larvae density observation or not
 	DVECTOR weight_null_larvae; // weight factor to apply to null larvae densities
 	ivector nb_larvae_cat; // Number of categories for Nishikawa densities observations
