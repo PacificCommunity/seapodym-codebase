@@ -2,13 +2,13 @@
 
 void SeapodymCoupled::prerun_model()
 {
+	OnRunFirstStep();
 	if (param->larvae_like[0]){
 		ReadEarly("larvae");
 	}
 	if (param->spawning_like[0]){
 		ReadEarly("spawning");
 	}
-	OnRunFirstStep();
 }
 
 ///This is the main loop function. It includes the following calls:
@@ -89,9 +89,18 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	//----------------------------------------------//
 	// 	LOCAL MATRICES ALLOCATION SECTION       //
 	//----------------------------------------------//	
+	dvar_matrix Spawning_Habitat;
+	dvar_matrix Total_pop;
+	dvar_matrix Habitat; 
 	dvar_matrix IFR; 
 	dvar_matrix ISR_denom; 
 	dvar_matrix FR_pop;
+	dvar_matrix Mortality;
+
+	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Spawning_Habitat.allocate(map.imin, map.imax, map.jinf, map.jsup);
+	Total_pop.allocate(map.imin, map.imax, map.jinf, map.jsup);
 
 	if (param->food_requirement_in_mortality(0)){ 
 		//temporal, need to check memory use first 
@@ -554,7 +563,7 @@ Mortality.initialize();
 				if (year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
 				//if (t_count > nbt_building+nbstoskip){
 					if (param->larvae_like[0]){
-						extract_early(sp,tcur,"larvae");
+						extract_early(sp,tcur, "larvae");
 					}
 				}
 			}
@@ -562,7 +571,7 @@ Mortality.initialize();
 			//9. Extract SB x Hs
 			if (year>=param->spawning_like_firstyear && year<=param->spawning_like_lastyear){
 				if (param->spawning_like[0]){
-					extract_early(sp,tcur,"spawning");
+					extract_early(sp,tcur,"spawning",&Spawning_Habitat,&Total_pop);
 				}
 			}
 

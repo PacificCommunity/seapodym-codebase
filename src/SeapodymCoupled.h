@@ -123,12 +123,6 @@ private:
 	ivector ntime_agg_spawning;
 	double spawninglike;
 
-	// Habitats, mortality and total pop
-	dvar_matrix Spawning_Habitat;
-	dvar_matrix Habitat; 
-	dvar_matrix Total_pop;
-	dvar_matrix Mortality; 
-
 	//catch and length
 
 	double lflike; // double value of lf_like
@@ -145,7 +139,7 @@ private:
 	dvariable early_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, string what);
 	void create_init_larvae_vars();
 	void create_init_spawning_vars();
-	void extract_early(const int sp, const int tcur, string what);
+	void extract_early(const int sp, const int tcur, string what, dvar_matrix* Spawning_Habitat = nullptr, dvar_matrix* Total_pop = nullptr);
 	void get_larvae_at_obs();
 	void get_SBHs_at_obs();
 	void elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles);

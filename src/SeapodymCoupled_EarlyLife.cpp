@@ -137,7 +137,7 @@ void SeapodymCoupled::create_init_spawning_vars()
 	}
 }
 
-void SeapodymCoupled::extract_early(const int sp, const int tcur, string what)
+void SeapodymCoupled::extract_early(const int sp, const int tcur, string what, dvar_matrix* Spawning_Habitat, dvar_matrix* Total_pop)
 {//Autodif function for the moment. Need to write adjoint!!!
 	int input_aggregated_flag;
 	std::vector<double> (*aggregated_input_vectors)[12] = nullptr;
@@ -170,6 +170,12 @@ void SeapodymCoupled::extract_early(const int sp, const int tcur, string what)
 		aggregated_input_vectors_i = &mat.aggregated_spawning_input_vectors_i;
 		aggregated_input_vectors_j = &mat.aggregated_spawning_input_vectors_j;
 		ntime_agg = &ntime_agg_spawning;
+
+		// Security check
+		if ((Spawning_Habitat == nullptr) || (Total_pop == nullptr)){
+			cerr << "Error: in extract_early(), if 'what' argument is 'spawning', Spawning_Habitat and Total_pop cannot be null pointers" << endl;
+			std::exit(EXIT_FAILURE);				
+		}
 	}else{
 		cerr << "Error: in extract_early(), 'what' argument is not recognized" << endl;
 		std::exit(EXIT_FAILURE);			
@@ -191,7 +197,7 @@ void SeapodymCoupled::extract_early(const int sp, const int tcur, string what)
 			if (what == "larvae"){
 				Agg_larvae_density_pred_at_obs(iAgg, k) +=  qmld(iv,jv)*mat.dvarDensity[sp][0][iv][jv];
 			}else{
-				Agg_SBHs_pred_at_obs(iAgg, k) +=  Spawning_Habitat(iv,jv)*Total_pop(iv,jv);
+				Agg_SBHs_pred_at_obs(iAgg, k) +=  (*Spawning_Habitat)(iv,jv)*(*Total_pop)(iv,jv);
 			}
 		}
 		(*ntime_agg)[iAgg] += 1;
@@ -203,7 +209,7 @@ void SeapodymCoupled::extract_early(const int sp, const int tcur, string what)
 				if (what == "larvae"){
 			    	Larvae_density_pred[i][j] = qmld[i][j] * mat.dvarDensity[sp][0][i][j];
 				}else{
-			    	SBHs_pred[i][j] = Spawning_Habitat[i][j] * Total_pop[i][j];
+			    	SBHs_pred[i][j] = (*Spawning_Habitat)[i][j] * (*Total_pop)[i][j];
 				}
 			}
 		}
