@@ -189,7 +189,6 @@ public:
 	double q_mld_slope, q_mld_depth;
 	ivector larvae_like; // weither to compute larvae likelihood, [sp]
 	DVECTOR q_sp_larvae;           // Larvae catchability, [sp]
-	DVECTOR K_sp_larvae;           // Half-saturation for Holling type 2 larvae scaling. 0 = linear (default).
 	DVECTOR likelihood_larvae_sigma;		// sigma parameter in Gaussian kernel used for larvae likelihood
 	DVECTOR likelihood_larvae_beta;		// betaf parameter in ZINB used for larvae likelihood
 	DVECTOR likelihood_larvae_probzero;		// pf parameter in ZINB used for larvae likelihood
@@ -221,7 +220,6 @@ public:
 	ivector spawning_input_aggregated_flag;//if file_spawning_data data is aggregated data
 	ivector spawning_likelihood_type; // Likelihood function for spawning index
 	DVECTOR q_sp_spawning;           // Spawning index scaling factor, [sp]
-	DVECTOR K_sp_spawning;         // Half-saturation for Holling type 2 spawning scaling. 0 = linear (default).
 	DVECTOR likelihood_spawning_sigma;		// sigma parameter in Gaussian kernel used for spawning likelihood
 	DVECTOR likelihood_spawning_beta;		// betaf parameter in ZINB used for spawning likelihood
 	DVECTOR likelihood_spawning_probzero;		// pf parameter in ZINB used for spawning likelihood

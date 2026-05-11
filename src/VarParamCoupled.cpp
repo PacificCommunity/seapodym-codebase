@@ -343,14 +343,10 @@ bool VarParamCoupled::read(const string& parfile)
 		a_sst_spawning.allocate(0, nb_species - 1);
 		b_sst_spawning.allocate(0, nb_species - 1);
 		q_sp_larvae.allocate(0, nb_species - 1);
-		K_sp_larvae.allocate(0, nb_species - 1);
-		K_sp_larvae.initialize();    // 0 = linear by default
 		likelihood_larvae_sigma.allocate(0, nb_species - 1);
 		likelihood_larvae_beta.allocate(0, nb_species - 1);
 		likelihood_larvae_probzero.allocate(0, nb_species - 1);
 		q_sp_spawning.allocate(0, nb_species - 1);
-		K_sp_spawning.allocate(0, nb_species - 1);
-		K_sp_spawning.initialize();  // 0 = linear by default
 		likelihood_spawning_sigma.allocate(0, nb_species - 1);
 		likelihood_spawning_beta.allocate(0, nb_species - 1);
 		likelihood_spawning_probzero.allocate(0, nb_species - 1);
@@ -979,10 +975,6 @@ bool VarParamCoupled::read(const string& parfile)
 				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <q_sp_larvae> fields." << endl; exit(1);
 			}
 		}
-		// Half-saturation for Holling type 2 larvae scaling
-		if (!doc.get("/K_sp_larvae", sp_name[sp]).empty())
-		    K_sp_larvae[sp] = doc.getDouble("/K_sp_larvae", sp_name[sp]);
-		// else: stays 0.0 → linear
 
 		// sigma parameter in Gaussian kernel used for larvae likelihood
 		if (!doc.get("/likelihood_larvae_sigma",sp_name[sp]).empty()){
@@ -1007,10 +999,6 @@ bool VarParamCoupled::read(const string& parfile)
 				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <q_sp_spawning> fields." << endl; exit(1);
 			}
 		}
-		// Half-saturation for Holling type 2 spawning scaling
-		if (!doc.get("/K_sp_spawning", sp_name[sp]).empty())
-		    K_sp_spawning[sp] = doc.getDouble("/K_sp_spawning", sp_name[sp]);
-		// else: stays 0.0 → linear
 
 		// sigma parameter in Gaussian kernel used for spawning likelihood
 		if (!doc.get("/likelihood_spawning_sigma",sp_name[sp]).empty()){
@@ -1696,12 +1684,10 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",nni);
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);
 	par_read_bounds(q_sp_larvae,q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",nni);
-	par_read_bounds(K_sp_larvae,   K_sp_larvae_min,   K_sp_larvae_max,   "/K_sp_larvae",   nni);
 	par_read_bounds(likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",nni);
 	par_read_bounds(likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",nni);
 	par_read_bounds(likelihood_larvae_probzero,likelihood_larvae_probzero_min,likelihood_larvae_probzero_max,"/likelihood_larvae_probzero",nni);
 	par_read_bounds(q_sp_spawning,q_sp_spawning_min,q_sp_spawning_max,"/q_sp_spawning",nni);
-	par_read_bounds(K_sp_spawning, K_sp_spawning_min, K_sp_spawning_max, "/K_sp_spawning", nni);
 	par_read_bounds(likelihood_spawning_sigma,likelihood_spawning_sigma_min,likelihood_spawning_sigma_max,"/likelihood_spawning_sigma",nni);
 	par_read_bounds(likelihood_spawning_beta,likelihood_spawning_beta_min,likelihood_spawning_beta_max,"/likelihood_spawning_beta",nni);
 	par_read_bounds(likelihood_spawning_probzero,likelihood_spawning_probzero_min,likelihood_spawning_probzero_max,"/likelihood_spawning_probzero",nni);
