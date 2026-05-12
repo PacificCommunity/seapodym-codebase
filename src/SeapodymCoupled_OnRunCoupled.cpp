@@ -116,19 +116,10 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	Mortality.initialize();
 
 	if (param->larvae_like[0]){
-		ntime_agg_larvae.initialize();
-		Larvae_density_pred.initialize();
-		Agg_larvae_density_pred_at_obs.initialize();
-		kinf_larvae.initialize(); ksup_larvae.initialize();
-		ntime_agg_larvae.initialize();
-		qmld = 1.0;
+		create_init_larvae_vars();		
 	}
 	if (param->spawning_like[0]){
-		ntime_agg_spawning.initialize();
-		SBHs_pred.initialize();
-		Agg_SBHs_pred_at_obs.initialize();
-		kinf_spawning.initialize(); ksup_spawning.initialize();
-		ntime_agg_spawning.initialize();
+		create_init_spawning_vars();
 	}
 
 		//precompute thermal habitat parameters

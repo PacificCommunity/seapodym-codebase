@@ -34,11 +34,6 @@ void SeapodymCoupled::OnRunFirstStep()
 	past_month=0;
 	past_qtr=0;
 	sumP = 0; 
-
-	if (param->larvae_like[0])
-		create_init_larvae_vars();		
-	if (param->spawning_like[0])
-		create_init_spawning_vars();
 		
 	for (int j=map.jmin;j<=map.jmax;j++){
 		double lat = param->lastlat(j);
