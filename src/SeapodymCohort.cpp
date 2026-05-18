@@ -197,17 +197,16 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 			pop.Precalrec_juv(map, mat, Mortality, tcur, (1-elarvae_dt));//checked
 			pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, (1-elarvae_dt));//checked
 			
-			//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
-			if (elarvae_model){
-				param->sigma_fcte = sigma_fcte_save;
-				mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
-				//Precompute diagonal coefficients for juvenile ADREs
-				pop.precaldia(*param, map, mat);
-				pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
-			}
 		}
 
 		if (age >0 && age <=param->sp_nb_cohort_jv[sp]){
+			//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
+			param->sigma_fcte = sigma_fcte_save;
+			mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
+			//Precompute diagonal coefficients for juvenile ADREs
+			pop.precaldia(*param, map, mat);
+			pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
+
 			//2.3. Juvenile habitat	
 			if (param->cannibalism[sp]){
 				Total_Pop_comp(Total_pop,sp,jday,tcur); //adjoint
@@ -277,7 +276,7 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 	}//end of 'sp' loop
 	//int year, month, day, jday, xx;		
 	//Date::update_time_variables(tcur, param->deltaT, param->date_mode, jday_spinup, jday, day, month, year, xx);
-	//cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ", time = " << model_time_count << ", year = "<< year << ", month = " << month << ", sum(density) = " << sum(dvarCohortDensity) << endl;
+	cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ", time = " << model_time_count << ", year = "<< year << ", month = " << month << ", sum(density) = " << sum(dvarCohortDensity) << endl;
 
 
 
