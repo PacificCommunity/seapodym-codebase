@@ -196,7 +196,7 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 			func.Mortality_Sp(*param, mat, map, Mortality, Spawning_Habitat, sp, mean_age, age, tcur);
 			pop.Precalrec_juv(map, mat, Mortality, tcur, (1-elarvae_dt));//checked
 			pop.Calrec_juv(map, mat, dvarCohortDensity, Mortality, tcur, (1-elarvae_dt));//checked
-			
+			param->sigma_fcte = sigma_fcte_save;
 		}
 
 		if (age >0 && age <=param->sp_nb_cohort_jv[sp]){
