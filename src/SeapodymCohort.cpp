@@ -199,7 +199,7 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 			param->sigma_fcte = sigma_fcte_save;
 		}
 
-		if (age >0 && age <=param->sp_nb_cohort_jv[sp]){
+		if (age >0 && age < param->sp_nb_cohort_lv[sp] + param->sp_nb_cohort_jv[sp]){
 			//2.2.0 Only in the ELM mode need to reset movement rates for juveniles
 			param->sigma_fcte = sigma_fcte_save;
 			mat.u = mat.un[tcur][0]; mat.v = mat.vn[tcur][0]; 
@@ -223,7 +223,7 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 		
 		}			
 
-		if (age > param->sp_nb_cohort_lv[sp] + param->sp_nb_cohort_jv[sp] && age <= param->sp_nb_cohorts[sp]){
+		if (age >= param->sp_nb_cohort_lv[sp] + param->sp_nb_cohort_jv[sp] && age <= param->sp_nb_cohorts[sp]){
 			//4. Transport and mortality of adult cohort
 
 			//NOTE: currently current averaging doesn't depend on seasonal migrations
