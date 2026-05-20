@@ -5,6 +5,12 @@ import glob
 import matplotlib.pyplot as plt
 import sys
 
+"""
+This script harversts the timing data from the output files results/n*.txt and plots the breakdown of time spent in different components 
+(calc, overhead, worker init, cohort init, comm) as a function of the number of ranks. It also computes the average and standard deviation 
+of the timings across multiple runs for each component.
+"""
+
 pat = re.compile(r'Timings calc/overhead/worker init/cohort init/comm: (\d+\.\d+)\/\s*(\d+\.\d+)\/\s*(\d+\.\d+)\/\s*(\d+\.\d+)\/\s*(\d+\.\d+)')
 pat2 = re.compile(r'n(\d+)\.txt')
 
@@ -20,7 +26,7 @@ def get_times(filename: str) -> float:
     f = open (filename, 'r')
     for line in f:
         if 'Timings calc/overhead/worker init/cohort init/comm' in line:
-            time_calc, time_overheaad, time_worker_init, time_cohort_init, time_comm = [float(x) for x in re.findall('(\d+\.\d+)', line)]
+            time_calc, time_overheaad, time_worker_init, time_cohort_init, time_comm = [float(x) for x in re.findall(r'(\d+\.\d+)', line)]
             times['calc'].append(float(time_calc))
             times['overhead'].append(float(time_overheaad))
             times['worker init'].append(float(time_worker_init))
@@ -58,12 +64,16 @@ def main():
     print(df)
     
     plt.figure()
-    for component in ['overhead', 'worker init', 'cohort init', 'comm']:
+    for component in ['calc', 'overhead', 'worker init', 'cohort init', 'comm']:
         plt.plot(df['num_ranks'], df[component], label=component)
-    plt.plot(df['num_ranks'], df['calc'], label='calc')
+        plt.fill_between(df['num_ranks'], \
+                        df[component] - df[component + ' std'], \
+                        df[component] + df[component + ' std'], \
+                        color='blue', alpha=0.2)
+
     plt.ylabel('Time (s)')
     plt.title('Timing breakdown by component')
-    plt.xticks(rotation=0)
+    plt.xticks(df['num_ranks'])
     plt.legend(title='Component')
     plt.tight_layout()
     plt.show()
