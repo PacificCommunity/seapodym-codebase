@@ -20,11 +20,11 @@ void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc
 void buffers_set(long int &mv, long int &mc, long int &mg);
 
 
-double tik, tak, time_init = 0.0, time_init2 = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
+double time_worker_init = 0.0, time_cohort_init = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
 
 SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 
-    tik = MPI_Wtime();
+    double tik = MPI_Wtime();
     
     SeapodymCohort cohort((char*)parfile, 0);
 
@@ -38,9 +38,9 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
     //prepare cohort run
     cohort.prerun_model();
 
-    tak = MPI_Wtime();
+    double tak = MPI_Wtime();
 
-    time_init += tak - tik;
+    time_worker_init += tak - tik;
 
     return cohort;
 }
@@ -52,7 +52,8 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     DistDataCollector* dataCollector,
     SeapodymCohort* cohort)
 {
-    tik = MPI_Wtime();
+    double tik = MPI_Wtime();
+
     logger->info("> task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 
     logger->info("    >> initialization of task id {}", task_id);
@@ -68,8 +69,9 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     logger->info("    << initialization of task id {}", task_id);
     
     // advance the cohort
-    tak = MPI_Wtime();
-    time_init2 += tak - tik;
+    double tak = MPI_Wtime();
+    time_cohort_init += tak - tik;
+
     for (auto step = stepBeg; step < stepEnd; ++step) {
 
     	double tik_step = MPI_Wtime();
@@ -104,12 +106,16 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     logger->info("< task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char** argv) {
 
-    time_init = 0;	
-    time_calc = 0;	
     // MPI initialization
     MPI_Init(&argc, &argv);
+
+    time_worker_init = 0;	
+    time_calc = 0;	
+
     int size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     int workerId;
@@ -177,19 +183,28 @@ int main(int argc, char** argv) {
     std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
 
     if (workerId == 0) {
+        //
         // Manager
+        //
         double tik = MPI_Wtime();
+
         TaskStepManager manager(MPI_COMM_WORLD, numCohorts, stepBegMap, stepEndMap, dependencyMap);
+        // Sync the manager with the workers before starting to distribute the tasks
+        MPI_Barrier(MPI_COMM_WORLD);
         auto results = manager.run();
+
         double time_manager = MPI_Wtime() - tik;
-	// Make sure the data are ready for te final checksum
-	MPI_Barrier(MPI_COMM_WORLD);
+
+	    // Make sure the data are ready for the final checksum
+	    MPI_Barrier(MPI_COMM_WORLD);
         double* data = dataCollect.getCollectedDataPtr();
         // print check sum
         double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
         printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
     } else {
+        //
         // Worker
+        //
 
         // Create SeapodymCohort object that will be shared among each worker
         int cmp_regime = 0;
@@ -224,14 +239,19 @@ int main(int argc, char** argv) {
             &cohort);
 
         TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
-        worker.run();
-	time_overhead = cohort.time_overhead;
+
+        // Sync the manager with the workers before starting to distribute the tasks
         MPI_Barrier(MPI_COMM_WORLD);
+        worker.run();
+        MPI_Barrier(MPI_COMM_WORLD);
+
+	    time_overhead = cohort.time_overhead;
     }
 
-
-    printf("[%d] Timings calc/step/overhead/init/cohort init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
-        time_calc, time_step, time_overhead, time_init, time_init2, time_mpi);
+    if (workerId > 0) {
+        printf("[%d] Timings calc/overhead/worker init/cohort init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
+        time_calc, time_overhead, time_worker_init, time_cohort_init, time_mpi);
+    }
 
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////

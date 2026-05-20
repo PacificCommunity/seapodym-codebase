@@ -276,7 +276,7 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 	}//end of 'sp' loop
 	//int year, month, day, jday, xx;		
 	//Date::update_time_variables(tcur, param->deltaT, param->date_mode, jday_spinup, jday, day, month, year, xx);
-	cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ", time = " << model_time_count << ", year = "<< year << ", month = " << month << ", sum(density) = " << sum(dvarCohortDensity) << endl;
+	//cerr << setprecision(8) << "cohort id: " << cohort_id << ", age = " << age << ", time = " << model_time_count << ", year = "<< year << ", month = " << month << ", sum(density) = " << sum(dvarCohortDensity) << endl;
 
 
 
