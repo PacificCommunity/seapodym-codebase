@@ -173,35 +173,6 @@ int main(int argc, char** argv) {
 		    workerId, numData, numAgeGroups, numTimeSteps, numChunks);
     }
 
-    DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
-    
-    // analyze the cohort Id task dependencies
-    SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps);
-    int numCohorts = taskDeps.getNumberOfCohorts();
-    std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
-    std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
-    std::map<int, std::set<std::array<int, 2>>> dependencyMap = taskDeps.getDependencyMap();
-
-    // if (workerId == 0) {
-    //     //
-    //     // Manager
-    //     //
-    //     double tik = MPI_Wtime();
-
-    //     TaskStepManager manager(MPI_COMM_WORLD, numCohorts, stepBegMap, stepEndMap, dependencyMap);
-    //     // Sync the manager with the workers before starting to distribute the tasks
-    //     MPI_Barrier(MPI_COMM_WORLD);
-    //     auto results = manager.run();
-
-    //     double time_manager = MPI_Wtime() - tik;
-
-	//     // Make sure the data are ready for the final checksum
-	//     MPI_Barrier(MPI_COMM_WORLD);
-    //     double* data = dataCollect.getCollectedDataPtr();
-    //     // print check sum
-    //     double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
-    //     printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
-    // } else {
         //
         // Worker
         //
@@ -228,34 +199,12 @@ int main(int argc, char** argv) {
         
         SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
 
-    //     // Bind the task function with the necessary parameters
-    //     auto taskFunc = std::bind(taskFunction,
-    //         std::placeholders::_1, // task_id
-    //         std::placeholders::_2, // stepBeg
-    //         std::placeholders::_3, // stepEnd
-    //         std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
-    //         logger,
-    //         &dataCollect,
-    //         &cohort);
 
-    //     TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
-
-    //     // Sync the manager with the workers before starting to distribute the tasks
-    //     MPI_Barrier(MPI_COMM_WORLD);
-    //     worker.run();
-    //     MPI_Barrier(MPI_COMM_WORLD);
-
-	//     time_overhead = cohort.time_overhead;
-    // }
-
-    // if (workerId > 0) {
         printf("[%d] Timings calc/overhead/worker init/cohort init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId, 
         time_calc, time_overhead, time_worker_init, time_cohort_init, time_mpi);
-    // }
 
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
-    dataCollect.free();
     MPI_Finalize();
 
     return 0;
