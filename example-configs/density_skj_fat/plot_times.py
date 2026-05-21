@@ -63,19 +63,25 @@ def main():
     df.sort_values('num_ranks', inplace=True)
     print(df)
     
+    df['num workers'] = df['num_ranks'] - 1
+    df['ideal'] = 1.0/df['num workers']
+    
     plt.figure()
-    for component in ['calc', 'overhead', 'worker init', 'cohort init', 'comm']:
-        plt.plot(df['num_ranks'], df[component], label=component)
-        plt.fill_between(df['num_ranks'], \
+    for component in ['ideal', 'calc', 'overhead', 'worker init', 'cohort init', 'comm']:
+        plt.semilogy(df['num workers'], df[component], label=component)
+        if hasattr(df, component + ' std'):
+            plt.fill_between(df['num workers'], \
                         df[component] - df[component + ' std'], \
                         df[component] + df[component + ' std'], \
                         color='blue', alpha=0.2)
 
     plt.ylabel('Time (s)')
-    plt.title('Timing breakdown by component')
+    plt.title('SEAPODYM timing breakdown (skl_fat.xml na=50 1983-2022)')
     plt.xticks(df['num_ranks'])
     plt.legend(title='Component')
     plt.tight_layout()
+    plt.xlabel('num workers')
+    plt.ylim(bottom=0)
     plt.show()
 
 if __name__ == '__main__':
