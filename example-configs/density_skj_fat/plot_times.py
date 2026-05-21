@@ -64,11 +64,11 @@ def main():
     print(df)
     
     df['num workers'] = df['num_ranks'] - 1
-    df['ideal'] = 1.0/df['num workers']
+    df['ideal'] = 300/df['num workers'] #df[ df['num workers'] == 1 ]['calc'] /df['num workers']
     
     plt.figure()
     for component in ['ideal', 'calc', 'overhead', 'worker init', 'cohort init', 'comm']:
-        plt.semilogy(df['num workers'], df[component], label=component)
+        plt.loglog(df['num workers'], df[component], label=component)
         if hasattr(df, component + ' std'):
             plt.fill_between(df['num workers'], \
                         df[component] - df[component + ' std'], \
@@ -77,7 +77,7 @@ def main():
 
     plt.ylabel('Time (s)')
     plt.title('SEAPODYM timing breakdown (skl_fat.xml na=50 1983-2022)')
-    plt.xticks(df['num_ranks'])
+    plt.xticks([1, df['num_ranks'].max()], [1, df['num_ranks'].max()])
     plt.legend(title='Component')
     plt.tight_layout()
     plt.xlabel('num workers')
