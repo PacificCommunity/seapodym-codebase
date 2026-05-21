@@ -382,6 +382,10 @@ auto time0 = clock::now();
 
 			//7. Spawning
 			Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
+			for (int a=0; a<param->sp_nb_cohorts[sp]; a++){
+				cerr << sum(mat.dvarDensity[sp][a]) << " ";
+			}
+			cerr << endl;
 		}//end of 'sp' loop
 
 density_time_calc += std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - time0).count();
