@@ -154,7 +154,9 @@ int seapodym_densities(const char* parfile, int cmp_regime, const bool reset_buf
 	//after minimization is finished one simulation will 
 	//be run with estimated parameters; outputs will be saved
 	gradient_structure::set_NO_DERIVATIVES();
-	sc.run_density((dvar_vector)x, true);
+	// For comparison with cohort code: remove the writing of outputs
+	//sc.run_density((dvar_vector)x, true);
+	sc.run_density((dvar_vector)x, false);
 	sc.write(newparfile.c_str());
 
 cout << "\n Total STEPS calc time is " << sc.density_time_calc << endl;

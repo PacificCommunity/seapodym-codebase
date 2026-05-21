@@ -5,7 +5,8 @@ void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input,
 void SeapodymCoupled::prerun_model()
 {
 	OnRunFirstStep();
-	ReadDensity();
+	// For comparison with cohort code: remove the reading of density input
+	//ReadDensity();
 	
 density_time_calc = 0;	
 }
@@ -395,9 +396,11 @@ density_time_calc += std::chrono::duration_cast<std::chrono::milliseconds>(clock
 		if (t_count == nbt_total)
 			stocklike += get_stock_like(total_stock, likelihood);
 		//Biomass density likelihood. Note, degrade it to the resolution of the density_input
-		if (t_count > nbstoskip)
-			update_density_like(Density_pred, mat.density_input(t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood);
 
+		// For comparison with cohort code: the density_input is not read
+		/*if (t_count > nbstoskip)
+			update_density_like(Density_pred, mat.density_input(t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood);
+		*/
 
 		if (writeoutputfiles){
 			if (!param->gcalc())	
