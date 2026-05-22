@@ -61,6 +61,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     const int nvar = cohort->nvarcalc();
     independent_variables x(1, nvar);
     adstring_array x_names(1,nvar);
+    cohort->xinit(x, x_names);
 
     int cohort_id = task_id;
     cohort->restart(cohort_id);
