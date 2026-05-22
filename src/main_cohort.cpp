@@ -77,6 +77,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     	double tik_step = MPI_Wtime();
         logger->info("        >>> step {} of task id {}", step, task_id);
         cohort->stepForward(false);
+        logger->info("End of step {} of task id {}. Checksum = {}", step, task_id, cohort->Checksum());
         logger->info("        <<< step {} of task id {}", step, task_id);
 	    time_step += MPI_Wtime() - tik_step;
 

@@ -296,3 +296,17 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 	t_count++;
 }
 
+double SeapodymCohort::Checksum()
+{
+	const int imin = map.imin1;
+	const int imax = map.imax1;
+	double s;
+	for (int i = imin; i <= imax; i++){
+		const int jmin = map.jinf1[i];
+		const int jmax = map.jsup1[i];
+		for (int j = jmin ; j <= jmax; j++){
+			s += dvarCohortDensity.elem_value(i, j);
+		}
+	}
+	return s;
+}
