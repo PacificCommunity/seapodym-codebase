@@ -1,5 +1,7 @@
 #include <chrono>
 #include "SeapodymCoupled.h"
+#include <fmt/core.h>
+
 
 void update_density_like(dvar_matrix& Density_pred, const dmatrix density_input, const imatrix map_carte, const int nlon, const int nlat, const int nlon_input, const int nlat_input, dvariable& likelihood);
 void SeapodymCoupled::prerun_model()
@@ -369,6 +371,12 @@ auto time0 = clock::now();
 			//	    TUNA AGEING AND SPAWNING		//
 			//----------------------------------------------//
 
+
+			for (int a=0; a<param->sp_nb_cohorts[sp]; a++){
+				cerr << fmt::format("{:.10f}", value(sum(mat.dvarDensity[sp][a]))) << " ";
+			}
+			cerr << endl;
+
 			//6. Ageing and survival
 			if (nt_dtau==dtau){
 				for (int a=param->sp_nb_cohorts[sp]-1; a >= 1; a--){
@@ -383,10 +391,6 @@ auto time0 = clock::now();
 
 			//7. Spawning
 			Spawning(mat.dvarDensity[sp][0],Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
-			for (int a=0; a<param->sp_nb_cohorts[sp]; a++){
-				cerr << sum(mat.dvarDensity[sp][a]) << " ";
-			}
-			cerr << endl;
 		}//end of 'sp' loop
 
 density_time_calc += std::chrono::duration_cast<std::chrono::milliseconds>(clock::now() - time0).count();

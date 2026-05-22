@@ -32,9 +32,10 @@ data <- do.call(rbind, lapply(dir("./", pattern="log_taskfunc"), function(file){
   if (length(out)>0){
     out <- out[grepl("Checksum", out)]
     do.call(rbind, lapply(1:length(out), function(i){
-      as.numeric(str_match(out[i], pattern)[2:4]) %>% 
+      str_match(out[i], pattern)[2:4] %>% 
         t %>% 
-        as.data.frame
+        as.data.frame %>% 
+        mutate(across(c(V1, V2), ~as.numeric(.x)))
     }))
   }
 })) %>% 
