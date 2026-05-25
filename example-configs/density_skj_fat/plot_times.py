@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 
 """
-This script harversts the timing data from the output files results/n*.txt and plots the breakdown of time spent in different components 
+This script harvests the timing data from the output files results/n*.txt and plots the breakdown of time spent in different components 
 (calc, overhead, worker init, cohort init, comm) as a function of the number of ranks. It also computes the average and standard deviation 
 of the timings across multiple runs for each component.
 """
@@ -82,6 +82,7 @@ def main():
     plt.tight_layout()
     plt.xlabel('num workers')
     plt.ylim(bottom=0)
+    plt.grid()
     plt.show()
 
 if __name__ == '__main__':
