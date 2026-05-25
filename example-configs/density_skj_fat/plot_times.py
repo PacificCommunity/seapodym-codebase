@@ -85,5 +85,16 @@ def main():
     plt.grid()
     plt.show()
 
+    df['total'] = df['calc'] + df['overhead'] + df['worker init'] + df['cohort init'] + df['comm']
+
+    # speedup
+    df['speedup'] = df[ df['num workers'] == 1 ]['total'].values[0] / df['total']
+    plt.figure()
+    plt.plot(df['num workers'], df['speedup'], marker='o')
+    plt.xlabel('num workers')
+    plt.ylabel('Speedup')
+    plt.title('SEAPODYM speedup (skl_fat.xml na=50 1983-2022)')
+    plt.show()
+
 if __name__ == '__main__':
     main()
