@@ -34,6 +34,7 @@ public:
 	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }		
 	void prerun_model();
 	void OnRunFirstStep();
+	double Checksum();
 	std::vector<double> GetCohortDensity();
 	int getChunkId(int step) {
 		int row = cohort_id - nb_age_class + 1 + step;

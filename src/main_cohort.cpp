@@ -61,6 +61,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     const int nvar = cohort->nvarcalc();
     independent_variables x(1, nvar);
     adstring_array x_names(1,nvar);
+    cohort->xinit(x, x_names);
 
     int cohort_id = task_id;
     cohort->restart(cohort_id);
@@ -77,6 +78,7 @@ taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
     	double tik_step = MPI_Wtime();
         logger->info("        >>> step {} of task id {}", step, task_id);
         cohort->stepForward(false);
+        logger->info("End of step {} of task id {}. Checksum = {}", step, task_id, cohort->Checksum());
         logger->info("        <<< step {} of task id {}", step, task_id);
 	    time_step += MPI_Wtime() - tik_step;
 

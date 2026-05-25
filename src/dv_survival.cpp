@@ -22,8 +22,9 @@ void SeapodymCoupled::Survival(dvar_matrix& N_a, dvar_matrix& N_a_1, const int a
 		Ageing(N_a, N_a_1);
 	else 
 
-		AgePlus(N_a, N_a_1);
-	
+		// For comparison with cohort code, at a time where A+ is not implemented in cohort code. To be restored after
+		//AgePlus(N_a, N_a_1);
+		Ageing(N_a, N_a_1);
 	
 
 } 
