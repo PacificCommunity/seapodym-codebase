@@ -102,9 +102,12 @@ def main():
     df['total'] = df['calc'] + df['overhead'] + df['worker init'] + df['cohort init'] + df['comm']
 
     # speedup
-    df['speedup'] = df[ df['num workers'] == 1 ]['total'].values[0] / df['total']
+    df['speedup worker'] = df[ df['num workers'] == 1 ]['total'].values[0] / df['total']
+    df['speedup manager'] = df[ df['num workers'] == 1 ]['time_manager'].values[0] / df['time_manager']
     plt.figure()
-    plt.plot(df['num workers'], df['speedup'], marker='o')
+    plt.plot(df['num workers'], df['speedup worker'], label='worker')
+    plt.plot(df['num workers'], df['speedup manager'], label='manager')
+    plt.legend(['worker', 'manager'])
     plt.xlabel('num workers')
     plt.ylabel('Speedup')
     plt.title('SEAPODYM speedup (skl_fat.xml na=50 1983-2022)')
