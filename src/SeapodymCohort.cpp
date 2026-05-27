@@ -300,7 +300,7 @@ double SeapodymCohort::Checksum()
 {
 	const int imin = map.imin1;
 	const int imax = map.imax1;
-	double s;
+	double s=0;
 	for (int i = imin; i <= imax; i++){
 		const int jmin = map.jinf1[i];
 		const int jmax = map.jsup1[i];
