@@ -156,7 +156,7 @@ void SeapodymCoupled::extract_larvae(const int sp, const int tcur)
 }
 
 
-void SeapodymCoupled::elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles)
+void SeapodymCoupled::elarvae_model_run(dvar_matrix& M, dvar_matrix& Density, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles)
 {
 	double sigma_fcte_save = param->sigma_fcte;
 
@@ -178,7 +178,7 @@ void SeapodymCoupled::elarvae_model_run(dvar_matrix& M, const int sp, const int 
 	pop.Precalrec_juv(map, mat, M, tcur,elarvae_dt);//checked
 
 	//2.0.1 Early larvae movement and mortality ADRE solver
-	pop.Calrec_juv(map, mat, mat.dvarDensity[sp][0], M, tcur,elarvae_dt);//checked
+	pop.Calrec_juv(map, mat, Density, M, tcur,elarvae_dt);//checked
 
 	
 	//2.0.2 Aggregate larvae density at larvae obs locations for the likelihood
@@ -196,7 +196,6 @@ void SeapodymCoupled::elarvae_model_run(dvar_matrix& M, const int sp, const int 
 	pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
 	
 }
-
 
 void SeapodymCoupled::get_larvae_at_obs()
 {

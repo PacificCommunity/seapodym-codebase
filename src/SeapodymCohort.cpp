@@ -183,7 +183,7 @@ time_overhead += (MPI_Wtime() - t0)*(param->sp_nb_cohorts[sp]-1)/param->sp_nb_co
 						&& tstart_cohort > nbstoskip-1)
 					time_getpred = true;
 
-				elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+				elarvae_model_run(Mortality,dvarCohortDensity,sp,tcur,time_getpred,writeoutputfiles);
 			}
 
 			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 
