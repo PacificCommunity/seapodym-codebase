@@ -328,7 +328,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 						&& t_count > nbt_building+nbstoskip)
 					time_getpred = true;
 
-				elarvae_model_run(Mortality,sp,tcur,time_getpred,writeoutputfiles);
+				elarvae_model_run(Mortality,mat.dvarDensity[sp][age],sp,tcur,time_getpred,writeoutputfiles);
 			}
 
 			//2.1 ADRE for late larvae in ELM or monthly larval class in default model 

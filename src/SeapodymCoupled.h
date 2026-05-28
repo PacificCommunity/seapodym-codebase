@@ -126,7 +126,7 @@ protected:
 	void create_init_larvae_vars();
 	void extract_larvae(const int sp, const int tcur);
 	void get_larvae_at_obs();
-	void elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles);
+	void elarvae_model_run(dvar_matrix& M, dvar_matrix& Density, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles);
 	void write_elarvae_dym(const int sp);
 	void getDate(int& jday, const int t_count);
 	void SaveRestart(const int year, const int month);

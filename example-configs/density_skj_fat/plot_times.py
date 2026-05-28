@@ -6,13 +6,24 @@ import matplotlib.pyplot as plt
 import sys
 
 """
-This script harversts the timing data from the output files results/n*.txt and plots the breakdown of time spent in different components 
+This script harvests the timing data from the output files results/n*.txt and plots the breakdown of time spent in different components 
 (calc, overhead, worker init, cohort init, comm) as a function of the number of ranks. It also computes the average and standard deviation 
 of the timings across multiple runs for each component.
 """
 
 pat = re.compile(r'Timings calc/overhead/worker init/cohort init/comm: (\d+\.\d+)\/\s*(\d+\.\d+)\/\s*(\d+\.\d+)\/\s*(\d+\.\d+)\/\s*(\d+\.\d+)')
 pat2 = re.compile(r'n(\d+)\.txt')
+
+def get_time_manager(filename: str) -> float:
+    f = open (filename, 'r')
+    res = None
+    for line in f:
+        m = re.search(r'time manager = \s*(\d+\.?\d+)\s*sec', line)
+        if m:
+            res = float(m.group(1))
+            break
+    f.close()
+    return res
 
 def get_times(filename: str) -> float:
 
@@ -45,6 +56,7 @@ def main():
         'worker init': [], 'worker init std': [],
         'cohort init': [], 'cohort init std': [],
         'comm': [], 'comm std': [],
+        'time_manager': [], 
     }
     for f in files:
         m = re.search(pat2, f)
@@ -55,6 +67,8 @@ def main():
             print(f"ERROR Could not extract n from filename {f}")
             sys.exit(1)
         times = get_times(f)
+        time_manager = get_time_manager(f)
+        data['time_manager'].append(time_manager)
         for name, values in times.items():
             # average the values
             data[name].append(np.mean(values))
@@ -82,14 +96,18 @@ def main():
     plt.tight_layout()
     plt.xlabel('num workers')
     plt.ylim(bottom=0)
+    plt.grid()
     plt.show()
 
     df['total'] = df['calc'] + df['overhead'] + df['worker init'] + df['cohort init'] + df['comm']
 
     # speedup
-    df['speedup'] = df[ df['num workers'] == 1 ]['total'].values[0] / df['total']
+    df['speedup worker'] = df[ df['num workers'] == 1 ]['total'].values[0] / df['total']
+    df['speedup manager'] = df[ df['num workers'] == 1 ]['time_manager'].values[0] / df['time_manager']
     plt.figure()
-    plt.plot(df['num workers'], df['speedup'], marker='o')
+    plt.plot(df['num workers'], df['speedup worker'], label='worker')
+    plt.plot(df['num workers'], df['speedup manager'], label='manager')
+    plt.legend(['worker', 'manager'])
     plt.xlabel('num workers')
     plt.ylabel('Speedup')
     plt.title('SEAPODYM speedup (skl_fat.xml na=50 1983-2022)')
