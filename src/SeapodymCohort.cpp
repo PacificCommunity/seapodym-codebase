@@ -49,10 +49,11 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		int tcur = t_count-1;
 		
 		std::vector<double> data( dataCollector.getNumSize() );
- 
+
+		dataCollector.startEpoch(); // should be as early as possible
+
 		// Get density of all age class from dataCollector
 		for (int aa=param->age_mature[sp]; aa<nb_age_class; aa++){
-			dataCollector.startEpoch(); // should be as early as possible
 			
 			int chunk_id = (tstart_cohort-1)*nb_age_class + aa;
 			int index = 0;
@@ -66,10 +67,9 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 					index++;
 				}
 			}
-			
-			dataCollector.endEpoch(); // should be as late as possible
 		}
-		
+
+		dataCollector.endEpoch(); // should be as late as possible
 
 		//Compute eggs at the end of t-1!	
 		getDate(jday, tstart_cohort);
