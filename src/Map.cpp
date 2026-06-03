@@ -718,7 +718,7 @@ int PMap::get_state_array_size(){
 
 int PMap::get_array_size(){
 //model state variables are allocated on the model domain 
-//with one extra grid cell for the boundary conditions.  
+//without the extra grid cell for the boundary conditions.  
 	int numData = 0;
 	for (int i = imin; i <= imax; i++){
 		const int j_min = jinf[i];

@@ -9,6 +9,8 @@
 #include "SeapodymCoupled.h"
 #include "DistDataCollector.h"
 
+class DataProvider; //just a declaration - only a pointer will be stored
+
 
 class SeapodymCohort : public SeapodymCoupled
 {
@@ -77,6 +79,8 @@ private:
 	int tstart_cohort;
 	int nb_age_class;
 
+	DataProvider* dp_ = nullptr;
+
 	dvariable likelihood;
 
 	//DMATRIX init_state;//not needed, initialized from mat.init_density_species
@@ -101,6 +105,10 @@ public:
 	// Remaining to implement
 	void setStateFromArray(const std::vector<double>& array);
 	std::vector<double> getArrayFromState();
-	void save(const std::string& restartFile);	
+	void save(const std::string& restartFile);
+
+	void setDataProvider(DataProvider* dp) {dp_ = dp;}
+
+	void setShmForcing();
 };
 #endif

@@ -47,8 +47,7 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 }
 
 
-void 
-taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
+void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		const std::shared_ptr<spdlog::logger>& logger,
 		DistDataCollector* dataCollector,
 		SeapodymCohort* cohort){
@@ -167,8 +166,15 @@ int main(int argc, char** argv) {
 	map.lit_map(param);
 	int numData = map.get_state_array_size();
 
+	//Set-up the size for the shared arrays for forcing data
+	size_t numForcing = (size_t)numTimeSteps * map.get_array_size() * param.get_nforcings();//IS TMP: works only for non-climatological O2 -> to deal with it later
+
 	// set up the data collector
 	int numChunks = numAgeGroups * numTimeSteps;
+
+	int color = (workerId == 0) ? 0 : 1;
+	MPI_Comm workerComm;
+	MPI_Comm_split(MPI_COMM_WORLD, color, workerId, &workerComm);
 
 	if (workerId == 0) {
 		printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d\n", \
@@ -203,6 +209,9 @@ int main(int argc, char** argv) {
 		// print check sum
 		double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
 		printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
+
+		//free manager's singleton 'color'
+		MPI_Comm_free(&workerComm);
 	} else {
 		//
 		// Worker
@@ -228,26 +237,42 @@ int main(int argc, char** argv) {
 		// its own gradient structure?
 		gradient_structure gs(gs_var_buffer);
 
-		SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
+		{
+			DataProvider dp(workerComm, numForcing);
 
-		// Bind the task function with the necessary parameters
-		auto taskFunc = std::bind(taskFunction,
-			std::placeholders::_1, // task_id
-			std::placeholders::_2, // stepBeg
-			std::placeholders::_3, // stepEnd
-			std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
-			logger,
-			&dataCollect,
-			&cohort);
+			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
 
-		TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
+			cohort.setDataProvider(&dp);
 
-		// Sync the manager with the workers before starting to distribute the tasks
-		MPI_Barrier(MPI_COMM_WORLD);
-		worker.run();
-		MPI_Barrier(MPI_COMM_WORLD);
+			//MPI_Win_fence(0, dp.win());
+			//if (dp.isShmRoot())
+			//	cohort.setShmForcing();//needs to be in cohort where the reading is done, but will be done once
+			//MPI_Win_fence(0, dp.win());
+			if (dp.isShmRoot())
+				cohort.setShmForcing();
+			MPI_Barrier(workerComm);   // IS TMP: publish-sync; replace with MPI_Win_fence once Alex adds it
 
-		time_overhead = cohort.time_overhead;
+			// Bind the task function with the necessary parameters
+			auto taskFunc = std::bind(taskFunction,
+				std::placeholders::_1, // task_id
+				std::placeholders::_2, // stepBeg
+				std::placeholders::_3, // stepEnd
+				std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
+				logger,
+				&dataCollect,
+				&cohort);
+
+			TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
+
+			// Sync the manager with the workers before starting to distribute the tasks
+			MPI_Barrier(MPI_COMM_WORLD);
+			worker.run();
+			MPI_Barrier(MPI_COMM_WORLD);
+
+			time_overhead = cohort.time_overhead;
+		}
+		//DataProvider clean-up
+		MPI_Comm_free(&workerComm);
 	}
 
 	if (workerId > 0) {

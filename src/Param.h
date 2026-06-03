@@ -51,6 +51,7 @@ public:
 	int	use_sst;
 	int	use_vld;
 	int	use_ph1;	
+	int	nforcings;
 
 	//Optimization control
 	int maxfn;
@@ -392,6 +393,7 @@ public:
 	inline int get_nbspecies() {return nb_species;}
 	inline int get_nbfishery() const {return nb_fishery;}
 	inline int get_nbforage() const {return nb_forage;}
+	inline int get_nforcings() const {return nforcings;}
 
 	void time_reading_init(){elapsed_time_reading = 0;}
 	double elapsed_time_reading;

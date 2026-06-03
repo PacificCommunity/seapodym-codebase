@@ -117,22 +117,26 @@ bool VarParamCoupled::read(const string& parfile)
 		str_dir_tags = doc.get("/strdir_tags", "value");
 
 	strfile_pp = str_dir + doc.get("/strfile_pp", "value");
+	nforcings = 1;
 
 	use_sst = 0;
 	if (!doc.get("/strfile_sst","value").empty()){
 		strfile_sst = str_dir + doc.get("/strfile_sst", "value");
 		use_sst = 1;
+		nforcings++;
 		//cout << "SST is in use in this simulation!" << endl; 
 	}
 	use_vld = 0;
 	if (!doc.get("/strfile_vld","value").empty()){
 		strfile_vld = str_dir + doc.get("/strfile_vld", "value");
 		use_vld = 1;
+		nforcings++;
 	}
 	use_ph1 = 0;
 	if (!doc.get("/strfile_ph1","value").empty()){
 		strfile_ph1 = str_dir + doc.get("/strfile_ph1", "value");
 		use_ph1 = 1;
+		nforcings++;
 	}
 
 	type_oxy = 0;
@@ -148,6 +152,7 @@ bool VarParamCoupled::read(const string& parfile)
 		strfile_u.push_back(str_dir+doc.get("/strfile_u", ostr.str()));
 		strfile_v.push_back(str_dir+doc.get("/strfile_v", ostr.str()));
 		strfile_oxy.push_back(str_dir+doc.get("/strfile_oxy", ostr.str()));
+		nforcings += 4;
 	}
 	//Climatological files to be ignored in the parfile: no spinup or forecasts in this version.
 	if (tuna_spinup || nb_yr_forecast){
@@ -244,7 +249,7 @@ bool VarParamCoupled::read(const string& parfile)
 	// m_inv_Lambda - inverse of Forage mortality through time transfer
 	// E - Ecological transfer coefficent from new primary prod to forage
 	// double C Conversion parameter from unit of PP (nitrogen or carbon) to wet weight of forage
-	//(Iverson 1990): ratio C/N for fish =3.6 ; ratio Dry weight/ C =2.4 ; ratio Wet weight/Dry weight = 3.3
+	//(Iverson 1990): ratio C/N for fish =3.6 /P; ratio Dry weight/ C =2.4 ; ratio Wet weight/Dry weight = 3.3
 	// 1 mmol N -> g N (1 mole N =14g) 1 mmol N = 14/1000* 3.6 * 2.4 * 3.3 = 0.4 g WW
 	// 1 mmol C -> g C (1 mole C =12g) 1 mmol C = 12/1000* 2.4 * 3.3 = 0.095 g WW
 	// source_frg[nb_forage]  - percentage of new prod transferred to each forage
@@ -261,6 +266,7 @@ bool VarParamCoupled::read(const string& parfile)
         E = doc.getDouble("/E", "value");
         c_pp = doc.getDouble("/c_pp", "value");
         nb_forage = doc.getInteger("/nb_forage", "value");
+	nforcings += nb_forage;
 	for (int n=0;n<nb_forage;n++) {
         	frg_name.push_back(doc.get("/frg_name", n));
 	}

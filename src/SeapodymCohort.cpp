@@ -4,6 +4,7 @@
 #include "sys/stat.h"
 #include <chrono>
 #include "DistDataCollector.h"
+#include "DataProvider.h"
 
 void SeapodymCohort::prerun_model()
 {
@@ -309,4 +310,46 @@ double SeapodymCohort::Checksum()
 		}
 	}
 	return s;
+}
+
+void SeapodymCohort::setShmForcing(){ 
+
+	if (!dp_) { cerr << "Error: setDataProvider() not called\n"; exit(1); }
+	
+	// Flatten the forcing series held in `mat` over [g0 .. nbt_total] 
+	// into the shared window, in the canonical field order
+	// that MUST match param->nforcings and the future loadSlice().
+	// IS TMP: currently rely on OnRunFirstStep's ReadAll, which has
+	// already filled matrices. Next step: makes this the SOLE reader.
+	
+	double* W  = dp_->getDataPtr();
+	const int g0 = nbt_building + 1;	// fixed time origin (==1; spinup removed)
+	const int nf = param->get_nforcings();  // fields per timestep
+	const size_t cells = map.get_array_size();// active ragged cells per field
+	const size_t slab  = (size_t)nf * cells;  // doubles per timestep
+
+	for (int t = g0; t <= nbt_total; ++t) {
+		double* base = W + (size_t)(t - g0) * slab;  // this timestep's block
+		size_t  f = 0; // running field index
+
+
+		auto put = [&](const dmatrix& src) {
+			double* dst = base + f * cells;
+			size_t  c   = 0;
+			for (int i = map.imin; i <= map.imax; ++i)
+				for (int j = map.jinf[i]; j <= map.jsup[i]; ++j)
+					dst[c++] = src(i, j);
+			++f;
+		};
+
+		put(mat.np1[t]);
+		if (param->use_sst) put(mat.sst[t]);
+		if (param->use_vld) put(mat.vld[t]);
+		if (param->use_ph1) put(mat.ph1[t]);
+		for (int k = 0; k < nb_layer; ++k) put(mat.tempn[t][k]);
+		for (int k = 0; k < nb_layer; ++k) put(mat.un[t][k]);
+		for (int k = 0; k < nb_layer; ++k) put(mat.vn[t][k]);
+		for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[t][k]);
+		for (int n = 0; n < nb_forage; ++n) put(mat.forage[t][n]);
+	}
 }
