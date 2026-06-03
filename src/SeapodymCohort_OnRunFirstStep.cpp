@@ -2,7 +2,7 @@
 #include "SeapodymCohort.h"
 
 //Prepare cohort run: initialize control variables, set flags, allocate memory for model and data variables, read forcing and fisheries data.
-void SeapodymCohort::OnRunFirstStep(DataProvider dataProvider)
+void SeapodymCohort::OnRunFirstStep()
 {
 	sumFprime.allocate(0, nb_forage - 1); 		sumFprime.initialize();
 	sumF.allocate(0, nb_forage - 1);		sumF.initialize();
@@ -67,7 +67,7 @@ void SeapodymCohort::OnRunFirstStep(DataProvider dataProvider)
 	}
 	//Reading all forcing data for the cohort lifetime window
 	//ReadAll(t0, nbt, offset_tstart_cohort);
-	ReadAll(t_count, nbt_total, 0, dataProvider);
+	ReadAll(t_count, nbt_total, 0);
 
 	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);
