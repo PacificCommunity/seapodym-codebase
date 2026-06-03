@@ -5,9 +5,9 @@
 #include <chrono>
 #include "DistDataCollector.h"
 
-void SeapodymCohort::prerun_model()
+void SeapodymCohort::prerun_model(DataProvider dataProvider)
 {
-	OnRunFirstStep();
+	OnRunFirstStep(dataProvider);
 	time_overhead = 0;
 }
 

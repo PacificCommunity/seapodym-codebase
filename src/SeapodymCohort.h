@@ -8,6 +8,7 @@
 #include "ReadWrite.h"
 #include "SeapodymCoupled.h"
 #include "DistDataCollector.h"
+#include "DataProvider.h"
 
 
 class SeapodymCohort : public SeapodymCoupled
@@ -32,9 +33,11 @@ public:
 	double time_overhead;	
 	//double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
 	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }		
-	void prerun_model();
-	void OnRunFirstStep();
+	void OnRunFirstStep(DataProvider dataProvider);
 	double Checksum();
+	void ReadTimeSeriesData(int t, int t_series, DataProvider dataProvider);
+	void ReadAll(int tstart, int tend, int offset, DataProvider dataProvider);
+	void prerun_model(DataProvider dataProvider);
 	std::vector<double> GetCohortDensity();
 	int getChunkId(int step) {
 		int row = cohort_id - nb_age_class + 1 + step;

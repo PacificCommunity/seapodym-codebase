@@ -8,6 +8,7 @@
 #include "SeapodymCohortDependencyAnalyzer.h"
 #include "TaskStepWorker.h"
 #include "DistDataCollector.h"
+#include "DataProvider.h"
 #include "TaskStepManager.h"
 #include "SeapodymCohort.h"
 #include <CmdLineArgParser.h>
@@ -22,7 +23,7 @@ void buffers_set(long int &mv, long int &mc, long int &mg);
 
 double time_worker_init = 0.0, time_cohort_init = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
 
-SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
+SeapodymCohort xinit_prerun_wrapper(const char* parfile, DataProvider dataProvider) {
 
     double tik = MPI_Wtime();
     
@@ -36,7 +37,7 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
     cohort.xinit(x, x_names);
 
     //prepare cohort run
-    cohort.prerun_model();
+    cohort.prerun_model(dataProvider);
 
     double tak = MPI_Wtime();
 
@@ -226,28 +227,33 @@ int main(int argc, char** argv) {
         
         // Does every worker need a gradiant structure object? Or does every cohort object need
         // its own gradient structure?
-        gradient_structure gs(gs_var_buffer);        
+        gradient_structure gs(gs_var_buffer);     
         
-        SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
+        {
+            const int numData = 10;
+            DataProvider dataProvider(MPI_COMM_WORLD, numData);
+           
+            SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str(), dataProvider);
 
-        // Bind the task function with the necessary parameters
-        auto taskFunc = std::bind(taskFunction,
-            std::placeholders::_1, // task_id
-            std::placeholders::_2, // stepBeg
-            std::placeholders::_3, // stepEnd
-            std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
-            logger,
-            &dataCollect,
-            &cohort);
+            // Bind the task function with the necessary parameters
+            auto taskFunc = std::bind(taskFunction,
+                std::placeholders::_1, // task_id
+                std::placeholders::_2, // stepBeg
+                std::placeholders::_3, // stepEnd
+                std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
+                logger,
+                &dataCollect,
+                &cohort);
 
-        TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
+            TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
 
-        // Sync the manager with the workers before starting to distribute the tasks
-        MPI_Barrier(MPI_COMM_WORLD);
-        worker.run();
-        MPI_Barrier(MPI_COMM_WORLD);
+            // Sync the manager with the workers before starting to distribute the tasks
+            MPI_Barrier(MPI_COMM_WORLD);
+            worker.run();
+            MPI_Barrier(MPI_COMM_WORLD);
 
-	    time_overhead = cohort.time_overhead;
+            time_overhead = cohort.time_overhead;
+        }
     }
 
     if (workerId > 0) {
