@@ -40,8 +40,8 @@ void SeapodymCohort::OnRunFirstStep()
 	int nbt = nbt_total;
 	//nbt_building = -1;
 
-	mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
-	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
+	mat.createMatOcean(map, t0, t0, nbi, nbj, nb_layer, deltaT);
+	mat.createMatForage(map, nb_forage, t0, t0, nbi, nbj);
 	if (!param->larvae_input_aggregated_flag[0])
 		mat.createMatLarvae(map, 1, nbt, nbi, nbj, deltaT);
 
@@ -67,7 +67,7 @@ void SeapodymCohort::OnRunFirstStep()
 	}
 	//Reading all forcing data for the cohort lifetime window
 	//ReadAll(t0, nbt, offset_tstart_cohort);
-	ReadAll(t_count, nbt_total, 0);
+	//ReadAll(t_count, nbt_total, 0);
 
 	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);

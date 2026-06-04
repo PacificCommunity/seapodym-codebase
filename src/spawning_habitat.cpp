@@ -31,7 +31,7 @@ void VarSimtunaFunc::Hs_comp(VarParamCoupled& param, CMatrices& mat, const PMap&
 				Hs.elem_value(i,j) = Hs_comp_elem(mat,F,pp_transform,a,b,c,d,e,ssv,nb_forage,dlayer,nlayer,jday,t_count,i,j);
 			}
 		}
-	} 
+	}
 }
 
 

@@ -110,5 +110,6 @@ public:
 	void setDataProvider(DataProvider* dp) {dp_ = dp;}
 
 	void setShmForcing();
+	void getData();
 };
 #endif

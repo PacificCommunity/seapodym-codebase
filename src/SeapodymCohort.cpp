@@ -47,7 +47,8 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		//Initialize from spawning
 		int sp = 0;
 		//int tcur = 0;
-		int tcur = t_count-1;
+		//int tcur = t_count-1;
+		int tcur = 1;
 		
 		std::vector<double> data( dataCollector.getNumSize() );
  
@@ -74,6 +75,9 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 
 		//Compute eggs at the end of t-1!	
 		getDate(jday, tstart_cohort);
+
+		// Get data from shared memory
+		getData();
 
 		//1. Spawning habitat (ToDo:IF NEEDED, see spawning_in_hs)
 		func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
@@ -123,13 +127,19 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	//		DATE and TIME-AGE		//
 	//----------------------------------------------//
 	//tcur = age - age_start + 1;
-	tcur = t_count;
+	//tcur = t_count;
+	tcur = 1;
 
 	int model_time_count = tstart_cohort + age - age_start;
 	getDate(jday, model_time_count+1);
 	for (int sp=0; sp < nb_species; sp++){
 		func.Seasonal_switch(*param,mat,map,jday,sp);	
 	}
+
+	//----------------------------------------------//
+	//	GET DATA FROM SHARED MEMORY		//
+	//----------------------------------------------//
+	getData();
 
 	//----------------------------------------------//
 	//	COHORT DYNAMICS WITHOUT FISHING		//
@@ -342,14 +352,66 @@ void SeapodymCohort::setShmForcing(){
 			++f;
 		};
 
-		put(mat.np1[t]);
-		if (param->use_sst) put(mat.sst[t]);
-		if (param->use_vld) put(mat.vld[t]);
-		if (param->use_ph1) put(mat.ph1[t]);
-		for (int k = 0; k < nb_layer; ++k) put(mat.tempn[t][k]);
-		for (int k = 0; k < nb_layer; ++k) put(mat.un[t][k]);
-		for (int k = 0; k < nb_layer; ++k) put(mat.vn[t][k]);
-		for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[t][k]);
-		for (int n = 0; n < nb_forage; ++n) put(mat.forage[t][n]);
+		//----------------------------------------------//
+		//	DATA READING SECTION: U,V,T,O2,PP	//
+		//----------------------------------------------//
+		//TIME SERIES 
+		t_series = t - nbt_building + nbt_start_series;
+		ReadTimeSeriesData(g0,t_series);	
+		/*
+		else if (((t <= nbt_building) && (month != past_month)) || (t > nbt_no_forecast)) {
+
+			//AVERAGED CLIMATOLOGY DATA
+			ReadClimatologyData(g0, month);
+		}
+		if (param->type_oxy==1 && month != past_month) {
+			//MONTHLY O2
+			ReadClimatologyOxy(g0, month);
+		}
+		if (param->type_oxy==2 && qtr != past_qtr) {
+			//QUARTERLY O2
+			ReadClimatologyOxy(g0, qtr);
+		}*/
+
+		put(mat.np1[g0]);
+		if (param->use_sst) put(mat.sst[g0]);
+		if (param->use_vld) put(mat.vld[g0]);
+		if (param->use_ph1) put(mat.ph1[g0]);
+		for (int k = 0; k < nb_layer; ++k) put(mat.tempn[g0][k]);
+		for (int k = 0; k < nb_layer; ++k) put(mat.un[g0][k]);
+		for (int k = 0; k < nb_layer; ++k) put(mat.vn[g0][k]);
+		for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[g0][k]);
+		for (int n = 0; n < nb_forage; ++n) put(mat.forage[g0][n]);
 	}
+}
+
+void SeapodymCohort::getData(){
+	if (!dp_) { cerr << "Error: setDataProvider() not called\n"; exit(1); }
+
+	double* W  = dp_->getDataPtr();
+	const int g0 = nbt_building + 1;	// fixed time origin (==1; spinup removed)
+	const int nf = param->get_nforcings();  // fields per timestep
+	const size_t cells = map.get_array_size();// active ragged cells per field
+	const size_t slab  = (size_t)nf * cells;  // doubles per timestep
+	double* base = W + (size_t)(t_count - g0) * slab;
+	size_t  f = 0; // running field index
+
+	auto get = [&](dmatrix& dst) {
+		double* src = base + f * cells;
+		size_t  c   = 0;
+		for (int i = map.imin; i <= map.imax; ++i)
+			for (int j = map.jinf[i]; j <= map.jsup[i]; ++j)
+				dst(i, j) = src[c++];
+		++f;
+	};
+
+	get(mat.np1[g0]);
+	if (param->use_sst) get(mat.sst[g0]);
+	if (param->use_vld) get(mat.vld[g0]);
+	if (param->use_ph1) get(mat.ph1[g0]);
+	for (int k = 0; k < nb_layer; ++k) get(mat.tempn[g0][k]);
+	for (int k = 0; k < nb_layer; ++k) get(mat.un[g0][k]);
+	for (int k = 0; k < nb_layer; ++k) get(mat.vn[g0][k]);
+	for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
+	for (int n = 0; n < nb_forage; ++n) get(mat.forage[g0][n]);
 }
