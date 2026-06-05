@@ -47,7 +47,7 @@ data <- do.call(rbind, lapply(dir("./", pattern="log_taskfunc"), function(file){
   pivot_wider(id_cols="t_count", names_from = "age", values_from="checksum") %>% 
   dplyr::select(-t_count) %>% 
   as.data.frame
-print(data)
-cat("Writing output to file 'checksum'\n")
+#print(data)
+cat("Writing output to file 'checksums'\n")
 data  %>% 
   write.table(file="checksums", row.names=F, quote=F, col.names=F)
