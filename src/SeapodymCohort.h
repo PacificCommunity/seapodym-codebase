@@ -110,6 +110,6 @@ public:
 	void setDataProvider(DataProvider* dp) {dp_ = dp;}
 
 	void setShmForcing();
-	void getData();
+	void getData(bool spawning_habitat_only = false);
 };
 #endif

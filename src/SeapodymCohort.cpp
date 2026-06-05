@@ -77,7 +77,7 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		getDate(jday, tstart_cohort);
 
 		// Get data from shared memory
-		getData();
+		getData(true);
 
 		//1. Spawning habitat (ToDo:IF NEEDED, see spawning_in_hs)
 		func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
@@ -358,12 +358,7 @@ void SeapodymCohort::setShmForcing(){
 		//TIME SERIES 
 		t_series = t - nbt_building + nbt_start_series;
 		ReadTimeSeriesData(g0,t_series);	
-		/*
-		else if (((t <= nbt_building) && (month != past_month)) || (t > nbt_no_forecast)) {
-
-			//AVERAGED CLIMATOLOGY DATA
-			ReadClimatologyData(g0, month);
-		}
+		
 		if (param->type_oxy==1 && month != past_month) {
 			//MONTHLY O2
 			ReadClimatologyOxy(g0, month);
@@ -371,21 +366,21 @@ void SeapodymCohort::setShmForcing(){
 		if (param->type_oxy==2 && qtr != past_qtr) {
 			//QUARTERLY O2
 			ReadClimatologyOxy(g0, qtr);
-		}*/
+		}
 
 		put(mat.np1[g0]);
+		for (int n = 0; n < nb_forage; ++n) put(mat.forage[g0][n]);
 		if (param->use_sst) put(mat.sst[g0]);
-		if (param->use_vld) put(mat.vld[g0]);
-		if (param->use_ph1) put(mat.ph1[g0]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.tempn[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.un[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.vn[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[g0][k]);
-		for (int n = 0; n < nb_forage; ++n) put(mat.forage[g0][n]);
+		if (param->use_vld) put(mat.vld[g0]);
+		if (param->use_ph1) put(mat.ph1[g0]);
 	}
 }
 
-void SeapodymCohort::getData(){
+void SeapodymCohort::getData(bool spawning_habitat_only){
 	if (!dp_) { cerr << "Error: setDataProvider() not called\n"; exit(1); }
 
 	double* W  = dp_->getDataPtr();
@@ -406,12 +401,19 @@ void SeapodymCohort::getData(){
 	};
 
 	get(mat.np1[g0]);
+	for (int n = 0; n < nb_forage; ++n){
+		if (spawning_habitat_only * param->day_layer[n] * param->night_layer[n])
+			++f;
+		else
+			get(mat.forage[g0][n]);
+	};
 	if (param->use_sst) get(mat.sst[g0]);
-	if (param->use_vld) get(mat.vld[g0]);
-	if (param->use_ph1) get(mat.ph1[g0]);
-	for (int k = 0; k < nb_layer; ++k) get(mat.tempn[g0][k]);
-	for (int k = 0; k < nb_layer; ++k) get(mat.un[g0][k]);
-	for (int k = 0; k < nb_layer; ++k) get(mat.vn[g0][k]);
-	for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
-	for (int n = 0; n < nb_forage; ++n) get(mat.forage[g0][n]);
+	if (!spawning_habitat_only){
+		for (int k = 0; k < nb_layer; ++k) get(mat.tempn[g0][k]);
+		for (int k = 0; k < nb_layer; ++k) get(mat.un[g0][k]);
+		for (int k = 0; k < nb_layer; ++k) get(mat.vn[g0][k]);
+		for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
+		if (param->use_vld) get(mat.vld[g0]);
+		if (param->use_ph1) get(mat.ph1[g0]);
+	}
 }
