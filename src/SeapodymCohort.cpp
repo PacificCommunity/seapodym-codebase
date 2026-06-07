@@ -8,7 +8,8 @@
 
 void SeapodymCohort::prerun_model()
 {
-	// Step 1 verification: confirm DataProvider is live and report shm rank.
+#ifdef SEAPODYM_WITH_DATAPROVIDER
+	// Step 1/2 verification: confirm DataProvider is live and report shm rank.
 	if (dp_) {
 		printf("[prerun_model] DataProvider live: shmRank=%d  isShmRoot=%s  "
 		       "np1 ptr=%p  un ptr=%p\n",
@@ -19,6 +20,7 @@ void SeapodymCohort::prerun_model()
 	} else {
 		printf("[prerun_model] WARNING: DataProvider not set\n");
 	}
+#endif
 
 	OnRunFirstStep();
 	time_overhead = 0;

@@ -8,7 +8,9 @@
 #include "ReadWrite.h"
 #include "SeapodymCoupled.h"
 #include "DistDataCollector.h"
-#include <DataProvider.h>
+#ifdef SEAPODYM_WITH_DATAPROVIDER
+#  include <DataProvider.h>
+#endif
 
 
 class SeapodymCohort : public SeapodymCoupled
@@ -32,10 +34,11 @@ public:
 
 	double time_overhead;
 
-	/** Step 1 plumbing: DataProvider for shared-memory forcing data.
-	 *  Set before calling prerun_model(). Non-owning pointer. */
+	/** DataProvider for shared-memory forcing data. Set before prerun_model(). Non-owning. */
+#ifdef SEAPODYM_WITH_DATAPROVIDER
 	void setDataProvider(DataProvider* dp) { dp_ = dp; }
 	DataProvider* getDataProvider() const  { return dp_; }
+#endif
 
 	//double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }
 	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }
@@ -66,8 +69,9 @@ public:
 	}
 
 private:
-	DataProvider* dp_ = nullptr;   ///< shared-memory forcing provider (Step 1, non-owning)
-
+#ifdef SEAPODYM_WITH_DATAPROVIDER
+	DataProvider* dp_ = nullptr;   ///< shared-memory forcing provider (non-owning)
+#endif
 	int dtau;
 	int nbt_before_first_recruitment; 	
 	int nt_dtau; 

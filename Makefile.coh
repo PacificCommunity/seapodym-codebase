@@ -99,7 +99,7 @@ INCPATH=-IDOM/src -Isrc
 BINPATH=bin
 
 ##############################################################
-OBJPATH=objs
+OBJPATH=objs_coh
 ADMODEL_HOME=$(ADMB_HOME)
 
 OS := $(shell uname -s)
@@ -108,7 +108,7 @@ ARCH := $(shell uname -m)
 #DEBUG=-pg -g
 DEBUG= -g
 #production code
-CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -g -O4 -DOPT_LIB -Wall -Wno-deprecated -I$(ADMODEL_HOME)/include -I/usr/include/libxml2 -I$(SEA_PARALLEL)/include $(INCPATH)
+CFLAGS=-DTRUE=true -DFALSE=false -D __GNUDOS__ -Dlinux -g -O4 -DOPT_LIB -Wall -Wno-deprecated -DSEAPODYM_WITH_DATAPROVIDER -I$(ADMODEL_HOME)/include -I/usr/include/libxml2 -I$(SEA_PARALLEL)/include $(INCPATH)
 
 ###### with safe library ################################
 #LFLAGS=-lm -L$(ADMODEL_HOME)/lib  -ladmb -lstdc++ -lxml2 

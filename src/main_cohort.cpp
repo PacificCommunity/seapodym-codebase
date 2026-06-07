@@ -171,46 +171,21 @@ int main(int argc, char** argv) {
     map.lit_map(param);
     int numData = map.get_state_array_size();
 
+    // ------------------------------------------------------------------ //
+    // Build a worker-only communicator so that shmRank-0 is the lowest
+    // worker rank, not the manager (rank 0 in MPI_COMM_WORLD).
+    // MPI_Comm_split with MPI_UNDEFINED excludes rank 0 from workerComm.
+    // ------------------------------------------------------------------ //
+    MPI_Comm workerComm = MPI_COMM_NULL;
+    MPI_Comm_split(MPI_COMM_WORLD,
+                   workerId == 0 ? MPI_UNDEFINED : 0,
+                   workerId,
+                   &workerComm);
+
     // Enclose DataProvider (and DistDataCollector) in a scope so their
     // destructors run before MPI_Finalize().
     {
-    // ------------------------------------------------------------------ //
-    // Step 1: construct DataProvider for shared-memory forcing data.
-    // Each named entry covers all time steps for one forcing field.
-    // Only shmRank-0 on each node will eventually read from disk (Step 2);
-    // for now we just allocate the windows and verify the plumbing.
-    // DataProvider is collective: all ranks must call the constructor.
-    // ------------------------------------------------------------------ //
-    const std::size_t mapCells = static_cast<std::size_t>(map.get_array_size());
-    const std::size_t dpT  = static_cast<std::size_t>(numTimeSteps);
-    const std::size_t dpNL = static_cast<std::size_t>(param.nb_layer);
-    const std::size_t dpNF = static_cast<std::size_t>(param.get_nbforage());
-    // 3-D fields: [t][i][j]  (one 2-D slice per time step)
-    const std::size_t sz3 = dpT * mapCells;
-    // 4-D ocean fields: [t][layer][i][j]
-    const std::size_t sz4 = dpT * dpNL * mapCells;
-    // 4-D forage: [t][forage_type][i][j]
-    const std::size_t szF = dpT * dpNF * mapCells;
-
-    DataProvider dataProvider(MPI_COMM_WORLD, {
-        {"np1",    sz3},   // primary production
-        {"sst",    sz3},   // sea-surface temperature
-        {"vld",    sz3},   // vertical layer depth (MLD/ZEU)
-        {"un",     sz4},   // zonal current
-        {"vn",     sz4},   // meridional current
-        {"tempn",  sz4},   // sub-surface temperature
-        {"oxygen", sz4},   // dissolved oxygen
-        {"forage", szF},   // forage fields
-    });
-
-    if (workerId == 0) {
-        printf("[%d] DataProvider: mapCells=%zu T=%zu NL=%zu NF=%zu  "
-               "(shm windows: np1/sst/vld=%zu  un/vn/tempn/oxygen=%zu  forage=%zu doubles)\n",
-               workerId, mapCells, dpT, dpNL, dpNF, sz3, sz4, szF);
-    }
-    // ------------------------------------------------------------------ //
-
-    // set up the data collector
+    // set up the data collector (uses MPI_COMM_WORLD — manager + workers)
     int numChunks = numAgeGroups * numTimeSteps;
 
     if (workerId == 0) {
@@ -219,7 +194,7 @@ int main(int argc, char** argv) {
     }
 
     DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
-    
+
     // analyze the cohort Id task dependencies
     SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps);
     int numCohorts = taskDeps.getNumberOfCohorts();
@@ -229,7 +204,7 @@ int main(int argc, char** argv) {
 
     if (workerId == 0) {
         //
-        // Manager
+        // Manager: no DataProvider needed (manager never calls ReadAll)
         //
         double tik = MPI_Wtime();
 
@@ -248,8 +223,33 @@ int main(int argc, char** argv) {
         printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
     } else {
         //
-        // Worker
+        // Worker: construct DataProvider on the worker-only communicator so
+        // shmRank-0 is the lowest-ranked worker, not the manager.
         //
+        const std::size_t mapCells = static_cast<std::size_t>(map.get_array_size());
+        const std::size_t dpT  = static_cast<std::size_t>(numTimeSteps);
+        const std::size_t dpNL = static_cast<std::size_t>(param.nb_layer);
+        const std::size_t dpNF = static_cast<std::size_t>(param.get_nbforage());
+        const std::size_t sz3  = dpT * mapCells;
+        const std::size_t sz4  = dpT * dpNL * mapCells;
+        const std::size_t szF  = dpT * dpNF * mapCells;
+
+        DataProvider dataProvider(workerComm, {
+            {"np1",    sz3},
+            {"sst",    sz3},
+            {"vld",    sz3},
+            {"un",     sz4},
+            {"vn",     sz4},
+            {"tempn",  sz4},
+            {"oxygen", sz4},
+            {"forage", szF},
+        });
+
+        if (workerId == 1) {  // rank 1 = shmRank 0 = shmRoot among workers
+            printf("[%d] DataProvider: mapCells=%zu T=%zu NL=%zu NF=%zu  "
+                   "(np1/sst/vld=%zu  un/vn/tempn/oxygen=%zu  forage=%zu doubles)\n",
+                   workerId, mapCells, dpT, dpNL, dpNF, sz3, sz4, szF);
+        }
 
         // Create SeapodymCohort object that will be shared among each worker
         int cmp_regime = 0;
@@ -266,12 +266,12 @@ int main(int argc, char** argv) {
         gradient_structure::set_GRADSTACK_BUFFER_SIZE(gradstack_buffer);
         gradient_structure::set_CMPDIF_BUFFER_SIZE(cmpdif_buffer);
         gradient_structure::set_NO_DERIVATIVES();
-        
+
         // Does every worker need a gradiant structure object? Or does every cohort object need
         // its own gradient structure?
-        gradient_structure gs(gs_var_buffer);        
-        
-        SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str(), &dataProvider);
+        gradient_structure gs(gs_var_buffer);
+
+        SeapodymCohort cohort = xinit_prerun_wrapper(parfile.c_str(), &dataProvider);
 
         // Bind the task function with the necessary parameters
         auto taskFunc = std::bind(taskFunction,
@@ -301,7 +301,11 @@ int main(int argc, char** argv) {
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
     dataCollect.free();
-    } // dataProvider and dataCollect destroyed here, before MPI_Finalize
+    } // DataProvider (worker-only) and DistDataCollector destroyed here, before MPI_Finalize
+
+    if (workerComm != MPI_COMM_NULL)
+        MPI_Comm_free(&workerComm);
+
     MPI_Finalize();
 
     return 0;

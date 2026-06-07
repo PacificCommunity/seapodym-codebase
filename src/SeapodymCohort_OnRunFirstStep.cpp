@@ -67,7 +67,11 @@ void SeapodymCohort::OnRunFirstStep()
 	}
 	//Reading all forcing data for the cohort lifetime window
 	//ReadAll(t0, nbt, offset_tstart_cohort);
+#ifdef SEAPODYM_WITH_DATAPROVIDER
+	ReadAll(t_count, nbt_total, 0, dp_);   // Step 2: pass DataProvider for shm broadcast
+#else
 	ReadAll(t_count, nbt_total, 0);
+#endif
 
 	Habitat.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	Mortality.allocate(map.imin, map.imax, map.jinf, map.jsup);

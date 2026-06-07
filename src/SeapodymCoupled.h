@@ -4,6 +4,9 @@
 #include "SeapodymDocConsole.h"
 #include "Date.h"
 #include "NishikawaLike.h"
+#ifdef SEAPODYM_WITH_DATAPROVIDER
+#  include <DataProvider.h>
+#endif
 
 /*!
 \brief The main simulation class
@@ -13,7 +16,7 @@ class SeapodymCoupled : public SeapodymDocConsole
 {
 public:
 	SeapodymCoupled(){/*DoesNothing*/};
-	SeapodymCoupled(const char* parfile) 
+	SeapodymCoupled(const char* parfile)
 	{
 		param = new VarParamCoupled();
 		param->init_param();
@@ -167,7 +170,13 @@ protected:
 	void delete_tag_releases();
 	void gaussian_kernel(dmatrix& gauss_kernel, dvector x, dvector y, double lon, double lat, double rx, double ry);
 	double lon_distance(const double lon_rel, const double lon_rec, const double lat_rel, const double lat_rec);
-	void ReadAll(int tstart, int tend, int offset);
+	// dp is non-null only when called from the MPI cohort target (Step 2+)
+	void ReadAll(int tstart, int tend, int offset, void* dp = nullptr);
+#ifdef SEAPODYM_WITH_DATAPROVIDER
+	// Step 2 helpers: serialize/deserialize forcing arrays to/from shared-memory buffers
+	void copyForcingToDP(DataProvider* dp, int t0, int nbt);
+	void copyForcingFromDP(DataProvider* dp, int t0, int nbt);
+#endif
 	void UnitConversions(int t);
 	void Food_Requirement_Index(dvar_matrix& IFR, dvar_matrix FR_pop, dvar_matrix ISR_denom, const int sp, const int age, const int t_count, const int jday);
 	void IFR_age_comp(dvar_matrix& IFR, dmatrix FR_pop, dmatrix ISR_denom, const int age, const int sp, const int t);
