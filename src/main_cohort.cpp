@@ -4,6 +4,7 @@
 #include <functional>
 #include <numeric>      // std::accumulate
 #include <mpi.h>
+#include <DataProvider.h>
 #include "VarParamCoupled.h"
 #include "SeapodymCohortDependencyAnalyzer.h"
 #include "TaskStepWorker.h"
@@ -22,10 +23,10 @@ void buffers_set(long int &mv, long int &mc, long int &mg);
 
 double time_worker_init = 0.0, time_cohort_init = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
 
-SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
+SeapodymCohort xinit_prerun_wrapper(const char* parfile, DataProvider* dp = nullptr) {
 
     double tik = MPI_Wtime();
-    
+
     SeapodymCohort cohort((char*)parfile, 0);
 
     //initialize variables of optimization
@@ -34,6 +35,9 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
     adstring_array x_names(1,nvar);
 
     cohort.xinit(x, x_names);
+
+    // Attach DataProvider before prerun_model so it is available during ReadAll (Step 2+)
+    cohort.setDataProvider(dp);
 
     //prepare cohort run
     cohort.prerun_model();
@@ -167,6 +171,45 @@ int main(int argc, char** argv) {
     map.lit_map(param);
     int numData = map.get_state_array_size();
 
+    // Enclose DataProvider (and DistDataCollector) in a scope so their
+    // destructors run before MPI_Finalize().
+    {
+    // ------------------------------------------------------------------ //
+    // Step 1: construct DataProvider for shared-memory forcing data.
+    // Each named entry covers all time steps for one forcing field.
+    // Only shmRank-0 on each node will eventually read from disk (Step 2);
+    // for now we just allocate the windows and verify the plumbing.
+    // DataProvider is collective: all ranks must call the constructor.
+    // ------------------------------------------------------------------ //
+    const std::size_t mapCells = static_cast<std::size_t>(map.get_array_size());
+    const std::size_t dpT  = static_cast<std::size_t>(numTimeSteps);
+    const std::size_t dpNL = static_cast<std::size_t>(param.nb_layer);
+    const std::size_t dpNF = static_cast<std::size_t>(param.get_nbforage());
+    // 3-D fields: [t][i][j]  (one 2-D slice per time step)
+    const std::size_t sz3 = dpT * mapCells;
+    // 4-D ocean fields: [t][layer][i][j]
+    const std::size_t sz4 = dpT * dpNL * mapCells;
+    // 4-D forage: [t][forage_type][i][j]
+    const std::size_t szF = dpT * dpNF * mapCells;
+
+    DataProvider dataProvider(MPI_COMM_WORLD, {
+        {"np1",    sz3},   // primary production
+        {"sst",    sz3},   // sea-surface temperature
+        {"vld",    sz3},   // vertical layer depth (MLD/ZEU)
+        {"un",     sz4},   // zonal current
+        {"vn",     sz4},   // meridional current
+        {"tempn",  sz4},   // sub-surface temperature
+        {"oxygen", sz4},   // dissolved oxygen
+        {"forage", szF},   // forage fields
+    });
+
+    if (workerId == 0) {
+        printf("[%d] DataProvider: mapCells=%zu T=%zu NL=%zu NF=%zu  "
+               "(shm windows: np1/sst/vld=%zu  un/vn/tempn/oxygen=%zu  forage=%zu doubles)\n",
+               workerId, mapCells, dpT, dpNL, dpNF, sz3, sz4, szF);
+    }
+    // ------------------------------------------------------------------ //
+
     // set up the data collector
     int numChunks = numAgeGroups * numTimeSteps;
 
@@ -228,7 +271,7 @@ int main(int argc, char** argv) {
         // its own gradient structure?
         gradient_structure gs(gs_var_buffer);        
         
-        SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
+        SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str(), &dataProvider);
 
         // Bind the task function with the necessary parameters
         auto taskFunc = std::bind(taskFunction,
@@ -258,6 +301,7 @@ int main(int argc, char** argv) {
     // Finalization of MPI
     ////////////////////////////////////////////////////////////////////////
     dataCollect.free();
+    } // dataProvider and dataCollect destroyed here, before MPI_Finalize
     MPI_Finalize();
 
     return 0;

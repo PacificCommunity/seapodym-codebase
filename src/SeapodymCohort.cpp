@@ -3,10 +3,23 @@
 #include "Date.h"
 #include "sys/stat.h"
 #include <chrono>
+#include <cstdio>
 #include "DistDataCollector.h"
 
 void SeapodymCohort::prerun_model()
 {
+	// Step 1 verification: confirm DataProvider is live and report shm rank.
+	if (dp_) {
+		printf("[prerun_model] DataProvider live: shmRank=%d  isShmRoot=%s  "
+		       "np1 ptr=%p  un ptr=%p\n",
+		       dp_->getShmRank(),
+		       dp_->isShmRoot() ? "YES" : "no",
+		       static_cast<void*>(dp_->getDataPtr("np1")),
+		       static_cast<void*>(dp_->getDataPtr("un")));
+	} else {
+		printf("[prerun_model] WARNING: DataProvider not set\n");
+	}
+
 	OnRunFirstStep();
 	time_overhead = 0;
 }

@@ -8,6 +8,7 @@
 #include "ReadWrite.h"
 #include "SeapodymCoupled.h"
 #include "DistDataCollector.h"
+#include <DataProvider.h>
 
 
 class SeapodymCohort : public SeapodymCoupled
@@ -29,9 +30,15 @@ public:
 	};
 	virtual ~SeapodymCohort() {/*DoNothing*/};
 
-	double time_overhead;	
-	//double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
-	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }		
+	double time_overhead;
+
+	/** Step 1 plumbing: DataProvider for shared-memory forcing data.
+	 *  Set before calling prerun_model(). Non-owning pointer. */
+	void setDataProvider(DataProvider* dp) { dp_ = dp; }
+	DataProvider* getDataProvider() const  { return dp_; }
+
+	//double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }
+	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }
 	void prerun_model();
 	void OnRunFirstStep();
 	double Checksum();
@@ -59,6 +66,8 @@ public:
 	}
 
 private:
+	DataProvider* dp_ = nullptr;   ///< shared-memory forcing provider (Step 1, non-owning)
+
 	int dtau;
 	int nbt_before_first_recruitment; 	
 	int nt_dtau; 
