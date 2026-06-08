@@ -245,7 +245,8 @@ int main(int argc, char** argv) {
         double* data = dataCollect.getCollectedDataPtr();
         // print check sum
         double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
-        printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
+        printf("[%d] Checksum = %15.10lf (%a) time manager = %10.5f sec\n", 
+            workerId, checksum, checksum, time_manager);
     } else {
         //
         // Worker
