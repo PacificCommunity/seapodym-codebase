@@ -4,36 +4,55 @@
 #  include <cstdio>
 #endif
 
+// ---------------------------------------------------------------------------
+// Helper: read a binary 2D grid into a FlatField3D time slice.
+// rbin_input2d writes into a ragged dmatrix; we use the field's pre-
+// allocated stage_ dmatrix and pack into the flat buffer afterwards.
+// ---------------------------------------------------------------------------
+// do-while(0) ensures the macro is a single statement safe inside if/else and loops.
+#define READ3(field, file, t, skip) \
+    do { \
+        rw.rbin_input2d(file, map, mat.field.stage(), nbi, nbj, skip); \
+        mat.field.commit(t); \
+    } while(0)
+
+// Same for a (t, k) slice of a FlatField4D.
+#define READ4(field, file, t, k, skip) \
+    do { \
+        rw.rbin_input2d(file, map, mat.field.stage(), nbi, nbj, skip); \
+        mat.field.commit(t, k); \
+    } while(0)
+
+
 void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)
 {
 	int nbytetoskip = (9 +(3* nlat * nlon) + param->nlevel + ((nlat *nlon)* (t_series-1))) * 4;
-	rw.rbin_input2d(param->strfile_pp, map, mat.np1[t], nbi, nbj, nbytetoskip);
+	READ3(np1, param->strfile_pp, t, nbytetoskip);
 
 	for (int k=0;k<nb_layer;k++){
-		rw.rbin_input2d(param->strfile_u[k], map, mat.un[t][k],   nbi, nbj, nbytetoskip);
-		rw.rbin_input2d(param->strfile_v[k], map, mat.vn[t][k],   nbi, nbj, nbytetoskip);
-		rw.rbin_input2d(param->strfile_t[k], map, mat.tempn[t][k],nbi, nbj, nbytetoskip);
+		READ4(un,     param->strfile_u[k], t, k, nbytetoskip);
+		READ4(vn,     param->strfile_v[k], t, k, nbytetoskip);
+		READ4(tempn,  param->strfile_t[k], t, k, nbytetoskip);
 		if (!param->type_oxy)
-			rw.rbin_input2d(param->strfile_oxy[k], map, mat.oxygen[t][k],nbi, nbj, nbytetoskip);
-
+			READ4(oxygen, param->strfile_oxy[k], t, k, nbytetoskip);
 	}
 	UnitConversions(t);
+
 	if (param->use_sst)
-		rw.rbin_input2d(param->strfile_sst, map, mat.sst[t], nbi, nbj, nbytetoskip);
+		READ3(sst, param->strfile_sst, t, nbytetoskip);
 	else
-		mat.sst[t] = mat.tempn[t][0];
+		mat.sst[t] = mat.tempn[t][0];  // RawSlice2D memcpy
 
 	if (param->use_vld){
-		rw.rbin_input2d(param->strfile_vld, map, mat.vld[t], nbi, nbj, nbytetoskip);
-		mat.vld[t] = mat.vld[t]/1000.0; //in km (mtl is in mt/km2). DO NOT change the units here without changing the use of vld in Ha computation
+		READ3(vld, param->strfile_vld, t, nbytetoskip);
+		mat.vld[t].scaleInPlace(1.0/1000.0); //in km (mtl is in mt/km2)
 	} else
-		mat.vld[t] = 1.0; //wont be used
+		mat.vld[t] = 1.0; //won't be used
 
 	if (!param->flag_coupling){
 		for (int n=0; n<nb_forage; n++){
-			rw.rbin_input2d(param->strfile_F[n], map, mat.forage[t][n], nbi, nbj, nbytetoskip);
-
-			mat.forage(t,n) = mat.forage(t,n)+0.000001; //to avoid zero habitat index, expecially in fine resolution simulations F can be zero!!!
+			READ4(forage, param->strfile_F[n], t, n, nbytetoskip);
+			mat.forage[t][n].addInPlace(0.000001); //avoid zero habitat index
 		}
 	} else {
 		for (int n=0; n<nb_forage; n++)
@@ -44,29 +63,32 @@ void SeapodymCoupled::ReadTimeSeriesData(int t, int t_series)
 void SeapodymCoupled::ReadClimatologyData(int t, int month)
 {
 	int nbytetoskip = (9 +(3* nlat * nlon) + 12 + ((nlat *nlon)* (month-1))) * 4;
-	rw.rbin_input2d(param->strfile_ppmc, map, mat.np1[t], nbi, nbj, nbytetoskip);
+	READ3(np1, param->strfile_ppmc, t, nbytetoskip);
+
 	for (int k=0;k<nb_layer;k++){
-		rw.rbin_input2d(param->strfile_umc[k], map, mat.un[t][k],   nbi, nbj, nbytetoskip);
-		rw.rbin_input2d(param->strfile_vmc[k], map, mat.vn[t][k],   nbi, nbj, nbytetoskip);
-		rw.rbin_input2d(param->strfile_tmc[k], map, mat.tempn[t][k],nbi, nbj, nbytetoskip);
+		READ4(un,     param->strfile_umc[k], t, k, nbytetoskip);
+		READ4(vn,     param->strfile_vmc[k], t, k, nbytetoskip);
+		READ4(tempn,  param->strfile_tmc[k], t, k, nbytetoskip);
 		if (!param->type_oxy)
-			rw.rbin_input2d(param->strfile_oxymc[k], map, mat.oxygen[t][k],nbi, nbj, nbytetoskip);
+			READ4(oxygen, param->strfile_oxymc[k], t, k, nbytetoskip);
 	}
 	UnitConversions(t);
+
 	if (param->use_sst)
-		rw.rbin_input2d(param->strfile_sstmc, map, mat.sst[t], nbi, nbj, nbytetoskip);
+		READ3(sst, param->strfile_sstmc, t, nbytetoskip);
 	else
 		mat.sst[t] = mat.tempn[t][0];
+
 	if (param->use_vld){
-		rw.rbin_input2d(param->strfile_vldmc, map, mat.vld[t], nbi, nbj, nbytetoskip);
-		mat.vld[t] = mat.vld[t]/1000.0; //in km
+		READ3(vld, param->strfile_vldmc, t, nbytetoskip);
+		mat.vld[t].scaleInPlace(1.0/1000.0);
 	} else
 		mat.vld[t] = 1.0;
 
 	if (!param->flag_coupling){
 		for (int n=0; n<nb_forage; n++)
-			rw.rbin_input2d(param->strfile_Fmc[n], map, mat.forage[t][n], nbi, nbj, nbytetoskip);
-	} else {//only simulation mode (no optimization yet)
+			READ4(forage, param->strfile_Fmc[n], t, n, nbytetoskip);
+	} else {
 		for (int n=0; n<nb_forage; n++)
 			rw.rbin_input2d(param->strfile_Smc[n], map, mat.mats[n], nbi, nbj, nbytetoskip);
 	}
@@ -74,8 +96,9 @@ void SeapodymCoupled::ReadClimatologyData(int t, int month)
 
 void SeapodymCoupled::UnitConversions(int t)
 {//Convert units of U and V from m/s to nmi/dt
-	mat.un(t) = mat.un(t) * 3600 * 24 * deltaT / 1852;
-	mat.vn(t) = mat.vn(t) * (-1) * 3600 * 24 * deltaT / 1852;
+	mat.un.scaleTimeStep(t,  3600.0 * 24 * deltaT / 1852);
+	mat.vn.scaleTimeStep(t, -3600.0 * 24 * deltaT / 1852);
+	// Apply latitude correction and zero sub-surface cells beyond nlayer.
 	const int imin = map.imin;
 	const int imax = map.imax;
 	for (int i = imin; i <= imax; i++){
@@ -103,110 +126,16 @@ void SeapodymCoupled::ReadClimatologyOxy(int t, int t_clm)
 	if (param->type_oxy==2) nlevel_oxy = 4;
 	int nbytetoskip = (9 +(3* nlat * nlon) + nlevel_oxy + ((nlat *nlon)* (t_clm-1))) * 4;
 	for (int k=0;k<nb_layer;k++)
-		rw.rbin_input2d(param->strfile_oxy[k], map, mat.oxygen[t][k], nbi, nbj, nbytetoskip);
+		READ4(oxygen, param->strfile_oxy[k], t, k, nbytetoskip);
 }
-
-#ifdef SEAPODYM_WITH_DATAPROVIDER
-// -----------------------------------------------------------------------
-// Step 2 helpers: serialise / deserialise all forcing arrays between the
-// ADMB matrices and the DataProvider flat shared-memory buffers.
-//
-// Flat buffer layout (consistent between the two directions):
-//   3D field arr[t][i][j]: buf[(t-t0)*mapCells + cell_idx]
-//   4D field arr[t][k][i][j]: buf[((t-t0)*ndim + k)*mapCells + cell_idx]
-// where cell_idx advances as i: imin..imax, j: jinf[i]..jsup[i].
-//
-// Note: coupling mode (flag_coupling) reads into mat.mats (a non-time-
-// dependent D3_ARRAY) rather than mat.forage. mat.mats is not currently
-// wired through DataProvider; a future step can add a "mats" entry.
-// -----------------------------------------------------------------------
-
-void SeapodymCoupled::copyForcingToDP(DataProvider* dp, int t0, int nbt)
-{
-	const int imin = map.imin;
-	const int imax = map.imax;
-
-	// --- 3D field helper: arr[t][i][j] ---
-	auto ser3 = [&](const char* name, D3_ARRAY& arr) {
-		double* buf = dp->getDataPtr(name);
-		if (!buf) { printf("[copyForcingToDP] WARNING: no buffer for '%s'\n", name); return; }
-		std::size_t idx = 0;
-		for (int t = t0; t <= nbt; ++t)
-			for (int i = imin; i <= imax; ++i)
-				for (int j = map.jinf[i]; j <= map.jsup[i]; ++j)
-					buf[idx++] = arr[t][i][j];
-	};
-
-	// --- 4D field helper: arr[t][k][i][j] ---
-	auto ser4 = [&](const char* name, D4_ARRAY& arr, int ndim) {
-		double* buf = dp->getDataPtr(name);
-		if (!buf) { printf("[copyForcingToDP] WARNING: no buffer for '%s'\n", name); return; }
-		std::size_t idx = 0;
-		for (int t = t0; t <= nbt; ++t)
-			for (int k = 0; k < ndim; ++k)
-				for (int i = imin; i <= imax; ++i)
-					for (int j = map.jinf[i]; j <= map.jsup[i]; ++j)
-						buf[idx++] = arr[t][k][i][j];
-	};
-
-	ser3("np1",  mat.np1);
-	ser3("sst",  mat.sst);
-	ser3("vld",  mat.vld);
-	ser4("un",     mat.un,     nb_layer);
-	ser4("vn",     mat.vn,     nb_layer);
-	ser4("tempn",  mat.tempn,  nb_layer);
-	ser4("oxygen", mat.oxygen, nb_layer);
-	if (!param->flag_coupling)
-		ser4("forage", mat.forage, nb_forage);
-}
-
-void SeapodymCoupled::copyForcingFromDP(DataProvider* dp, int t0, int nbt)
-{
-	const int imin = map.imin;
-	const int imax = map.imax;
-
-	// --- 3D field helper: arr[t][i][j] ---
-	auto des3 = [&](const char* name, D3_ARRAY& arr) {
-		const double* buf = dp->getDataPtr(name);
-		if (!buf) { printf("[copyForcingFromDP] WARNING: no buffer for '%s'\n", name); return; }
-		std::size_t idx = 0;
-		for (int t = t0; t <= nbt; ++t)
-			for (int i = imin; i <= imax; ++i)
-				for (int j = map.jinf[i]; j <= map.jsup[i]; ++j)
-					arr[t][i][j] = buf[idx++];
-	};
-
-	// --- 4D field helper: arr[t][k][i][j] ---
-	auto des4 = [&](const char* name, D4_ARRAY& arr, int ndim) {
-		const double* buf = dp->getDataPtr(name);
-		if (!buf) { printf("[copyForcingFromDP] WARNING: no buffer for '%s'\n", name); return; }
-		std::size_t idx = 0;
-		for (int t = t0; t <= nbt; ++t)
-			for (int k = 0; k < ndim; ++k)
-				for (int i = imin; i <= imax; ++i)
-					for (int j = map.jinf[i]; j <= map.jsup[i]; ++j)
-						arr[t][k][i][j] = buf[idx++];
-	};
-
-	des3("np1",  mat.np1);
-	des3("sst",  mat.sst);
-	des3("vld",  mat.vld);
-	des4("un",     mat.un,     nb_layer);
-	des4("vn",     mat.vn,     nb_layer);
-	des4("tempn",  mat.tempn,  nb_layer);
-	des4("oxygen", mat.oxygen, nb_layer);
-	if (!param->flag_coupling)
-		des4("forage", mat.forage, nb_forage);
-}
-#endif // SEAPODYM_WITH_DATAPROVIDER
 
 // -----------------------------------------------------------------------
 
 void SeapodymCoupled::ReadAll(int tstart, int tend, int offset, void* dpVoid)
 {
-	// Step 2: only the shmRoot on each node reads from disk.
-	// dpVoid is non-null only when called from SeapodymCohort::OnRunFirstStep
-	// with the MPI cohort target.
+	// Step 3: each FlatField already aliases the DataProvider shared-memory
+	// window directly, so only the shmRoot needs to read from disk.
+	// After reading, a single MPI_Barrier lets non-shmRoot workers proceed.
 #ifdef SEAPODYM_WITH_DATAPROVIDER
 	DataProvider* dp = static_cast<DataProvider*>(dpVoid);
 	const bool doRead = (!dp || dp->isShmRoot());
@@ -215,52 +144,36 @@ void SeapodymCoupled::ReadAll(int tstart, int tend, int offset, void* dpVoid)
 #endif
 
 	if (doRead) {
-		//cout << "Reading all forcing variables at once... " << endl;
 		int jday = 0;
 		int t = tstart;
 
-		//need to read oxygen in case if month==past_month
-		//(otherwise we may not have it for the first time steps)
 		if (param->type_oxy==1 && month==past_month)
 			ReadClimatologyOxy(1, month);
-		//need to read oxygen in case if qtr==past_qtr
 		if (param->type_oxy==2 && qtr==past_qtr)
 			ReadClimatologyOxy(1, qtr);
 
 		for (; t<=tend; t++){
 			getDate(jday,t);
-			//----------------------------------------------//
-			//	DATA READING SECTION: U,V,T,O2,PP	//
-			//----------------------------------------------//
 			if (t > nbt_building) {
-				//TIME SERIES
 				t_series = t - nbt_building + nbt_start_series + offset;
 				ReadTimeSeriesData(t, t_series);
 			}
 			else if ((t <= nbt_building) && (month != past_month)) {
-				//AVERAGED CLIMATOLOGY DATA
 				ReadClimatologyData(t, month);
 			}
 			if (param->type_oxy==1 && month != past_month) {
-				//MONTHLY O2
 				ReadClimatologyOxy(t, month);
 			}
 			if (param->type_oxy==2 && qtr != past_qtr) {
-				//QUARTERLY O2
 				ReadClimatologyOxy(t, qtr);
 			}
 		}
 	} // end doRead
 
-	// Step 2: broadcast forcing data within each shared-memory node.
+	// Ensure shmRoot has finished writing into the shared-memory window
+	// before non-shmRoot workers read from it.
 #ifdef SEAPODYM_WITH_DATAPROVIDER
-	if (dp) {
-		if (dp->isShmRoot())
-			copyForcingToDP(dp, tstart, tend);
-		MPI_Barrier(dp->getShmComm());
-		if (!dp->isShmRoot())
-			copyForcingFromDP(dp, tstart, tend);
-	}
+	if (dp) MPI_Barrier(dp->getShmComm());
 #endif
 }
 
@@ -275,9 +188,6 @@ void SeapodymCoupled::RestoreDistributions(ivector& nb_age_built)
 		int nlat = param->nlat;
 		int nlon = param->nlong;
 		rw.rbin_headpar(fileCohorts, param->nlong, param->nlat, nlevel);
-		/*if (nlevel != nb_ages)
-			cout << "WARNING: in file " << fileCohorts << " number of cohorts is " <<
-				nlevel << " != " << nb_ages << " in the current parfile!" << endl;*/
 		for (int a=0; a<nb_ages; a++){
 			int nbytetoskip = (9 +(3* nlat * nlon) + nlevel + ((nlat *nlon)* a)) * 4;
 			rw.rbin_input2d(fileCohorts, map, mat.init_density_species[sp][a], nbi, nbj, nbytetoskip);

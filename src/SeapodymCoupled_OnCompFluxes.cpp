@@ -604,7 +604,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 
 				AverageCurrents(tcur,n);
 
-				SolveADRE(mat.forage(tcur),n);
+				{ dmatrix forage_n = static_cast<dmatrix>(mat.forage[tcur][n]); SolveADRE(forage_n, n); mat.forage[tcur][n] = forage_n; }
 			}
 
 		}// end of flag_coupling condition

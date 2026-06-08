@@ -72,13 +72,13 @@ void SeapodymCoupled::PredationMortality(int t, dmatrix total_pop)
 	} 
 }
 
-void SeapodymCoupled::SolveADRE(d3_array F, int n)
+void SeapodymCoupled::SolveADRE(dmatrix& F_n, int n)
 {
 	pop.precaldia(*param, map, mat);
 	pop.caldia(map, *param, mat.diffusion_x, mat.advection_x, mat.diffusion_y, mat.advection_y);
 
 	pop.precalrec(map, mat.mortality[n]);
-	pop.calrec(map, F[n], mat.mortality[n]);
+	pop.calrec(map, F_n, mat.mortality[n]);
 }
 
 void SeapodymCoupled::SolveADE(d4_array S, int n, int ntimes)

@@ -1,4 +1,5 @@
 HEADERS= \
+FlatField.h \
 XMLDocument2.h \
 calpop.h \
 Map.h \
@@ -21,6 +22,7 @@ NishikawaLike.h \
 SeapodymCohort.h
 
 SRCS= \
+FlatField.cpp \
 main_cohort.cpp \
 ad_buffers.cpp \
 XMLDocument2.cpp \

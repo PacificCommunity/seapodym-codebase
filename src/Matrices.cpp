@@ -69,73 +69,53 @@ void CMatrices::createMatTransport(const PMap& map)
 */
 }
 
-void CMatrices::createMatOcean(const PMap& map, int t0, int nbt, int nbi, int nbj, int nb_layer, int dt)
+void CMatrices::createMatOcean(const PMap& map, int t0, int nbt, int nbi, int nbj, int nb_layer, int dt,
+                               double* buf_np1, double* buf_sst, double* buf_ph1, double* buf_vld,
+                               double* buf_un, double* buf_vn, double* buf_tempn, double* buf_oxygen)
 {
 	//1D
-	lastlat.allocate(map.jmin, map.jmax);				// Latitude of cell j
-	lat_correction.allocate(map.jmin, map.jmax);			// Correction for cell area at latitude j
-	//maxGD_lat.allocate(map.jmin, map.jmax);				// Correction for cell area at latitude j
-	//dDL.allocate(map.jmin, map.jmax);				// Correction for cell area at latitude j
+	lastlat.allocate(map.jmin, map.jmax);			// Latitude of cell j
+	lat_correction.allocate(map.jmin, map.jmax);		// Correction for cell area at latitude j
 
 	lastlat.initialize();
 	lat_correction.initialize();
-	//maxGD_lat.initialize();
-	//dDL.initialize();
-
 
 	//2D
         int nbdays_max = 365+dt;
-	daylength.allocate(1, nbdays_max, 0, nbj-1);			// Length of day based on latitude and date
-	//grad_daylength.allocate(1, nbdays_max, 0, nbj-1);		// gradient of daylength;
+	daylength.allocate(1, nbdays_max, 0, nbj-1);		// Length of day based on latitude and date
 
-	u.allocate(map.imin, map.imax, map.jinf, map.jsup);		// u(i,j) = advection est-ouest suivant les i
-	v.allocate(map.imin, map.imax, map.jinf, map.jsup);		// v(i,j) = advection nord-sud suivant les j
-	speed.allocate(map.imin, map.imax, map.jinf, map.jsup);		// magnitude of species velocity (without passive compnt);
+	u.allocate(map.imin, map.imax, map.jinf, map.jsup);	// u(i,j) = zonal advection
+	v.allocate(map.imin, map.imax, map.jinf, map.jsup);	// v(i,j) = meridional advection
+	speed.allocate(map.imin, map.imax, map.jinf, map.jsup);	// species speed magnitude
 
 	daylength.initialize();
-	//grad_daylength.initialize();
 	u.initialize();
 	v.initialize();
 	speed.initialize();
 
-	
-	//3D
-	np1.allocate(t0, nbt);						// production primaire 1
-	vld.allocate(t0, nbt);						// variable defining vertical layer depths (can be either MLD or ZEU)
-	ph1.allocate(t0, nbt);
-	sst.allocate(t0, nbt);						// SST
-	for (int t=t0; t<=nbt; t++){
-		np1(t).allocate(map.imin, map.imax, map.jinf, map.jsup);			
-		vld(t).allocate(map.imin, map.imax, map.jinf, map.jsup);			
-		ph1(t).allocate(map.imin, map.imax, map.jinf, map.jsup);			
-		sst(t).allocate(map.imin, map.imax, map.jinf, map.jsup);			
-	}
-	np1.initialize();
-	vld.initialize();
-	ph1.initialize();
-	sst.initialize();
+	//3D flat forcing fields (own memory or alias external DataProvider buffer)
+	np1.allocate(map, t0, nbt, buf_np1);
+	sst.allocate(map, t0, nbt, buf_sst);
+	ph1.allocate(map, t0, nbt, buf_ph1);	// ph1 not in DataProvider → always owns
+	vld.allocate(map, t0, nbt, buf_vld);
 
-	//4D
-	un.allocate(t0, nbt);					
-	vn.allocate(t0, nbt);					
-	tempn.allocate(t0, nbt);					
-	oxygen.allocate(t0, nbt);				
-	for (int t=t0; t<=nbt; t++){
-		un(t).allocate(0, nb_layer - 1);			// zonal current in layer n
-		vn(t).allocate(0, nb_layer - 1);			// meridional current in layer n
-		tempn(t).allocate(0, nb_layer - 1);			// temperature in layer n
-		oxygen(t).allocate(0, nb_layer - 1);			// oxygen in layer n
-		for (int n=0; n<nb_layer; n++){
-			un(t,n).allocate(map.imin, map.imax, map.jinf, map.jsup);			
-			vn(t,n).allocate(map.imin, map.imax, map.jinf, map.jsup);			
-			tempn(t,n).allocate(map.imin, map.imax, map.jinf, map.jsup);			
-			oxygen(t,n).allocate(map.imin, map.imax, map.jinf, map.jsup);			
-		}
-	}
-	un.initialize();
-	vn.initialize();
-	tempn.initialize();
-	oxygen.initialize();
+	// Only zero-initialise self-owned buffers; external buffers will be
+	// written by shmRoot before the MPI_Barrier in ReadAll.
+	if (!buf_np1) np1.initialize();
+	if (!buf_sst) sst.initialize();
+	ph1.initialize();                   // ph1 always self-owned
+	if (!buf_vld) vld.initialize();
+
+	//4D flat forcing fields
+	un.allocate(map, t0, nbt, nb_layer, buf_un);
+	vn.allocate(map, t0, nbt, nb_layer, buf_vn);
+	tempn.allocate(map, t0, nbt, nb_layer, buf_tempn);
+	oxygen.allocate(map, t0, nbt, nb_layer, buf_oxygen);
+
+	if (!buf_un)    un.initialize();
+	if (!buf_vn)    vn.initialize();
+	if (!buf_tempn) tempn.initialize();
+	if (!buf_oxygen) oxygen.initialize();
 }
 
 void CMatrices::createMatLarvae(const PMap& map, int t0, int nbt, int nbi, int nbj, int dt)
@@ -160,19 +140,11 @@ void CMatrices::createMatSource(int nforage, int ntr, int nbi, int nbj)
 	mats.initialize();
 }
 
-void CMatrices::createMatForage(const PMap& map, int nforage, int t0, int nbt, int nbi, int nbj)
+void CMatrices::createMatForage(const PMap& map, int nforage, int t0, int nbt, int nbi, int nbj,
+                                double* buf_forage)
 {
-	forage.allocate(t0, nbt);
-	for (int t=t0; t<=nbt; t++){
-		forage(t).allocate(0, nforage - 1);
-		for (int n=0; n<nforage; n++){
-			forage(t,n).allocate(map.imin, map.imax, map.jinf, map.jsup);
-			forage(t,n).initialize();
-		}
-	}
-
-//	nF_ratio.allocate(0, nforage - 1);
-//	nF_ratio.initialize();
+	forage.allocate(map, t0, nbt, nforage, buf_forage);
+	if (!buf_forage) forage.initialize();
 }
 
 void CMatrices::createMatMortality(int nforage, int nbi, int nbj)

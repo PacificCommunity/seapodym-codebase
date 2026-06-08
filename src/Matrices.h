@@ -7,6 +7,7 @@
 
 #include "Map.h"
 #include "Param.h"
+#include "FlatField.h"
 
 /*!
 \brief Seapodym matrices class.
@@ -40,15 +41,15 @@ public:
 	dmatrix daylength;	// Length of day based on latitude and date
 //	dmatrix grad_daylength; // gradient of daylength;
 //	dvector dDL; 		// gradient of daylength;
-	D3_ARRAY np1;
-	D3_ARRAY sst;
-	D3_ARRAY ph1;		//Inna 16/01/2017: adding PH (upper layer only) variable that will impact juvenile mortality
-	D3_ARRAY vld;
-	D4_ARRAY un;		// courant zonal dans la couche n
-	D4_ARRAY vn;		// courant meridien dans la couche n
-	D4_ARRAY tempn;		// temperature dans la couche n
-	D4_ARRAY oxygen;	// oxygen dans la couche n
-	D4_ARRAY forage;
+	FlatField3D np1;
+	FlatField3D sst;
+	FlatField3D ph1;	//Inna 16/01/2017: adding PH (upper layer only) variable that will impact juvenile mortality
+	FlatField3D vld;
+	FlatField4D un;		// courant zonal dans la couche n
+	FlatField4D vn;		// courant meridien dans la couche n
+	FlatField4D tempn;	// temperature dans la couche n
+	FlatField4D oxygen;	// oxygen dans la couche n
+	FlatField4D forage;
 	D3_ARRAY season_switch;
 	D3_ARRAY sigma_season;
 	//D3_ARRAY sigma_ha_season;
@@ -116,7 +117,13 @@ public:
 
 	void createMatHeader(const CParam& param);
 	//void createMatHeader(const CParam& int nlong, int nlat, int nlevel);
-	void createMatOcean(const PMap& map, int t0, int nbt, int nbi, int nbj, int nb_layer, int dt);
+	// buf_* are optional external buffers (DataProvider shared-memory windows).
+	// Pass nullptr to have the field own its allocation.
+	void createMatOcean(const PMap& map, int t0, int nbt, int nbi, int nbj, int nb_layer, int dt,
+	                    double* buf_np1   = nullptr, double* buf_sst    = nullptr,
+	                    double* buf_ph1   = nullptr, double* buf_vld    = nullptr,
+	                    double* buf_un    = nullptr, double* buf_vn     = nullptr,
+	                    double* buf_tempn = nullptr, double* buf_oxygen = nullptr);
 	void createMatLarvae(const PMap& map, int t0, int nbt, int nbi, int nbj, int dt);
 	void createMatTransport(const PMap& map);//, int nbi, int nbj);
 
@@ -127,7 +134,8 @@ public:
 	void createMatNoBorder(int nbi, int nbj);
 	//void createMatNoBorder(const CParam& param);
 	//void createMatForage(const CParam& param);
-	void createMatForage(const PMap& map, int nforage, int t0, int nbt, int nbi, int nbj);
+	void createMatForage(const PMap& map, int nforage, int t0, int nbt, int nbi, int nbj,
+	                     double* buf_forage = nullptr);
 	void createMatHabitat(const PMap& map, const int nb_forage, const int nb_species,int t0, int nbt, const ivector sp_adult_age0, const ivector sp_nb_age_class, const imatrix age_compute_habitat);
 	void createMatHabitat_input(const PMap& map, const int nb_ages, const int nbt_total);
 	void createMatSpecies(const PMap& map, int t0, int nbt, int nbi, int nbj, int nb_species, const ivector a0_adult, const ivector sp_nb_age_class);

@@ -23,24 +23,27 @@ void buffers_set(long int &mv, long int &mc, long int &mg);
 
 double time_worker_init = 0.0, time_cohort_init = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
 
-SeapodymCohort xinit_prerun_wrapper(const char* parfile, DataProvider* dp = nullptr) {
+// Returns a heap-allocated SeapodymCohort to avoid requiring a copy/move
+// constructor (CMatrices is non-copyable/non-movable due to FlatField members
+// and the virtual destructor chain).  Caller owns the pointer and must delete it.
+SeapodymCohort* xinit_prerun_wrapper(const char* parfile, DataProvider* dp = nullptr) {
 
     double tik = MPI_Wtime();
 
-    SeapodymCohort cohort((char*)parfile, 0);
+    SeapodymCohort* cohort = new SeapodymCohort((char*)parfile, 0);
 
     //initialize variables of optimization
-    const int nvar = cohort.nvarcalc();
+    const int nvar = cohort->nvarcalc();
     independent_variables x(1, nvar);
     adstring_array x_names(1,nvar);
 
-    cohort.xinit(x, x_names);
+    cohort->xinit(x, x_names);
 
-    // Attach DataProvider before prerun_model so it is available during ReadAll (Step 2+)
-    cohort.setDataProvider(dp);
+    // Attach DataProvider before prerun_model so it is available during ReadAll (Step 3)
+    cohort->setDataProvider(dp);
 
     //prepare cohort run
-    cohort.prerun_model();
+    cohort->prerun_model();
 
     double tak = MPI_Wtime();
 
@@ -271,7 +274,8 @@ int main(int argc, char** argv) {
         // its own gradient structure?
         gradient_structure gs(gs_var_buffer);
 
-        SeapodymCohort cohort = xinit_prerun_wrapper(parfile.c_str(), &dataProvider);
+        SeapodymCohort* cohortPtr = xinit_prerun_wrapper(parfile.c_str(), &dataProvider);
+        SeapodymCohort& cohort = *cohortPtr;
 
         // Bind the task function with the necessary parameters
         auto taskFunc = std::bind(taskFunction,
@@ -291,6 +295,7 @@ int main(int argc, char** argv) {
         MPI_Barrier(MPI_COMM_WORLD);
 
 	    time_overhead = cohort.time_overhead;
+        delete cohortPtr;
     }
 
     if (workerId > 0) {

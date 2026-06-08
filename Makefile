@@ -1,4 +1,5 @@
 HEADERS= \
+FlatField.h \
 XMLDocument2.h \
 calpop.h \
 Map.h \
@@ -20,6 +21,7 @@ VarSimtunaFunc.h \
 NishikawaLike.h
 
 SRCS= \
+FlatField.cpp \
 main_simulation.cpp \
 ad_buffers.cpp \
 XMLDocument2.cpp \

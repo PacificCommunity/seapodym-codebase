@@ -40,8 +40,23 @@ void SeapodymCohort::OnRunFirstStep()
 	int nbt = nbt_total;
 	//nbt_building = -1;
 
-	mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
-	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
+#ifdef SEAPODYM_WITH_DATAPROVIDER
+	if (dp_) {
+		// Step 3: alias the 8 forcing fields directly to the DataProvider
+		// shared-memory window.  shmRoot reads into it; non-shmRoot workers
+		// see the data after MPI_Barrier in ReadAll — no copy needed.
+		mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT,
+		    dp_->getDataPtr("np1"), dp_->getDataPtr("sst"), nullptr /*ph1*/,
+		    dp_->getDataPtr("vld"), dp_->getDataPtr("un"), dp_->getDataPtr("vn"),
+		    dp_->getDataPtr("tempn"), dp_->getDataPtr("oxygen"));
+		mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj,
+		    dp_->getDataPtr("forage"));
+	} else
+#endif
+	{
+		mat.createMatOcean(map, t0, nbt, nbi, nbj, nb_layer, deltaT);
+		mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
+	}
 	if (!param->larvae_input_aggregated_flag[0])
 		mat.createMatLarvae(map, 1, nbt, nbi, nbj, deltaT);
 
