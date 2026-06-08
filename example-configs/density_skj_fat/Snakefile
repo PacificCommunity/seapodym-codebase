@@ -26,9 +26,11 @@ rule all:
 # -----------------------------
 rule run_mpi:
     output:
-        "results/run_{n}_{r}_{h}.out"
+        main="results/run_{n}_{r}_{h}-main.out",
+        best="results/run_{n}_{r}_{h}-best.out"
     params:
-        exe="../../bin/seapodym_cohort",
+        exe_main="../../bin/seapodym_cohort-main",
+        exe_best="../../bin/seapodym_cohort-best",
         parfile="skj_fat.xml"
     threads:
         lambda wc: int(wc.n)
@@ -38,25 +40,33 @@ rule run_mpi:
         source sourceme.sh
         cd example-configs/density_skj_fat
         mkdir -p results
-        # record SLURM job ID
-        echo "jobid=$SLURM_JOB_ID" > {output}
-        # create a tmp directory to run at the same level
-        cd ..
-        hash=$(echo "$RANDOM" | sha256sum | cut -d' ' -f1)
-        rundir="tmp-$hash"
-        rm -rf $rundir
-        mkdir $rundir
-        cd $rundir
-        # copy the input file
-        cp ../density_skj_fat/{params.parfile} .
-        # run MPI program using Slurm
-        srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
-             {params.exe} -s {params.parfile} >> ../density_skj_fat/{output} 2>&1
-        cd ../
-        # clean up
-        rm -rf $rundir
-        # back to where we started
-        cd density_skj_fat
+
+        for exe in {params.exe_main} {params.exe_best}; do
+            if [ "$exe" = "{params.exe_main}" ]; then
+                outfile={output.main}
+            else
+                outfile={output.best}
+            fi
+            # record SLURM job ID
+            echo "jobid=$SLURM_JOB_ID" > $outfile
+            # create a tmp directory to run at the same level
+            cd ..
+            hash=$(echo "$RANDOM" | sha256sum | cut -d' ' -f1)
+            rundir="tmp-$hash"
+            rm -rf $rundir
+            mkdir $rundir
+            cd $rundir
+            # copy the input file
+            cp ../density_skj_fat/{params.parfile} .
+            # run MPI program using Slurm
+            srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
+                 $exe -s {params.parfile} >> ../density_skj_fat/$outfile 2>&1
+            cd ../
+            # clean up
+            rm -rf $rundir
+            # back to where we started
+            cd density_skj_fat
+        done
         """
 
 # -----------------------------
@@ -64,7 +74,8 @@ rule run_mpi:
 # -----------------------------
 rule collect_results:
     input:
-        expand("results/run_{n}_{r}_{h}.out", n=N_VALUES, r=REPEATS, h=HOSTS)
+        expand("results/run_{n}_{r}_{h}-main.out", n=N_VALUES, r=REPEATS, h=HOSTS),
+        expand("results/run_{n}_{r}_{h}-best.out", n=N_VALUES, r=REPEATS, h=HOSTS)
     output:
         "results/timings.csv"
     run:
@@ -72,10 +83,15 @@ rule collect_results:
         rows = []
 
         for f in input:
-            parts = f.split("/")[-1].replace(".out","").split("_")
-            n = int(parts[1])
-            r = int(parts[2])
-            host = parts[3]
+            basename = f.split("/")[-1].replace(".out","")
+            # basename format: run_{n}_{r}_{h}-{branch}
+            branch_sep = basename.rfind("-")
+            branch = basename[branch_sep+1:]
+            core = basename[len("run_"):branch_sep]
+            parts = core.split("_")
+            n = int(parts[0])
+            r = int(parts[1])
+            host = parts[2]
 
             jobid = None
             manager_time = None
@@ -88,13 +104,13 @@ rule collect_results:
                     if m:
                         manager_time = float(m.group(1))
 
-            rows.append((n, jobid, host, manager_time))
+            rows.append((n, jobid, host, branch, manager_time))
 
         rows.sort()
 
         with open(output[0], "w", newline="") as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["nprocs","jobid","host","manager_time"])
+            writer.writerow(["nprocs","jobid","host","branch","manager_time"])
             writer.writerows(rows)
 
 # -----------------------------
