@@ -57,12 +57,12 @@ rule run_mpi:
 
 
         # run main
-        echo "jobid=$SLURM_JOB_ID" > {output.main}
+        echo "jobid=$SLURM_JOB_ID" > ../density_skj_fat/{output.main}
         srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
              {params.exe_main} -s {params.parfile} >> ../density_skj_fat/{output.main} 2>&1
 
         # run best
-        echo "jobid=$SLURM_JOB_ID" > {output.best}
+        echo "jobid=$SLURM_JOB_ID" > ../density_skj_fat/{output.best}
         srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
              {params.exe_best} -s {params.parfile} >> ../density_skj_fat/{output.best} 2>&1
 
