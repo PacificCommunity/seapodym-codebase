@@ -332,7 +332,7 @@ void SeapodymCohort::setShmForcing(){
 	// IS TMP: currently rely on OnRunFirstStep's ReadAll, which has
 	// already filled matrices. Next step: makes this the SOLE reader.
 	
-	double* W  = dp_->getDataPtr();
+	double* W  = dp_->getDataPtr("forcing");
 	const int g0 = nbt_building + 1;	// fixed time origin (==1; spinup removed)
 	const int nf = param->get_nforcings();  // fields per timestep
 	const size_t cells = map.get_array_size();// active ragged cells per field
@@ -383,7 +383,7 @@ void SeapodymCohort::setShmForcing(){
 void SeapodymCohort::getData(bool spawning_habitat_only){
 	if (!dp_) { cerr << "Error: setDataProvider() not called\n"; exit(1); }
 
-	double* W  = dp_->getDataPtr();
+	double* W  = dp_->getDataPtr("forcing");
 	const int g0 = nbt_building + 1;	// fixed time origin (==1; spinup removed)
 	const int nf = param->get_nforcings();  // fields per timestep
 	const size_t cells = map.get_array_size();// active ragged cells per field

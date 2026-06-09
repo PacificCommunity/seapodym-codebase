@@ -238,7 +238,10 @@ int main(int argc, char** argv) {
 		gradient_structure gs(gs_var_buffer);
 
 		{
-			DataProvider dp(workerComm, numForcing);
+			std::vector<std::pair<std::string, std::size_t>> nameSizePairs = {
+				{"forcing", static_cast<std::size_t>(numForcing)},
+			};
+			DataProvider dp(workerComm, nameSizePairs);
 
 			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
 
