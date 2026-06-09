@@ -38,7 +38,7 @@ rule run_mpi:
         lambda wc: int(wc.n)
     shell:
         r"""
-        cd ~/seapodym_scaling/seapodym-codebase-phase3/
+        cd ~/seapodym_scaling/seapodym-codebase-dataprovider-step3/
         source sourceme.sh
         cd example-configs/density_skj_fat
         mkdir -p results
