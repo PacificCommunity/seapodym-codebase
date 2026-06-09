@@ -21,7 +21,7 @@ HOSTS = ["genoa",]
 # -----------------------------
 rule all:
     input:
-        "results/speedup.png"
+        "results/timings.csv"
 
 # -----------------------------
 # Run MPI jobs (submitted to Slurm)
