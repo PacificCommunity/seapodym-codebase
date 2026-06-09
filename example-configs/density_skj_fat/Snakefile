@@ -3,7 +3,7 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# snakemake --jobs 10 --cluster "sbatch -p genoa --mem-per-cpu=4g --nodes=1 --ntasks-per-node={threads} --cpus-per-task=1 --time=01:30:00 --extra-node-info=1:*:1 --distribution=*:block:* --mem-bind=local"
+# snakemake --jobs 10 --cluster "sbatch -p genoa --mem=20g --nodes=1 --ntasks-per-node={threads} --cpus-per-task=1 --time=01:30:00 --extra-node-info=1:*:1 --distribution=*:block:* --mem-bind=local"
 # 
 
 # MPI benchmarking configurations
