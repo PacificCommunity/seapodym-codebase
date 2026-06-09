@@ -29,9 +29,10 @@ def main(*, dir : str='results', output : str='results/timings.csv'):
             for line in fh:
                 if line.startswith("jobid="):
                     jobid = line.split("=")[1].strip()
-                    m = pattern.search(line)
-                    if m:
-                        manager_time = float(m.group(1))
+                m = pattern.search(line)
+                if m:
+                    manager_time = float(m.group(1))
+                    print(f'manager time = {manager_time}')
 
             rows.append((n, jobid, host, branch, manager_time))
 

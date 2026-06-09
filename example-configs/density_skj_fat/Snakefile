@@ -82,33 +82,9 @@ rule collect_results:
         expand("results/run_{n}_{r}_{h}-best.out", n=N_VALUES, r=REPEATS, h=HOSTS)
     output:
         "results/timings.csv"
-    run:
-        pattern = re.compile(r"time manager\s*=\s*([0-9.]+)")
-        rows = []
-
-        for f in input:
-            parts = f.split("/")[-1].replace(".out","").split("_")
-            n = int(parts[1])
-            r = int(parts[2])
-            host = parts[3]
-
-            jobid = None
-            manager_time = None
-
-            with open(f) as fh:
-                for line in fh:
-                    if line.startswith("jobid="):
-                        jobid = line.split("=")[1].strip()
-                    m = pattern.search(line)
-                    if m:
-                        manager_time = float(m.group(1))
-
-            rows.append((n, jobid, host, manager_time))
-
-        rows.sort()
-
-        with open(output[0], "w", newline="") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(["nprocs","jobid","host","manager_time"])
-            writer.writerows(rows)
+    shell:
+        r"""
+        module load Python
+        python assemble_timings.py -d results -o results/timings.csv
+        """
 
