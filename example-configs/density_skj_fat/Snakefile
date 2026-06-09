@@ -58,12 +58,12 @@ rule run_mpi:
 
         # run main
         echo "jobid=$SLURM_JOB_ID" > ../density_skj_fat/{output.main}
-        srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
+        srun --partition {h} --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
              {params.exe_main} -s {params.parfile} >> ../density_skj_fat/{output.main} 2>&1
 
         # run best
         echo "jobid=$SLURM_JOB_ID" > ../density_skj_fat/{output.best}
-        srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
+        srun --partition {h} --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
              {params.exe_best} -s {params.parfile} >> ../density_skj_fat/{output.best} 2>&1
 
         cd ../
@@ -111,19 +111,4 @@ rule collect_results:
             writer = csv.writer(csvfile)
             writer.writerow(["nprocs","jobid","host","manager_time"])
             writer.writerows(rows)
-
-# -----------------------------
-# Plot speedup
-# -----------------------------
-rule plot_speedup:
-    input:
-        "results/timings.csv"
-    output:
-        "results/speedup.png"
-    shell:
-    	r"""
-    	ml purge
-    	ml Python
-    	python plot_scaling.py -i {input} -o {output}
-    	"""
 
