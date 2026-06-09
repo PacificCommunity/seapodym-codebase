@@ -41,32 +41,23 @@ rule run_mpi:
         cd example-configs/density_skj_fat
         mkdir -p results
 
-        for exe in {params.exe_main} {params.exe_best}; do
-            if [ "$exe" = "{params.exe_main}" ]; then
-                outfile={output.main}
-            else
-                outfile={output.best}
-            fi
-            # record SLURM job ID
-            echo "jobid=$SLURM_JOB_ID" > $outfile
-            # create a tmp directory to run at the same level
-            cd ..
-            hash=$(echo "$RANDOM" | sha256sum | cut -d' ' -f1)
-            rundir="tmp-$hash"
-            rm -rf $rundir
-            mkdir $rundir
-            cd $rundir
-            # copy the input file
-            cp ../density_skj_fat/{params.parfile} .
-            # run MPI program using Slurm
-            srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
-                 $exe -s {params.parfile} >> ../density_skj_fat/$outfile 2>&1
-            cd ../
-            # clean up
-            rm -rf $rundir
-            # back to where we started
-            cd density_skj_fat
-        done
+        echo "jobid=$SLURM_JOB_ID" > {output.main}
+        cd ..
+        hash=$(echo "$RANDOM" | sha256sum | cut -d' ' -f1)
+        rundir="tmp-$hash"
+        rm -rf $rundir && mkdir $rundir && cd $rundir
+        cp ../density_skj_fat/{params.parfile} .
+
+        # --- run main ---
+         srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
+             {params.exe_main} -s {params.parfile} >> ../density_skj_fat/{output.main} 2>&1
+
+        # --- run best ---
+        srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
+             {params.exe_best} -s {params.parfile} >> ../density_skj_fat/{output.best} 2>&1
+
+        # clean up
+        cd .. && rm -rf $rundir && cd density_skj_fat
         """
 
 # -----------------------------
