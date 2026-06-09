@@ -76,7 +76,8 @@ rule run_mpi:
 # -----------------------------
 rule collect_results:
     input:
-        expand("results/run_{n}_{r}_{h}.out", n=N_VALUES, r=REPEATS, h=HOSTS)
+        expand("results/run_{n}_{r}_{h}-main.out", n=N_VALUES, r=REPEATS, h=HOSTS),
+        expand("results/run_{n}_{r}_{h}-best.out", n=N_VALUES, r=REPEATS, h=HOSTS)
     output:
         "results/timings.csv"
     run:
