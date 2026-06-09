@@ -39,10 +39,11 @@ rule run_mpi:
     shell:
         r"""
         cd ~/nesi99999/seapodym-codebase-dataprovider-step3/
-        source sourceme.sh
+        
+        source sourceme-main.sh
+
         cd example-configs/density_skj_fat
         mkdir -p results
-        # record SLURM job ID
         # create a tmp directory to run at the same level
         cd ..
         hash=$(echo "$RANDOM" | sha256sum | cut -d' ' -f1)
