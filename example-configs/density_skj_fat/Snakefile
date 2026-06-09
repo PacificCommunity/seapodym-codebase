@@ -38,6 +38,7 @@ rule run_mpi:
         lambda wc: int(wc.n)
     shell:
         r"""
+        set -x
         cd ~/nesi99999/seapodym-codebase-dataprovider-step3/
         
         source sourceme-main.sh
