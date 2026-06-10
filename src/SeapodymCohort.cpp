@@ -110,6 +110,7 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		}
 	}	
 
+	getDate(jday, t_count);// In order to get qtr
 	if (param->type_oxy==1)
 		getO2clm(month);
 	if (param->type_oxy==2)
@@ -150,10 +151,6 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 		getO2clm(month);
 	else if ((param->type_oxy==2) && (qtr != past_qtr))
 		getO2clm(qtr);
-	/*TTTRACE(t_count, month, past_month)
-	TTTRACE(t_count, cohort_id, sum(mat.oxygen[tcur][0]))
-	TTTRACE(t_count, cohort_id, sum(mat.oxygen[tcur][1]))
-	TTTRACE(t_count, cohort_id, sum(mat.oxygen[tcur][2]))*/
 
 	//----------------------------------------------//
 	//	COHORT DYNAMICS WITHOUT FISHING		//
@@ -451,7 +448,6 @@ void SeapodymCohort::getData(bool spawning_habitat_only){
 
 void SeapodymCohort::getO2clm(int t_clm){
 	double* W  = dp_->getDataPtr("O2clm");
-	//double* W  = dp_->getDataPtr("forcing_allT");
 	const int g0 = 1;
 	const int nf = param->get_nforcings_O2clm();
 	const size_t cells = map.get_array_size();// active ragged cells per field
@@ -469,5 +465,4 @@ void SeapodymCohort::getO2clm(int t_clm){
 	};
 
 	for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
-	TTTRACE(t_count, cohort_id, sum(mat.oxygen[g0][0]))
 }
