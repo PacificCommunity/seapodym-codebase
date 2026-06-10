@@ -2003,7 +2003,7 @@ std::vector<std::pair<std::string, std::size_t>> VarParamCoupled::getDpNameSizeP
 	std::vector<std::pair<std::string, std::size_t>> nameSizePairs = { 
 		{"forcing_allT", arraySize_AllTimeSteps}};
 	if (arraySize_O2clm > 0)
-		nameSizePairs.push_back({"O2clm", arraySize_O2clm});
+		nameSizePairs.push_back({"forcing_O2clm", arraySize_O2clm});
 
 	return nameSizePairs;
 }

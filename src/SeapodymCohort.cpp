@@ -381,7 +381,7 @@ void SeapodymCohort::setShmForcing(){
 
 	// Set O2 from climatology
 	if (param->type_oxy){
-		double* W_O2clm  = dp_->getDataPtr("O2clm");
+		double* W_O2clm  = dp_->getDataPtr("forcing_O2clm");
 		const int nf_O2clm = param->get_nforcings_O2clm();
 		const size_t slab_O2clm  = (size_t)nf_O2clm * cells;  // doubles per timestep
 		int nbt_O2clm = 12;
@@ -447,7 +447,7 @@ void SeapodymCohort::getData(bool spawning_habitat_only){
 }
 
 void SeapodymCohort::getO2clm(int t_clm){
-	double* W  = dp_->getDataPtr("O2clm");
+	double* W  = dp_->getDataPtr("forcing_O2clm");
 	const int g0 = 1;
 	const int nf = param->get_nforcings_O2clm();
 	const size_t cells = map.get_array_size();// active ragged cells per field
