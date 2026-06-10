@@ -51,10 +51,11 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		int tcur = 1;
 		
 		std::vector<double> data( dataCollector.getNumSize() );
+
+		dataCollector.startEpoch(); // should be as early as possible
  
 		// Get density of all age class from dataCollector
 		for (int aa=param->age_mature[sp]; aa<nb_age_class; aa++){
-			dataCollector.startEpoch(); // should be as early as possible
 			
 			int chunk_id = (tstart_cohort-1)*nb_age_class + aa;
 			int index = 0;
@@ -68,10 +69,8 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 					index++;
 				}
 			}
-			
-			dataCollector.endEpoch(); // should be as late as possible
 		}
-		
+		dataCollector.endEpoch(); // should be as late as possible
 
 		//Compute eggs at the end of t-1!	
 		getDate(jday, tstart_cohort);
@@ -388,12 +387,12 @@ void SeapodymCohort::setShmForcing(){
 		double* W_O2clm  = dp_->getDataPtr("O2clm");
 		const int nf_O2clm = param->get_nforcings_O2clm();
 		const size_t slab_O2clm  = (size_t)nf_O2clm * cells;  // doubles per timestep
-		size_t  f = 0; // running field index
 		int nbt_O2clm = 12;
 		if (param->type_oxy==2)
 			nbt_O2clm = 4;
 
 		for (int t_clm = 1; t_clm <= nbt_O2clm; ++t_clm) {
+			size_t  f = 0; // running field index
 			double* base = W_O2clm + (size_t)(t_clm-1) * slab_O2clm;  // this timestep's block
 
 			auto put = [&](const dmatrix& src) {

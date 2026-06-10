@@ -1985,24 +1985,25 @@ void VarParamCoupled::par2_read_bounds(dvector& var, double& var_min, double& va
 
 
 std::vector<std::pair<std::string, std::size_t>> VarParamCoupled::getDpNameSizePairs(const int numTimeSteps, int array_size) {
-    // Gets the size of the different arrays in shared memory. 
+// Assigns the (name,size) pairs for arrays to be passed to DataProvider 
 
 	//1. Forcing
-    int nforcings = get_nforcings();
-    int nforcings_O2clm = get_nforcings_O2clm();
-    size_t arraySize_AllTimeSteps = array_size * (size_t)numTimeSteps * nforcings;
-	size_t arraySize_O2clm = 0;
-	if (type_oxy==1)
-		arraySize_O2clm = array_size * (size_t)12 * nforcings_O2clm;
-	if (type_oxy==2)
-		arraySize_O2clm = array_size * (size_t)4 * nforcings_O2clm;
+	size_t arraySize_AllTimeSteps = static_cast<std::size_t>(array_size) * numTimeSteps * get_nforcings();
 
-	//2. Initial stat (to be implemented)
+	size_t arraySize_O2clm = static_cast<std::size_t>(array_size) * get_nforcings_O2clm();
+	if (type_oxy==1)
+		arraySize_O2clm *= 12;
+	if (type_oxy==2)
+		arraySize_O2clm *= 4;
+
+	//2. Initial state (to be implemented)
 	//3. State (to be implemented)
 
-	std::vector<std::pair<std::string, std::size_t>> nameSizePairs = {
-		{"forcing_allT", static_cast<std::size_t>(arraySize_AllTimeSteps)},
-		{"O2clm", static_cast<std::size_t>(arraySize_O2clm)}
-	};
+	//4. Build the pairs for DataProvider
+	std::vector<std::pair<std::string, std::size_t>> nameSizePairs = { 
+		{"forcing_allT", arraySize_AllTimeSteps}};
+	if (arraySize_O2clm > 0)
+		nameSizePairs.push_back({"O2clm", arraySize_O2clm});
+
 	return nameSizePairs;
 }

@@ -24,7 +24,8 @@ rownames(mat) <- paste0("time", 1:nrow(mat))
 print(mat)
 
 cat("Writing output to file 'checksums'\n")
-write.table(mat, file="checksums", row.names=F, col.names=F, quote=F)
+m <- matrix(sprintf("%.16g", mat), nrow = nrow(mat))
+write.table(m, file="checksums", row.names=F, col.names=F, quote=F)
 
 options(def.options)
 
