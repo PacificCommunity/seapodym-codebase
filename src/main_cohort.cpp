@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <functional>
 #include <numeric>	  // std::accumulate
+#include <vector>
 #include <mpi.h>
 #include "VarParamCoupled.h"
 #include "SeapodymCohortDependencyAnalyzer.h"
@@ -13,6 +14,7 @@
 #include <CmdLineArgParser.h>
 #include "ctrace.h"
 #include "DataProvider.h"
+#include "Tags.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -73,7 +75,27 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	double tak = MPI_Wtime();
 	time_cohort_init += tak - tik;
 
+	// Downstream workers registered by DOWNSTREAM_TAG messages from the manager.
+	// Once populated, we send STEP_DONE directly to these ranks after each step,
+	// bypassing the manager for the next hop of the dependency chain.
+	std::vector<int> downstream_ranks;
+
 	for (auto step = stepBeg; step < stepEnd; ++step) {
+
+		// Drain any DOWNSTREAM_TAG messages that arrived since the last step.
+		// Each carries the rank of a newly assigned downstream worker.
+		{
+			int flag = 0;
+			MPI_Status ds_status;
+			MPI_Iprobe(0, DOWNSTREAM_TAG, comm, &flag, &ds_status);
+			while (flag) {
+				int dr;
+				MPI_Recv(&dr, 1, MPI_INT, 0, DOWNSTREAM_TAG, comm, MPI_STATUS_IGNORE);
+				downstream_ranks.push_back(dr);
+				logger->info("        registered downstream rank {} for task id {}", dr, task_id);
+				MPI_Iprobe(0, DOWNSTREAM_TAG, comm, &flag, &ds_status);
+			}
+		}
 
 		double tik_step = MPI_Wtime();
 		logger->info("        >>> step {} of task id {}", step, task_id);
@@ -82,7 +104,7 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		logger->info("        <<< step {} of task id {}", step, task_id);
 		time_step += MPI_Wtime() - tik_step;
 
-		// Send the data to the manager.
+		// Send the data to the shared collector.
 		logger->info("        >>> send data for step {} of task id {}", step, task_id);
 		std::vector<double> localData = cohort->GetCohortDensity();
 		int chunk_id = cohort->getChunkId(step);
@@ -93,15 +115,27 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		logger->info("        <<< send data for step {} of task id {}", step, task_id);
 
 		int success = task_id;
-		// send message to the manager that the step is complete
+		// Notify the manager that the step is complete.  This is still needed
+		// so the manager can dispatch further-downstream cohorts (item 4).
 		int output[3] = {task_id, step, success};
-		const int endTaskTag = 1;
 
 		logger->info("        >>> notify manager after step {} of task id {}", step, task_id);
 		tik_mpi = MPI_Wtime();
-		MPI_Send(output, 3, MPI_INT, 0, endTaskTag, comm);
+		MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
 		time_mpi += MPI_Wtime() - tik_mpi;
 		logger->info("        <<< notify manager after step {} of task id {}", step, task_id);
+
+		// Item 3: notify registered downstream workers directly (STEP_DONE_TAG),
+		// bypassing the manager for the immediate dependency hop.
+		if (!downstream_ranks.empty()) {
+			int step_done[2] = {task_id, step};
+			tik_mpi = MPI_Wtime();
+			for (int dr : downstream_ranks) {
+				MPI_Send(step_done, 2, MPI_INT, dr, STEP_DONE_TAG, comm);
+				logger->info("        sent STEP_DONE step {} task {} → rank {}", step, task_id, dr);
+			}
+			time_mpi += MPI_Wtime() - tik_mpi;
+		}
 	}
 
 	time_calc += MPI_Wtime() - tak;
