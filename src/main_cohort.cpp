@@ -167,7 +167,7 @@ int main(int argc, char** argv) {
 	int numData = map.get_state_array_size();
 
 	//Set-up the size for the shared arrays for forcing data
-	size_t numForcing = (size_t)numTimeSteps * map.get_array_size() * param.get_nforcings();//IS TMP: works only for non-climatological O2 -> to deal with it later
+	std::vector<std::pair<std::string, std::size_t>> nameSizePairs = param.getDpNameSizePairs(numTimeSteps, map.get_array_size());
 
 	// set up the data collector
 	int numChunks = numAgeGroups * numTimeSteps;
@@ -238,9 +238,6 @@ int main(int argc, char** argv) {
 		gradient_structure gs(gs_var_buffer);
 
 		{
-			std::vector<std::pair<std::string, std::size_t>> nameSizePairs = {
-				{"forcing", static_cast<std::size_t>(numForcing)},
-			};
 			DataProvider dp(workerComm, nameSizePairs);
 
 			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());

@@ -111,5 +111,6 @@ public:
 
 	void setShmForcing();
 	void getData(bool spawning_habitat_only = false);
+	void getO2clm(int t_clm);
 };
 #endif

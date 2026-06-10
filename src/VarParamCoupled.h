@@ -87,6 +87,7 @@ public:
 	}
 */
 	void save_statistics(const string dirout, const adstring_array x_names, double likelihood, dvector g, double elapsed_time, int status, int iter, int nvars);
+	std::vector<std::pair<std::string, std::size_t>> getDpNameSizePairs(const int numTimeSteps, int array_size);
 
 public:
 //	dvar_matrix dvarsU;

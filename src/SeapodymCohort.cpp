@@ -111,7 +111,14 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		}
 	}	
 
+	if (param->type_oxy==1)
+		getO2clm(month);
+	if (param->type_oxy==2)
+		getO2clm(qtr);
+
 	age = age_start;
+	past_month = month;
+	past_qtr = qtr;
 }
 
 void SeapodymCohort::stepForward(bool writeoutputfiles)
@@ -140,6 +147,14 @@ void SeapodymCohort::stepForward(bool writeoutputfiles)
 	//	GET DATA FROM SHARED MEMORY		//
 	//----------------------------------------------//
 	getData();
+	if ((param->type_oxy==1) && (month != past_month))
+		getO2clm(month);
+	else if ((param->type_oxy==2) && (qtr != past_qtr))
+		getO2clm(qtr);
+	/*TTTRACE(t_count, month, past_month)
+	TTTRACE(t_count, cohort_id, sum(mat.oxygen[tcur][0]))
+	TTTRACE(t_count, cohort_id, sum(mat.oxygen[tcur][1]))
+	TTTRACE(t_count, cohort_id, sum(mat.oxygen[tcur][2]))*/
 
 	//----------------------------------------------//
 	//	COHORT DYNAMICS WITHOUT FISHING		//
@@ -329,10 +344,8 @@ void SeapodymCohort::setShmForcing(){
 	// Flatten the forcing series held in `mat` over [g0 .. nbt_total] 
 	// into the shared window, in the canonical field order
 	// that MUST match param->nforcings and the future loadSlice().
-	// IS TMP: currently rely on OnRunFirstStep's ReadAll, which has
-	// already filled matrices. Next step: makes this the SOLE reader.
 	
-	double* W  = dp_->getDataPtr("forcing");
+	double* W  = dp_->getDataPtr("forcing_allT");
 	const int g0 = nbt_building + 1;	// fixed time origin (==1; spinup removed)
 	const int nf = param->get_nforcings();  // fields per timestep
 	const size_t cells = map.get_array_size();// active ragged cells per field
@@ -341,7 +354,6 @@ void SeapodymCohort::setShmForcing(){
 	for (int t = g0; t <= nbt_total; ++t) {
 		double* base = W + (size_t)(t - g0) * slab;  // this timestep's block
 		size_t  f = 0; // running field index
-
 
 		auto put = [&](const dmatrix& src) {
 			double* dst = base + f * cells;
@@ -358,15 +370,6 @@ void SeapodymCohort::setShmForcing(){
 		//TIME SERIES 
 		t_series = t - nbt_building + nbt_start_series;
 		ReadTimeSeriesData(g0,t_series);	
-		
-		if (param->type_oxy==1 && month != past_month) {
-			//MONTHLY O2
-			ReadClimatologyOxy(g0, month);
-		}
-		if (param->type_oxy==2 && qtr != past_qtr) {
-			//QUARTERLY O2
-			ReadClimatologyOxy(g0, qtr);
-		}
 
 		put(mat.np1[g0]);
 		for (int n = 0; n < nb_forage; ++n) put(mat.forage[g0][n]);
@@ -374,16 +377,44 @@ void SeapodymCohort::setShmForcing(){
 		for (int k = 0; k < nb_layer; ++k) put(mat.tempn[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.un[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.vn[g0][k]);
-		for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[g0][k]);
+		if (!param->type_oxy)
+			for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[g0][k]);
 		if (param->use_vld) put(mat.vld[g0]);
 		if (param->use_ph1) put(mat.ph1[g0]);
+	}
+
+	// Set O2 from climatology
+	if (param->type_oxy){
+		double* W_O2clm  = dp_->getDataPtr("O2clm");
+		const int nf_O2clm = param->get_nforcings_O2clm();
+		const size_t slab_O2clm  = (size_t)nf_O2clm * cells;  // doubles per timestep
+		size_t  f = 0; // running field index
+		int nbt_O2clm = 12;
+		if (param->type_oxy==2)
+			nbt_O2clm = 4;
+
+		for (int t_clm = 1; t_clm <= nbt_O2clm; ++t_clm) {
+			double* base = W_O2clm + (size_t)(t_clm-1) * slab_O2clm;  // this timestep's block
+
+			auto put = [&](const dmatrix& src) {
+				double* dst = base + f * cells;
+				size_t  c   = 0;
+				for (int i = map.imin; i <= map.imax; ++i)
+					for (int j = map.jinf[i]; j <= map.jsup[i]; ++j)
+						dst[c++] = src(i, j);
+				++f;
+			};
+
+			ReadClimatologyOxy(1, t_clm);
+			for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[1][k]);
+		}
 	}
 }
 
 void SeapodymCohort::getData(bool spawning_habitat_only){
 	if (!dp_) { cerr << "Error: setDataProvider() not called\n"; exit(1); }
 
-	double* W  = dp_->getDataPtr("forcing");
+	double* W  = dp_->getDataPtr("forcing_allT");
 	const int g0 = nbt_building + 1;	// fixed time origin (==1; spinup removed)
 	const int nf = param->get_nforcings();  // fields per timestep
 	const size_t cells = map.get_array_size();// active ragged cells per field
@@ -402,7 +433,7 @@ void SeapodymCohort::getData(bool spawning_habitat_only){
 
 	get(mat.np1[g0]);
 	for (int n = 0; n < nb_forage; ++n){
-		if (spawning_habitat_only * param->day_layer[n] * param->night_layer[n])
+		if (spawning_habitat_only && param->day_layer[n] && param->night_layer[n])
 			++f;
 		else
 			get(mat.forage[g0][n]);
@@ -412,8 +443,32 @@ void SeapodymCohort::getData(bool spawning_habitat_only){
 		for (int k = 0; k < nb_layer; ++k) get(mat.tempn[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) get(mat.un[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) get(mat.vn[g0][k]);
-		for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
+		if (!param->type_oxy)
+			for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
 		if (param->use_vld) get(mat.vld[g0]);
 		if (param->use_ph1) get(mat.ph1[g0]);
 	}
+}
+
+void SeapodymCohort::getO2clm(int t_clm){
+	double* W  = dp_->getDataPtr("O2clm");
+	//double* W  = dp_->getDataPtr("forcing_allT");
+	const int g0 = 1;
+	const int nf = param->get_nforcings_O2clm();
+	const size_t cells = map.get_array_size();// active ragged cells per field
+	const size_t slab  = (size_t)nf * cells; 
+	double* base = W + (size_t)(t_clm-g0) * slab;
+	size_t  f = 0; // running field index
+
+	auto get = [&](dmatrix& dst) {
+		double* src = base + f * cells;
+		size_t  c   = 0;
+		for (int i = map.imin; i <= map.imax; ++i)
+			for (int j = map.jinf[i]; j <= map.jsup[i]; ++j)
+				dst(i, j) = src[c++];
+		++f;
+	};
+
+	for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
+	TTTRACE(t_count, cohort_id, sum(mat.oxygen[g0][0]))
 }
