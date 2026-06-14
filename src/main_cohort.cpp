@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <functional>
 #include <numeric>	  // std::accumulate
+#include <vector>
 #include <mpi.h>
 #include "VarParamCoupled.h"
 #include "SeapodymCohortDependencyAnalyzer.h"
@@ -13,6 +14,7 @@
 #include <CmdLineArgParser.h>
 #include "ctrace.h"
 #include "DataProvider.h"
+#include "Tags.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -91,7 +93,7 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		logger->info("        <<< step {} of task id {}", step, task_id);
 		time_step += MPI_Wtime() - tik_step;
 
-		// Send the data to the manager.
+		// Send the data to the shared collector.
 		logger->info("        >>> send data for step {} of task id {}", step, task_id);
 		std::vector<double> localData = cohort->GetCohortDensity();
 		int chunk_id = cohort->getChunkId(step);
@@ -102,14 +104,11 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		logger->info("        <<< send data for step {} of task id {}", step, task_id);
 
 		int success = task_id;
-		// send message to the manager that the step is complete
 		int output[3] = {task_id, step, success};
-		const int endTaskTag = 1;
-
 		logger->info("        >>> notify manager after step {} of task id {}", step, task_id);
-		double t_s = MPI_Wtime();
-		MPI_Send(output, 3, MPI_INT, 0, endTaskTag, comm);
-		time_send += MPI_Wtime() - t_s;
+		tik_mpi = MPI_Wtime();
+		MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
+		time_mpi += MPI_Wtime() - tik_mpi;
 		logger->info("        <<< notify manager after step {} of task id {}", step, task_id);
 	}
 
