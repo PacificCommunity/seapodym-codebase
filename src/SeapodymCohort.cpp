@@ -380,7 +380,20 @@ void SeapodymCohort::setShmForcing(){
 	const size_t cells = map.get_array_size();// active ragged cells per field
 	const size_t slab  = (size_t)nf * cells;  // doubles per timestep
 
-	for (int t = g0; t <= nbt_total; ++t) {
+	// Partition the timestep range [g0, nbt_total] across node-local workers.
+	// Each shm-rank reads its OWN timesteps (ReadTimeSeriesData seeks by t_series,
+	// random access) into its PRIVATE mat[g0], then writes its DISJOINT window
+	// slabs. No write conflicts: private scratch, disjoint offsets. Caller must
+	// MPI_Barrier(dp_->getShmComm()) after this returns.
+	int shmRank = dp_->getShmRank();
+	int shmSize = 1;
+	MPI_Comm_size(dp_->getShmComm(), &shmSize);
+	const int Tsteps = nbt_total - g0 + 1;                       // number of timesteps
+	const int per    = (Tsteps + shmSize - 1) / shmSize;        // ceil split
+	const int tlo    = g0 + shmRank * per;
+	const int thi    = (tlo + per < nbt_total + 1) ? (tlo + per) : (nbt_total + 1);
+
+	for (int t = tlo; t < thi; ++t) {
 		double* base = W + (size_t)(t - g0) * slab;  // this timestep's block
 		size_t  f = 0; // running field index
 
@@ -413,7 +426,7 @@ void SeapodymCohort::setShmForcing(){
 	}
 
 	// Set O2 from climatology
-	if (param->type_oxy){
+	if (param->type_oxy && dp_->isShmRoot()){
 		double* W_O2clm  = dp_->getDataPtr("forcing_O2clm");
 		const int nf_O2clm = param->get_nforcings_O2clm();
 		const size_t slab_O2clm  = (size_t)nf_O2clm * cells;  // doubles per timestep

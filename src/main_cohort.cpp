@@ -261,9 +261,8 @@ int main(int argc, char** argv) {
 			//	cohort.setShmForcing();//needs to be in cohort where the reading is done, but will be done once
 			//MPI_Win_fence(0, dp.win());
 			double t_shm = MPI_Wtime();
-			if (dp.isShmRoot())
-				cohort.setShmForcing();
-			MPI_Barrier(workerComm);   
+			cohort.setShmForcing();          // every node-local worker reads its timestep slice
+			MPI_Barrier(dp.getShmComm());    // per-node publish-sync: all slabs visible before any read
 
 			time_io_forcing += MPI_Wtime()-t_shm;
 			// Bind the task function with the necessary parameters
