@@ -106,7 +106,7 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		int success = task_id;
 		int output[3] = {task_id, step, success};
 		logger->info("        >>> notify manager after step {} of task id {}", step, task_id);
-		tik_mpi = MPI_Wtime();
+		double tik_mpi = MPI_Wtime();
 		MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
 		time_mpi += MPI_Wtime() - tik_mpi;
 		logger->info("        <<< notify manager after step {} of task id {}", step, task_id);
