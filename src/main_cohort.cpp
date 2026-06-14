@@ -18,6 +18,10 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
+double time_ic_comm = 0.0, time_ic_flush = 0.0, time_ic_copy = 0.0, time_spawning = 0.0, time_getdata = 0.0, time_xreset = 0.0, time_init_cohort_spawning = 0.0, time_init_cohort_restart = 0.0, time_io_forcing = 0.0;
+long   n_ic = 0;   // count of spawning-path inits, for per-init averages
+double time_mpi_put = 0.0, time_send = 0.0, time_idle = 0.0;
+	
 SeapodymCohort* seapodym_cohort(const char* parfile, const int cmp_regime, const bool reset_buffers, int cohort_id, gradient_structure& gs);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 void buffers_set(long int &mv, long int &mc, long int &mg);
@@ -54,6 +58,11 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		DistDataCollector* dataCollector,
 		SeapodymCohort* cohort){
 
+	static double last_task_end = -1.0;        // per-worker process, persists across calls
+	double t_in = MPI_Wtime();
+	if (last_task_end >= 0.0)
+		time_idle += t_in - last_task_end;     // <-- time spent in worker.run() waiting for dispatch	
+	
 	double tik = MPI_Wtime();
 
 	logger->info("> task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
@@ -89,9 +98,9 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		std::vector<double> localData = cohort->GetCohortDensity();
 		int chunk_id = cohort->getChunkId(step);
 
-		double tik_mpi = MPI_Wtime();
+		double t_p = MPI_Wtime();
 		dataCollector->put(chunk_id, localData.data());
-		time_mpi += MPI_Wtime() - tik_mpi;
+		time_mpi_put += MPI_Wtime() - t_p;
 		logger->info("        <<< send data for step {} of task id {}", step, task_id);
 
 		int success = task_id;
@@ -104,6 +113,9 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	}
 
 	time_calc += MPI_Wtime() - tak;
+
+	last_task_end = MPI_Wtime();
+
 	logger->info("< task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 }
 
@@ -183,7 +195,7 @@ int main(int argc, char** argv) {
 	DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
 
 	// analyze the cohort Id task dependencies
-	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps);
+	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0]);
 	int numCohorts = taskDeps.getNumberOfCohorts();
 	std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
 	std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
@@ -247,10 +259,11 @@ int main(int argc, char** argv) {
 			//if (dp.isShmRoot())
 			//	cohort.setShmForcing();//needs to be in cohort where the reading is done, but will be done once
 			//MPI_Win_fence(0, dp.win());
-			if (dp.isShmRoot())
-				cohort.setShmForcing();
-			MPI_Barrier(workerComm);   // IS TMP: publish-sync; replace with MPI_Win_fence once Alex adds it
+			double t_shm = MPI_Wtime();
+			cohort.setShmForcing();          // every node-local worker reads its timestep slice
+			MPI_Barrier(dp.getShmComm());    // per-node publish-sync: all slabs visible before any read
 
+			time_io_forcing += MPI_Wtime()-t_shm;
 			// Bind the task function with the necessary parameters
 			auto taskFunc = std::bind(taskFunction,
 				std::placeholders::_1, // task_id
@@ -277,7 +290,20 @@ int main(int argc, char** argv) {
 	if (workerId > 0) {
 		printf("[%d] Timings calc/overhead/worker init/cohort init/comm: %10.3lf/%10.3lf/%10.3lf/%10.3lf/%10.3lf\n", workerId,
 		time_calc, time_overhead, time_worker_init, time_cohort_init, time_mpi);
+
+printf("[%d] InitCohort comm/flush/copy/init_restart,init_spawning/spawning/getdata/xreset (tot, per-init ms): "
+         "%.3f/%.3f/%.3f/%.3f/%.3f/%.3f/%.3f/%.3f s ; %.3f/%.3f/%.3f/%.3f/%.3f/%.3f/%.3f/%.3f ms over %ld inits\n", workerId,
+         time_ic_comm, time_ic_flush, time_ic_copy, time_init_cohort_restart, time_init_cohort_spawning, time_spawning, time_getdata, time_xreset,
+         n_ic? 1e3*time_ic_comm/n_ic:0, n_ic? 1e3*time_ic_flush/n_ic:0,
+         n_ic? 1e3*time_ic_copy/n_ic:0, n_ic? 1e3*time_init_cohort_restart/numAgeGroups:0, 
+         n_ic? 1e3*time_init_cohort_spawning/n_ic:0, n_ic? 1e3*time_spawning/n_ic:0, 
+	 n_ic? 1e3*time_getdata/n_ic:0, n_ic? 1e3*time_xreset/n_ic:0,n_ic);
+
+printf("[%d] Time IO/Put/Send/Idle: %.3f/%.3f/%.3f/%.3f ms\n",
+         workerId, 1e3*time_io_forcing, 1e3*time_mpi_put, 1e3*time_send, 1e3*time_idle);
 	}
+
+
 
 	// Finalization of MPI
 	////////////////////////////////////////////////////////////////////////

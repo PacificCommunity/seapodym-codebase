@@ -6,6 +6,9 @@
 #include "DistDataCollector.h"
 #include "DataProvider.h"
 
+extern double time_ic_comm, time_ic_flush, time_ic_copy, time_spawning, time_getdata, time_xreset, time_init_cohort_restart, time_init_cohort_spawning;
+extern long   n_ic;
+
 void SeapodymCohort::prerun_model()
 {
 	OnRunFirstStep();
@@ -30,19 +33,24 @@ std::vector<double> SeapodymCohort::GetCohortDensity()
 void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles) 
 {
 
+double t_all = MPI_Wtime();
+double t_rs = 0.0;
+double t_reset = MPI_Wtime();
 	//Reset model parameters:
 	reset(x);
+time_xreset += MPI_Wtime() - t_reset;	
 
 	//----------------------------------------------//
 	//	ALLOCATE AND INITIALIZE COHORT DENSITY	//
 	//----------------------------------------------//	
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	if (cohort_id < nb_age_class){ 
+t_rs = MPI_Wtime();
 
 		//Initialize from restart file
 		RestoreDistributions(mat.nb_age_built);
 		dvarCohortDensity = mat.init_density_species(0,age_start);
-
+t_rs = MPI_Wtime()-t_rs;
 	} else {
 		//Initialize from spawning
 		int sp = 0;
@@ -52,32 +60,52 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 		
 		std::vector<double> data( dataCollector.getNumSize() );
 
+double t_block = MPI_Wtime();      
+double t_flush_acc = 0.0, t_copy_acc = 0.0;
+
 		dataCollector.startEpoch(); // should be as early as possible
- 
 		// Get density of all age class from dataCollector
 		for (int aa=param->age_mature[sp]; aa<nb_age_class; aa++){
 			
 			int chunk_id = (tstart_cohort-1)*nb_age_class + aa;
-			int index = 0;
 			dataCollector.getAsync(chunk_id, data.data());
-			dataCollector.flush(); // now the data are ready to be used
+
+double t_f = MPI_Wtime();
+			dataCollector.flush(); // now the data are ready to be used                       
+t_flush_acc += MPI_Wtime() - t_f;
+
+double t_c = MPI_Wtime();
+			int index = 0;
 			for (int i = map.imin1; i <= map.imax1; i++){
 				const int jmin1 = map.jinf1[i];
 				const int jmax1 = map.jsup1[i];
 				for (int j = jmin1 ; j <= jmax1; j++){
-					mat.dvarDensity(0,aa,i,j) = data[index];
+					//stripping out derivatives runs faster, but 
+					//need to be careful later to handle this in adjoint
+					mat.dvarDensity(0,aa).elem_value(i,j) = data[index];
 					index++;
 				}
 			}
+t_copy_acc += MPI_Wtime() - t_c;
 		}
 		dataCollector.endEpoch(); // should be as late as possible
 
+double t_total = MPI_Wtime() - t_block;
+time_ic_flush += t_flush_acc;                      
+time_ic_copy  += t_copy_acc;                       
+time_ic_comm  += t_total - t_copy_acc;             
+++n_ic;
+		
+double t_gd = MPI_Wtime();
 		//Compute eggs at the end of t-1!	
 		getDate(jday, tstart_cohort);
 
 		// Get data from shared memory
 		getData(true);
+	
+time_getdata += MPI_Wtime()-t_gd;
 
+double t_sp = MPI_Wtime();
 		//1. Spawning habitat (ToDo:IF NEEDED, see spawning_in_hs)
 		func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
 
@@ -87,6 +115,8 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 
 		//3: Reproduction
 		Spawning(dvarCohortDensity,Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
+												    
+time_spawning += MPI_Wtime() - t_sp;
 	}
 
 	if (writeoutputfiles){
@@ -119,6 +149,9 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 	age = age_start;
 	past_month = month;
 	past_qtr = qtr;
+
+time_init_cohort_restart += t_rs;
+time_init_cohort_spawning += MPI_Wtime() - t_all - t_rs;
 }
 
 void SeapodymCohort::stepForward(bool writeoutputfiles)
@@ -347,7 +380,20 @@ void SeapodymCohort::setShmForcing(){
 	const size_t cells = map.get_array_size();// active ragged cells per field
 	const size_t slab  = (size_t)nf * cells;  // doubles per timestep
 
-	for (int t = g0; t <= nbt_total; ++t) {
+	// Partition the timestep range [g0, nbt_total] across node-local workers.
+	// Each shm-rank reads its OWN timesteps (ReadTimeSeriesData seeks by t_series,
+	// random access) into its PRIVATE mat[g0], then writes its DISJOINT window
+	// slabs. No write conflicts: private scratch, disjoint offsets. Caller must
+	// MPI_Barrier(dp_->getShmComm()) after this returns.
+	int shmRank = dp_->getShmRank();
+	int shmSize = 1;
+	MPI_Comm_size(dp_->getShmComm(), &shmSize);
+	const int Tsteps = nbt_total - g0 + 1;                       // number of timesteps
+	const int per    = (Tsteps + shmSize - 1) / shmSize;        // ceil split
+	const int tlo    = g0 + shmRank * per;
+	const int thi    = (tlo + per < nbt_total + 1) ? (tlo + per) : (nbt_total + 1);
+
+	for (int t = tlo; t < thi; ++t) {
 		double* base = W + (size_t)(t - g0) * slab;  // this timestep's block
 		size_t  f = 0; // running field index
 
@@ -380,7 +426,7 @@ void SeapodymCohort::setShmForcing(){
 	}
 
 	// Set O2 from climatology
-	if (param->type_oxy){
+	if (param->type_oxy && dp_->isShmRoot()){
 		double* W_O2clm  = dp_->getDataPtr("forcing_O2clm");
 		const int nf_O2clm = param->get_nforcings_O2clm();
 		const size_t slab_O2clm  = (size_t)nf_O2clm * cells;  // doubles per timestep
