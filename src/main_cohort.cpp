@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
 	DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
 
 	// analyze the cohort Id task dependencies
-	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps);
+	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0]);
 	int numCohorts = taskDeps.getNumberOfCohorts();
 	std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
 	std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
@@ -260,6 +260,7 @@ int main(int argc, char** argv) {
 			//if (dp.isShmRoot())
 			//	cohort.setShmForcing();//needs to be in cohort where the reading is done, but will be done once
 			//MPI_Win_fence(0, dp.win());
+			double t_shm = MPI_Wtime();
 			if (dp.isShmRoot())
 				cohort.setShmForcing();
 			MPI_Barrier(workerComm);   
