@@ -56,7 +56,8 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		const std::shared_ptr<spdlog::logger>& logger,
 		DistDataCollector* dataCollector,
-		SeapodymCohort* cohort){
+		SeapodymCohort* cohort,
+		const independent_variables& x){
 
 	static double last_task_end = -1.0;        // per-worker process, persists across calls
 	double t_in = MPI_Wtime();
@@ -68,11 +69,6 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	logger->info("> task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 
 	logger->info("    >> initialization of task id {}", task_id);
-	//initialize variables of optimization
-	const int nvar = cohort->nvarcalc();
-	independent_variables x(1, nvar);
-	adstring_array x_names(1,nvar);
-	cohort->xinit(x, x_names);
 
 	int cohort_id = task_id;
 	cohort->restart(cohort_id);
@@ -253,6 +249,14 @@ int main(int argc, char** argv) {
 
 			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
 
+			// Initialize optimization variables once; x is stable for all tasks
+			// (xinit fills x from fixed model parameters that don't change between tasks).
+			// x is captured by reference in taskFunc — lifetime matches the enclosing block.
+			const int nvar = cohort.nvarcalc();
+			independent_variables x(1, nvar);
+			adstring_array x_names(1, nvar);
+			cohort.xinit(x, x_names);
+
 			cohort.setDataProvider(&dp);
 
 			//MPI_Win_fence(0, dp.win());
@@ -272,7 +276,8 @@ int main(int argc, char** argv) {
 				std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
 				logger,
 				&dataCollect,
-				&cohort);
+				&cohort,
+				std::cref(x));        // x lives in this block, outlives taskFunc and worker.run()
 
 			TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
 
