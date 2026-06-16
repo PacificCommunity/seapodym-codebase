@@ -96,25 +96,37 @@ time_ic_copy  += t_copy_acc;
 time_ic_comm  += t_total - t_copy_acc;             
 ++n_ic;
 		
-double t_gd = MPI_Wtime();
-		//Compute eggs at the end of t-1!	
+		//Compute eggs at the end of t-1!
 		getDate(jday, tstart_cohort);
 
-		// Get data from shared memory
-		getData(true);
-	
+		if (!(param->elarvae_model[sp] || param->spawning_adult_func_only[sp])){
+double t_gd = MPI_Wtime();
+			// Get data from shared memory at t-1
+			int t_count_save = t_count;
+			t_count = t_count - 1;
+			getData(true);
+			t_count = t_count_save;
+			if (param->type_oxy==1)
+				getO2clm(month);
+			if (param->type_oxy==2)
+				getO2clm(qtr);
+
 time_getdata += MPI_Wtime()-t_gd;
 
-double t_sp = MPI_Wtime();
-		//1. Spawning habitat (ToDo:IF NEEDED, see spawning_in_hs)
-		func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
+double t_hs = MPI_Wtime();
+			//1. Spawning habitat (ToDo:IF NEEDED, see spawning_in_hs)
+			func.Spawning_Habitat(*param, mat, map, Spawning_Habitat, 1.0, sp, tcur, jday);
+time_spawning += MPI_Wtime() - t_hs;
+		}
 
+double t_sp = MPI_Wtime();
 		//2: Spawning biomass: 
 		//If load Density(t-1(+deltaT),amature,..,na) passed by Manager to mat.dvarDensity(sp,a,i,j), then no need to change the function
 		SpawningBiomass_comp(Total_pop, sp);
 
 		//3: Reproduction
 		Spawning(dvarCohortDensity,Spawning_Habitat,Total_pop,jday,sp,tcur);//checked
+
 												    
 time_spawning += MPI_Wtime() - t_sp;
 	}
@@ -140,7 +152,7 @@ time_spawning += MPI_Wtime() - t_sp;
 		}
 	}	
 
-	getDate(jday, t_count);// In order to get qtr
+	getDate(jday, t_count);// In order to get qtr for the next part
 	if (param->type_oxy==1)
 		getO2clm(month);
 	if (param->type_oxy==2)
@@ -416,11 +428,11 @@ void SeapodymCohort::setShmForcing(){
 		put(mat.np1[g0]);
 		for (int n = 0; n < nb_forage; ++n) put(mat.forage[g0][n]);
 		if (param->use_sst) put(mat.sst[g0]);
+		if (!param->type_oxy)
+			for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.tempn[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.un[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) put(mat.vn[g0][k]);
-		if (!param->type_oxy)
-			for (int k = 0; k < nb_layer; ++k) put(mat.oxygen[g0][k]);
 		if (param->use_vld) put(mat.vld[g0]);
 		if (param->use_ph1) put(mat.ph1[g0]);
 	}
@@ -481,12 +493,12 @@ void SeapodymCohort::getData(bool spawning_habitat_only){
 			get(mat.forage[g0][n]);
 	};
 	if (param->use_sst) get(mat.sst[g0]);
+	if (!param->type_oxy)
+		for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
 	if (!spawning_habitat_only){
 		for (int k = 0; k < nb_layer; ++k) get(mat.tempn[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) get(mat.un[g0][k]);
 		for (int k = 0; k < nb_layer; ++k) get(mat.vn[g0][k]);
-		if (!param->type_oxy)
-			for (int k = 0; k < nb_layer; ++k) get(mat.oxygen[g0][k]);
 		if (param->use_vld) get(mat.vld[g0]);
 		if (param->use_ph1) get(mat.ph1[g0]);
 	}
