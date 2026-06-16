@@ -33,12 +33,12 @@ std::vector<double> SeapodymCohort::GetCohortDensity()
 void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles) 
 {
 
-double t_all = MPI_Wtime();
-double t_rs = 0.0;
-double t_reset = MPI_Wtime();
-	//Reset model parameters:
-	reset(x);
-time_xreset += MPI_Wtime() - t_reset;	
+    double t_all = MPI_Wtime();
+    double t_rs = 0.0;
+    double t_reset = MPI_Wtime();
+    //Reset model parameters: moved to worker init in main_cohort.cpp
+    //reset(x);
+    time_xreset += MPI_Wtime() - t_reset;	
 
 	//----------------------------------------------//
 	//	ALLOCATE AND INITIALIZE COHORT DENSITY	//

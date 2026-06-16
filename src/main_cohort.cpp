@@ -17,6 +17,7 @@
 #include "Tags.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include "admodel.h"
 
 double time_ic_comm = 0.0, time_ic_flush = 0.0, time_ic_copy = 0.0, time_spawning = 0.0, time_getdata = 0.0, time_xreset = 0.0, time_init_cohort_spawning = 0.0, time_init_cohort_restart = 0.0, time_io_forcing = 0.0;
 long   n_ic = 0;   // count of spawning-path inits, for per-init averages
@@ -265,6 +266,7 @@ int main(int argc, char** argv) {
 			//MPI_Win_fence(0, dp.win());
 			double t_shm = MPI_Wtime();
 			cohort.setShmForcing();          // every node-local worker reads its timestep slice
+
 			MPI_Barrier(dp.getShmComm());    // per-node publish-sync: all slabs visible before any read
 
 			time_io_forcing += MPI_Wtime()-t_shm;
@@ -283,6 +285,9 @@ int main(int argc, char** argv) {
 
 			// Sync the manager with the workers before starting to distribute the tasks
 			MPI_Barrier(MPI_COMM_WORLD);
+			// Reset model parameters (applies boundp() transforms from optimisation space to
+			// physical parameter space) — done once here rather than per-task in InitializeCohort.
+			cohort.reset(dvar_vector(x));
 			worker.run();
 			MPI_Barrier(MPI_COMM_WORLD);
 
