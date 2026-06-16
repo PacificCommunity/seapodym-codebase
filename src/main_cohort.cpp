@@ -267,6 +267,10 @@ int main(int argc, char** argv) {
 			double t_shm = MPI_Wtime();
 			cohort.setShmForcing();          // every node-local worker reads its timestep slice
 
+			// Reset model parameters (applies boundp() transforms from optimisation space to
+			// physical parameter space) — done once here rather than per-task in InitializeCohort.
+			cohort.reset(dvar_vector(x));
+
 			MPI_Barrier(dp.getShmComm());    // per-node publish-sync: all slabs visible before any read
 
 			time_io_forcing += MPI_Wtime()-t_shm;
@@ -285,9 +289,6 @@ int main(int argc, char** argv) {
 
 			// Sync the manager with the workers before starting to distribute the tasks
 			MPI_Barrier(MPI_COMM_WORLD);
-			// Reset model parameters (applies boundp() transforms from optimisation space to
-			// physical parameter space) — done once here rather than per-task in InitializeCohort.
-			cohort.reset(dvar_vector(x));
 			worker.run();
 			MPI_Barrier(MPI_COMM_WORLD);
 
