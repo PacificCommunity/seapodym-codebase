@@ -68,30 +68,93 @@ void Hessian_comp(const char* parfile)
 	dmatrix Cov = inv(H);
 	double determ = det(H);
 	dvector evalues = eigenvalues(H);
-	ofstream ofs;
-	const char* filename = "Hessian.out";
-
-	ofs.open(filename, ios::out);
-	ofs << nvar << "\n"; 
 
 	dvector pars = sc.param->get_parvals();
-	ofs << "Parameter\t" << "Est. value\t" << "Gradient" << "\n";   
+
+	//--- convergence / identifiability diagnostics ---
+	double gmax = 0.0;
+	for (int i=1; i<=nvar; i++){ double a = fabs(g1(i)); if (a>gmax) gmax = a; }
+
+	dvector Hinv_g = Cov*g1;          // H^{-1} g
+	double lambda2 = g1*Hinv_g;       // Newton decrement squared = g' H^{-1} g
+	dvector nstep  = -Hinv_g;         // Newton step
+	double maxrel_step = 0.0;
 	for (int i=1; i<=nvar; i++)
-		ofs << x_names[i] << "\t" << pars(i) << "\t" << g1(i) << "\n";
+		if (pars(i)!=0.0){ double a = fabs(nstep(i)/pars(i)); if (a>maxrel_step) maxrel_step = a; }
+
+	double emin = min(evalues), emax = max(evalues);
+	int is_pd = (emin > 0.0);
+	double condnum = (emin!=0.0) ? emax/emin : -1.0;
+
+	// standard errors from the covariance (NaN / huge => non-PD or unidentified)
+	dvector SE(1,nvar);
+	for (int i=1; i<=nvar; i++) SE(i) = sqrt(Cov(i,i));
+
+	// least-identified direction = dominant eigenvector of Cov (power iteration)
+	dvector vdir(1,nvar); vdir = 1.0/sqrt((double)nvar);
+	for (int it=0; it<300; it++){ vdir = Cov*vdir; double nv = norm(vdir); if (nv>0.0) vdir /= nv; }
+
+	cout << "\n--- convergence / identifiability diagnostics ---" << endl;
+	cout << "L = " << likelihood << " ; Gmax = " << gmax << endl;
+	cout << "Newton decrement^2 g'H^-1g = " << lambda2
+	     << " ; pred. remaining dL = " << 0.5*lambda2
+	     << " ; relative = " << 0.5*lambda2/likelihood << endl;
+	cout << "max relative Newton step |dx/x| = " << maxrel_step << endl;
+	cout << "det = " << determ << " ; eig in [" << emin << ", " << emax << "] ; "
+	     << (is_pd ? "PD (local min)" : "NOT PD -> saddle/flat")
+	     << " ; condition number = " << condnum << endl;
+
+	ofstream ofs;
+	const char* filename = "Hessian.out";
+	ofs.open(filename, ios::out);
+	ofs << nvar << "\n\n";
+
+	ofs << "Parameter\tEstimate\tGradient\tStdErr\tCV\n";
+	for (int i=1; i<=nvar; i++)
+		ofs << x_names[i] << "\t" << pars(i) << "\t" << g1(i) << "\t"
+		    << SE(i) << "\t" << SE(i)/fabs(pars(i)) << "\n";
 	ofs << "\n";
 
-	ofs << determ << "\n"; 
-	ofs << evalues << "\n\n"; 
+	ofs << "CONVERGENCE DIAGNOSTICS\n";
+	ofs << "likelihood\t"           << likelihood            << "\n";
+	ofs << "Gmax\t"                 << gmax                  << "\n";
+	ofs << "Newton_decrement_sq\t"  << lambda2               << "\n";
+	ofs << "pred_remaining_dL\t"    << 0.5*lambda2           << "\n";
+	ofs << "relative_remaining\t"   << 0.5*lambda2/likelihood<< "\n";
+	ofs << "max_rel_newton_step\t"  << maxrel_step           << "\n";
+	ofs << "determinant\t"          << determ                << "\n";
+	ofs << "min_eigenvalue\t"       << emin                  << "\n";
+	ofs << "max_eigenvalue\t"       << emax                  << "\n";
+	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no")<< "\n";
+	ofs << "condition_number\t"     << condnum               << "\n\n";
 
+	ofs << "Least-identified direction (dominant eigenvector of Cov):\n";
+	for (int i=1; i<=nvar; i++)
+		ofs << x_names[i] << "\t" << vdir(i) << "\n";
+	ofs << "\n";
+
+	ofs << "Eigenvalues:\n" << evalues << "\n\n";
+
+	ofs << "Hessian:\n";
 	for (int i=1; i<=nvar; i++){
 		for (int j=1; j<=nvar; j++)
 			ofs << H(i,j) << " ";
 		ofs << "\n";
 	}
 	ofs << "\n";
+
+	ofs << "Covariance (inverse Hessian):\n";
 	for (int i=1; i<=nvar; i++){
 		for (int j=1; j<=nvar; j++)
 			ofs << Cov(i,j) << " ";
+		ofs << "\n";
+	}
+	ofs << "\n";
+
+	ofs << "Correlation matrix:\n";
+	for (int i=1; i<=nvar; i++){
+		for (int j=1; j<=nvar; j++)
+			ofs << Cov(i,j)/(SE(i)*SE(j)) << " ";
 		ofs << "\n";
 	}
 	ofs << "\n";
