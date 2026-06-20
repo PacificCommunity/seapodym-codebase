@@ -44,6 +44,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	//once nt_dtau = dtau, recruitment occurs and nt_dtau=0
 	//its initial value is dtau-nbt_before_first_recruitment_date
 	int nt_dtau = dtau-nbt_before_first_recruitment; 
+	int nt_dtau_input = 3;//dtau_input-nbt_before_first_recruitment_input; 
 
 	//routine-specific variables
 	int tcur = t_count; //will be used for forcing variable time control
@@ -72,7 +73,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	dvariable likelihood = 0.0;
 	dvariable total_stock = 0.0;
 	//Reset model parameters:
-	reset(x);
+	dvariable penalty = reset(x);
 
 	//----------------------------------------------//
 	// 	LOCAL MATRICES ALLOCATION SECTION       //
@@ -397,9 +398,16 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 		if (t_count == nbt_total)
 			stocklike += get_stock_like(total_stock, likelihood);
 		//Biomass density likelihood. Note, degrade it to the resolution of the density_input
-		if (t_count > nbstoskip){
+		if ((t_count > nbstoskip) & (month==2 || month==5 || month==8 || month==11)){//temporal: need to read the recruitment month from degraded conf
+		//if ((t_count > nbstoskip) & (nt_dtau_input==dtau_input)){
 			if (param->density_like_data){
-				for (int age=0; age<param->sp_nb_cohorts[0]; age++){
+				int oaf = 3; //observed age frequency in units of modelled age class, e.g., if input density's age class size is 3 months and the downscaled model is monthly, oaf=3
+				int age0 = 0;
+				if (oaf > 1) //not possible to fit age 0, which is first quarter with oaf=3
+					age0 = 3;
+				for (int age=age0; age<param->sp_nb_cohorts[0]; age+=oaf){
+					//TTTRACE(t_count,month,age)
+					//TTRACE(norm(value(Density_pred[age])),norm(mat.density_input(age,t_count)))
 					update_density_like(Density_pred[age], mat.density_input(age,t_count), map.carte, nlon, nlat, nlon_input, nlat_input, likelihood, param->density_like_weight);
 				}
 			} else 
@@ -427,6 +435,7 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 			rw.rwbin_minmax(fileout, minval, maxval);
 		}
 		nt_dtau++;
+		nt_dtau_input++;
 		past_month=month;
 		step_count++;
 		if (qtr != past_qtr) past_qtr = qtr; 
@@ -434,8 +443,10 @@ double SeapodymCoupled::OnRunDensity(dvar_vector x, const bool writeoutputfiles)
 	} // end of simulation loop
 
 	param->total_like = value(likelihood);
-	if (!param->scalc())
-		cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood)-stocklike << " " << stocklike << endl;
+	if (!param->scalc()){
+		likelihood += penalty;
+		cout << "end of forward run, likelihood: " << defaultfloat << value(likelihood)-value(penalty)-stocklike << " " << stocklike << endl;
+	}
 
 
 	return value(likelihood);
@@ -528,12 +539,17 @@ void SeapodymCoupled::ReadDensityAges()
 	}
 
 	//Now DATA READING
+	int oaf = 3;
+	
 	for (int age=0; age<nb_ages; age++){
 	
+		int age_input = (int)age/oaf;
 		std::ostringstream ostr;
-		ostr << age+1;
+		ostr << age_input + 1;
 		file_input = param->strdir_output + param->sp_name[sp] + "_age" + ostr.str() + ".dym";
 
+		int index_weight = age_input * oaf;
+		//TTTRACE(age_input,index_weight,param->weight[sp][index_weight])
 		for (; t_count<=nbt_total; t_count++){
 			getDate(jday);
 		
@@ -565,7 +581,7 @@ void SeapodymCoupled::ReadDensityAges()
 				{
 					litbin.read(( char *)&buf,sizeofDymInputType);
 					//convert to biomass density in kg/sq.km
-					mat.density_input[age][t_count][i+1][j+1]= buf * param->weight[sp][age];
+					mat.density_input[age][t_count][i+1][j+1]= buf * param->weight[sp][index_weight]/oaf;
 				}
 			}
 		
