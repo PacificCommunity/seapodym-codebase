@@ -8,6 +8,7 @@
 const double Vmax_diff  = 1.25;
 const double rc = 0.0005;
 const double rho = 0.99;
+const double v_eps = 1e-20;
 
 void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, const dmatrix& habitat, const dmatrix& total_pop, double MSS, double MSS_size_slope, double sigma_species, double c_diff_fish, const int sp, const int age, const int jday)
 {
@@ -34,7 +35,7 @@ void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, con
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;//fixed, given in 'body length' units
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dmax    = sigma_species*Dinf;
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 	double rho_x = 0.0;
 	double rho_y = 0.0;
@@ -127,10 +128,10 @@ if (habitat(i,j)==0){cout << "Zero habitat at " << age << " " << i << " "<< j <<
 				v_y = CHI_y * dHdy;
 				//limit maximal velocity by Vinf to avoid approximation errors with 
 				//finite differences in case of strong gradients
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
+				
 				advection_x[j] = c*U + v_x*mat.lat_correction[j];
 				advection_y[j] = c*V + v_y;
 

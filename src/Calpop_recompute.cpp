@@ -11,6 +11,7 @@ void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage
 const double Vmax_diff = 1.25;
 const double rc = 0.0005;
 const double rho = 0.99;
+const double v_eps = 1e-20;
 
 
 ///This function recomputes all intermediate solutions of one forward ADI step, taking the solution from previous step.
@@ -281,7 +282,7 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
 
 
-	const double Dmax    = sigma_species*Dinf;
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 	
 
@@ -345,11 +346,9 @@ double D = Dinf * diff_habitat;
 				double v_y = CHI_y * dHdy;
 
 				//limit maximal velocity my Vinf
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
-
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x*mat.lat_correction[j];// for computing derivatives in dv_caldia
 				advection_y(i,j) = c*V + v_y;
@@ -407,7 +406,7 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
 
-	const double Dmax    = sigma_species*Dinf;
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
 	const double nb_layer = param.nb_layer;
@@ -470,11 +469,9 @@ double D = Dinf * diff_habitat;
 				double v_y = CHI_y * dHdy;
 
 				//limit maximal velocity my Vinf
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
-
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x*lat_correction[j];// for computing derivatives in dv_caldia
 				advection_y(i,j) = c*V + v_y;
@@ -534,7 +531,7 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dmax    = sigma_species*Dinf;
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
 	const double nb_layer = param.nb_layer;
@@ -601,10 +598,9 @@ double D = Dinf * diff_habitat;
 				double v_y = CHI_y * dHdy;
 
 				//limit maximal velocity by Vinf
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x * mat.lat_correction[j];
 				advection_y(i,j) = c*V + v_y;
@@ -676,9 +672,9 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	//Parameters to recompute accessibility to layers 
 	const double oxy_teta = param.a_oxy_habitat[sp];
 	const double oxy_cr   = param.b_oxy_habitat[sp];
-	const double sigma_ha = param.sigma_ha[sp][age];
+	//const double sigma_ha = param.sigma_ha[sp][age];
+	//const double twosigsq = 2.0*sigma_ha*sigma_ha;
 	const double temp_age = param.temp_age[sp][age];
-	const double twosigsq = 2.0*sigma_ha*sigma_ha;
 	const double temp_max = param.b_sst_spawning(sp);
 	const double delta1   = param.thermal_func_delta[0][sp];
 	const double delta2   = param.thermal_func_delta[1][sp];
@@ -712,7 +708,7 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dmax    = sigma_species*Dinf;
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
 	const double sigma_left  = param.sigma_ha_left[sp][age];
@@ -821,10 +817,9 @@ double D = Dinf * diff_habitat;
 				double v_y = CHI_y * dHdy;
 
 				//limit maximal velocity by Vinf
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x * mat.lat_correction[j];
 				advection_y(i,j) = c*V + v_y;

@@ -29,6 +29,7 @@ unsigned long int restore_long_int_value(void);
 const double Vmax_diff  = 1.25;
 const double rc = 0.0005;
 const double rho = 0.99;
+const double v_eps = 1e-20;   
 
 void CCalpop::Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatrices& mat, dvar_matrix& habitat, dvar_matrix& total_pop, const int sp, const int age, const int t_count, const int jday)
 {
@@ -252,7 +253,7 @@ void dv_caldia()
 	const double Dinf_size_slope = param->Dinf_size_slope[sp];
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
-	const double Dmax   = sigma_species*Dinf;
+	//const double Dmax   = sigma_species*Dinf;
 
 	const int imax = map->imax;
 	const int imin = map->imin;
@@ -322,8 +323,8 @@ void dv_caldia()
 */
 
 				//precompute v_x and v_y
-				double v_x = mss_species * unit_x * dHdx/Vinf;				
-				double v_y = mss_species * unit_y * dHdy/Vinf;
+				double v_x = mss_species * unit_x * dHdx;				
+				double v_y = mss_species * unit_y * dHdy;
 			
 				double dfv_x = 0.0;
 				double dfv_y = 0.0;
@@ -337,13 +338,19 @@ void dv_caldia()
 				dfAdv_x(i,j) = 0.0;
 
 
-				//v_y = Vinf*param.func_limit_one(v_y/Vinf);
-				if (v_y>=0) dfv_y = param->dffunc_limit_one(v_y,Vinf*dfv_y)/Vinf;
-				if (v_y<0)  dfv_y = param->dffunc_limit_one(-v_y,Vinf*dfv_y)/Vinf;
-
-				//v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_x>=0) dfv_x = param->dffunc_limit_one(v_x,Vinf*dfv_x)/Vinf;
-				if (v_x<0)  dfv_x = param->dffunc_limit_one(-v_x,Vinf*dfv_x)/Vinf;
+				// --- NORM cap reverse (replaces the 4 per-component dffunc_limit_one lines) ---
+				{
+					double cap_mr = sqrt(v_x*v_x + v_y*v_y + v_eps);
+					double cap_u  = cap_mr/Vinf;
+					double cap_f  = param->func_limit_one(cap_u);
+					double cap_fp = param->dffunc_limit_one(cap_u, 1.0);
+					double cap_s  = Vinf*cap_f/cap_mr;
+					double cap_sp = (cap_fp - cap_s)/cap_mr;
+					double cap_proj = v_x*dfv_x + v_y*dfv_y;
+					double cap_nx = cap_s*dfv_x + (cap_sp/cap_mr)*v_x*cap_proj;
+					double cap_ny = cap_s*dfv_y + (cap_sp/cap_mr)*v_y*cap_proj;
+					dfv_x = cap_nx;  dfv_y = cap_ny;
+				}
 
 				//double v_y = MSS * unit_y * dHdy; 
 				dfMSS(i,j) += unit_y * dHdy * dfv_y;
@@ -551,9 +558,9 @@ void dv_caldia_UV()
 	//Parameters to recompute accessibility to layers 
 	const double oxy_teta = param->a_oxy_habitat[sp];
 	const double oxy_cr   = param->b_oxy_habitat[sp];
-	const double sigma_ha = param->sigma_ha[sp][age];
+	//const double sigma_ha = param->sigma_ha[sp][age];
+	//const double twosigsq = 2.0*sigma_ha*sigma_ha;
 	const double temp_age = param->temp_age[sp][age];
-	const double twosigsq = 2.0*sigma_ha*sigma_ha;
 	const double temp_max = param->b_sst_spawning(sp);
 	const double delta1   = param->thermal_func_delta[0][sp];
 	const double delta2   = param->thermal_func_delta[1][sp];
@@ -686,7 +693,7 @@ void dv_caldia_UV()
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dinf_size_slope = param->Dinf_size_slope[sp];
 	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
-	const double Dmax   = sigma_species*Dinf;
+	//const double Dmax   = sigma_species*Dinf;
 	const double rmax   = param->rmax_currents[sp];
 
 	const int imax = map->imax;
@@ -768,8 +775,8 @@ void dv_caldia_UV()
 				dfAdv_x(i,j) = 0.0;
 */
 				//precompute v_x and v_y
-				double v_x = mss_species * unit_x * dHdx / Vinf;				
-				double v_y = mss_species * unit_y * dHdy / Vinf;
+				double v_x = mss_species * unit_x * dHdx; 				
+				double v_y = mss_species * unit_y * dHdy; 
 
 				double dfv_x = 0.0;
 				double dfv_y = 0.0;
@@ -786,14 +793,19 @@ void dv_caldia_UV()
 				dfv_x   += lat_correction(j) * dfAdv_x(i,j);
 				dfAdv_x(i,j) = 0.0;
 
-				//v_y = Vinf*param.func_limit_one(v_y/Vinf);
-				if (v_y>=0) dfv_y = param->dffunc_limit_one(v_y,Vinf*dfv_y)/Vinf;
-				if (v_y<0)  dfv_y = param->dffunc_limit_one(-v_y,Vinf*dfv_y)/Vinf;
-	
-				//v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_x>=0) dfv_x = param->dffunc_limit_one(v_x,Vinf*dfv_x)/Vinf;
-				if (v_x<0)  dfv_x = param->dffunc_limit_one(-v_x,Vinf*dfv_x)/Vinf;
-
+				// --- NORM cap reverse (replaces the 4 per-component dffunc_limit_one lines) ---
+				{
+					double cap_mr = sqrt(v_x*v_x + v_y*v_y + v_eps);
+					double cap_u  = cap_mr/Vinf;
+					double cap_f  = param->func_limit_one(cap_u);
+					double cap_fp = param->dffunc_limit_one(cap_u, 1.0);
+					double cap_s  = Vinf*cap_f/cap_mr;
+					double cap_sp = (cap_fp - cap_s)/cap_mr;
+					double cap_proj = v_x*dfv_x + v_y*dfv_y;
+					double cap_nx = cap_s*dfv_x + (cap_sp/cap_mr)*v_x*cap_proj;
+					double cap_ny = cap_s*dfv_y + (cap_sp/cap_mr)*v_y*cap_proj;
+					dfv_x = cap_nx;  dfv_y = cap_ny;
+				}
 				//double v_y = MSS * unit_y * dHdy; 
 				dfMSS(i,j) += unit_y * dHdy * dfv_y;
 				dfMSS_slope(i,j) += mss_species * unit_y * log(length) * dHdy  * dfv_y;
