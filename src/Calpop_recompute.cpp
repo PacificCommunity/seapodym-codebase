@@ -321,8 +321,13 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 				}
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				double D = Dmax * diff_habitat;
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double D = Dmax * diff_habitat;
+//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+//   sigma_species = BASE diffusion fraction (D at H_a=1)
+//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
+double D = Dinf * diff_habitat;
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -441,8 +446,14 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 				}
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				double D = Dmax * diff_habitat;
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double D = Dmax * diff_habitat;
+//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+//   sigma_species = BASE diffusion fraction (D at H_a=1)
+//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
+double D = Dinf * diff_habitat;
+
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -562,8 +573,13 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 				}
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				double D = Dmax * diff_habitat;
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double D = Dmax * diff_habitat;
+//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+//   sigma_species = BASE diffusion fraction (D at H_a=1)
+//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
+double D = Dinf * diff_habitat;
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -738,8 +754,14 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 				}
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				double D = Dmax * diff_habitat;
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double D = Dmax * diff_habitat;
+//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+//   sigma_species = BASE diffusion fraction (D at H_a=1)
+//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
+double D = Dinf * diff_habitat;
+
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));

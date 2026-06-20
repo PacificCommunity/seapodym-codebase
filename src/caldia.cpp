@@ -94,9 +94,16 @@ if (habitat(i,j)==0){cout << "Zero habitat at " << age << " " << i << " "<< j <<
 						dHdy = (habitat[i][j+1] - habitat[i][j])/(dy);
 
 				}
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+				//double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
 
-				double D = Dmax * diff_habitat;
+				//double D = Dmax * diff_habitat;
+
+				//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+				//   sigma_species = BASE diffusion fraction (D at H_a=1)
+				//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+				double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
+				double D = Dinf * diff_habitat;
+				
 				rho_x = 1.0- rho * sqrt(dHdx*dHdx) * dx;
 				rho_y = 1.0- rho * sqrt(dHdy*dHdy) * dy;
 

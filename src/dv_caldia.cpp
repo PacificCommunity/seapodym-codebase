@@ -359,10 +359,13 @@ void dv_caldia()
 				double rho_y = 1.0 - rho * sqrt(dHdy*dHdy) * dy;
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
 				//double diff_habitat = 1.0 - D_dec_H1*pow(habitat(i,j),c_diff_fish);
-				double D = Dmax * diff_habitat;
+//				double D = Dmax * diff_habitat;
 //vary diffusion with seasons
+double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
+double D = Dinf * diff_habitat;
+
 
 
 				double sfunc = mat->season_switch(sp,jday,j);
@@ -414,11 +417,22 @@ void dv_caldia()
 				dfC_diff(i,j)+= Dmax * habitat(i,j)/pow(c_diff_fish+habitat(i,j),2) * dfD;
 				dfD = 0.0;
 */
+/*Commented 20260618
 				//double D = Dmax*(1-c_diff_fish*pow(habitat(i,j),3));
                                 dfH(i,j)     -= Dmax * 3.0 * c_diff_fish*pow(habitat(i,j),2) * dfD_pr;
                                 dfSigma(i,j) += Dinf * (1-c_diff_fish*pow(habitat(i,j),3)) * dfD_pr;
                                 dfC_diff(i,j)-= Dmax * pow(habitat(i,j),3) * dfD_pr;
                                 dfD_pr = 0.0;
+*/
+//-- New form: D = Dinf * (sigma_species + c_diff_fish * (1-habitat)^2)
+//   dD/dH       = -2 * c_diff_fish * Dinf * (1 - habitat(i,j))
+//   dD/dsigma   = Dinf
+//   dD/dc       = Dinf * (1 - habitat(i,j))^2
+dfH(i,j)      -= 2.0 * c_diff_fish * Dinf * (1.0 - habitat(i,j)) * dfD_pr;
+dfSigma(i,j)  += Dinf * dfD_pr;
+dfC_diff(i,j) += Dinf * pow(1.0 - habitat(i,j), 2) * dfD_pr;
+dfD_pr = 0.0;
+
 
 /*  				//double D = Dmax*(1-D_dec_H1*pow(habitat(i,j),c_diff_fish));
                                 dfH(i,j)     -= Dmax * c_diff_fish * D_dec_H1 * pow(habitat(i,j),c_diff_fish-1) * dfD_pr;
@@ -810,11 +824,14 @@ void dv_caldia_UV()
 				dfV(i,j) -= v(i,j) * expr3 * dfr;
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
 				//double diff_habitat = 1.0 - D_dec_H1*pow(habitat(i,j),c_diff_fish);
-				double D = Dmax * diff_habitat;
+//				double D = Dmax * diff_habitat;
 
 //vary diffusion with seasons
+double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
+double D = Dinf * diff_habitat;
+
 				double sfunc = mat->season_switch(sp,jday,j);
  				double D_season = (0.9*D*sfunc + D*(1.0-sfunc));
 
@@ -890,13 +907,17 @@ void dv_caldia_UV()
                                 dfC_diff(i,j)-= Dmax * pow(habitat(i,j),3) * dfD_pr;
                                 dfD_pr = 0.0;
 */
-
+/*Commented 20260618
                                 //double D = Dmax*(1-c_diff_fish*pow(habitat(i,j),3));
                                 dfH(i,j)     -= Dmax * 3.0 * c_diff_fish*pow(habitat(i,j),2) * dfD;
                                 dfSigma(i,j) += Dinf * (1-c_diff_fish*pow(habitat(i,j),3)) * dfD;
                                 dfC_diff(i,j)-= Dmax * pow(habitat(i,j),3) * dfD;
                                 dfD = 0.0;
-
+*/
+dfH(i,j)      -= 2.0 * c_diff_fish * Dinf * (1.0 - habitat(i,j)) * dfD;
+dfSigma(i,j)  += Dinf * dfD;
+dfC_diff(i,j) += Dinf * pow(1.0 - habitat(i,j), 2) * dfD;
+dfD = 0.0;
 /*  				//double D = Dmax*(1-D_dec_H1*pow(habitat(i,j),c_diff_fish));
                                 dfH(i,j)     -= Dmax * c_diff_fish * D_dec_H1 * pow(habitat(i,j),c_diff_fish-1) * dfD;
                                 dfSigma(i,j) += Dinf * diff_habitat * dfD;
