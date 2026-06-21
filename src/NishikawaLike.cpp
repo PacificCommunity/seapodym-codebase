@@ -1,6 +1,10 @@
 #include "NishikawaLike.h"
 #include <fvar.hpp>
 
+static dvariable obs_model_linear(dvariable h, dvariable N_pred) { return N_pred * h; }
+static dvariable obs_model_nonlinear(dvariable h, dvariable N_pred) { return N_pred*N_pred / (h + N_pred*N_pred);} 
+
+
 // Class and function to compute the likelihood of a larvae density observed on an interval (raw Nishikawa data).
 
 NishikawaCategories::NishikawaCategories(VarParamCoupled& param): dl(0.1) {
@@ -585,16 +589,20 @@ void dv_categorical_zip_comp(){
 }
 
 
-
 // Functions to compute the likelihood of a larvae density observed on a continuous scale
 
 dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
 
+	dvariable L_pred;
+
 	dvariable h = param.dvarsQ_sp_larvae[sp];
-	dvariable L_pred = N_pred * h;
+	if (param.linear_larvae_obs_model)
+		L_pred = obs_model_linear(h, N_pred);
+	else
+		L_pred = obs_model_nonlinear(h, N_pred);
+
 	dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
 	dvariable lkhd = 0.0;
-
 
 	if (N_obs==0.0)
 		lkhd = weight_Lobszero*L_pred*L_pred/(2.0*pow(sigma, 2.0)) ;

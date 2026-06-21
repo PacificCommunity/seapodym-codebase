@@ -892,6 +892,10 @@ bool VarParamCoupled::read(const string& parfile)
 		}else{
 			larvae_like[sp] = 0;
 		}	
+		linear_larvae_obs_model = 1;
+		if (!doc.get("/larvae_obs_model_type","value").empty()){
+			linear_larvae_obs_model = doc.getInteger("/larvae_obs_model_type", "value");	
+		}
 		if (larvae_like[sp]){
 			if (!doc.get("/larvae_likelihood_years","first_year").empty())
 				larvae_like_firstyear = doc.getInteger("/larvae_likelihood_years","first_year");
