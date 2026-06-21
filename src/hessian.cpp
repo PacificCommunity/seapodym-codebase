@@ -71,37 +71,64 @@ void Hessian_comp(const char* parfile)
 
 	dvector pars = sc.param->get_parvals();
 
-	//--- convergence / identifiability diagnostics ---
+	//=== convergence / identifiability diagnostics ========================
+	// Convergence is NOT judged by the raw gradient norm max|g_i|: it is not
+	// invariant under reparametrisation, so a fixed threshold confounds proximity
+	// to the minimum with the scaling of the parameters and of the objective.
+
 	double gmax = 0.0;
 	for (int i=1; i<=nvar; i++){ double a = fabs(g1(i)); if (a>gmax) gmax = a; }
 
-	dvector Hinv_g = Cov*g1;          // H^{-1} g
-	double lambda2 = g1*Hinv_g;       // Newton decrement squared = g' H^{-1} g
-	dvector nstep  = -Hinv_g;         // Newton step
+	// Newton decrement lambda2 = g'H^{-1}g. Half of it is the objective decrease
+	// predicted on stepping to the local quadratic minimum; 0.5*lambda2/L is the
+	// scale-invariant relative improvement still available (<<1 => at the minimum).
+	dvector Hinv_g = Cov*g1;
+	double lambda2 = g1*Hinv_g;
+	dvector nstep  = -Hinv_g;                 // Newton step
 	double maxrel_step = 0.0;
 	for (int i=1; i<=nvar; i++)
 		if (pars(i)!=0.0){ double a = fabs(nstep(i)/pars(i)); if (a>maxrel_step) maxrel_step = a; }
 
+	// Eigenvalues of H: all positive => positive definite => genuine local minimum.
+	// Condition number = max/min eigenvalue flags ill-conditioning (near-flat dirs).
 	double emin = min(evalues), emax = max(evalues);
 	int is_pd = (emin > 0.0);
 	double condnum = (emin!=0.0) ? emax/emin : -1.0;
 
-	// standard errors from the covariance (NaN / huge => non-PD or unidentified)
+	// Standard errors = sqrt(diag(Cov)); NaN/huge here => non-PD or unidentified.
 	dvector SE(1,nvar);
 	for (int i=1; i<=nvar; i++) SE(i) = sqrt(Cov(i,i));
 
-	// least-identified direction = dominant eigenvector of Cov (power iteration)
-	dvector vdir(1,nvar); vdir = 1.0/sqrt((double)nvar);
-	for (int it=0; it<300; it++){ vdir = Cov*vdir; double nv = norm(vdir); if (nv>0.0) vdir /= nv; }
+	// Correlation matrix (built once; scale-free; reused below).
+	dmatrix Corr(1,nvar,1,nvar);
+	for (int i=1; i<=nvar; i++)
+		for (int j=1; j<=nvar; j++)
+			Corr(i,j) = Cov(i,j)/(SE(i)*SE(j));
+
+	// (1) FLATTEST direction: dominant eigenvector of Cov (= smallest-eigenvalue
+	//     eigenvector of H), the direction the likelihood curves least in absolute
+	//     terms. Flags a SATURATED / individually unidentified parameter sitting in
+	//     a flat region of its functional form (small gradient AND small curvature).
+	//     var_flat = variance along it = 1/min eigenvalue of H.
+	dvector vsat(1,nvar); vsat = 1.0/sqrt((double)nvar);
+	for (int it=0; it<500; it++){ vsat = Cov*vsat; double nv = norm(vsat); if (nv>0.0) vsat /= nv; }
+	double var_flat = vsat*(Cov*vsat);
+
+	// (2) MOST-COLLINEAR direction: dominant eigenvector of the correlation matrix
+	//     (standardized, scale-free). Flags a TRADE-OFF -- standardized parameters
+	//     the data constrain only in combination, not individually. vinfl =
+	//     variance-inflation factor along it. The two directions are complementary:
+	//     (1) finds saturation, (2) finds confounding.
+	dvector vcol(1,nvar); vcol = 1.0/sqrt((double)nvar);
+	for (int it=0; it<500; it++){ vcol = Corr*vcol; double nv = norm(vcol); if (nv>0.0) vcol /= nv; }
+	double vinfl = vcol*(Corr*vcol);
 
 	cout << "\n--- convergence / identifiability diagnostics ---" << endl;
-	cout << "L = " << likelihood << " ; Gmax = " << gmax << endl;
-	cout << "Newton decrement^2 g'H^-1g = " << lambda2
-	     << " ; pred. remaining dL = " << 0.5*lambda2
-	     << " ; relative = " << 0.5*lambda2/likelihood << endl;
+	cout << "L = " << likelihood << " ; Gmax = " << gmax << " (scale-dependent; not used for convergence)" << endl;
+	cout << "Newton decrement^2 = " << lambda2
+	     << " ; relative remaining = " << 0.5*lambda2/likelihood << " (<<1 => at the minimum)" << endl;
 	cout << "max relative Newton step |dx/x| = " << maxrel_step << endl;
-	cout << "det = " << determ << " ; eig in [" << emin << ", " << emax << "] ; "
-	     << (is_pd ? "PD (local min)" : "NOT PD -> saddle/flat")
+	cout << (is_pd ? "PD (local min)" : "NOT PD -> saddle/flat")
 	     << " ; condition number = " << condnum << endl;
 
 	ofstream ofs;
@@ -110,27 +137,37 @@ void Hessian_comp(const char* parfile)
 	ofs << nvar << "\n\n";
 
 	ofs << "Parameter\tEstimate\tGradient\tStdErr\tCV\n";
+	ofs << "# StdErr = sqrt(diag(inverse Hessian)); CV = StdErr/|Estimate| (relative uncertainty)\n";
 	for (int i=1; i<=nvar; i++)
 		ofs << x_names[i] << "\t" << pars(i) << "\t" << g1(i) << "\t"
 		    << SE(i) << "\t" << SE(i)/fabs(pars(i)) << "\n";
 	ofs << "\n";
 
 	ofs << "CONVERGENCE DIAGNOSTICS\n";
-	ofs << "likelihood\t"           << likelihood            << "\n";
-	ofs << "Gmax\t"                 << gmax                  << "\n";
-	ofs << "Newton_decrement_sq\t"  << lambda2               << "\n";
-	ofs << "pred_remaining_dL\t"    << 0.5*lambda2           << "\n";
-	ofs << "relative_remaining\t"   << 0.5*lambda2/likelihood<< "\n";
-	ofs << "max_rel_newton_step\t"  << maxrel_step           << "\n";
-	ofs << "determinant\t"          << determ                << "\n";
-	ofs << "min_eigenvalue\t"       << emin                  << "\n";
-	ofs << "max_eigenvalue\t"       << emax                  << "\n";
-	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no")<< "\n";
-	ofs << "condition_number\t"     << condnum               << "\n\n";
+	ofs << "likelihood\t"           << likelihood             << "\t# objective (neg. log-likelihood) being minimised\n";
+	ofs << "Gmax\t"                 << gmax                   << "\t# max|gradient|; scale-dependent, NOT a reliable convergence test\n";
+	ofs << "Newton_decrement_sq\t"  << lambda2                << "\t# g'H^-1g; curvature-weighted distance to the minimum\n";
+	ofs << "pred_remaining_dL\t"    << 0.5*lambda2            << "\t# objective decrease predicted to reach the quadratic minimum\n";
+	ofs << "relative_remaining\t"   << 0.5*lambda2/likelihood << "\t# pred_remaining_dL / L; scale-invariant; <<1 => at the minimum\n";
+	ofs << "max_rel_newton_step\t"  << maxrel_step            << "\t# largest |dx/x|; how far parameters still want to move\n";
+	ofs << "determinant\t"          << determ                 << "\t# det(H); >0 consistent with positive definite\n";
+	ofs << "min_eigenvalue\t"       << emin                   << "\t# smallest curvature (flattest direction)\n";
+	ofs << "max_eigenvalue\t"       << emax                   << "\t# largest curvature (stiffest direction)\n";
+	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no") << "\t# yes => genuine local minimum; no => saddle / not a minimum\n";
+	ofs << "condition_number\t"     << condnum                << "\t# max/min eigenvalue; high => ill-conditioned (near-flat directions)\n\n";
 
-	ofs << "Least-identified direction (dominant eigenvector of Cov):\n";
+	ofs << "FLATTEST direction (dominant eigenvector of covariance = smallest-curvature direction of the likelihood)\n";
+	ofs << "# Shows a SATURATED / individually unidentified parameter: a flat region of its functional form.\n";
+	ofs << "variance_along\t" << var_flat << "\t# = 1 / min_eigenvalue\n";
 	for (int i=1; i<=nvar; i++)
-		ofs << x_names[i] << "\t" << vdir(i) << "\n";
+		ofs << x_names[i] << "\t" << vsat(i) << "\n";
+	ofs << "\n";
+
+	ofs << "MOST-COLLINEAR direction (dominant eigenvector of correlation matrix; standardized units)\n";
+	ofs << "# Shows a TRADE-OFF: standardized parameters constrained only in combination, not individually.\n";
+	ofs << "variance_inflation\t" << vinfl << "\t# joint variance / uncorrelated-direction variance\n";
+	for (int i=1; i<=nvar; i++)
+		ofs << x_names[i] << "\t" << vcol(i) << "\n";
 	ofs << "\n";
 
 	ofs << "Eigenvalues:\n" << evalues << "\n\n";
@@ -154,7 +191,7 @@ void Hessian_comp(const char* parfile)
 	ofs << "Correlation matrix:\n";
 	for (int i=1; i<=nvar; i++){
 		for (int j=1; j<=nvar; j++)
-			ofs << Cov(i,j)/(SE(i)*SE(j)) << " ";
+			ofs << Corr(i,j) << " ";
 		ofs << "\n";
 	}
 	ofs << "\n";
