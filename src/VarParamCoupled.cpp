@@ -316,6 +316,7 @@ bool VarParamCoupled::read(const string& parfile)
 		age_mature.allocate(0, nb_species - 1);
 		maturity_age.allocate(0, nb_species - 1);
 		spawning_adult_func_only.allocate(0, nb_species - 1);
+		BHsat_model.allocate(0, nb_species - 1);
 		age_autonomous.allocate(0, nb_species - 1);
 		age_recruit.allocate(0, nb_species - 1);
 		age_compute_habitat.allocate(0, nb_species - 1);
@@ -398,7 +399,10 @@ bool VarParamCoupled::read(const string& parfile)
 		spawning_adult_func_only[sp] = 0;
 		if (!doc.get("/spawning_in_hs",sp_name[sp]).empty())
 			spawning_adult_func_only[sp] = !doc.getInteger("/spawning_in_hs", sp_name[sp]);
-	
+
+		BHsat_model[sp] = 0;
+		if (!doc.get("/BH_with_halfsat_model",sp_name[sp]).empty())
+			BHsat_model[sp] = !doc.getInteger("/BH_with_halfsat_model", sp_name[sp]);
 
 		//old parameter files:
 		if (doc.get("/spawning_season_peak").empty()){

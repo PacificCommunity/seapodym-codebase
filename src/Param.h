@@ -61,7 +61,8 @@ public:
 	ivector vert_movement;		   //average currents through vertical layers accessible to fish
 	ivector scale_forage_ave_currents; //use eF scaler when computing the time spent in the layer
 	ivector seasonal_migrations;	   //activate seasonal spawning migrations
-	ivector spawning_adult_func_only;  //use stock-recruitment function only at spawning, ignoring Hs
+	ivector spawning_adult_func_only;  //use stock-recruitment function only at spawning, ignoring Hs, 0 by default
+	ivector BHsat_model;  		   //use stock-recruitment function form with half-saturation as the slope, 0 by default
 	ivector food_requirement_in_mortality;
 	ivector uncouple_sst_larvae;	
 	ivector gaussian_thermal_function;	
