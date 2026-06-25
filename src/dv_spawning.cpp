@@ -38,7 +38,7 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 	A_sp = a_adults_spawning;
 
 	if (param->elarvae_model[sp] || param->spawning_adult_func_only[sp]){
-		if (!param->BHsat_model)
+		if (!param->BHsat_model[sp])
 			spawning_adult_func_comp(J_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);
 		else 
 			spawning_adult_func_BHsat_comp(J_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);
@@ -60,14 +60,14 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 		//save_identifier_string2((char*)"spawning_adult_func_end");
 		save_identifier_string2((char*)"spawning_BH_Allee_func_end");
 
-		if (!param->BHsat_model)
+		if (!param->BHsat_model[sp])
 			gradient_structure::GRAD_STACK1->set_gradient_stack(dv_spawning_BH_Allee_func_comp);
 		else
 			gradient_structure::GRAD_STACK1->set_gradient_stack(dv_spawning_BHsat_Allee_func_comp);
 
 	} else {
 
-		if (!param->BHsat_model)
+		if (!param->BHsat_model[sp])
 			spawning_in_hs_comp(J_c,Hs_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);	
 		else
 			spawning_in_hs_BHsat_comp(J_c,Hs_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);	
@@ -94,7 +94,7 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
         	save_int_value(sp);
 		save_identifier_string2((char*)"spawning_in_hs_end");
 
-		if (!param->BHsat_model)
+		if (!param->BHsat_model[sp])
 			gradient_structure::GRAD_STACK1->set_gradient_stack(dv_spawning_in_hs_comp);
 		else
 			gradient_structure::GRAD_STACK1->set_gradient_stack(dv_spawning_in_hs_BHsat_comp);

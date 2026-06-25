@@ -27,16 +27,16 @@ void SeapodymCoupled::Spawning(dvar_matrix& J, dvar_matrix& Hs, dvar_matrix& Nma
 	A_sp = a_adults_spawning;
 
 	if (param->elarvae_model[sp] | param->spawning_adult_func_only[sp]){
-		if (!param->BHsat_model)
+		if (!param->BHsat_model[sp])
 			spawning_adult_func_comp(J_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);
 		else 
 			spawning_adult_func_BHsat_comp(J_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);
 
 	} else {
-		if (!param->BHsat_model)
+		if (!param->BHsat_model[sp])
 			spawning_in_hs_comp(J_c,Hs_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);	
 		else
-			spawning_in_hs_BHsat_comp(J_c,Hs_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);
+			spawning_in_hs_BHsat_comp(J_c,Hs_c,N_mat,value(nb_recruitment),value(a_adults_spawning),a_allee);	
 	}
 
 	J = nograd_assign(J_c);
