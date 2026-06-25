@@ -153,21 +153,54 @@ void Hessian_comp(const char* parfile)
 	ofs << "determinant\t"          << determ                 << "\t# det(H); >0 consistent with positive definite\n";
 	ofs << "min_eigenvalue\t"       << emin                   << "\t# smallest curvature (flattest direction)\n";
 	ofs << "max_eigenvalue\t"       << emax                   << "\t# largest curvature (stiffest direction)\n";
-	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no") << "\t# yes => genuine local minimum; no => saddle / not a minimum\n";
+	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no") << "\t# yes => (local) minimum; no => saddle / not a minimum\n";
 	ofs << "condition_number\t"     << condnum                << "\t# max/min eigenvalue; high => ill-conditioned (near-flat directions)\n\n";
 
 	ofs << "FLATTEST direction (dominant eigenvector of covariance = smallest-curvature direction of the likelihood)\n";
 	ofs << "# Shows a SATURATED / individually unidentified parameter: a flat region of its functional form.\n";
 	ofs << "variance_along\t" << var_flat << "\t# = 1 / min_eigenvalue\n";
-	for (int i=1; i<=nvar; i++)
-		ofs << x_names[i] << "\t" << vsat(i) << "\n";
+	{
+		ivector idx(1,nvar);
+		for (int i=1;i<=nvar;i++) idx(i)=i;
+		for (int a=1;a<nvar;a++){ int best=a;
+			for (int b=a+1;b<=nvar;b++) if (fabs(vsat(idx(b)))>fabs(vsat(idx(best)))) best=b;
+			int tmp=idx(a); idx(a)=idx(best); idx(best)=tmp; }
+		bool marked=false;
+		for (int a=1;a<=nvar;a++){ int i=idx(a);
+			ofs << x_names[i] << "\t" << vsat(i);
+			if (!marked && fabs(vsat(i))<0.01){ ofs << "\t< 0.01 onward"; marked=true; }
+			ofs << "\n"; }
+	}
 	ofs << "\n";
 
 	ofs << "MOST-COLLINEAR direction (dominant eigenvector of correlation matrix; standardized units)\n";
 	ofs << "# Shows a TRADE-OFF: standardized parameters constrained only in combination, not individually.\n";
 	ofs << "variance_inflation\t" << vinfl << "\t# joint variance / uncorrelated-direction variance\n";
+	{
+		ivector idx(1,nvar);
+		for (int i=1;i<=nvar;i++) idx(i)=i;
+		for (int a=1;a<nvar;a++){ int best=a;
+			for (int b=a+1;b<=nvar;b++) if (fabs(vcol(idx(b)))>fabs(vcol(idx(best)))) best=b;
+			int tmp=idx(a); idx(a)=idx(best); idx(best)=tmp; }
+		bool marked=false;
+		for (int a=1;a<=nvar;a++){ int i=idx(a);
+			ofs << x_names[i] << "\t" << vcol(i);
+			if (!marked && fabs(vcol(i))<0.01){ ofs << "\t< 0.01 onward"; marked=true; }
+			ofs << "\n"; }
+	}
+	ofs << "\n";
+
+	// --- strongly cross-correlated parameter pairs (|rho| > 0.8) ---
+	ofs << "Cross-correlated pairs (|correlation| > 0.8)\n";
+	ofs << "# |r|>0.8 (rho^2>0.64, >64% shared variance); * = |r|>0.9, ** = |r|>0.95 (effectively non-separable)\n";
 	for (int i=1; i<=nvar; i++)
-		ofs << x_names[i] << "\t" << vcol(i) << "\n";
+		for (int j=i+1; j<=nvar; j++)
+			if (fabs(Corr(i,j)) > 0.8){
+				const char* mark = (fabs(Corr(i,j)) > 0.95) ? "**" : (fabs(Corr(i,j)) > 0.9) ? "*" : "";
+				char rbuf[16];
+				snprintf(rbuf, sizeof rbuf, "%.2f", Corr(i,j));
+				ofs << x_names[i] << "\t" << x_names[j] << "\t" << rbuf << mark << "\n";
+			}
 	ofs << "\n";
 
 	ofs << "Eigenvalues:\n" << evalues << "\n\n";
