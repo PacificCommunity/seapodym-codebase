@@ -101,7 +101,7 @@ public:
 
 	int get_iterationN(){return iterationNumber;}
 	int get_maxn(){return maxn;}
-	int get_Vinf(){return Vinf;}
+	double get_Vinf(){return Vinf;}
 	//void set_gradcalc(bool flag){_gradcalc = flag;}
 
 private:
