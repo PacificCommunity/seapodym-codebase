@@ -38,6 +38,9 @@ void SeapodymCoupled::ReadLarvae()
 				}
 			}
 			litbin.close();
+			
+			double iAgg_max = max(mat.larvae_input[iAgg]);
+			if (larvae_obs_max < iAgg_max) larvae_obs_max = iAgg_max;
 		}
 
 		// Vector of non-NA observed density

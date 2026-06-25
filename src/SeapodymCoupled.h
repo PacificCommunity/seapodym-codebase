@@ -115,6 +115,7 @@ private:
 	ivector ntime_agg;
 	double elarvae_dt;
 	double larvaelike;
+	double larvae_obs_max = 0.0;
 	
 	//catch and length
 

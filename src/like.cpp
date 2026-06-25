@@ -211,6 +211,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 
 dvariable SeapodymCoupled::larvae_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
 	dvariable lkhd = 0.0;
+TRACE(like_type)	
 	switch (like_type){
 		case 0: // Mixed Gaussian Kernel cost function
 			lkhd = NshkwCat.mixed_gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
@@ -257,10 +258,11 @@ dvariable SeapodymCoupled::larvae_like(int like_type, int L_obs, dvariable N_pre
 }
 
 dvariable SeapodymCoupled::larvae_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
+
 	dvariable lkhd = 0.0;
 	switch (like_type){
 		case 0: // Gaussian cost function
-			lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+			lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, larvae_obs_max, 0);
 			break;
 
 		case 1:{// Poisson cost function
@@ -290,6 +292,10 @@ dvariable SeapodymCoupled::larvae_like(int like_type, double L_obs, dvariable N_
 
 		case 4: // Zero-Inflated Poisson cost function
 			lkhd = zip_comp(L_obs, N_pred, *param, 0);
+			break;
+
+		case 5: // Logit-Normal likelihood
+			lkhd = logit_normal_comp(L_obs, N_pred, *param, larvae_obs_max, 0);
 			break;
 	}
 	return(lkhd);

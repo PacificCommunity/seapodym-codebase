@@ -1,10 +1,10 @@
 #include "NishikawaLike.h"
 #include <fvar.hpp>
 
-static dvariable obs_model_linear(dvariable h, dvariable N_pred) { return N_pred * h; }
-static dvariable obs_model_nonlinear(dvariable h, dvariable N_pred) { return N_pred*N_pred / (h + N_pred*N_pred);} 
+static dvariable obs_model_linear(dvariable h, dvariable y) { return h * y; }
+static dvariable obs_model_nonlinear(dvariable h, dvariable y) { return y*y / (h*h + y*y);} 
 
-
+double eps = 1e-6;
 // Class and function to compute the likelihood of a larvae density observed on an interval (raw Nishikawa data).
 
 NishikawaCategories::NishikawaCategories(VarParamCoupled& param): dl(0.1) {
@@ -591,16 +591,17 @@ void dv_categorical_zip_comp(){
 
 // Functions to compute the likelihood of a larvae density observed on a continuous scale
 
-dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
+dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double larvae_obs_max, int sp){
 
 	dvariable L_pred;
-
 	dvariable h = param.dvarsQ_sp_larvae[sp];
 	if (param.linear_larvae_obs_model)
 		L_pred = obs_model_linear(h, N_pred);
-	else
-		L_pred = obs_model_nonlinear(h, N_pred);
-
+	else{
+		N_pred = 1e-4*N_pred;
+		//L_pred = obs_model_nonlinear(h, N_pred);
+		L_pred = larvae_obs_max * obs_model_nonlinear(h, N_pred);
+	}
 	dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
 	dvariable lkhd = 0.0;
 
@@ -610,6 +611,26 @@ dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, 
 		lkhd = pow(N_obs-L_pred, 2.0)/(2.0 * pow(sigma, 2.0));
 	
 	return 1000.0*lkhd;
+}
+
+//This likelihood function is only when having probability of presence as observed quantity
+dvariable logit_normal_comp(double pp_obs, dvariable N_pred, VarParamCoupled& param, const double larvae_obs_max, int sp){
+
+	dvariable like = 0.0;
+
+	dvariable h = param.dvarsQ_sp_larvae[sp];
+	dvariable y = 0.0001*N_pred;
+	y = larvae_obs_max * obs_model_nonlinear(h,y);
+	//y = obs_model_nonlinear(h,y);
+	dvariable ys = y - 2.0*y*eps + eps; 			  //to avoid [0,1] values
+	dvariable pred = log(ys/(1.0 - ys));
+
+	double xs  = pp_obs - 2.0*pp_obs*eps + eps; //to avoid [0,1] values 
+	double obs = log(xs/(1.0 - xs));
+	// sigma fixed: drop log(sigma); w = 0.5/(sigma*sigma) will be the larval-data WEIGHT (outside of this function)
+	if (pp_obs>0) //in BRTM outputs zero corresponds to NO observations
+		like = pow(obs - pred,2);   // + an irrelevant constant
+	return like;
 }
 
 dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp){

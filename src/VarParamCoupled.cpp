@@ -402,7 +402,7 @@ bool VarParamCoupled::read(const string& parfile)
 
 		BHsat_model[sp] = 0;
 		if (!doc.get("/BH_with_halfsat_model",sp_name[sp]).empty())
-			BHsat_model[sp] = !doc.getInteger("/BH_with_halfsat_model", sp_name[sp]);
+			BHsat_model[sp] = doc.getInteger("/BH_with_halfsat_model", sp_name[sp]);
 
 		//old parameter files:
 		if (doc.get("/spawning_season_peak").empty()){
@@ -897,8 +897,8 @@ bool VarParamCoupled::read(const string& parfile)
 			larvae_like[sp] = 0;
 		}	
 		linear_larvae_obs_model = 1;
-		if (!doc.get("/larvae_obs_model_type","value").empty()){
-			linear_larvae_obs_model = doc.getInteger("/larvae_obs_model_type", "value");	
+		if (!doc.get("/is_larvae_obs_model_linear","flag").empty()){
+			linear_larvae_obs_model = doc.getInteger("/is_larvae_obs_model_linear", "flag");	
 		}
 		if (larvae_like[sp]){
 			if (!doc.get("/larvae_likelihood_years","first_year").empty())
