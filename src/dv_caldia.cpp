@@ -243,7 +243,7 @@ void dv_caldia()
 	dvector lat_correction(jinf,jsup);
 	lat_correction = mat->lat_correction;
 
-	const int    deltaT = param->deltaT;
+	const double deltaT = param->deltaT;
 	const double length = param->length[sp][age]*0.01;
 	const double lmax   = param->length[sp][param->sp_nb_cohorts[sp]-1]*0.01;
 	const double unit_x = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dx;
@@ -684,7 +684,7 @@ void dv_caldia_UV()
 	dvector lat_correction(jinf,jsup);
 	lat_correction = mat->lat_correction;
 
-	const int    deltaT = param->deltaT;
+	const double deltaT = param->deltaT;
 	const double length = param->length[sp][age]*0.01;
 	const double lmax   = param->length[sp][param->sp_nb_cohorts[sp]-1]*0.01;
 	const double unit_x = pow(length,mss_size_slope)*(3600*24.0*deltaT/1852)*dx;
