@@ -35,23 +35,23 @@ void Hessian_comp(const char* parfile)
 	
 	cout << "Likelihood and Gradient for estimated vector: \n" << likelihood << "; " << g1 << endl;
 	
-	//two-point finite-difference approximation of the Hessian
+	//bound-aware one-sided FD Hessian with Richardson extrapolation.
+	//scaled x in [-1,1] (ADMB arcsin transform): step INWARD -- forward by default,
+	//backward when a forward step would cross the upper bound (|x|=1).
 	for (int ix=1; ix<=nvar; ix++){
 		double xs = x(ix);
+		double s  = (xs + delta > 1.0) ? -1.0 : 1.0;   //-1 => backward (near upper bound)
 
-		x(ix) = xs + delta; 
+		x(ix) = xs + s*delta;
 		likelihood = run_model(sc,x,g2,nvar);
-		
-		H1 = (g2-g1)/delta; 
-			
+		H1 = (g2-g1)/(s*delta);
 		g2.initialize();
 
-		x(ix) = xs + epsilon*delta; //1. step correction
+		x(ix) = xs + s*epsilon*delta; //1. step correction
 		likelihood = run_model(sc,x,g2,nvar);
+		H2 = (g2-g1)/(s*epsilon*delta); //1. step correction
 
-		H2 = (g2-g1)/(epsilon*delta); // 1. step correction
-
-		H(ix) = (H2-epsilon*H1)/(1-epsilon); // 1. step correction
+		H(ix) = (H2-epsilon*H1)/(1-epsilon); //1. step correction
 
 		cout << ix << ".\t"<< H(ix) << endl;
 
@@ -68,6 +68,17 @@ void Hessian_comp(const char* parfile)
 	dmatrix Cov = inv(H);
 	double determ = det(H);
 	dvector evalues = eigenvalues(H);
+
+	double max_abs_eig = fabs(evalues(1)), min_abs_eig = fabs(evalues(1));
+	int    n_negative  = (evalues(1) < 0.0) ? 1 : 0;
+	for (int i = 2; i <= nvar; i++){
+		double a = fabs(evalues(i));
+		if (a > max_abs_eig) max_abs_eig = a;
+		if (a < min_abs_eig) min_abs_eig = a;
+		if (evalues(i) < 0.0) n_negative++;
+	}
+	double condition_number = max_abs_eig / min_abs_eig;   // largest / smallest eigenvalue by magnitude (spectral condition number; = lambda_max/lambda_min when PD Hessian)
+
 
 	dvector pars = sc.param->get_parvals();
 
@@ -93,7 +104,6 @@ void Hessian_comp(const char* parfile)
 	// Condition number = max/min eigenvalue flags ill-conditioning (near-flat dirs).
 	double emin = min(evalues), emax = max(evalues);
 	int is_pd = (emin > 0.0);
-	double condnum = (emin!=0.0) ? emax/emin : -1.0;
 
 	// Standard errors = sqrt(diag(Cov)); NaN/huge here => non-PD or unidentified.
 	dvector SE(1,nvar);
@@ -129,7 +139,7 @@ void Hessian_comp(const char* parfile)
 	     << " ; relative remaining = " << 0.5*lambda2/likelihood << " (<<1 => at the minimum)" << endl;
 	cout << "max relative Newton step |dx/x| = " << maxrel_step << endl;
 	cout << (is_pd ? "PD (local min)" : "NOT PD -> saddle/flat")
-	     << " ; condition number = " << condnum << endl;
+	     << " ; condition number = " << condition_number << endl;
 
 	ofstream ofs;
 	const char* filename = "Hessian.out";
@@ -144,8 +154,14 @@ void Hessian_comp(const char* parfile)
 	ofs << "\n";
 
 	ofs << "CONVERGENCE DIAGNOSTICS\n";
-	ofs << "likelihood\t"           << likelihood             << "\t# objective (neg. log-likelihood) being minimised\n";
-	ofs << "Gmax\t"                 << gmax                   << "\t# max|gradient|; scale-dependent, NOT a reliable convergence test\n";
+	ofs << "Note, negative eigenvalues at a converged minimum may indicate FD noise (|min_eig| large, scales ~1/h)\n";
+	ofs << "Run Hessian with different FD steps and verify it's a minimum IF: \n";
+	ofs << "- Newton_decrement_sq, relative_remaining and variance_along are stable across FD steps\n";
+	ofs << "- relative_remaining is small (<<1)\n";
+	ofs << "If so, the non-PD is attributable to the ill-conditioning (condition_number > 1e6), not to a real saddle\n";
+	and positive, if relative_remaining is small variance_along and condition_number (if >10^6 then ill-conditioning)\n"
+	ofs << "likelihood\t"           << likelihood             << "\t# objective (neg. log-likelihood) \n";
+	ofs << "Gmax\t"                 << gmax                   << "\t# max|gradient|, scale-dependent - NOT a reliable convergence test\n";
 	ofs << "Newton_decrement_sq\t"  << lambda2                << "\t# g'H^-1g; curvature-weighted distance to the minimum\n";
 	ofs << "pred_remaining_dL\t"    << 0.5*lambda2            << "\t# objective decrease predicted to reach the quadratic minimum\n";
 	ofs << "relative_remaining\t"   << 0.5*lambda2/likelihood << "\t# pred_remaining_dL / L; scale-invariant; <<1 => at the minimum\n";
@@ -153,12 +169,13 @@ void Hessian_comp(const char* parfile)
 	ofs << "determinant\t"          << determ                 << "\t# det(H); >0 consistent with positive definite\n";
 	ofs << "min_eigenvalue\t"       << emin                   << "\t# smallest curvature (flattest direction)\n";
 	ofs << "max_eigenvalue\t"       << emax                   << "\t# largest curvature (stiffest direction)\n";
+	ofs << "nb_neg_eigenvalues\t"   << n_negative             << "\t# count of negative eigenvalues; 0 => PD";
 	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no") << "\t# yes => (local) minimum; no => saddle / not a minimum\n";
-	ofs << "condition_number\t"     << condnum                << "\t# max/min eigenvalue; high => ill-conditioned (near-flat directions)\n\n";
+	ofs << "condition_number\t"     << condition_number       << "\t# |max|/|min| eigenvalue magnitude (spectral); valid whether PD or not; high => ill-conditioned\n\n";
+	ofs << "variance_along\t" 	<< var_flat               << "\t# = 1 / smallest-magnitude eigenvalue = variance along the flattest direction; stable & positive => real minimum\n";
 
 	ofs << "FLATTEST direction (dominant eigenvector of covariance = smallest-curvature direction of the likelihood)\n";
 	ofs << "# Shows a SATURATED / individually unidentified parameter: a flat region of its functional form.\n";
-	ofs << "variance_along\t" << var_flat << "\t# = 1 / min_eigenvalue\n";
 	{
 		ivector idx(1,nvar);
 		for (int i=1;i<=nvar;i++) idx(i)=i;
