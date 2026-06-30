@@ -316,8 +316,8 @@ void dv_Hf_comp(void)
 				dfHa(i,j)  = 0.0;  
 
 				//3. rotated hyperbola 
-				//func_Hf = param.func_limit_one(Hf);
-				double dfHf = param->dffunc_limit_one(Hf,dffunc_Hf);
+				//func_Hf = param.func_limit_habitat_one(Hf);
+				double dfHf = param->dffunc_limit_habitat_one(Hf,dffunc_Hf);
 				dffunc_Hf = 0.0;
 
 			
@@ -558,7 +558,7 @@ void dv_Ha_comp(void)
 
                                         Hf += f_access * F;
                                 }
-                                double Hf_func = param->func_limit_one(Hf);
+                                double Hf_func = param->func_limit_habitat_one(Hf);
 				
 
 				double dfHf = 0.0;

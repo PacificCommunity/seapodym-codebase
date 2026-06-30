@@ -389,6 +389,8 @@ public:
 	int lontoi(double lon);
 	double func_limit_one(const double m);
 	double dffunc_limit_one(const double x, const double dfy);
+	double func_limit_habitat_one(const double m);
+	double dffunc_limit_habitat_one(const double x, const double dfy);
 	//double dffunc_limit_one(const double m);
 	double f1_smooth(const double x);
 	double df1_smooth(const double x);

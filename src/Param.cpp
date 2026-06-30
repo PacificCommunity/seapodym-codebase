@@ -269,6 +269,70 @@ double CParam::dffunc_limit_one(const double x, const double dfy)
 	return(dfx);
 }
 
+double CParam::func_limit_habitat_one(const double x)
+{
+	//parameters of hyperbola
+	double phi = 22.5*pi/180.0;
+	double a = 0.2;
+	double e = 1.0/cos(phi);
+	double b = a*sqrt(e*e-1.0);
+
+	//coordinate center
+	//shift is to have all y>=0
+	double x0 = 1.0-0.00101482322788;
+	double y0 = 1.0;
+
+	//equation for hyperbola
+	double sinsq = sin(phi)*sin(phi);
+	double cossq = 1.0-sinsq;
+	double rasq  = 1.0/(a*a);
+	double rbsq  = 1.0/(b*b);
+	double A = sinsq*rasq - cossq*rbsq;
+	double B = -2.0*(x-x0)*cos(phi)*sin(phi)*(rasq+rbsq);
+	double C = 1.0-(x-x0)*(x-x0)*(sinsq*rbsq-cossq*rasq);
+
+	return(y0+(B+sqrt(B*B-4.0*A*C))/(2*A));
+}
+
+double CParam::dffunc_limit_habitat_one(const double x, const double dfy)
+{
+	//parameters of hyperbola
+	double phi = 22.5*pi/180.0;
+	double a = 0.2;
+	double e = 1.0/cos(phi);
+	double b = a*sqrt(e*e-1.0);
+
+	//coordinate center
+	//shift is to have all y>=0
+	double x0 = 1.0-0.00101482322788;
+	//double y0 = 1.0;
+
+	//precompute 
+	double sinsq = sin(phi)*sin(phi);
+	double cossq = 1.0-sinsq;
+	double rasq  = 1.0/(a*a);
+	double rbsq  = 1.0/(b*b);
+	double A = sinsq*rasq - cossq*rbsq;
+	double B = -2.0*(x-x0)*cos(phi)*sin(phi)*(rasq+rbsq);
+	double C = 1.0-(x-x0)*(x-x0)*(sinsq*rbsq-cossq*rasq);
+	double D = sqrt(B*B-4.0*A*C);
+
+	//derivatives
+	double dfx = 0.0;
+	//double y = y0+(B+sqrt(B*B-4.0*A*C))/(2*A);
+	double dfC = -dfy/D;
+	double dfB = dfy*(1.0+B/D)/(2*A);
+
+	//double C = 1.0-(x-x0)*(x-x0)*(sinsq*rbsq-cossq*rasq);
+	dfx -= 2.0*(x-x0)*(sinsq*rbsq-cossq*rasq)*dfC;
+
+	//double B = -2.0*(x-x0)*cos(phi)*sin(phi)*(rasq+rbsq);
+	dfx -= 2.0*cos(phi)*sin(phi)*(rasq+rbsq)*dfB;
+
+	return(dfx);
+}
+
+
 double CParam::f1_smooth(const double x){
 
 	const double k = 8.0;
