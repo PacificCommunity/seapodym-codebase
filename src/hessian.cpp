@@ -90,24 +90,24 @@ void Hessian_comp(const char* parfile)
 	double gmax = 0.0;
 	for (int i=1; i<=nvar; i++){ double a = fabs(g1(i)); if (a>gmax) gmax = a; }
 
+	// Standard errors = sqrt(diag(Cov)); NaN/huge here => non-PD or unidentified.
+	dvector SE(1,nvar);
+	for (int i=1; i<=nvar; i++) SE(i) = sqrt(Cov(i,i));
+
 	// Newton decrement lambda2 = g'H^{-1}g. Half of it is the objective decrease
 	// predicted on stepping to the local quadratic minimum; 0.5*lambda2/L is the
 	// scale-invariant relative improvement still available (<<1 => at the minimum).
 	dvector Hinv_g = Cov*g1;
 	double lambda2 = g1*Hinv_g;
 	dvector nstep  = -Hinv_g;                 // Newton step
-	double maxrel_step = 0.0;
+	double maxse_step  = 0.0; int ise  = 1;
 	for (int i=1; i<=nvar; i++)
-		if (pars(i)!=0.0){ double a = fabs(nstep(i)/pars(i)); if (a>maxrel_step) maxrel_step = a; }
-
+		if (SE(i)  !=0.0){ double b = fabs(nstep(i)/SE(i));   if (b>maxse_step ){maxse_step  = b; ise  = i;}}	
+	
 	// Eigenvalues of H: all positive => positive definite => genuine local minimum.
 	// Condition number = max/min eigenvalue flags ill-conditioning (near-flat dirs).
 	double emin = min(evalues), emax = max(evalues);
 	int is_pd = (emin > 0.0);
-
-	// Standard errors = sqrt(diag(Cov)); NaN/huge here => non-PD or unidentified.
-	dvector SE(1,nvar);
-	for (int i=1; i<=nvar; i++) SE(i) = sqrt(Cov(i,i));
 
 	// Correlation matrix (built once; scale-free; reused below).
 	dmatrix Corr(1,nvar,1,nvar);
@@ -137,7 +137,7 @@ void Hessian_comp(const char* parfile)
 	cout << "L = " << likelihood << " ; Gmax = " << gmax << " (scale-dependent; not used for convergence)" << endl;
 	cout << "Newton decrement^2 = " << lambda2
 	     << " ; relative remaining = " << 0.5*lambda2/likelihood << " (<<1 => at the minimum)" << endl;
-	cout << "max relative Newton step |dx/x| = " << maxrel_step << endl;
+	cout << "max Newton step in SE units, max|dx/SE| = " << maxse_step << endl;
 	cout << (is_pd ? "PD (local min)" : "NOT PD -> saddle/flat")
 	     << " ; condition number = " << condition_number << endl;
 
@@ -146,11 +146,14 @@ void Hessian_comp(const char* parfile)
 	ofs.open(filename, ios::out);
 	ofs << nvar << "\n\n";
 
-	ofs << "Parameter\tEstimate\tGradient\tStdErr\tCV\n";
-	ofs << "# StdErr = sqrt(diag(inverse Hessian)); CV = StdErr/|Estimate| (relative uncertainty)\n";
+	ofs << "Parameter\tEstimate\tGradient\tStdErr\tCV\tNewtonStep\tNewtonStep/SE\n";
+	ofs << "# NewtonStep=(-H^-1 g)_i is the step to the local (unconstrained) quadratic min; \n";
+	ofs << "# normalized by parameter SE, it shows how far FM still wants to move within parameter uncertainty\n";
 	for (int i=1; i<=nvar; i++)
 		ofs << x_names[i] << "\t" << pars(i) << "\t" << g1(i) << "\t"
-		    << SE(i) << "\t" << SE(i)/fabs(pars(i)) << "\n";
+			<< SE(i) << "\t" << SE(i)/fabs(pars(i)) << "\t"
+			<< nstep(i) << "\t" << nstep(i)/SE(i) << "\n";
+
 	ofs << "\n";
 
 	ofs << "CONVERGENCE DIAGNOSTICS\n";
@@ -159,20 +162,33 @@ void Hessian_comp(const char* parfile)
 	ofs << "- Newton_decrement_sq, relative_remaining and variance_along are stable across FD steps\n";
 	ofs << "- relative_remaining is small (<<1)\n";
 	ofs << "If so, the non-PD is attributable to the ill-conditioning (condition_number > 1e6), not to a real saddle\n";
-	and positive, if relative_remaining is small variance_along and condition_number (if >10^6 then ill-conditioning)\n"
 	ofs << "likelihood\t"           << likelihood             << "\t# objective (neg. log-likelihood) \n";
 	ofs << "Gmax\t"                 << gmax                   << "\t# max|gradient|, scale-dependent - NOT a reliable convergence test\n";
 	ofs << "Newton_decrement_sq\t"  << lambda2                << "\t# g'H^-1g; curvature-weighted distance to the minimum\n";
 	ofs << "pred_remaining_dL\t"    << 0.5*lambda2            << "\t# objective decrease predicted to reach the quadratic minimum\n";
 	ofs << "relative_remaining\t"   << 0.5*lambda2/likelihood << "\t# pred_remaining_dL / L; scale-invariant; <<1 => at the minimum\n";
-	ofs << "max_rel_newton_step\t"  << maxrel_step            << "\t# largest |dx/x|; how far parameters still want to move\n";
+	ofs << "max_step_in_SE\t"       << maxse_step             << "\t# largest |dx/StdErr| is for " << x_names[ise] << "; <1 => remaining move is within own uncertainty\n";
 	ofs << "determinant\t"          << determ                 << "\t# det(H); >0 consistent with positive definite\n";
-	ofs << "min_eigenvalue\t"       << emin                   << "\t# smallest curvature (flattest direction)\n";
+	ofs << "min_eigenvalue\t"       << emin                   << "\t# smallest curvature: >0 - flattest direction, <0 - saddle or FD-noise\n";
 	ofs << "max_eigenvalue\t"       << emax                   << "\t# largest curvature (stiffest direction)\n";
 	ofs << "nb_neg_eigenvalues\t"   << n_negative             << "\t# count of negative eigenvalues; 0 => PD";
 	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no") << "\t# yes => (local) minimum; no => saddle / not a minimum\n";
 	ofs << "condition_number\t"     << condition_number       << "\t# |max|/|min| eigenvalue magnitude (spectral); valid whether PD or not; high => ill-conditioned\n\n";
 	ofs << "variance_along\t" 	<< var_flat               << "\t# = 1 / smallest-magnitude eigenvalue = variance along the flattest direction; stable & positive => real minimum\n";
+
+	// --- strongly cross-correlated parameter pairs (|rho| > 0.8) ---
+	ofs << "Cross-correlated pairs (|correlation| > 0.8)\n";
+	ofs << "# |r|>0.8 (rho^2>0.64, >64% shared variance); * = |r|>0.9, ** = |r|>0.95 (effectively non-separable)\n";
+	for (int i=1; i<=nvar; i++)
+		for (int j=i+1; j<=nvar; j++)
+			if (fabs(Corr(i,j)) > 0.8){
+				const char* mark = (fabs(Corr(i,j)) > 0.95) ? "**" : (fabs(Corr(i,j)) > 0.9) ? "*" : "";
+				char rbuf[16];
+				snprintf(rbuf, sizeof rbuf, "%.2f", Corr(i,j));
+				ofs << x_names[i] << "\t" << x_names[j] << "\t" << rbuf << mark << "\n";
+			}
+	ofs << "\n";
+
 
 	ofs << "FLATTEST direction (dominant eigenvector of covariance = smallest-curvature direction of the likelihood)\n";
 	ofs << "# Shows a SATURATED / individually unidentified parameter: a flat region of its functional form.\n";
@@ -205,19 +221,6 @@ void Hessian_comp(const char* parfile)
 			if (!marked && fabs(vcol(i))<0.01){ ofs << "\t< 0.01 onward"; marked=true; }
 			ofs << "\n"; }
 	}
-	ofs << "\n";
-
-	// --- strongly cross-correlated parameter pairs (|rho| > 0.8) ---
-	ofs << "Cross-correlated pairs (|correlation| > 0.8)\n";
-	ofs << "# |r|>0.8 (rho^2>0.64, >64% shared variance); * = |r|>0.9, ** = |r|>0.95 (effectively non-separable)\n";
-	for (int i=1; i<=nvar; i++)
-		for (int j=i+1; j<=nvar; j++)
-			if (fabs(Corr(i,j)) > 0.8){
-				const char* mark = (fabs(Corr(i,j)) > 0.95) ? "**" : (fabs(Corr(i,j)) > 0.9) ? "*" : "";
-				char rbuf[16];
-				snprintf(rbuf, sizeof rbuf, "%.2f", Corr(i,j));
-				ofs << x_names[i] << "\t" << x_names[j] << "\t" << rbuf << mark << "\n";
-			}
 	ofs << "\n";
 
 	ofs << "Eigenvalues:\n" << evalues << "\n\n";
