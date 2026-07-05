@@ -56,14 +56,54 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		const std::shared_ptr<spdlog::logger>& logger,
 		DistDataCollector* dataCollector,
-		SeapodymCohort* cohort){
+		SeapodymCohort* cohort,
+		int firstAPlusId, int numAgeGroups, int numTimeSteps){
 
 	static double last_task_end = -1.0;        // per-worker process, persists across calls
 	double t_in = MPI_Wtime();
 	if (last_task_end >= 0.0)
-		time_idle += t_in - last_task_end;     // <-- time spent in worker.run() waiting for dispatch	
-	
+		time_idle += t_in - last_task_end;     // <-- time spent in worker.run() waiting for dispatch
+
 	double tik = MPI_Wtime();
+
+	if (task_id >= firstAPlusId) {
+		// A+ (plus group) accumulator task. This is not a live biological
+		// cohort: it is the spatial sum of (a) the individuals that just
+		// graduated into the top age class at the previous time step and
+		// (b) the existing A+ pool carried over from the previous time step.
+		// stepBeg/stepEnd are always 0/1 for these tasks (see
+		// SeapodymCohortDependencyAnalyzer), so there is nothing to loop over.
+		int t = task_id - firstAPlusId;
+		logger->info("> A+ task id {} (t={})", task_id, t);
+
+		std::vector<double> buf(dataCollector->getNumSize());
+		if (task_id == firstAPlusId) {
+			// t=0: no upstream dependency; seed from the actual initial
+			// condition for the A+ age bin (index sp_nb_cohorts[0]-1 == numAgeGroups).
+			buf = cohort->GetInitDensity(numAgeGroups);
+		} else {
+			int prevAPlusChunk  = SeapodymCohort::computeAPlusChunkId(task_id - 1, firstAPlusId, numAgeGroups, numTimeSteps);
+			int graduatingChunk = SeapodymCohort::computeChunkId(t - 1, numAgeGroups - 1, numAgeGroups);
+			std::vector<double> prevAPlus(dataCollector->getNumSize());
+			std::vector<double> graduating(dataCollector->getNumSize());
+			dataCollector->get(prevAPlusChunk, prevAPlus.data());
+			dataCollector->get(graduatingChunk, graduating.data());
+			for (std::size_t k = 0; k < buf.size(); ++k)
+				buf[k] = prevAPlus[k] + graduating[k];
+		}
+
+		int myChunk = SeapodymCohort::computeAPlusChunkId(task_id, firstAPlusId, numAgeGroups, numTimeSteps);
+		dataCollector->put(myChunk, buf.data());
+
+		int success = task_id;
+		int output[3] = {task_id, stepBeg, success};
+		MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
+
+		time_calc += MPI_Wtime() - tik;
+		last_task_end = MPI_Wtime();
+		logger->info("< A+ task id {} (t={})", task_id, t);
+		return;
+	}
 
 	logger->info("> task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 
@@ -167,8 +207,12 @@ int main(int argc, char** argv) {
 	param.init_param();
 	param.read(parfile);
 
-	// Get number of time steps and number of cohorts from param
-	int numAgeGroups = param.sp_nb_cohorts[0];
+	// Get number of time steps and number of cohorts from param.
+	// numAgeGroups excludes the A+ (plus group) bin: the diagonal cohort-task
+	// scheme ages "normal" cohorts through numAgeGroups steps, and the A+ bin
+	// (age index sp_nb_cohorts[0]-1) is modelled separately as its own chain
+	// of one-step accumulator tasks (see SeapodymCohortDependencyAnalyzer).
+	int numAgeGroups = param.sp_nb_cohorts[0] - 1;
 	int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
 	Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
 	//int numTasks = numAgeGroups + numTimeSteps - 1;
@@ -180,8 +224,10 @@ int main(int argc, char** argv) {
 	//Set-up the size for the shared arrays for forcing data
 	std::vector<std::pair<std::string, std::size_t>> nameSizePairs = param.getDpNameSizePairs(numTimeSteps, map.get_array_size());
 
-	// set up the data collector
-	int numChunks = numAgeGroups * numTimeSteps;
+	// set up the data collector. One extra chunk per time step is reserved
+	// for the A+ (plus group) accumulator series, appended after the normal
+	// (task, step) chunk range - see SeapodymCohort::computeAPlusChunkId().
+	int numChunks = numAgeGroups * numTimeSteps + numTimeSteps;
 
 	int color = (workerId == 0) ? 0 : 1;
 	MPI_Comm workerComm;
@@ -194,8 +240,9 @@ int main(int argc, char** argv) {
 
 	DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
 
-	// analyze the cohort Id task dependencies
-	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0]);
+	// analyze the cohort Id task dependencies (aPlusCohort=true adds the A+ chain)
+	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0], /*aPlusCohort=*/true);
+	int firstAPlusId = taskDeps.getFirstAPlusCohortId();
 	int numCohorts = taskDeps.getNumberOfCohorts();
 	std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
 	std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
@@ -272,7 +319,8 @@ int main(int argc, char** argv) {
 				std::placeholders::_4, // MPI communicator so we can send messages to the manager at the end of each step
 				logger,
 				&dataCollect,
-				&cohort);
+				&cohort,
+				firstAPlusId, numAgeGroups, numTimeSteps);
 
 			TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
 

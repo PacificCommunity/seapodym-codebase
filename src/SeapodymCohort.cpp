@@ -30,6 +30,21 @@ std::vector<double> SeapodymCohort::GetCohortDensity()
 	return vec;
 }
 
+std::vector<double> SeapodymCohort::GetInitDensity(int age)
+{
+	const int imin = map.imin1;
+	const int imax = map.imax1;
+	std::vector<double> vec;
+	for (int i = imin; i <= imax; i++){
+		const int jmin = map.jinf1[i];
+		const int jmax = map.jsup1[i];
+		for (int j = jmin ; j <= jmax; j++){
+			vec.push_back(mat.init_density_species(0, age, i, j));
+		}
+	}
+	return vec;
+}
+
 void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles) 
 {
 

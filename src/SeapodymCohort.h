@@ -18,7 +18,11 @@ public:
 	SeapodymCohort(){/*DoesNothing*/};
 	SeapodymCohort(const char* parfile, int cohortId) : SeapodymCoupled(parfile) {
 		cohort_id = cohortId;
-		nb_age_class = param->sp_nb_cohorts[0];
+		// nb_age_class excludes the A+ (plus group) bin: the diagonal cohort-task
+		// scheme only ages "normal" cohorts through nb_age_class steps; the A+
+		// bin (age index sp_nb_cohorts[0]-1) is handled separately as its own
+		// chain of accumulator tasks (see main_cohort.cpp / SeapodymCohortDependencyAnalyzer).
+		nb_age_class = param->sp_nb_cohorts[0] - 1;
 
 		// Get starting age_class and start time from cohort_id
 		if (cohort_id >= nb_age_class){
@@ -38,17 +42,36 @@ public:
 	void OnRunFirstStep();
 	double Checksum();
 	std::vector<double> GetCohortDensity();
-	int getChunkId(int step) {
-		int row = cohort_id - nb_age_class + 1 + step;
+	// Flattened initial-condition density for a given age index (map.imin1..imax1 /
+	// jinf1..jsup1 ordering, same as GetCohortDensity()). Used to seed the very
+	// first A+ accumulator task (t=0), which has no upstream task dependency.
+	std::vector<double> GetInitDensity(int age);
+
+	// Chunk-id formula for a normal (non-A+) cohort task, factored out as a
+	// static so callers (e.g. main_cohort.cpp) can look up the chunk of *any*
+	// task/step pair, not just "this" cohort's own.
+	static int computeChunkId(int taskId, int step, int numAgeGroups) {
+		int row = taskId - numAgeGroups + 1 + step;
 		int col = step;
-		if (cohort_id<nb_age_class && row==0){
-			col = nb_age_class - cohort_id - 1;
+		if (taskId<numAgeGroups && row==0){
+			col = numAgeGroups - taskId - 1;
 		}
-		return row * nb_age_class + col;
+		return row * numAgeGroups + col;
 	}
+	int getChunkId(int step) {
+		return computeChunkId(cohort_id, step, nb_age_class);
+	}
+
+	// Chunk-id formula for an A+ (plus group) accumulator task. A+ tasks are
+	// appended after all the normal (taskId, step) chunks, one per time step:
+	// slot = numAgeGroups*numTimeSteps + (taskId - firstAPlusId).
+	static int computeAPlusChunkId(int taskId, int firstAPlusId, int numAgeGroups, int numTimeSteps) {
+		return numAgeGroups * numTimeSteps + (taskId - firstAPlusId);
+	}
+
 	void restart(int cohortId){
 		cohort_id = cohortId;
-		nb_age_class = param->sp_nb_cohorts[0];
+		nb_age_class = param->sp_nb_cohorts[0] - 1; // excludes A+, see constructor
 		// Get starting age_class and start time from cohort_id
 		if (cohort_id >= nb_age_class){
 			age_start = 0;
