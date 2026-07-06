@@ -104,6 +104,8 @@ double pred_surface_comp(dvector forage, const double DL, const int nb_forage, i
 	double pred = frg_surf_day*DL + frg_surf_night/12.0 + 1e-9; 
 
 	return pred;		
+	
+//	return 1.0;	
 }
 
 double lognormal(const double x, const double mu, const double sigma)
