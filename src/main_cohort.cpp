@@ -67,20 +67,29 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	double tik = MPI_Wtime();
 
 	if (task_id >= firstAPlusId) {
-		// A+ (plus group) accumulator task. This is not a live biological
-		// cohort: it is the spatial sum of (a) the individuals that just
-		// graduated into the top age class at the previous time step and
-		// (b) the existing A+ pool carried over from the previous time step.
-		// stepBeg/stepEnd are always 0/1 for these tasks (see
-		// SeapodymCohortDependencyAnalyzer), so there is nothing to loop over.
+		// A+ (plus group) accumulator task. Behaves like a normal cohort
+		// task from here on - initialize, then stepForward() runs the same
+		// mortality/movement/feeding-habitat dynamics any adult age gets -
+		// except its input density comes from merging two sources each step
+		// instead of a single spawning event, and its age is pinned rather
+		// than advancing (see SeapodymCohort::restartAPlus). stepBeg/stepEnd
+		// are always 0/1 for these tasks (see SeapodymCohortDependencyAnalyzer),
+		// so there is exactly one stepForward() call, not a loop.
 		int t = task_id - firstAPlusId;
 		logger->info("> A+ task id {} (t={})", task_id, t);
 
-		std::vector<double> buf(dataCollector->getNumSize());
-		if (task_id == firstAPlusId) {
-			// t=0: no upstream dependency; seed from the actual initial
-			// condition for the A+ age bin (index sp_nb_cohorts[0]-1 == numAgeGroups).
-			buf = cohort->GetInitDensity(numAgeGroups);
+		const int nvar = cohort->nvarcalc();
+		independent_variables x(1, nvar);
+		adstring_array x_names(1,nvar);
+		cohort->xinit(x, x_names);
+
+		cohort->restartAPlus(t);
+
+		if (t == 0) {
+			// t=0: no upstream dependency; the plus group's opening balance
+			// is just the initial condition for its age bin, read from file
+			// like any other initial cohort.
+			cohort->init_cohort_aplus(x, std::vector<double>(), /*seedFromFile=*/true);
 		} else {
 			int prevAPlusChunk  = SeapodymCohort::computeAPlusChunkId(task_id - 1, firstAPlusId, numAgeGroups, numTimeSteps);
 			int graduatingChunk = SeapodymCohort::computeChunkId(t - 1, numAgeGroups - 1, numAgeGroups);
@@ -88,18 +97,31 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 			std::vector<double> graduating(dataCollector->getNumSize());
 			dataCollector->get(prevAPlusChunk, prevAPlus.data());
 			dataCollector->get(graduatingChunk, graduating.data());
-			for (std::size_t k = 0; k < buf.size(); ++k)
-				buf[k] = prevAPlus[k] + graduating[k];
+			std::vector<double> merged(prevAPlus.size());
+			for (std::size_t k = 0; k < merged.size(); ++k)
+				merged[k] = prevAPlus[k] + graduating[k];
+			cohort->init_cohort_aplus(x, merged, /*seedFromFile=*/false);
 		}
 
+		double tak_aplus = MPI_Wtime();
+		time_cohort_init += tak_aplus - tik;
+
+		// run this time step's real adult dynamics on the seeded/merged density
+		cohort->stepForward(false);
+		logger->info("End of A+ task id {} (t={}). Checksum = {}", task_id, t, cohort->Checksum());
+
+		std::vector<double> out = cohort->GetCohortDensity();
 		int myChunk = SeapodymCohort::computeAPlusChunkId(task_id, firstAPlusId, numAgeGroups, numTimeSteps);
-		dataCollector->put(myChunk, buf.data());
+
+		double t_p = MPI_Wtime();
+		dataCollector->put(myChunk, out.data());
+		time_mpi_put += MPI_Wtime() - t_p;
 
 		int success = task_id;
 		int output[3] = {task_id, stepBeg, success};
 		MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
 
-		time_calc += MPI_Wtime() - tik;
+		time_calc += MPI_Wtime() - tak_aplus;
 		last_task_end = MPI_Wtime();
 		logger->info("< A+ task id {} (t={})", task_id, t);
 		return;
@@ -283,7 +305,7 @@ int main(int argc, char** argv) {
 		double checksumNormal = std::accumulate(data, data + numNormalChunks * numData, 0.0);
 		double checksumAPlus  = std::accumulate(data + numNormalChunks * numData, data + numChunks * numData, 0.0);
 		double checksum = checksumNormal + checksumAPlus;
-		printf("[%d] Checksum = %15.5lf (normal = %15.5lf, A+ = %15.5lf) time manager = %10.5f sec\n",
+		printf("[%d] Checksum = %15.5lf (normal = %15.5lf, A+ = %15.8le) time manager = %10.5f sec\n",
 			workerId, checksum, checksumNormal, checksumAPlus, time_manager);
 
 		//free manager's singleton 'color'

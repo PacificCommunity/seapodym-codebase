@@ -30,22 +30,7 @@ std::vector<double> SeapodymCohort::GetCohortDensity()
 	return vec;
 }
 
-std::vector<double> SeapodymCohort::GetInitDensity(int age)
-{
-	const int imin = map.imin1;
-	const int imax = map.imax1;
-	std::vector<double> vec;
-	for (int i = imin; i <= imax; i++){
-		const int jmin = map.jinf1[i];
-		const int jmax = map.jsup1[i];
-		for (int j = jmin ; j <= jmax; j++){
-			vec.push_back(mat.init_density_species(0, age, i, j));
-		}
-	}
-	return vec;
-}
-
-void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles) 
+void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles)
 {
 
 double t_all = MPI_Wtime();
@@ -134,6 +119,50 @@ double t_sp = MPI_Wtime();
 time_spawning += MPI_Wtime() - t_sp;
 	}
 
+	FinishInitialize(writeoutputfiles);
+
+time_init_cohort_restart += t_rs;
+time_init_cohort_spawning += MPI_Wtime() - t_all - t_rs;
+}
+
+void SeapodymCohort::InitializeAPlus(dvar_vector& x, const std::vector<double>& mergedDensity, bool seedFromFile)
+{
+	//Reset model parameters:
+	reset(x);
+
+	//----------------------------------------------//
+	//	ALLOCATE AND INITIALIZE COHORT DENSITY	//
+	//----------------------------------------------//
+	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	if (seedFromFile){
+		// t=0: no upstream task dependency; the plus group's opening balance
+		// is just the initial condition for its age bin (age_start ==
+		// nb_age_class), read from file exactly like any other initial cohort.
+		RestoreDistributions(mat.nb_age_built);
+		dvarCohortDensity = mat.init_density_species(0,age_start);
+	} else {
+		// t>0: mergedDensity already holds (previous A+ pool) + (individuals
+		// that just graduated into the top age class this step), flattened
+		// in the same map.imin1..imax1/jinf1..jsup1 order GetCohortDensity()
+		// uses. This is the density stepForward() will apply this step's
+		// mortality/movement/feeding-habitat dynamics to - the AgePlus merge
+		// happens here, before dynamics, not instead of them.
+		int index = 0;
+		for (int i = map.imin1; i <= map.imax1; i++){
+			const int jmin1 = map.jinf1[i];
+			const int jmax1 = map.jsup1[i];
+			for (int j = jmin1 ; j <= jmax1; j++){
+				dvarCohortDensity.elem_value(i,j) = mergedDensity[index];
+				index++;
+			}
+		}
+	}
+
+	FinishInitialize(false);
+}
+
+void SeapodymCohort::FinishInitialize(bool writeoutputfiles)
+{
 	if (writeoutputfiles){
 		if (!param->gcalc())
 			ConsoleOutput(0,0);
@@ -141,19 +170,19 @@ time_spawning += MPI_Wtime() - t_sp;
 
 	//----------------------------------------------//
 	// PRECOMPUTE VARIABLES USED IN COHORT MODELING	//
-	//----------------------------------------------//	
+	//----------------------------------------------//
 	//precompute thermal habitat parameters
 	for (int sp=0; sp < nb_species; sp++){
 		func.Vars_at_age_precomp(*param,sp);
 		func.mortality_range_age_comp(*param,mat,sp);
-	
+
 		//precompute seasonal switch function
 		if (param->seasonal_migrations[sp]){
 			func.Seasonal_switch_year_precomp(*param,mat,map,
 						value(param->dvarsSpawning_season_peak[sp]),
 						value(param->dvarsSpawning_season_start[sp]),sp);
 		}
-	}	
+	}
 
 	getDate(jday, t_count);// In order to get qtr
 	if (param->type_oxy==1)
@@ -164,9 +193,6 @@ time_spawning += MPI_Wtime() - t_sp;
 	age = age_start;
 	past_month = month;
 	past_qtr = qtr;
-
-time_init_cohort_restart += t_rs;
-time_init_cohort_spawning += MPI_Wtime() - t_all - t_rs;
 }
 
 void SeapodymCohort::stepForward(bool writeoutputfiles)

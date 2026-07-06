@@ -51,10 +51,6 @@ public:
 	void OnRunFirstStep();
 	double Checksum();
 	std::vector<double> GetCohortDensity();
-	// Flattened initial-condition density for a given age index (map.imin1..imax1 /
-	// jinf1..jsup1 ordering, same as GetCohortDensity()). Used to seed the very
-	// first A+ accumulator task (t=0), which has no upstream task dependency.
-	std::vector<double> GetInitDensity(int age);
 
 	// Chunk-id formula for a normal (non-A+) cohort task, factored out as a
 	// static so callers (e.g. main_cohort.cpp) can look up the chunk of *any*
@@ -90,6 +86,36 @@ public:
 			tstart_cohort = 0;
 		}
 		t_count = tstart_cohort+1;
+	}
+
+	// Sets this object up to represent the A+ (plus group) accumulator task
+	// for absolute time index t (t=0 is the initial condition, before any
+	// time step has elapsed). age/age_start are pinned at nb_age_class (one
+	// past the last normal age, i.e. the A+ bin) rather than advancing:
+	// unlike restart(), each A+(t) is an independent, one-shot task/dispatch
+	// (see SeapodymCohortDependencyAnalyzer), not a persisting trajectory, so
+	// there is no "next age" to advance into. tstart_cohort/t_count follow
+	// the same convention restart() uses for a cohort "born" at time t, which
+	// is what makes stepForward()'s existing calendar-date and forcing-data
+	// lookups (both keyed off tstart_cohort/t_count) come out correct
+	// without any further changes to stepForward() itself.
+	void restartAPlus(int t){
+		age_start = nb_age_class;
+		age = nb_age_class;
+		tstart_cohort = t;
+		t_count = t + 1;
+	}
+
+	// Initializes the A+ task's density either from the actual initial
+	// condition (seedFromFile=true, used only for t=0, which has no upstream
+	// task dependency) or from mergedDensity - the previous A+ pool plus the
+	// individuals that just graduated into the top age class, already summed
+	// by the caller, flattened in the same map.imin1..imax1/jinf1..jsup1
+	// order as GetCohortDensity(). Either way, stepForward() then runs the
+	// same adult dynamics (mortality, movement, feeding habitat) on it that
+	// any other cohort's step would get.
+	void init_cohort_aplus(dvar_vector x, const std::vector<double>& mergedDensity, bool seedFromFile) {
+		return InitializeAPlus(x, mergedDensity, seedFromFile);
 	}
 
 private:
@@ -132,6 +158,13 @@ private:
 	int pop_built;
 
 	void InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles = false);
+	void InitializeAPlus(dvar_vector& x, const std::vector<double>& mergedDensity, bool seedFromFile);
+	// Setup shared by InitializeCohort() and InitializeAPlus(): precomputed
+	// per-age habitat/mortality parameters, calendar date, O2 climatology,
+	// and the age/past_month/past_qtr bookkeeping stepForward() relies on.
+	// Factored out so both initialization paths stay in lockstep instead of
+	// risking drift between two copies of the same ~15 lines.
+	void FinishInitialize(bool writeoutputfiles);
 
 public:
 	void stepForward(const bool writeoutputfiles = false);
