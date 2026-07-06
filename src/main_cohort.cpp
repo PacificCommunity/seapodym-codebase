@@ -264,9 +264,18 @@ int main(int argc, char** argv) {
 		// Make sure the data are ready for the final checksum
 		MPI_Barrier(MPI_COMM_WORLD);
 		double* data = dataCollect.getCollectedDataPtr();
-		// print check sum
-		double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
-		printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
+		// Split the checksum into the "normal" cohort chunk range and the A+
+		// chunk range (see SeapodymCohort::computeAPlusChunkId): normal chunks
+		// come first, A+ chunks are appended after. Keeping them separate lets
+		// us confirm a future change to A+'s dynamics doesn't perturb normal
+		// cohort results, and vice versa, instead of relying on one aggregate
+		// number that could mask a regression in either half.
+		int numNormalChunks = numAgeGroups * numTimeSteps;
+		double checksumNormal = std::accumulate(data, data + numNormalChunks * numData, 0.0);
+		double checksumAPlus  = std::accumulate(data + numNormalChunks * numData, data + numChunks * numData, 0.0);
+		double checksum = checksumNormal + checksumAPlus;
+		printf("[%d] Checksum = %15.5lf (normal = %15.5lf, A+ = %15.5lf) time manager = %10.5f sec\n",
+			workerId, checksum, checksumNormal, checksumAPlus, time_manager);
 
 		//free manager's singleton 'color'
 		MPI_Comm_free(&workerComm);
