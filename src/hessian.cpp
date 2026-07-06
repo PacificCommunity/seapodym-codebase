@@ -160,8 +160,9 @@ void Hessian_comp(const char* parfile)
 	ofs << "Note, negative eigenvalues at a converged minimum may indicate FD noise (|min_eig| large, scales ~1/h)\n";
 	ofs << "Run Hessian with different FD steps and verify it's a minimum IF: \n";
 	ofs << "- Newton_decrement_sq, relative_remaining and variance_along are stable across FD steps\n";
-	ofs << "- relative_remaining is small (<<1)\n";
-	ofs << "If so, the non-PD is attributable to the ill-conditioning (condition_number > 1e6), not to a real saddle\n";
+	ofs << "- variance_along is positive and relative_remaining is small (<<1)\n";
+	ofs << "- while min_eigenvalue itself is unstable, growing like ~1/h (the noise signature)\n";
+	ofs << "If so, the non-PD Hessian points to numerical artefact (FD-noise), not a real saddle\n";
 	ofs << "likelihood\t"           << likelihood             << "\t# objective (neg. log-likelihood) \n";
 	ofs << "Gmax\t"                 << gmax                   << "\t# max|gradient|, scale-dependent - NOT a reliable convergence test\n";
 	ofs << "Newton_decrement_sq\t"  << lambda2                << "\t# g'H^-1g; curvature-weighted distance to the minimum\n";
@@ -171,7 +172,7 @@ void Hessian_comp(const char* parfile)
 	ofs << "determinant\t"          << determ                 << "\t# det(H); >0 consistent with positive definite\n";
 	ofs << "min_eigenvalue\t"       << emin                   << "\t# smallest curvature: >0 - flattest direction, <0 - saddle or FD-noise\n";
 	ofs << "max_eigenvalue\t"       << emax                   << "\t# largest curvature (stiffest direction)\n";
-	ofs << "nb_neg_eigenvalues\t"   << n_negative             << "\t# count of negative eigenvalues; 0 => PD";
+	ofs << "nb_neg_eigenvalues\t"   << n_negative             << "\t# count of negative eigenvalues; 0 => PD\n";
 	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no") << "\t# yes => (local) minimum; no => saddle / not a minimum\n";
 	ofs << "condition_number\t"     << condition_number       << "\t# |max|/|min| eigenvalue magnitude (spectral); valid whether PD or not; high => ill-conditioned\n\n";
 	ofs << "variance_along\t" 	<< var_flat               << "\t# = 1 / smallest-magnitude eigenvalue = variance along the flattest direction; stable & positive => real minimum\n";
