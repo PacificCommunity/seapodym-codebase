@@ -29,11 +29,11 @@ void buffers_set(long int &mv, long int &mc, long int &mg);
 
 double time_worker_init = 0.0, time_cohort_init = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
 
-SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
+SeapodymCohort xinit_prerun_wrapper(const char* parfile, bool useAPlus) {
 
 	double tik = MPI_Wtime();
 
-	SeapodymCohort cohort((char*)parfile, 0);
+	SeapodymCohort cohort((char*)parfile, 0, useAPlus);
 
 	//initialize variables of optimization
 	const int nvar = cohort.nvarcalc();
@@ -179,10 +179,13 @@ int main(int argc, char** argv) {
 
 	CmdLineArgParser cmdLine;
 	cmdLine.set("-s", std::string("initparfile.xml"), "Input parameter file");
+	cmdLine.set("-no-aplus", false, "Disable the A+ (plus group) accumulator and reproduce "
+		"pre-A+ behavior/checksum, for regression comparison.");
 
 	// Parse the command line arguments
 	bool success = cmdLine.parse(argc, argv);
 	bool help = cmdLine.get<bool>("-help") || cmdLine.get<bool>("-h");
+	bool useAPlus = !cmdLine.get<bool>("-no-aplus");
 	if (!success) {
 		std::cerr << "Error parsing command line arguments." << std::endl;
 		cmdLine.help();
@@ -212,7 +215,9 @@ int main(int argc, char** argv) {
 	// scheme ages "normal" cohorts through numAgeGroups steps, and the A+ bin
 	// (age index sp_nb_cohorts[0]-1) is modelled separately as its own chain
 	// of one-step accumulator tasks (see SeapodymCohortDependencyAnalyzer).
-	int numAgeGroups = param.sp_nb_cohorts[0] - 1;
+	// With -no-aplus, numAgeGroups reverts to sp_nb_cohorts[0] and A+ is just
+	// the last ordinary aging cohort, reproducing pre-A+ behavior.
+	int numAgeGroups = param.sp_nb_cohorts[0] - (useAPlus ? 1 : 0);
 	int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
 	Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
 	//int numTasks = numAgeGroups + numTimeSteps - 1;
@@ -224,24 +229,28 @@ int main(int argc, char** argv) {
 	//Set-up the size for the shared arrays for forcing data
 	std::vector<std::pair<std::string, std::size_t>> nameSizePairs = param.getDpNameSizePairs(numTimeSteps, map.get_array_size());
 
-	// set up the data collector. One extra chunk per time step is reserved
-	// for the A+ (plus group) accumulator series, appended after the normal
-	// (task, step) chunk range - see SeapodymCohort::computeAPlusChunkId().
-	int numChunks = numAgeGroups * numTimeSteps + numTimeSteps;
+	// set up the data collector. When A+ is enabled, one extra chunk per time
+	// step is reserved for the A+ (plus group) accumulator series, appended
+	// after the normal (task, step) chunk range - see
+	// SeapodymCohort::computeAPlusChunkId(). With -no-aplus this is 0, and the
+	// buffer is exactly the pre-A+ size.
+	int numChunks = numAgeGroups * numTimeSteps + (useAPlus ? numTimeSteps : 0);
 
 	int color = (workerId == 0) ? 0 : 1;
 	MPI_Comm workerComm;
 	MPI_Comm_split(MPI_COMM_WORLD, color, workerId, &workerComm);
 
 	if (workerId == 0) {
-		printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d\n", \
-			workerId, numData, numAgeGroups, numTimeSteps, numChunks);
+		printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d aPlus = %s\n", \
+			workerId, numData, numAgeGroups, numTimeSteps, numChunks, useAPlus ? "on" : "off");
 	}
 
 	DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
 
-	// analyze the cohort Id task dependencies (aPlusCohort=true adds the A+ chain)
-	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0], /*aPlusCohort=*/true);
+	// analyze the cohort Id task dependencies (aPlusCohort adds the A+ chain;
+	// with -no-aplus this is false, and no A+ task ids are ever generated,
+	// so main()'s A+ branch below simply never triggers)
+	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0], /*aPlusCohort=*/useAPlus);
 	int firstAPlusId = taskDeps.getFirstAPlusCohortId();
 	int numCohorts = taskDeps.getNumberOfCohorts();
 	std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
@@ -307,7 +316,7 @@ int main(int argc, char** argv) {
 		{
 			DataProvider dp(workerComm, nameSizePairs);
 
-			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
+			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str(), useAPlus);
 
 			cohort.setDataProvider(&dp);
 

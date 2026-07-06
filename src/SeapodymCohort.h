@@ -16,13 +16,22 @@ class SeapodymCohort : public SeapodymCoupled
 {
 public:
 	SeapodymCohort(){/*DoesNothing*/};
-	SeapodymCohort(const char* parfile, int cohortId) : SeapodymCoupled(parfile) {
+	// aPlusOn selects whether the A+ (plus group) bin is carved out of the
+	// normal diagonal cohort scheme (default, matches main_cohort.cpp's
+	// default) or folded back in as an ordinary aging cohort, reproducing
+	// pre-A+ behavior. Exposed so main_cohort.cpp's -no-aplus flag can
+	// request the old behavior for regression comparison.
+	SeapodymCohort(const char* parfile, int cohortId, bool aPlusOn = true) : SeapodymCoupled(parfile) {
 		cohort_id = cohortId;
-		// nb_age_class excludes the A+ (plus group) bin: the diagonal cohort-task
-		// scheme only ages "normal" cohorts through nb_age_class steps; the A+
-		// bin (age index sp_nb_cohorts[0]-1) is handled separately as its own
-		// chain of accumulator tasks (see main_cohort.cpp / SeapodymCohortDependencyAnalyzer).
-		nb_age_class = param->sp_nb_cohorts[0] - 1;
+		aPlusEnabled = aPlusOn;
+		// nb_age_class excludes the A+ (plus group) bin when aPlusEnabled: the
+		// diagonal cohort-task scheme only ages "normal" cohorts through
+		// nb_age_class steps; the A+ bin (age index sp_nb_cohorts[0]-1) is
+		// handled separately as its own chain of accumulator tasks (see
+		// main_cohort.cpp / SeapodymCohortDependencyAnalyzer). When disabled,
+		// nb_age_class reverts to sp_nb_cohorts[0], i.e. A+ is just the last
+		// ordinary aging cohort, as before this feature existed.
+		nb_age_class = param->sp_nb_cohorts[0] - (aPlusEnabled ? 1 : 0);
 
 		// Get starting age_class and start time from cohort_id
 		if (cohort_id >= nb_age_class){
@@ -71,7 +80,7 @@ public:
 
 	void restart(int cohortId){
 		cohort_id = cohortId;
-		nb_age_class = param->sp_nb_cohorts[0] - 1; // excludes A+, see constructor
+		nb_age_class = param->sp_nb_cohorts[0] - (aPlusEnabled ? 1 : 0); // see constructor
 		// Get starting age_class and start time from cohort_id
 		if (cohort_id >= nb_age_class){
 			age_start = 0;
@@ -101,6 +110,7 @@ private:
 	int age_start;
 	int tstart_cohort;
 	int nb_age_class;
+	bool aPlusEnabled;
 
 	DataProvider* dp_ = nullptr;
 
