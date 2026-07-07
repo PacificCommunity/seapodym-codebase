@@ -17,12 +17,12 @@ def main(*, input_file: str='results/timings.csv', output_file: str='results/tim
 
         # Ensure manager_time column exists
         if "manager_time" not in df.columns:
-            print(f"ERROR: 'manager_time' column not found in CSV. Cannot plot speedup.")
+            print(f"ERROR: 'manager_time' column not found in CSV. Cannot plot.")
 
         # Drop rows with missing manager_time
         df = df.dropna(subset=["manager_time"])
         if df.empty:
-            print(f"ERROR: No valid 'manager_time' values found. Cannot plot speedup.")
+            print(f"ERROR: No valid 'manager_time' values found. Cannot plot.")
         
         # Plot curves for Milan & Genoa
         cols = {
@@ -44,7 +44,7 @@ def main(*, input_file: str='results/timings.csv', output_file: str='results/tim
         plt.loglog([1,100], 1000./np.array([1,100]), 'k-', label='ideal')
 
         plt.xlabel("Number of processes (nprocs)")
-        plt.ylabel("Speedup (relative to nprocs=2)")
+        plt.ylabel("Manager time s")
         plt.title("Seapodym cohort timings 1983-2022 skj_Fat.xml A+")
         plt.xticks(sorted(df["nprocs"].unique()))
         plt.grid(True)
