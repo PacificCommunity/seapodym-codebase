@@ -67,13 +67,6 @@ public:
 		return computeChunkId(cohort_id, step, nb_age_class);
 	}
 
-	// Chunk-id formula for an A+ (plus group) accumulator task. A+ tasks are
-	// appended after all the normal (taskId, step) chunks, one per time step:
-	// slot = numAgeGroups*numTimeSteps + (taskId - firstAPlusId).
-	static int computeAPlusChunkId(int taskId, int firstAPlusId, int numAgeGroups, int numTimeSteps) {
-		return numAgeGroups * numTimeSteps + (taskId - firstAPlusId);
-	}
-
 	void restart(int cohortId){
 		cohort_id = cohortId;
 		nb_age_class = param->sp_nb_cohorts[0] - (aPlusEnabled ? 1 : 0); // see constructor
@@ -92,13 +85,17 @@ public:
 	// for absolute time index t (t=0 is the initial condition, before any
 	// time step has elapsed). age/age_start are pinned at nb_age_class (one
 	// past the last normal age, i.e. the A+ bin) rather than advancing:
-	// unlike restart(), each A+(t) is an independent, one-shot task/dispatch
-	// (see SeapodymCohortDependencyAnalyzer), not a persisting trajectory, so
-	// there is no "next age" to advance into. tstart_cohort/t_count follow
-	// the same convention restart() uses for a cohort "born" at time t, which
-	// is what makes stepForward()'s existing calendar-date and forcing-data
-	// lookups (both keyed off tstart_cohort/t_count) come out correct
-	// without any further changes to stepForward() itself.
+	// unlike restart(), A+ is not a persisting trajectory with a "next age"
+	// to advance into - it is the same SeapodymCohort object reused for
+	// every time step by main_cohort.cpp's dedicated A+ worker loop, with
+	// restartAPlus(t)/init_cohort_aplus() called fresh before each
+	// stepForward() (see runAPlusWorker() in main_cohort.cpp). tstart_cohort
+	// /t_count follow the same convention restart() uses for a cohort "born"
+	// at time t, which is what makes stepForward()'s existing calendar-date
+	// and forcing-data lookups (both keyed off tstart_cohort/t_count) come
+	// out correct without any further changes to stepForward() itself - and
+	// what makes reusing this object safe: every field stepForward() reads
+	// is re-pinned by restartAPlus()/FinishInitialize() before each call.
 	void restartAPlus(int t){
 		age_start = nb_age_class;
 		age = nb_age_class;
