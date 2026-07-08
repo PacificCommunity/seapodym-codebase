@@ -254,15 +254,18 @@ void runAPlusWorker(SeapodymCohort& cohort, DistDataCollector* dataCollector,
 	// Chunk 0 (A+'s file-seeded opening balance) has no feeder and therefore
 	// no graph-based dependency gating it - unlike every later row, nothing
 	// in the task dependency graph stops the manager from dispatching the
-	// very first spawning-based cohort (which needs this exact chunk)
-	// before this rank has even finished its own startup and reached this
-	// point. This one-time barrier, matched by every farm rank before it
-	// starts accepting/dispatching any work (see main()), closes that gap.
-	// (Now also enforced, more fundamentally, by DistDataCollector's own
-	// post-construction barrier - see that class - but kept here too since
-	// it's cheap and documents the specific ordering requirement at this
-	// call site.)
-	MPI_Barrier(MPI_COMM_WORLD);
+	// very first spawning-based cohort (which needs this exact chunk) before
+	// this rank has even finished its own startup and reached this point.
+	// This used to be closed with an extra MPI_Barrier(MPI_COMM_WORLD) here
+	// (matched by one in main()'s manager/worker branches below), but that
+	// turned out to be redundant: DistDataCollector's own post-construction
+	// barrier already guarantees the window is safe to put()/get() the
+	// moment construction returns, and the actual chunk-0 read is already
+	// gated by the ordinary dependency chain (a newborn cohort can't be
+	// dispatched until every initial cohort - including the very first
+	// feeder - has completed, and a feeder can't complete without an ACK,
+	// which A+'s strict-order reorder buffer only sends once row 0 has
+	// already been processed).
 
 	// Reorder buffer: row -> (source rank to ACK, its density payload).
 	std::map<int, std::pair<int, std::vector<double>>> pending;
@@ -446,12 +449,6 @@ int main(int argc, char** argv) {
 
 			TaskStepManager manager(comm_farm, numCohorts, stepBegMap, stepEndMap, dependencyMap);
 
-			// Match the A+ worker's post-chunk-0 barrier (see runAPlusWorker())
-			// before any task can be dispatched - otherwise the very first
-			// spawning-based cohort could be dispatched and try to read A+'s
-			// chunk 0 before the A+ worker has published it.
-			if (useAPlus) MPI_Barrier(MPI_COMM_WORLD);
-
 			// Sync the manager with the farm workers before starting to distribute the tasks
 			MPI_Barrier(comm_farm);
 			auto results = manager.run();
@@ -532,10 +529,6 @@ int main(int argc, char** argv) {
 					numAgeGroups, numTimeSteps, aPlusWorkerRank);
 
 				TaskStepWorker worker(comm_farm, taskFunc, stepBegMap, stepEndMap);
-
-				// Match the A+ worker's post-chunk-0 barrier and the manager's
-				// corresponding call above - see that comment.
-				if (useAPlus) MPI_Barrier(MPI_COMM_WORLD);
 
 				// Sync the manager with the farm workers before starting to distribute the tasks
 				MPI_Barrier(comm_farm);
