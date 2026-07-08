@@ -3,11 +3,11 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# snakemake --jobs 10 --cluster "sbatch -p genoa --mem=50g --nodes=1 --ntasks-per-node={threads} --cpus-per-task=1 --time=01:30:00 --extra-node-info=1:*:1 --distribution=*:block:* --mem-bind=local"
+# snakemake --jobs 10 --cluster "sbatch -p genoa --mem=60g --nodes=1 --ntasks-per-node={threads} --cpus-per-task=1 --time=01:30:00 --extra-node-info=1:*:1 --distribution=*:block:* --mem-bind=local"
 # 
 
 # MPI benchmarking configurations
-PROCS = [3, 10, 20, 30, 40, 50, 70, 100]
+PROCS = [3, 11, 21, 31, 41, 51, 61, 71, 81, 91, 101]
 REPEATS = range(0,3)
 HOSTS = ["genoa",]
 CASES = ["aplus", "aplus3"]
@@ -26,7 +26,7 @@ rule run_mpi:
     output:
         exp="results/run_{n}_{r}_{h}_{c}.out",
     params:
-        parfile="skj_Fat.xml"
+        parfile="../density_skj_fat/skj_Fat.xml"
     threads:
         lambda wc: int(wc.n)
     shell:
@@ -45,9 +45,9 @@ rule run_mpi:
         rm -rf $rundir
         mkdir $rundir
         cd $rundir
-        # copy the input file
-        cp ../density_skj_fat/{params.parfile} .
-
+        
+        # create directories
+        mkdir -p output/output_F0/
 
         # run 
         echo "jobid=$SLURM_JOB_ID" > ../density_skj_fat/{output.exp}
