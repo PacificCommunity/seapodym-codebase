@@ -3,6 +3,8 @@
 #include "Date.h"
 #include "sys/stat.h"
 #include <chrono>
+#include <cmath>
+#include <iostream>
 #include "DistDataCollector.h"
 #include "DataProvider.h"
 
@@ -30,7 +32,7 @@ std::vector<double> SeapodymCohort::GetCohortDensity()
 	return vec;
 }
 
-void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles)
+void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, int numTimeSteps, const bool writeoutputfiles)
 {
 
 double t_all = MPI_Wtime();
@@ -88,6 +90,47 @@ double t_c = MPI_Wtime();
 			}
 t_copy_acc += MPI_Wtime() - t_c;
 		}
+
+		if (aPlusEnabled){
+			// Plus group's density as of the end of t-1. SpawningBiomass_comp's
+			// own loop (a < param->sp_nb_cohorts[sp]) always included the
+			// oldest age class, A+ or not; nb_age_class here IS exactly that
+			// oldest (A+) index, since it excludes A+ from the "normal" range
+			// by construction. A+ publishes its density under this same
+			// chunk-id formula each step - see computeAPlusChunkId() and its
+			// use in main_cohort.cpp's taskFunction().
+			int chunk_id = nb_age_class * numTimeSteps + (tstart_cohort - 1);
+			dataCollector.getAsync(chunk_id, data.data());
+
+double t_f2 = MPI_Wtime();
+			dataCollector.flush();
+t_flush_acc += MPI_Wtime() - t_f2;
+
+			if (std::isnan(data[0])) {
+				// NaN (DistDataCollector::BAD_VALUE) here means chunk_id was
+				// never written before this cohort tried to read it - a
+				// missing/out-of-order dependency, not a numerical blow-up.
+				// Note: BAD_VALUE == NaN can never be detected with ==
+				// (NaN != NaN by definition), hence std::isnan() here.
+				std::cerr << "ERROR: cohort " << cohort_id
+					<< " (tstart_cohort=" << tstart_cohort << ") read BAD_VALUE (NaN) "
+					<< "from A+ chunk " << chunk_id << " (t=" << (tstart_cohort - 1) << ")\n";
+				MPI_Abort(MPI_COMM_WORLD, 1);
+			}
+
+double t_c2 = MPI_Wtime();
+			int index = 0;
+			for (int i = map.imin1; i <= map.imax1; i++){
+				const int jmin1 = map.jinf1[i];
+				const int jmax1 = map.jsup1[i];
+				for (int j = jmin1 ; j <= jmax1; j++){
+					mat.dvarDensity(0,nb_age_class).elem_value(i,j) = data[index];
+					index++;
+				}
+			}
+t_copy_acc += MPI_Wtime() - t_c2;
+		}
+
 		dataCollector.endEpoch(); // should be as late as possible
 
 double t_total = MPI_Wtime() - t_block;

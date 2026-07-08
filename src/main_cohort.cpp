@@ -139,7 +139,7 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	int cohort_id = task_id;
 	cohort->restart(cohort_id);
 	//initialize cohort either from restart or from spawning
-	cohort->init_cohort(x,*dataCollector);
+	cohort->init_cohort(x,*dataCollector,numTimeSteps);
 	logger->info("    << initialization of task id {}", task_id);
 
 	// advance the cohort
