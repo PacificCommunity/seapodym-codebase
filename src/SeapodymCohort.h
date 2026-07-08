@@ -46,7 +46,12 @@ public:
 
 	double time_overhead;	
 	//double run_cohort(dvar_vector x, const bool writeoutputfiles = false) { return OnRunCohort(x, writeoutputfiles); }		
-	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, writeoutputfiles); }		
+	// numTimeSteps is only needed to locate A+'s published density chunk
+	// (aplus_chunk_id = nb_age_class*numTimeSteps + (tstart_cohort-1)) when
+	// this cohort is being initialized from spawning and aPlusEnabled - see
+	// InitializeCohort()'s spawning branch and main_cohort.cpp's matching
+	// nb_age_class*numTimeSteps + t formula in runAPlusWorker().
+	void init_cohort(dvar_vector x, DistDataCollector& dataCollector, int numTimeSteps, const bool writeoutputfiles = false) { return InitializeCohort(x, dataCollector, numTimeSteps, writeoutputfiles); }
 	void prerun_model();
 	void OnRunFirstStep();
 	double Checksum();
@@ -154,7 +159,7 @@ private:
 	
 	int pop_built;
 
-	void InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, const bool writeoutputfiles = false);
+	void InitializeCohort(dvar_vector& x, DistDataCollector& dataCollector, int numTimeSteps, const bool writeoutputfiles = false);
 	void InitializeAPlus(dvar_vector& x, const std::vector<double>& mergedDensity, bool seedFromFile);
 	// Setup shared by InitializeCohort() and InitializeAPlus(): precomputed
 	// per-age habitat/mortality parameters, calendar date, O2 climatology,

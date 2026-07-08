@@ -1,8 +1,12 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <cmath>
 #include <functional>
 #include <numeric>	  // std::accumulate
+#include <algorithm>	  // std::copy
+#include <map>
+#include <utility>
 #include <vector>
 #include <mpi.h>
 #include "VarParamCoupled.h"
@@ -90,7 +94,7 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	int cohort_id = task_id;
 	cohort->restart(cohort_id);
 	//initialize cohort either from restart or from spawning
-	cohort->init_cohort(x,*dataCollector);
+	cohort->init_cohort(x,*dataCollector,numTimeSteps);
 	logger->info("    << initialization of task id {}", task_id);
 
 	// advance the cohort
@@ -126,11 +130,23 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		// dispatched before the A+ worker has folded this contribution in -
 		// that ordering is what makes an explicit A+ dependency edge in the
 		// task graph unnecessary.
+		//
+		// The message also carries the A+ calendar step this feeds
+		// (task_id+1) as its first element. Feeders can complete - and thus
+		// NOTIFY - in any order (nothing in the dependency graph forces task
+		// task_id+1's feeding event to happen after task_id's: a new cohort
+		// is typically born numAgeGroups-2 rows before its predecessor even
+		// reaches its own feeding step), but A+'s dynamics are a genuine
+		// sequential recurrence, so the A+ worker must process contributions
+		// in calendar order regardless of arrival order - see runAPlusWorker().
 		// ------------------------------------------------------------------
 		if (aPlusWorkerRank >= 0 && step == numAgeGroups - 1 && task_id <= numTimeSteps - 2) {
 			logger->info("        >>> A+ notify for task id {}", task_id);
 			double t_n = MPI_Wtime();
-			MPI_Send(localData.data(), (int)localData.size(), MPI_DOUBLE,
+			std::vector<double> msg(localData.size() + 1);
+			msg[0] = double(task_id + 1); // A+ calendar step this feeds
+			std::copy(localData.begin(), localData.end(), msg.begin() + 1);
+			MPI_Send(msg.data(), (int)msg.size(), MPI_DOUBLE,
 					 aPlusWorkerRank, APLUS_NOTIFY_TAG, MPI_COMM_WORLD);
 
 			int ack;
@@ -156,13 +172,23 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	logger->info("< task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 }
 
+// Chunk id under which the A+ worker publishes its density at calendar step
+// t, in the A+ range appended after all the normal (task,step) chunks - see
+// main()'s numChunks. Newly-spawned cohorts (SeapodymCohort::InitializeCohort,
+// spawning branch) read this same chunk (nb_age_class*numTimeSteps+(t-1),
+// with nb_age_class==numAgeGroups when A+ is enabled) to fold A+'s
+// contribution into spawning biomass.
+int inline aplusChunkId(int t, int numAgeGroups, int numTimeSteps) {
+	return numAgeGroups * numTimeSteps + t;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 // Dedicated A+ (plus group) worker loop. Runs on its own MPI rank, entirely
-// outside the TaskStepManager/TaskStepWorker dependency graph - ordering is
-// enforced by the ping-pong in taskFunction() above (a feeder blocks on the
-// ACK before telling the manager it is done), not by an explicit dependency
-// edge.
+// outside the TaskStepManager/TaskStepWorker dependency graph - ordering
+// relative to the manager is enforced by the ping-pong in taskFunction()
+// above (a feeder blocks on the ACK before telling the manager it is done),
+// not by an explicit dependency edge.
 //
 // `cohort` is a single persistent SeapodymCohort reused for every A+ time
 // step: right after stepForward(), its own dvarCohortDensity *is* "last
@@ -174,7 +200,21 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 // reads before each call, so reusing one object across many calls is safe -
 // the same pattern the ordinary-cohort path already relies on for reusing
 // one SeapodymCohort across many task_ids per worker.
-void runAPlusWorker(SeapodymCohort& cohort, int numData, int numTimeSteps,
+//
+// IMPORTANT: A+'s dynamics are a genuine sequential recurrence (step t needs
+// the state as of step t-1, plus the correct calendar date and forcing data
+// for step t) - not a commutative accumulation. Feeders can complete, and
+// therefore NOTIFY this rank, in any order (see taskFunction()'s comment),
+// so this loop cannot simply process the n-th message received as step n.
+// Instead each NOTIFY carries the calendar step it feeds (prepended to the
+// payload by the sender), and a small reorder buffer holds early arrivals
+// until their turn comes, processing steps strictly in ascending order. The
+// ACK to a feeder is sent only once its step has actually been processed -
+// an earlier ACK would let that feeder tell the manager it is done before
+// A+ has actually caught up to it, defeating the ordering guarantee this
+// whole ping-pong exists to provide.
+void runAPlusWorker(SeapodymCohort& cohort, DistDataCollector* dataCollector,
+		int numAgeGroups, int numData, int numTimeSteps,
 		const std::shared_ptr<spdlog::logger>& logger) {
 
 	const int nvar = cohort.nvarcalc();
@@ -182,50 +222,86 @@ void runAPlusWorker(SeapodymCohort& cohort, int numData, int numTimeSteps,
 	adstring_array x_names(1, nvar);
 	cohort.xinit(x, x_names);
 
-	double checksumAPlus = 0.0;
-
-	// t=0: no upstream dependency - the opening balance is just the initial
-	// condition for the A+ age bin, read from file like any other initial
-	// cohort.
-	cohort.restartAPlus(0);
-	cohort.init_cohort_aplus(x, std::vector<double>(), /*seedFromFile=*/true);
-	cohort.stepForward(false);
-	checksumAPlus += cohort.Checksum();
-	logger->info("A+ t=0 done. Checksum = {}", cohort.Checksum());
-
-	std::vector<double> graduating(numData);
-	for (int t = 1; t < numTimeSteps; ++t) {
-
-		MPI_Status status;
-		logger->info(">>> A+ waiting for feeder, t={}", t);
-		MPI_Recv(graduating.data(), numData, MPI_DOUBLE,
-				 MPI_ANY_SOURCE, APLUS_NOTIFY_TAG, MPI_COMM_WORLD, &status);
-		logger->info("<<< A+ received feeder data, t={}", t);
-
-		// Merge this step's graduating cohort with A+'s own current density.
-		// No RMA fetch needed for "the previous A+ pool" - this object's own
-		// state, right after the previous stepForward(), already holds it.
-		std::vector<double> prevAPlus = cohort.GetCohortDensity();
-		std::vector<double> merged(prevAPlus.size());
-		for (std::size_t k = 0; k < merged.size(); ++k)
-			merged[k] = prevAPlus[k] + graduating[k];
-
-		cohort.restartAPlus(t);
-		cohort.init_cohort_aplus(x, merged, /*seedFromFile=*/false);
+	// Runs one A+ calendar step and publishes its result. `graduating` is
+	// null for t=0 (seeded from file; no upstream feeder), otherwise it is
+	// the feeder's density for this step, merged with A+'s own current
+	// density (its state right after the previous call - see header comment).
+	auto processStep = [&](int t, const std::vector<double>* graduating) {
+		if (graduating == nullptr) {
+			cohort.restartAPlus(t);
+			cohort.init_cohort_aplus(x, std::vector<double>(), /*seedFromFile=*/true);
+		} else {
+			std::vector<double> prevAPlus = cohort.GetCohortDensity();
+			std::vector<double> merged(prevAPlus.size());
+			for (std::size_t k = 0; k < merged.size(); ++k)
+				merged[k] = prevAPlus[k] + (*graduating)[k];
+			cohort.restartAPlus(t);
+			cohort.init_cohort_aplus(x, merged, /*seedFromFile=*/false);
+		}
 		cohort.stepForward(false);
-		checksumAPlus += cohort.Checksum();
 		logger->info("A+ t={} done. Checksum = {}", t, cohort.Checksum());
 
-		// Acknowledge the feeder. Only now can it notify the manager, so any
-		// cohort scheduled after that point is guaranteed to see this step's
-		// contribution already folded into A+.
-		int ack = 1;
-		MPI_Send(&ack, 1, MPI_INT, status.MPI_SOURCE, APLUS_ACK_TAG, MPI_COMM_WORLD);
+		// Publish this step's density so a cohort spawned right after this
+		// step can fold it into its spawning-biomass sum (see
+		// SeapodymCohort::InitializeCohort's spawning branch).
+		std::vector<double> out = cohort.GetCohortDensity();
+		int chunk_id = aplusChunkId(t, numAgeGroups, numTimeSteps);
+		dataCollector->put(chunk_id, out.data());
+	};
+
+	processStep(0, nullptr);
+
+	// Chunk 0 (A+'s file-seeded opening balance) has no feeder and therefore
+	// no graph-based dependency gating it - unlike every later row, nothing
+	// in the task dependency graph stops the manager from dispatching the
+	// very first spawning-based cohort (which needs this exact chunk)
+	// before this rank has even finished its own startup and reached this
+	// point. This one-time barrier, matched by every farm rank before it
+	// starts accepting/dispatching any work (see main()), closes that gap.
+	// (Now also enforced, more fundamentally, by DistDataCollector's own
+	// post-construction barrier - see that class - but kept here too since
+	// it's cheap and documents the specific ordering requirement at this
+	// call site.)
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	// Reorder buffer: row -> (source rank to ACK, its density payload).
+	std::map<int, std::pair<int, std::vector<double>>> pending;
+	int nextRow = 1;
+	std::vector<double> buf(numData + 1);
+
+	while (nextRow < numTimeSteps) {
+
+		MPI_Status status;
+		logger->info(">>> A+ waiting for a feeder (next row = {})", nextRow);
+		MPI_Recv(buf.data(), numData + 1, MPI_DOUBLE,
+				 MPI_ANY_SOURCE, APLUS_NOTIFY_TAG, MPI_COMM_WORLD, &status);
+		int row = (int)std::llround(buf[0]);
+		logger->info("<<< A+ received feeder data for row {}", row);
+		pending.emplace(row, std::make_pair(status.MPI_SOURCE,
+				std::vector<double>(buf.begin() + 1, buf.end())));
+
+		// Drain the buffer while the next expected row is already available -
+		// a single arrival can unblock several buffered rows at once.
+		while (pending.count(nextRow)) {
+			auto it = pending.find(nextRow);
+			const int srcRank = it->second.first;
+			processStep(nextRow, &it->second.second);
+			pending.erase(it);
+
+			// Only now - after nextRow has actually been processed - can the
+			// feeder that fed it be told to notify the manager.
+			int ack = 1;
+			MPI_Send(&ack, 1, MPI_INT, srcRank, APLUS_ACK_TAG, MPI_COMM_WORLD);
+
+			++nextRow;
+		}
 	}
 
-	// Hand the final checksum to the manager so it can print the unified
-	// normal/A+ report.
-	MPI_Send(&checksumAPlus, 1, MPI_DOUBLE, 0, APLUS_CHECKSUM_TAG, MPI_COMM_WORLD);
+	// Signal the manager that every A+ step has been published to
+	// dataCollector, so it is safe to read the A+ chunk range for the
+	// final checksum.
+	int done = 1;
+	MPI_Send(&done, 1, MPI_INT, 0, APLUS_CHECKSUM_TAG, MPI_COMM_WORLD);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -310,10 +386,12 @@ int main(int argc, char** argv) {
 	//Set-up the size for the shared arrays for forcing data
 	std::vector<std::pair<std::string, std::size_t>> nameSizePairs = param.getDpNameSizePairs(numTimeSteps, map.get_array_size());
 
-	// Set up the data collector for normal cohorts only - A+ no longer
-	// shares this buffer (see runAPlusWorker()/taskFunction()), so its size
-	// no longer needs an extra per-time-step chunk range.
-	int numChunks = numAgeGroups * numTimeSteps;
+	// Set up the data collector. Normal (task,step) chunks come first; when
+	// A+ is enabled, one extra chunk per time step is appended for the A+
+	// worker to publish its density into (see aplusChunkId()) - each chunk
+	// is uniquely owned by one calendar step, so unlike the shared RMA slot
+	// this design replaced, there is nothing for two writers to race on.
+	int numChunks = numAgeGroups * numTimeSteps + (useAPlus ? numTimeSteps : 0);
 
 	// A+ is never part of the dependency graph now - it's handled entirely
 	// by the ping-pong between the oldest normal cohort and the dedicated A+
@@ -349,13 +427,17 @@ int main(int argc, char** argv) {
 			workerId, numData, numAgeGroups, numTimeSteps, numChunks, useAPlus ? "on" : "off");
 	}
 
+	// dataCollect spans MPI_COMM_WORLD, not comm_farm: the dedicated A+
+	// worker needs to publish into it too (see aplusChunkId()), and it sits
+	// outside comm_farm entirely. TaskStepManager/TaskStepWorker still run
+	// over comm_farm - only this data-sharing window includes everyone.
+	DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
+
 	if (!isAPlusWorker) {
 		//
 		// Farm ranks: manager (workerId 0) + ordinary cohort workers,
 		// running over comm_farm (== MPI_COMM_WORLD when A+ is disabled).
 		//
-		DistDataCollector dataCollect(comm_farm, numChunks, numData);
-
 		if (workerId == 0) {
 			//
 			// Manager
@@ -363,26 +445,37 @@ int main(int argc, char** argv) {
 			double tik = MPI_Wtime();
 
 			TaskStepManager manager(comm_farm, numCohorts, stepBegMap, stepEndMap, dependencyMap);
+
+			// Match the A+ worker's post-chunk-0 barrier (see runAPlusWorker())
+			// before any task can be dispatched - otherwise the very first
+			// spawning-based cohort could be dispatched and try to read A+'s
+			// chunk 0 before the A+ worker has published it.
+			if (useAPlus) MPI_Barrier(MPI_COMM_WORLD);
+
 			// Sync the manager with the farm workers before starting to distribute the tasks
 			MPI_Barrier(comm_farm);
 			auto results = manager.run();
 
 			double time_manager = MPI_Wtime() - tik;
 
-			// Make sure the data are ready for the final checksum
+			// Make sure the farm's own data are ready for the final checksum.
 			MPI_Barrier(comm_farm);
-			double* data = dataCollect.getCollectedDataPtr();
-			double checksumNormal = std::accumulate(data, data + numChunks * numData, 0.0);
 
-			// The A+ worker keeps its density in its own local memory (it is
-			// never written through dataCollect - see runAPlusWorker()), so
-			// it computes its own checksum and hands it over directly, only
-			// once its last step is done.
-			double checksumAPlus = 0.0;
+			// The A+ worker publishes its density into dataCollect's A+ chunk
+			// range as it goes (see runAPlusWorker()), but it is outside
+			// comm_farm, so the barrier above doesn't cover it. Wait for its
+			// explicit "done" signal instead - sent only after its very last
+			// publish - before reading that range.
 			if (useAPlus) {
-				MPI_Recv(&checksumAPlus, 1, MPI_DOUBLE, aPlusWorkerRank,
+				int done;
+				MPI_Recv(&done, 1, MPI_INT, aPlusWorkerRank,
 						 APLUS_CHECKSUM_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			}
+
+			double* data = dataCollect.getCollectedDataPtr();
+			int numNormalChunks = numAgeGroups * numTimeSteps;
+			double checksumNormal = std::accumulate(data, data + numNormalChunks * numData, 0.0);
+			double checksumAPlus  = std::accumulate(data + numNormalChunks * numData, data + numChunks * numData, 0.0);
 			double checksum = checksumNormal + checksumAPlus;
 			printf("[%d] Checksum = %15.5lf (normal = %15.5lf, A+ = %15.8le) time manager = %10.5f sec\n",
 				workerId, checksum, checksumNormal, checksumAPlus, time_manager);
@@ -440,6 +533,10 @@ int main(int argc, char** argv) {
 
 				TaskStepWorker worker(comm_farm, taskFunc, stepBegMap, stepEndMap);
 
+				// Match the A+ worker's post-chunk-0 barrier and the manager's
+				// corresponding call above - see that comment.
+				if (useAPlus) MPI_Barrier(MPI_COMM_WORLD);
+
 				// Sync the manager with the farm workers before starting to distribute the tasks
 				MPI_Barrier(comm_farm);
 				worker.run();
@@ -450,8 +547,6 @@ int main(int argc, char** argv) {
 			//DataProvider clean-up
 			MPI_Comm_free(&workerComm);
 		}
-
-		dataCollect.free(); // collective on comm_farm
 
 	} else {
 		//
@@ -491,7 +586,7 @@ int main(int argc, char** argv) {
 
 			time_io_forcing += MPI_Wtime()-t_shm;
 
-			runAPlusWorker(cohort, numData, numTimeSteps, logger);
+			runAPlusWorker(cohort, &dataCollect, numAgeGroups, numData, numTimeSteps, logger);
 
 			time_overhead = cohort.time_overhead;
 		}
@@ -518,6 +613,8 @@ printf("[%d] Time IO/Put/Send/Idle: %.3f/%.3f/%.3f/%.3f ms\n",
 
 	// Finalization of MPI
 	////////////////////////////////////////////////////////////////////////
+	dataCollect.free(); // collective on MPI_COMM_WORLD - every rank participates
+
 	if (useAPlus && comm_farm != MPI_COMM_NULL)
 		MPI_Comm_free(&comm_farm);
 
