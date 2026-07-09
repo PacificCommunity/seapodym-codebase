@@ -21,26 +21,20 @@ public:
 	// default) or folded back in as an ordinary aging cohort, reproducing
 	// pre-A+ behavior. Exposed so main_cohort.cpp's -no-aplus flag can
 	// request the old behavior for regression comparison.
+	// nb_age_class excludes the A+ (plus group) bin when aPlusEnabled: the
+	// diagonal cohort-task scheme only ages "normal" cohorts through
+	// nb_age_class steps; the A+ bin (age index sp_nb_cohorts[0]-1) is
+	// handled separately as its own chain of accumulator tasks (see
+	// main_cohort.cpp / SeapodymCohortDependencyAnalyzer). When disabled,
+	// nb_age_class reverts to sp_nb_cohorts[0], i.e. A+ is just the last
+	// ordinary aging cohort, as before this feature existed. The
+	// cohort_id/age_start/tstart_cohort bookkeeping this implies is identical
+	// to what restart() computes, so delegate to it instead of duplicating
+	// it here - every worker's initial cohortId=0 is throwaway anyway (it
+	// gets restart()-ed to the real task id before any real work happens).
 	SeapodymCohort(const char* parfile, int cohortId, bool aPlusOn = true) : SeapodymCoupled(parfile) {
-		cohort_id = cohortId;
 		aPlusEnabled = aPlusOn;
-		// nb_age_class excludes the A+ (plus group) bin when aPlusEnabled: the
-		// diagonal cohort-task scheme only ages "normal" cohorts through
-		// nb_age_class steps; the A+ bin (age index sp_nb_cohorts[0]-1) is
-		// handled separately as its own chain of accumulator tasks (see
-		// main_cohort.cpp / SeapodymCohortDependencyAnalyzer). When disabled,
-		// nb_age_class reverts to sp_nb_cohorts[0], i.e. A+ is just the last
-		// ordinary aging cohort, as before this feature existed.
-		nb_age_class = param->sp_nb_cohorts[0] - (aPlusEnabled ? 1 : 0);
-
-		// Get starting age_class and start time from cohort_id
-		if (cohort_id >= nb_age_class){
-			age_start = 0;
-			tstart_cohort = cohort_id-nb_age_class+1;
-		}else{
-			age_start = nb_age_class - cohort_id - 1;
-			tstart_cohort = 0;
-		}
+		restart(cohortId);
 	};
 	virtual ~SeapodymCohort() {/*DoNothing*/};
 
@@ -81,7 +75,7 @@ public:
 
 	void restart(int cohortId){
 		cohort_id = cohortId;
-		nb_age_class = param->sp_nb_cohorts[0] - (aPlusEnabled ? 1 : 0); // see constructor
+		nb_age_class = param->sp_nb_cohorts[0] - (aPlusEnabled ? 1 : 0); // see constructor's comment above
 		// Get starting age_class and start time from cohort_id
 		if (cohort_id >= nb_age_class){
 			age_start = 0;

@@ -52,6 +52,13 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile, bool useAPlus) {
 	return cohort;
 }
 
+// Tell the manager task_id's given step is done. The third slot of the
+// message used to be a separate "success" value that was always just a copy
+// of task_id - collapsed here since it never carried any other information.
+void notifyManagerDone(MPI_Comm comm, int task_id, int step) {
+	int output[3] = {task_id, step, task_id};
+	MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
+}
 
 void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		const std::shared_ptr<spdlog::logger>& logger,
@@ -66,6 +73,14 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 
 	double tik = MPI_Wtime();
 
+	//initialize variables of optimization - identical for both the A+ and
+	//normal-cohort paths below, so done once here rather than duplicated in
+	//each branch.
+	const int nvar = cohort->nvarcalc();
+	independent_variables x(1, nvar);
+	adstring_array x_names(1,nvar);
+	cohort->xinit(x, x_names);
+
 	if (task_id >= firstAPlusId) {
 		// A+ (plus group) accumulator task. Behaves like a normal cohort
 		// task from here on - initialize, then stepForward() runs the same
@@ -78,11 +93,6 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		int t = task_id - firstAPlusId;
 		logger->info("> A+ task id {} (t={})", task_id, t);
 
-		const int nvar = cohort->nvarcalc();
-		independent_variables x(1, nvar);
-		adstring_array x_names(1,nvar);
-		cohort->xinit(x, x_names);
-
 		cohort->restartAPlus(t);
 
 		if (t == 0) {
@@ -93,13 +103,15 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		} else {
 			int prevAPlusChunk  = SeapodymCohort::computeAPlusChunkId(task_id - 1, firstAPlusId, numAgeGroups, numTimeSteps);
 			int graduatingChunk = SeapodymCohort::computeChunkId(t - 1, numAgeGroups - 1, numAgeGroups);
-			std::vector<double> prevAPlus(dataCollector->getNumSize());
-			std::vector<double> graduating(dataCollector->getNumSize());
-			dataCollector->get(prevAPlusChunk, prevAPlus.data());
+			// Fetch the previous A+ pool directly into `merged`, then add the
+			// graduating cohort's density in place - avoids allocating a
+			// separate prevAPlus buffer just to sum it into a third one.
+			std::vector<double> merged(dataCollector->getNumSize());
+			std::vector<double> graduating(merged.size());
+			dataCollector->get(prevAPlusChunk, merged.data());
 			dataCollector->get(graduatingChunk, graduating.data());
-			std::vector<double> merged(prevAPlus.size());
 			for (std::size_t k = 0; k < merged.size(); ++k)
-				merged[k] = prevAPlus[k] + graduating[k];
+				merged[k] += graduating[k];
 			cohort->init_cohort_aplus(x, merged, /*seedFromFile=*/false);
 		}
 
@@ -117,9 +129,7 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		dataCollector->put(myChunk, out.data());
 		time_mpi_put += MPI_Wtime() - t_p;
 
-		int success = task_id;
-		int output[3] = {task_id, stepBeg, success};
-		MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
+		notifyManagerDone(comm, task_id, stepBeg);
 
 		time_calc += MPI_Wtime() - tak_aplus;
 		last_task_end = MPI_Wtime();
@@ -130,12 +140,6 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	logger->info("> task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 
 	logger->info("    >> initialization of task id {}", task_id);
-	//initialize variables of optimization
-	const int nvar = cohort->nvarcalc();
-	independent_variables x(1, nvar);
-	adstring_array x_names(1,nvar);
-	cohort->xinit(x, x_names);
-
 	int cohort_id = task_id;
 	cohort->restart(cohort_id);
 	//initialize cohort either from restart or from spawning
@@ -165,11 +169,9 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		time_mpi_put += MPI_Wtime() - t_p;
 		logger->info("        <<< send data for step {} of task id {}", step, task_id);
 
-		int success = task_id;
-		int output[3] = {task_id, step, success};
 		logger->info("        >>> notify manager after step {} of task id {}", step, task_id);
 		double tik_mpi = MPI_Wtime();
-		MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
+		notifyManagerDone(comm, task_id, step);
 		time_mpi += MPI_Wtime() - tik_mpi;
 		logger->info("        <<< notify manager after step {} of task id {}", step, task_id);
 	}
