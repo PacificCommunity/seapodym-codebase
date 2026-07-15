@@ -20,4 +20,4 @@ module load gimkl/2020a
 rm log_*.txt
 
 # Run the MPI job
-srun ../../bin/seapodym_cohort -s skj_fat.xml >& results/n${SLURM_NTASKS}.txt
+srun ../../bin/seapodym_cohort_aplus -s skj_fat.xml >& results/n${SLURM_NTASKS}.txt
