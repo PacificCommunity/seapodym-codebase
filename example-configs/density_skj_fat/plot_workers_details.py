@@ -61,7 +61,7 @@ def parse_logs(pattern):
                         task_id = int(m.group(1))
                         task_ids.append(task_id)
                         worker_ids.append(worker_id)
-                        phases.append('coh init')
+                        phases.append('init')
                         t_starts.append(t_start)
                         t_ends.append(ts)
                         steps.append(-1)
