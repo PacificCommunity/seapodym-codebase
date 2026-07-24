@@ -147,7 +147,7 @@ double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& Agg_p
 		if (param->fit_null_larvae[0]==1){
 			weight_Lobszero = param->weight_null_larvae[0];
 		}
-		like_weight = param->larvae_like_weight;
+		like_weight = param->elife_like_weight;
 		like_type = param->larvae_likelihood_type[0];
 		input_categorical_flag = param->larvae_input_categorical_flag[0];
 		nb_input_agg_groups = param->nb_larvae_input_agg_groups;
@@ -197,7 +197,7 @@ double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& Pred,
 		if (param->fit_null_larvae[0]==1){
 			weight_Lobszero = param->weight_null_larvae[0];
 		}
-		like_weight = param->larvae_like_weight;
+		like_weight = param->elife_like_weight;
 		like_type = param->larvae_likelihood_type[0];
 		input_categorical_flag = param->larvae_input_categorical_flag[0];
 	}else{

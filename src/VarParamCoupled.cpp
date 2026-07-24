@@ -1356,12 +1356,12 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 		}
 		tag_like_weight = 1.0; //default value
-		larvae_like_weight = 1.0; //default value
+		elife_like_weight = 1.0; //default value
 		spawning_like_weight = 1.0; //default value
 		if (!doc.get("/tag_like_weight").empty())		  
 			tag_like_weight = doc.getDouble("/tag_like_weight");
-		if (!doc.get("/larvae_like_weight").empty())		  
-			larvae_like_weight = doc.getDouble("/larvae_like_weight");
+		if (!doc.get("/elife_like_weight").empty())		  
+			elife_like_weight = doc.getDouble("/elife_like_weight");
 		if (!doc.get("/spawning_like_weight").empty())		  
 			spawning_like_weight = doc.getDouble("/spawning_like_weight");
 
