@@ -35,6 +35,17 @@ bool VarParamCoupled::read(const string& parfile)
         deltaY = doc.getInteger("/deltaY", "value");
         deltaT = doc.getInteger("/deltaT", "value");
 
+	//smin1 cap parameters (global). Defaults reproduce existing configs: sharp knee a=0.07, shifted form.
+	smin1_shifted_form = 1;
+	double a_cknee = 0.07, a_vknee = 0.07, a_hknee = 0.07;
+	if (!doc.get("/smin1_pars","old_form").empty()) smin1_shifted_form = doc.getInteger("/smin1_pars","old_form");
+	if (!doc.get("/smin1_pars","a_cknee").empty())  a_cknee = doc.getDouble("/smin1_pars","a_cknee");
+	if (!doc.get("/smin1_pars","a_vknee").empty())  a_vknee = doc.getDouble("/smin1_pars","a_vknee");
+	if (!doc.get("/smin1_pars","a_hknee").empty())  a_hknee = doc.getDouble("/smin1_pars","a_hknee");
+	set_smin1_coeffs(a_cknee, smin1_shifted_form, cknee_A, cknee_K, cknee_x0);
+	set_smin1_coeffs(a_vknee, smin1_shifted_form, vknee_A, vknee_K, vknee_x0);
+	set_smin1_coeffs(a_hknee, smin1_shifted_form, hknee_A, hknee_K, hknee_x0);
+
 //IMPORTANT: in order to get correct dimentions (nbi,nbj)=(nlon+2,nlat+2) 
 //the coordinates (latitudeMax,longitudeMin) in parfile
 //should give the NORTH-WEST corner of the upper-left grid cell 
@@ -1271,6 +1282,10 @@ bool VarParamCoupled::read(const string& parfile)
 		poisson_like_min_catch = 2.0; //default value, observed catches below 1(kg, X kg, mt, depending on the catch_units_converter) will not be used in the Poisson likelihood
 		if (!doc.get("/poisson_like_min_catch","value").empty())
 			poisson_like_min_catch = doc.getDouble("/poisson_like_min_catch","value");
+		if (poisson_like_min_catch < 0){
+			cout << "Minimal catch in poisson likelihood should be non-negative, setting: poisson_like_min_catch = 0" << endl;
+			poisson_like_min_catch = 0;
+		}
 
 		//Catch likelihood weights
 		catch_like_weight.allocate(0,nb_fishery-1);

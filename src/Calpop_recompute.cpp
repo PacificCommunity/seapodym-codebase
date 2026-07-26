@@ -93,7 +93,7 @@ void CCalpop::RecompADI_step_fwd_with_catch(const PMap& map, CParam& param, d3_a
 				if (C(i,j)==0)
 					uuint(itr,i,j) = uvec[i];
 				else 
-					uuint(itr,i,j) = uvec[i] - uvec[i] * param.func_limit_one(C(i,j)/(uvec[i]+1e-14)) / iterationNumber;
+					uuint(itr,i,j) = uvec[i] - uvec[i] * param.smin1_c(C(i,j)/(uvec[i]+1e-14)) / iterationNumber;
 
 				uuint_t(itr,i,j) = uvec[i];
 			}	
@@ -347,7 +347,7 @@ double D = Dinf * diff_habitat;
 
 				//limit maximal velocity my Vinf
 				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
-				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
 				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x*mat.lat_correction[j];// for computing derivatives in dv_caldia
@@ -470,7 +470,7 @@ double D = Dinf * diff_habitat;
 
 				//limit maximal velocity my Vinf
 				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
-				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
 				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x*lat_correction[j];// for computing derivatives in dv_caldia
@@ -599,7 +599,7 @@ double D = Dinf * diff_habitat;
 
 				//limit maximal velocity by Vinf
 				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
-				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
 				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x * mat.lat_correction[j];
@@ -818,7 +818,7 @@ double D = Dinf * diff_habitat;
 
 				//limit maximal velocity by Vinf
 				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
-				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
 				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x * mat.lat_correction[j];

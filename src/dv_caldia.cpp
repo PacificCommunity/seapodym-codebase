@@ -342,8 +342,8 @@ void dv_caldia()
 				{
 					double cap_mr = sqrt(v_x*v_x + v_y*v_y + v_eps);
 					double cap_u  = cap_mr/Vinf;
-					double cap_f  = param->func_limit_one(cap_u);
-					double cap_fp = param->dffunc_limit_one(cap_u, 1.0);
+					double cap_f  = param->smin1_v(cap_u);
+					double cap_fp = param->dfsmin1_v(cap_u, 1.0);
 					double cap_s  = Vinf*cap_f/cap_mr;
 					double cap_sp = (cap_fp - cap_s)/cap_mr;
 					double cap_proj = v_x*dfv_x + v_y*dfv_y;
@@ -797,8 +797,8 @@ void dv_caldia_UV()
 				{
 					double cap_mr = sqrt(v_x*v_x + v_y*v_y + v_eps);
 					double cap_u  = cap_mr/Vinf;
-					double cap_f  = param->func_limit_one(cap_u);
-					double cap_fp = param->dffunc_limit_one(cap_u, 1.0);
+					double cap_f  = param->smin1_v(cap_u);
+					double cap_fp = param->dfsmin1_v(cap_u, 1.0);
 					double cap_s  = Vinf*cap_f/cap_mr;
 					double cap_sp = (cap_fp - cap_s)/cap_mr;
 					double cap_proj = v_x*dfv_x + v_y*dfv_y;

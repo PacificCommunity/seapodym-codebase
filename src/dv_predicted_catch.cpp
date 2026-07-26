@@ -206,10 +206,9 @@ void dv_predicted_catch_fishery()
 								fish += af(ii,jj)*uu(ii+ki,jj+kj)/(afr*lat_correction[jj+kj]);
 
 					//const double F_pr = s_c*eff/(reso*reso);
-					//const double F = reso*reso*param->func_limit_one(F_pr);
+					//const double F = reso*reso*param->smin1(F_pr);
 					const double F_pr = s_c*eff/afr;
-					const double F = afr*param->func_limit_one(F_pr);
-					//const double F = reso*reso*param->func_limit_one(s_c*eff/(reso*reso));
+					const double F = afr*param->smin1_c(F_pr);
 					//end of recomputation section
 
 					double dfF = 0;
@@ -243,14 +242,11 @@ void dv_predicted_catch_fishery()
 					dfC_pr_age(i,j)	+= dfC_pred(i,j);
 					dfC_pred(i,j)    = 0.0;	
 			
-					//const double F = afr*param.func_limit_one(s_c*eff/afr);
-					//double dfs_c = eff*param->dffunc_limit_one(F_pr,reso*reso*dfF)/(reso*reso);
-					double dfs_c = eff*param->dffunc_limit_one(F_pr,afr*dfF)/afr;
+					//double dfs_c = eff*param->dfsmin1(F_pr,reso*reso*dfF)/(reso*reso);
+					double dfs_c = eff*param->dfsmin1_c(F_pr, afr*dfF)/afr;
 					dfF = 0.0;
 
 					/*
-					//const double F = reso*reso*param.func_limit_one(s_c*eff/(reso*reso));
-					double dfs_c = eff*param->dffunc_limit_one(F_pr)*dfF;
 					dfF = 0.0;
 					*/
 

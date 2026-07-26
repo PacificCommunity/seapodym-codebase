@@ -129,7 +129,7 @@ if (habitat(i,j)==0){cout << "Zero habitat at " << age << " " << i << " "<< j <<
 				//limit maximal velocity by Vinf to avoid approximation errors with 
 				//finite differences in case of strong gradients
 				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
-				double s = Vinf * param.func_limit_one(m/Vinf) / m;
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
 				v_x *= s;  v_y *= s;
 				
 				advection_x[j] = c*U + v_x*mat.lat_correction[j];

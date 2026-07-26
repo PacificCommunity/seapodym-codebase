@@ -63,6 +63,10 @@ public:
 	ivector seasonal_migrations;	   //activate seasonal spawning migrations
 	ivector spawning_adult_func_only;  //use stock-recruitment function only at spawning, ignoring Hs, 0 by default
 	ivector BHsat_model;  		   //use stock-recruitment function form with half-saturation as the slope, 0 by default
+	int smin1_shifted_form;            // smin1 cap: 1(default)=shifted form (original), 0=centre at (1,1)
+	double cknee_A, cknee_K, cknee_x0; // precomputed smin1 coeffs: catch cap
+	double vknee_A, vknee_K, vknee_x0; // precomputed smin1 coeffs: velocity cap
+	double hknee_A, hknee_K, hknee_x0; // precomputed smin1 coeffs: habitat cap
 	ivector food_requirement_in_mortality;
 	ivector uncouple_sst_larvae;	
 	ivector gaussian_thermal_function;	
@@ -387,11 +391,17 @@ public:
 	double itolon(int i);
 	int lattoj(double lat);
 	int lontoi(double lon);
-	double func_limit_one(const double m);
-	double dffunc_limit_one(const double x, const double dfy);
-	double func_limit_habitat_one(const double m);
-	double dffunc_limit_habitat_one(const double x, const double dfy);
-	//double dffunc_limit_one(const double m);
+	void set_smin1_coeffs(const double a, const int shifted, double& A, double& K, double& x0);
+	double smin1(const double x, const double A, const double K, const double x0);
+	double dfsmin1(const double x, const double dfy, const double A, const double K, const double x0);
+	// wrappers: read the class's own precomputed coeffs (no passing from caller)
+	double smin1_v(const double x){ return smin1(x, vknee_A, vknee_K, vknee_x0); }
+	double smin1_c(const double x){ return smin1(x, cknee_A, cknee_K, cknee_x0); }
+	double smin1_h(const double x){ return smin1(x, hknee_A, hknee_K, hknee_x0); }
+	double dfsmin1_v(const double x, const double dfy){ return dfsmin1(x, dfy, vknee_A, vknee_K, vknee_x0); }
+	double dfsmin1_c(const double x, const double dfy){ return dfsmin1(x, dfy, cknee_A, cknee_K, cknee_x0); }
+	double dfsmin1_h(const double x, const double dfy){ return dfsmin1(x, dfy, hknee_A, hknee_K, hknee_x0); }
+	
 	double f1_smooth(const double x);
 	double df1_smooth(const double x);
 	void afcoef(const double lon, const double lat, dmatrix& a, int& ki, int& kj, const int reso);
