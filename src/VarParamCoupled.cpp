@@ -328,6 +328,7 @@ bool VarParamCoupled::read(const string& parfile)
 		maturity_age.allocate(0, nb_species - 1);
 		spawning_adult_func_only.allocate(0, nb_species - 1);
 		BHsat_model.allocate(0, nb_species - 1);
+		additive_diffusion.allocate(0, nb_species - 1);
 		age_autonomous.allocate(0, nb_species - 1);
 		age_recruit.allocate(0, nb_species - 1);
 		age_compute_habitat.allocate(0, nb_species - 1);
@@ -414,6 +415,12 @@ bool VarParamCoupled::read(const string& parfile)
 		BHsat_model[sp] = 0;
 		if (!doc.get("/BH_with_halfsat_model",sp_name[sp]).empty())
 			BHsat_model[sp] = doc.getInteger("/BH_with_halfsat_model", sp_name[sp]);
+
+		//Form of the habitat-dependent diffusion factor. Default (0) is the
+		//multiplicative form D = Dinf*sigma*(1-c*Ha^3), as in all earlier versions.
+		additive_diffusion[sp] = 0;
+		if (!doc.get("/additive_diffusion_model",sp_name[sp]).empty())
+			additive_diffusion[sp] = doc.getInteger("/additive_diffusion_model", sp_name[sp]);
 
 		//old parameter files:
 		if (doc.get("/spawning_season_peak").empty()){

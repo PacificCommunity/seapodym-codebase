@@ -10,6 +10,20 @@ const double rc = 0.0005;
 const double rho = 0.99;
 const double v_eps = 1e-20;
 
+//Habitat-dependent factor of the diffusion coefficient, D = Dinf * diff_habitat_comp(...).
+//Selected per species by param.additive_diffusion[sp]:
+//  0 (default) multiplicative: sigma*(1 - c*Ha^3)  -- sigma is the fraction of Dinf at Ha=0,
+//                              c the fraction of it removed in the best habitat.
+//  1           additive:       sigma + c*(1-Ha)^2  -- sigma is the base fraction at Ha=1,
+//                              c the extra 'seek' fraction added in the worst habitat.
+double CCalpop::diff_habitat_comp(const int additive, const double H, const double sigma, const double c)
+{
+	if (additive)
+		return(sigma + c*pow(1.0-H,2));
+
+	return(sigma*(1.0 - c*pow(H,3)));
+}
+
 void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, const dmatrix& habitat, const dmatrix& total_pop, double MSS, double MSS_size_slope, double sigma_species, double c_diff_fish, const int sp, const int age, const int jday)
 {
 	mat.diffusion_x.initialize();
@@ -35,6 +49,7 @@ void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, con
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;//fixed, given in 'body length' units
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
 	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 	double rho_x = 0.0;
@@ -95,15 +110,15 @@ if (habitat(i,j)==0){cout << "Zero habitat at " << age << " " << i << " "<< j <<
 						dHdy = (habitat[i][j+1] - habitat[i][j])/(dy);
 
 				}
-				//double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+				
+				//-- Multiplicative form (default, dform = 0): D = Dinf * (1-c*H^3);
+				//   sigma_species = multiplicator of Dinf
+				//   c_diff_fish   = minimal diffusion rate in H_a=1
 
-				//double D = Dmax * diff_habitat;
-
-				//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+				//-- Additive form (optional, dform = 1): D = Dinf * (sigma + c * (1-H)^2)
 				//   sigma_species = BASE diffusion fraction (D at H_a=1)
 				//   c_diff_fish   = SEEK fraction (additional at H_a=0)
-				double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
-				double D = Dinf * diff_habitat;
+				double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 				
 				rho_x = 1.0- rho * sqrt(dHdx*dHdx) * dx;
 				rho_y = 1.0- rho * sqrt(dHdy*dHdy) * dy;

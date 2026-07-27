@@ -280,6 +280,7 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
 
 
 	//const double Dmax    = sigma_species*Dinf;
@@ -327,8 +328,7 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 //-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
 //   sigma_species = BASE diffusion fraction (D at H_a=1)
 //   c_diff_fish   = SEEK fraction (additional at H_a=0)
-double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
-double D = Dinf * diff_habitat;
+double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -405,6 +405,7 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
 
 	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
@@ -450,8 +451,7 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 //-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
 //   sigma_species = BASE diffusion fraction (D at H_a=1)
 //   c_diff_fish   = SEEK fraction (additional at H_a=0)
-double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
-double D = Dinf * diff_habitat;
+double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 
 
 				double sfunc = mat.season_switch(sp,jday,j);
@@ -531,6 +531,7 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
 	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
@@ -575,8 +576,7 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 //-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
 //   sigma_species = BASE diffusion fraction (D at H_a=1)
 //   c_diff_fish   = SEEK fraction (additional at H_a=0)
-double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
-double D = Dinf * diff_habitat;
+double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -708,6 +708,7 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
 	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
 	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
@@ -755,8 +756,7 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 //-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
 //   sigma_species = BASE diffusion fraction (D at H_a=1)
 //   c_diff_fish   = SEEK fraction (additional at H_a=0)
-double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
-double D = Dinf * diff_habitat;
+double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 
 
 				double sfunc = mat.season_switch(sp,jday,j);

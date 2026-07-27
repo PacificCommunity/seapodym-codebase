@@ -63,6 +63,7 @@ public:
 	ivector seasonal_migrations;	   //activate seasonal spawning migrations
 	ivector spawning_adult_func_only;  //use stock-recruitment function only at spawning, ignoring Hs, 0 by default
 	ivector BHsat_model;  		   //use stock-recruitment function form with half-saturation as the slope, 0 by default
+	ivector additive_diffusion;	   //diffusion model: 0 by default = multiplicative sigma*(1-c*Ha^3), 1 = additive sigma+c*(1-Ha)^2
 	int smin1_shifted_form;            // smin1 cap: 1(default)=shifted form (original), 0=centre at (1,1)
 	double cknee_A, cknee_K, cknee_x0; // precomputed smin1 coeffs: catch cap
 	double vknee_A, vknee_K, vknee_x0; // precomputed smin1 coeffs: velocity cap

@@ -7,6 +7,7 @@
 
 void dv_caldia(void);
 void dv_caldia_UV(void);
+void dfdiff_habitat_comp(const int additive, const double H, const double sigma, const double c, const double dfD, double& dfH, double& dfSigma, double& dfC);
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double twosigsq, double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
 void f_accessibility_agauss(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double sigl, double sigr, double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double temp_mean, 
@@ -253,6 +254,7 @@ void dv_caldia()
 	const double Dinf_size_slope = param->Dinf_size_slope[sp];
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
+	const int dform = param->additive_diffusion[sp];
 	//const double Dmax   = sigma_species*Dinf;
 
 	const int imax = map->imax;
@@ -365,16 +367,9 @@ void dv_caldia()
 				double rho_x = 1.0 - rho * sqrt(dHdx*dHdx) * dx;
 				double rho_y = 1.0 - rho * sqrt(dHdy*dHdy) * dy;
 
-				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				//double diff_habitat = 1.0 - D_dec_H1*pow(habitat(i,j),c_diff_fish);
-//				double D = Dmax * diff_habitat;
-//vary diffusion with seasons
-double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
-double D = Dinf * diff_habitat;
+				double D = Dinf * pop->diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 
-
-
+				//vary diffusion with seasons
 				double sfunc = mat->season_switch(sp,jday,j);
  				D = (0.9*D*sfunc + D*(1.0-sfunc));
 
@@ -431,14 +426,10 @@ double D = Dinf * diff_habitat;
                                 dfC_diff(i,j)-= Dmax * pow(habitat(i,j),3) * dfD_pr;
                                 dfD_pr = 0.0;
 */
-//-- New form: D = Dinf * (sigma_species + c_diff_fish * (1-habitat)^2)
-//   dD/dH       = -2 * c_diff_fish * Dinf * (1 - habitat(i,j))
-//   dD/dsigma   = Dinf
-//   dD/dc       = Dinf * (1 - habitat(i,j))^2
-dfH(i,j)      -= 2.0 * c_diff_fish * Dinf * (1.0 - habitat(i,j)) * dfD_pr;
-dfSigma(i,j)  += Dinf * dfD_pr;
-dfC_diff(i,j) += Dinf * pow(1.0 - habitat(i,j), 2) * dfD_pr;
-dfD_pr = 0.0;
+				//-- D = Dinf * diff_habitat_comp(dform,...); 
+				dfdiff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish, Dinf*dfD_pr,
+						    dfH(i,j), dfSigma(i,j), dfC_diff(i,j));
+				dfD_pr = 0.0;
 
 
 /*  				//double D = Dmax*(1-D_dec_H1*pow(habitat(i,j),c_diff_fish));
@@ -693,6 +684,7 @@ void dv_caldia_UV()
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
 	const double Dinf_size_slope = param->Dinf_size_slope[sp];
 	const double Dinf   = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*deltaT/1852,2)/(4.0*deltaT);
+	const int dform = param->additive_diffusion[sp];
 	//const double Dmax   = sigma_species*Dinf;
 	const double rmax   = param->rmax_currents[sp];
 
@@ -835,15 +827,9 @@ void dv_caldia_UV()
 				dfU(i,j) -= u(i,j) * expr3 * dfr;
 				dfV(i,j) -= v(i,j) * expr3 * dfr;
 
-				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				//double diff_habitat = 1.0 - D_dec_H1*pow(habitat(i,j),c_diff_fish);
-//				double D = Dmax * diff_habitat;
+				double D = Dinf * pop->diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 
-//vary diffusion with seasons
-double diff_habitat = sigma_species + c_diff_fish * pow(1.0 - habitat(i,j), 2);
-double D = Dinf * diff_habitat;
-
+				//vary diffusion with seasons
 				double sfunc = mat->season_switch(sp,jday,j);
  				double D_season = (0.9*D*sfunc + D*(1.0-sfunc));
 
@@ -926,10 +912,9 @@ double D = Dinf * diff_habitat;
                                 dfC_diff(i,j)-= Dmax * pow(habitat(i,j),3) * dfD;
                                 dfD = 0.0;
 */
-dfH(i,j)      -= 2.0 * c_diff_fish * Dinf * (1.0 - habitat(i,j)) * dfD;
-dfSigma(i,j)  += Dinf * dfD;
-dfC_diff(i,j) += Dinf * pow(1.0 - habitat(i,j), 2) * dfD;
-dfD = 0.0;
+				dfdiff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish, 
+						    Dinf*dfD,dfH(i,j), dfSigma(i,j), dfC_diff(i,j));
+				dfD = 0.0;
 /*  				//double D = Dmax*(1-D_dec_H1*pow(habitat(i,j),c_diff_fish));
                                 dfH(i,j)     -= Dmax * c_diff_fish * D_dec_H1 * pow(habitat(i,j),c_diff_fish-1) * dfD;
                                 dfSigma(i,j) += Dinf * diff_habitat * dfD;
@@ -960,6 +945,24 @@ dfD = 0.0;
 	dfSwitch.save_dmatrix_derivatives(Switch_pos);
 	dfC_diff.save_dmatrix_derivatives(cdiff_pos);
 }
+
+
+//Adjoint of diff_habitat_comp: accumulates dfD * d(diff_habitat)/d(H,sigma,c).
+void dfdiff_habitat_comp(const int additive, const double H, const double sigma, const double c, const double dfD, double& dfH, double& dfSigma, double& dfC)
+{
+	if (additive){
+		//d/dH = -2c(1-H); d/dsigma = 1; d/dc = (1-H)^2
+		dfH     -= 2.0*c*(1.0-H) * dfD;
+		dfSigma += dfD;
+		dfC     += pow(1.0-H,2) * dfD;
+	} else {
+		//d/dH = -3*sigma*c*H^2; d/dsigma = 1-c*H^3; d/dc = -sigma*H^3
+		dfH     -= 3.0*sigma*c*pow(H,2) * dfD;
+		dfSigma += (1.0 - c*pow(H,3)) * dfD;
+		dfC     -= sigma*pow(H,3) * dfD;
+	}
+}
+
 
 void dfybet_comp(dmatrix& dfybet, dmatrix& dfd, dmatrix& dfe, dmatrix& dff, const dmatrix d, const dmatrix e, const dmatrix f, unsigned long int pos_map, const int maxn, const int dt)
 {
