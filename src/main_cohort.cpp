@@ -21,6 +21,7 @@
 #include "Tags.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include "admodel.h"
 
 // Tags for the A+ ping-pong protocol between a feeder cohort and the
 // dedicated A+ worker rank (must not clash with Tags.h: 0-3).
@@ -73,7 +74,8 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		const std::shared_ptr<spdlog::logger>& logger,
 		DistDataCollector* dataCollector,
 		SeapodymCohort* cohort,
-		int numAgeGroups, int numTimeSteps, int aPlusWorkerRank){
+		int numAgeGroups, int numTimeSteps, int aPlusWorkerRank,
+		const independent_variables& x){
 
 	static double last_task_end = -1.0;        // per-worker process, persists across calls
 	double t_in = MPI_Wtime();
@@ -85,11 +87,6 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 	logger->info("> task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 
 	logger->info("    >> initialization of task id {}", task_id);
-	//initialize variables of optimization
-	const int nvar = cohort->nvarcalc();
-	independent_variables x(1, nvar);
-	adstring_array x_names(1,nvar);
-	cohort->xinit(x, x_names);
 
 	int cohort_id = task_id;
 	cohort->restart(cohort_id);
@@ -510,10 +507,23 @@ int main(int argc, char** argv) {
 
 				SeapodymCohort cohort = xinit_prerun_wrapper(parfile.c_str(), useAPlus);
 
+				// Initialize optimization variables once; x is stable for all tasks
+				// (xinit fills x from fixed model parameters that don't change between tasks).
+				// x is captured by reference in taskFunc — lifetime matches the enclosing block.
+				const int nvar = cohort.nvarcalc();
+				independent_variables x(1, nvar);
+				adstring_array x_names(1, nvar);
+				cohort.xinit(x, x_names);
+
 				cohort.setDataProvider(&dp);
 
 				double t_shm = MPI_Wtime();
 				cohort.setShmForcing();          // every node-local worker reads its timestep slice
+
+				// Reset model parameters (applies boundp() transforms from optimisation space to
+				// physical parameter space) — done once here rather than per-task in InitializeCohort.
+				cohort.reset(dvar_vector(x));
+
 				MPI_Barrier(dp.getShmComm());    // per-node publish-sync: all slabs visible before any read
 
 				time_io_forcing += MPI_Wtime()-t_shm;
@@ -526,7 +536,8 @@ int main(int argc, char** argv) {
 					logger,
 					&dataCollect,
 					&cohort,
-					numAgeGroups, numTimeSteps, aPlusWorkerRank);
+					numAgeGroups, numTimeSteps, aPlusWorkerRank,
+					std::cref(x)); // x lives in this block, outlives taskFunc and worker.run()
 
 				TaskStepWorker worker(comm_farm, taskFunc, stepBegMap, stepEndMap);
 
@@ -571,11 +582,19 @@ int main(int argc, char** argv) {
 
 			SeapodymCohort cohort = xinit_prerun_wrapper(parfile.c_str(), useAPlus);
 
+			// Initialize optimization variables once; x is stable for all tasks
+			// (xinit fills x from fixed model parameters that don't change between tasks).
+			// x is captured by reference in taskFunc — lifetime matches the enclosing block.
+			const int nvar = cohort.nvarcalc();
+			independent_variables x(1, nvar);
+			adstring_array x_names(1, nvar);
+			cohort.xinit(x, x_names);
+
 			cohort.setDataProvider(&dp);
 
 			double t_shm = MPI_Wtime();
-			cohort.setShmForcing();
-			MPI_Barrier(dp.getShmComm());
+			cohort.setShmForcing();          // every node-local worker reads its timestep slice
+			MPI_Barrier(dp.getShmComm());    // per-node publish-sync: all slabs visible before any read
 
 			time_io_forcing += MPI_Wtime()-t_shm;
 
