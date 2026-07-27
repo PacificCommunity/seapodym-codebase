@@ -8,6 +8,7 @@ void Normal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihoo
 void LogNormal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, const int nobs);
 void ZILogNormal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, dvariable& prob, const int nobs);
 dvariable Poisson(const dvector data_obs, dvar_vector& data_est, const double min_obs_catch, const int nobs);
+dvariable Poisson0(const dvector data_obs, dvar_vector& data_est, const double min_obs_catch, const int nobs);
 dvariable TruncatedPoisson(const dvector data_obs, dvar_vector& data_est, const int nobs);
 dvariable Exponential(const dvector data_obs, dvar_vector& data_est, const int nobs);
 dvariable Weibull(const dvector data_obs, dvar_vector& data_est, const int nobs);
@@ -88,6 +89,9 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 				break;
 
 			case 11: likelihood = Weibull(cdata_obs,cdata_est,nobs);
+				break;
+
+			case 12: likelihood = Poisson0(cdata_obs,cdata_est,param->poisson_like_min_catch,nobs);
 				break;
 
         	}
@@ -595,6 +599,34 @@ dvariable Poisson(const dvector data_obs, dvar_vector& data_est, const double mi
 		const double obs = data_obs(n);
 		if (pred>0 && obs>min_obs_catch){
 			likelihood += pred - obs*log(pred) + gammln(obs+1.0);
+		}
+	}
+	return(likelihood);
+}
+
+//Poisson cost function without the 'pred>0' guard (likelihood type 12).
+//Type 3 skips any record whose predicted catch is zero so the term -obs*log(pred) 
+//becomes unbounded as pred->0 and the objective discontinuous. 
+//Here the record is kept and log(pred+eps) bounds the penalty, which keeps the 
+//objective continuous and differentiable when a fishery's catchability
+//is driven toward zero. eps is small relative to the smallest retained observation, so
+//at any good fit types 3 and 12 agree to ~1e-7 relative; they differ only where the
+//predicted catch is at or near zero.
+//ATTENTION: objective values of types 3 and 12 are NOT comparable - type 12 includes
+//zero predictions and all have additive constant.
+//PROVISIONAL: added for testing alongside type 3, potentially 3 will be replaced by 12
+//once the two have been compared on the reference models.
+dvariable Poisson0(const dvector data_obs, dvar_vector& data_est, const double min_obs_catch, const int nobs)
+{
+	dvariable likelihood = 0;
+	//strictly positive even if min_obs_catch is set to zero
+	const double eps = 1e-6 * (min_obs_catch > 0.0 ? min_obs_catch : 1.0);
+
+	for (int n=0; n<nobs; n++){
+		dvariable pred = data_est(n);
+		const double obs = data_obs(n);
+		if (obs>min_obs_catch){
+			likelihood += pred - obs*log(pred + eps) + gammln(obs+1.0);
 		}
 	}
 	return(likelihood);
