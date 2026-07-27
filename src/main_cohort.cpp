@@ -64,7 +64,8 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		const std::shared_ptr<spdlog::logger>& logger,
 		DistDataCollector* dataCollector,
 		SeapodymCohort* cohort,
-		int firstAPlusId, int numAgeGroups, int numTimeSteps){
+		int firstAPlusId, int numAgeGroups, int numTimeSteps,
+		const independent_variables& x){
 
 	static double last_task_end = -1.0;        // per-worker process, persists across calls
 	double t_in = MPI_Wtime();
@@ -72,14 +73,6 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		time_idle += t_in - last_task_end;     // <-- time spent in worker.run() waiting for dispatch
 
 	double tik = MPI_Wtime();
-
-	//initialize variables of optimization - identical for both the A+ and
-	//normal-cohort paths below, so done once here rather than duplicated in
-	//each branch.
-	const int nvar = cohort->nvarcalc();
-	independent_variables x(1, nvar);
-	adstring_array x_names(1,nvar);
-	cohort->xinit(x, x_names);
 
 	if (task_id >= firstAPlusId) {
 		// A+ (plus group) accumulator task. Behaves like a normal cohort
@@ -342,6 +335,14 @@ int main(int argc, char** argv) {
 
 			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str(), useAPlus);
 
+			// Initialize optimization variables once; x is stable for all tasks
+			// (xinit fills x from fixed model parameters that don't change between tasks).
+			// x is captured by reference in taskFunc — lifetime matches the enclosing block.
+			const int nvar = cohort.nvarcalc();
+			independent_variables x(1, nvar);
+			adstring_array x_names(1, nvar);
+			cohort.xinit(x, x_names);
+
 			cohort.setDataProvider(&dp);
 
 			//MPI_Win_fence(0, dp.win());
@@ -362,7 +363,8 @@ int main(int argc, char** argv) {
 				logger,
 				&dataCollect,
 				&cohort,
-				firstAPlusId, numAgeGroups, numTimeSteps);
+				firstAPlusId, numAgeGroups, numTimeSteps,
+				std::cref(x)); // x lives in this block, outlives taskFunc and worker.run()
 
 			TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
 
