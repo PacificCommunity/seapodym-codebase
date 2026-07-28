@@ -38,13 +38,13 @@ void SeapodymCohort::InitializeCohort(dvar_vector& x, DistDataCollector& dataCol
 double t_all = MPI_Wtime();
 double t_rs = 0.0;
 double t_reset = MPI_Wtime();
-	//Reset model parameters:
-	reset(x);
-time_xreset += MPI_Wtime() - t_reset;	
+	//Reset model parameters: moved to worker init in main_cohort.cpp
+	//reset(x);
+time_xreset += MPI_Wtime() - t_reset;
 
 	//----------------------------------------------//
 	//	ALLOCATE AND INITIALIZE COHORT DENSITY	//
-	//----------------------------------------------//	
+	//----------------------------------------------//
 	dvarCohortDensity.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	if (cohort_id < nb_age_class){ 
 t_rs = MPI_Wtime();
@@ -170,8 +170,8 @@ time_init_cohort_spawning += MPI_Wtime() - t_all - t_rs;
 
 void SeapodymCohort::InitializeAPlus(dvar_vector& x, const std::vector<double>& mergedDensity, bool seedFromFile)
 {
-	//Reset model parameters:
-	reset(x);
+	//Reset model parameters: moved to worker init in main_cohort.cpp
+	//reset(x);
 
 	//----------------------------------------------//
 	//	ALLOCATE AND INITIALIZE COHORT DENSITY	//

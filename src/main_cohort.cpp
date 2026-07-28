@@ -343,6 +343,11 @@ int main(int argc, char** argv) {
 			adstring_array x_names(1, nvar);
 			cohort.xinit(x, x_names);
 
+			// Reset model parameters (applies boundp() transforms from optimisation space to
+			// physical parameter space) — done once here rather than per-task in InitializeCohort/
+			// InitializeAPlus, both of which share this same x across normal and A+ tasks.
+			cohort.reset(dvar_vector(x));
+
 			cohort.setDataProvider(&dp);
 
 			//MPI_Win_fence(0, dp.win());
