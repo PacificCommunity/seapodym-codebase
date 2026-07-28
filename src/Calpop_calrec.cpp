@@ -255,7 +255,7 @@ void CCalpop::calrec_GO_with_catch(const PMap& map, CParam& param, dvar_matrix& 
 					if (C_obs(i,j)==0)
 						uuint(i,j) = uvec[i];
 					else {
-						double C_est_ij_itr = uvec[i] * param.func_limit_one(C_obs(i,j)/(uvec[i]+1e-14)) / iterationNumber;
+						double C_est_ij_itr = uvec[i] * param.smin1_c(C_obs(i,j)/(uvec[i]+1e-14)) / iterationNumber;
 						uuint(i,j) = uvec[i] - C_est_ij_itr;
 						C_est.elem_value(i,j) += C_est_ij_itr;
 					}

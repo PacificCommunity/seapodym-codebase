@@ -35,6 +35,17 @@ bool VarParamCoupled::read(const string& parfile)
         deltaY = doc.getInteger("/deltaY", "value");
         deltaT = doc.getInteger("/deltaT", "value");
 
+	//smin1 cap parameters (global). Defaults reproduce existing configs: sharp knee a=0.07, shifted form.
+	smin1_shifted_form = 1;
+	double a_cknee = 0.07, a_vknee = 0.07, a_hknee = 0.07;
+	if (!doc.get("/smin1_pars","old_form").empty()) smin1_shifted_form = doc.getInteger("/smin1_pars","old_form");
+	if (!doc.get("/smin1_pars","a_cknee").empty())  a_cknee = doc.getDouble("/smin1_pars","a_cknee");
+	if (!doc.get("/smin1_pars","a_vknee").empty())  a_vknee = doc.getDouble("/smin1_pars","a_vknee");
+	if (!doc.get("/smin1_pars","a_hknee").empty())  a_hknee = doc.getDouble("/smin1_pars","a_hknee");
+	set_smin1_coeffs(a_cknee, smin1_shifted_form, cknee_A, cknee_K, cknee_x0);
+	set_smin1_coeffs(a_vknee, smin1_shifted_form, vknee_A, vknee_K, vknee_x0);
+	set_smin1_coeffs(a_hknee, smin1_shifted_form, hknee_A, hknee_K, hknee_x0);
+
 //IMPORTANT: in order to get correct dimentions (nbi,nbj)=(nlon+2,nlat+2) 
 //the coordinates (latitudeMax,longitudeMin) in parfile
 //should give the NORTH-WEST corner of the upper-left grid cell 
@@ -316,6 +327,8 @@ bool VarParamCoupled::read(const string& parfile)
 		age_mature.allocate(0, nb_species - 1);
 		maturity_age.allocate(0, nb_species - 1);
 		spawning_adult_func_only.allocate(0, nb_species - 1);
+		BHsat_model.allocate(0, nb_species - 1);
+		additive_diffusion.allocate(0, nb_species - 1);
 		age_autonomous.allocate(0, nb_species - 1);
 		age_recruit.allocate(0, nb_species - 1);
 		age_compute_habitat.allocate(0, nb_species - 1);
@@ -325,6 +338,7 @@ bool VarParamCoupled::read(const string& parfile)
 		cannibalism.allocate(0, nb_species - 1);
 		nb_recruitment.allocate(0, nb_species - 1);
 		a_adults_spawning.allocate(0, nb_species - 1);
+		a_allee_adults.allocate(0, nb_species - 1);
 		alpha_hsp_prey.allocate(0, nb_species - 1);
 		alpha_hsp_predator.allocate(0, nb_species - 1);
 		beta_hsp_predator.allocate(0, nb_species - 1);
@@ -352,6 +366,7 @@ bool VarParamCoupled::read(const string& parfile)
 		a_sst_larvae.allocate(0, nb_species - 1);
 		b_sst_larvae.allocate(0, nb_species - 1);
 		gaussian_thermal_function.allocate(0,nb_species-1);
+		set_access_temp.allocate(0,nb_species-1);
 		a_sst_habitat.allocate(0, nb_species - 1);
 		b_sst_habitat.allocate(0, nb_species - 1);
 		T_age_size_slope.allocate(0, nb_species - 1);
@@ -372,7 +387,11 @@ bool VarParamCoupled::read(const string& parfile)
 		MSS_size_slope.allocate(0, nb_species - 1);
 		c_diff_fish.allocate(0, nb_species - 1);
 
+		Dinf_size_slope.allocate(0, nb_species - 1);
+
 		sigma_ha.allocate(0, nb_species - 1);
+		sigma_ha_left.allocate(0, nb_species - 1);
+		sigma_ha_right.allocate(0, nb_species - 1);
 		temp_age.allocate(0, nb_species - 1);
 		rmax_currents.allocate(0, nb_species - 1);
 	}
@@ -392,7 +411,16 @@ bool VarParamCoupled::read(const string& parfile)
 		spawning_adult_func_only[sp] = 0;
 		if (!doc.get("/spawning_in_hs",sp_name[sp]).empty())
 			spawning_adult_func_only[sp] = !doc.getInteger("/spawning_in_hs", sp_name[sp]);
-	
+
+		BHsat_model[sp] = 0;
+		if (!doc.get("/BH_with_halfsat_model",sp_name[sp]).empty())
+			BHsat_model[sp] = doc.getInteger("/BH_with_halfsat_model", sp_name[sp]);
+
+		//Form of the habitat-dependent diffusion factor. Default (0) is the
+		//multiplicative form D = Dinf*sigma*(1-c*Ha^3), as in all earlier versions.
+		additive_diffusion[sp] = 0;
+		if (!doc.get("/additive_diffusion_model",sp_name[sp]).empty())
+			additive_diffusion[sp] = doc.getInteger("/additive_diffusion_model", sp_name[sp]);
 
 		//old parameter files:
 		if (doc.get("/spawning_season_peak").empty()){
@@ -444,6 +472,27 @@ bool VarParamCoupled::read(const string& parfile)
 		}
 
 		////////////////
+		//REPRODUCTION//   
+		////////////////
+
+		//maximal number of larvae (by cell) at large spawning biomass of adults
+               	nb_recruitment[sp] = doc.getDouble("/nb_recruitment", sp_name[sp]);
+		
+		//slope coefficient in Beverton-Holt function
+               	a_adults_spawning[sp] = doc.getDouble("/a_adults_spawning", sp_name[sp]);
+		
+		a_allee_adults[sp] = 0;//default value - no Allee effect
+		if (!doc.get("/a_allee_adults",sp_name[sp]).empty()){
+               		a_allee_adults[sp] = doc.getDouble("/a_allee_adults", sp_name[sp]);
+			if (a_allee_adults[sp]<0){
+				cout << "Parameter a_allee_adults must be non-negative. Exit now!"; 
+				exit(1);
+			}
+		}
+
+	
+
+		////////////////
 		//  HABITATS  //   
 		////////////////
 	
@@ -459,13 +508,6 @@ bool VarParamCoupled::read(const string& parfile)
                	alpha_hsp_prey[sp] = doc.getDouble("/alpha_hsp_prey", sp_name[sp]);
                	alpha_hsp_predator[sp] = doc.getDouble("/alpha_hsp_predator", sp_name[sp]);
                	beta_hsp_predator[sp] = doc.getDouble("/beta_hsp_predator", sp_name[sp]);
-	
-		//maximal number of larvae (by cell) at large spawning biomass of adults
-               	nb_recruitment[sp] = doc.getDouble("/nb_recruitment", sp_name[sp]);
-		
-		//slope coefficient in Beverton-Holt function
-               	a_adults_spawning[sp] = doc.getDouble("/a_adults_spawning", sp_name[sp]);
-
 
 		// 2. Juvenile habitat
 		cannibalism[sp] = 0;
@@ -482,6 +524,18 @@ bool VarParamCoupled::read(const string& parfile)
 		gaussian_thermal_function[sp] = 1; //default value
 		if (!doc.get("/gaussian_thermal_function",sp_name[sp]).empty()){
 			gaussian_thermal_function[sp] = doc.getInteger("/gaussian_thermal_function", sp_name[sp]);
+		}
+     		
+		set_access_temp[sp] = 0;
+		if (!doc.get("/accessible_temperature",sp_name[sp]).empty()){
+			set_access_temp[sp] = doc.getInteger("/accessible_temperature", sp_name[sp]);
+		}
+		access_temp_min = -1e2;
+		access_temp_max = 1e2;
+		if (set_access_temp[sp]){
+			string sv = "/accessible_temperature";
+			access_temp_min = doc.getDouble(sv + "/limits", "min");
+			access_temp_max = doc.getDouble(sv + "/limits", "max");
 		}
 			
 		//standard deviation in Gaussian temperature function
@@ -551,6 +605,10 @@ bool VarParamCoupled::read(const string& parfile)
 		//scaling exponent in power low giving the species sustainable speed
 		//in m/sec, i.e. V_mss = MSS_species * pow(L,MSS_size_slope)
 		MSS_size_slope[sp] = doc.getDouble("/MSS_size_slope", sp_name[sp]);
+
+		Dinf_size_slope[sp] = 0.6; 
+		if (!doc.get("/Dinf_size_slope",sp_name[sp]).empty())
+			Dinf_size_slope[sp] = doc.getDouble("/Dinf_size_slope", sp_name[sp]);
 	
 		//Adding rmax to the parfile as a fixed parameter. 
 		//Note, if not present in the parfile, then set to default value:
@@ -587,6 +645,12 @@ bool VarParamCoupled::read(const string& parfile)
 		sp_unit_cohort[sp].allocate(0,sp_nb_cohorts[sp]-1);
 
 		sigma_ha[sp].allocate(sp_a0_adult[sp],sp_nb_cohorts[sp]-1);
+
+		sigma_ha_left[sp].allocate(sp_a0_adult[sp],sp_nb_cohorts[sp]-1);
+		sigma_ha_right[sp].allocate(sp_a0_adult[sp],sp_nb_cohorts[sp]-1);
+		sigma_ha_left.initialize();
+		sigma_ha_right.initialize();
+
 		temp_age[sp].allocate(sp_a0_adult[sp],sp_nb_cohorts[sp]-1);
 		sigma_ha.initialize();
 		temp_age.initialize();
@@ -781,6 +845,8 @@ bool VarParamCoupled::read(const string& parfile)
 	elarvae_mortality_inc.allocate(0,nb_species-1);
 	elarvae_mortality_min.initialize();
 	elarvae_mortality_inc.initialize();
+	elarvae_mortality_inc2.allocate(0,nb_species-1);
+	elarvae_mortality_inc2.initialize();
 	elarvae_slope_low.allocate(0,nb_species-1);
 	elarvae_slope_high.allocate(0,nb_species-1);
 	elarvae_slope_low.initialize();
@@ -832,6 +898,9 @@ bool VarParamCoupled::read(const string& parfile)
 				vstr = str + "/hs_sst_func_coefs";
 				elarvae_a_sst[sp] = doc.getDouble(vstr, "a_sst");
 				elarvae_b_sst[sp] = doc.getDouble(vstr, "b_sst");	
+				elarvae_mortality_inc2[sp] = elarvae_mortality_inc[sp];
+				if (!doc.get(vstr, "inc").empty())
+					elarvae_mortality_inc2[sp] = doc.getDouble(vstr, "inc");
 				elarvae_hs_fsst_fixed[sp] = doc.getInteger(vstr, "flag");	
 			}
 		} 
@@ -845,6 +914,10 @@ bool VarParamCoupled::read(const string& parfile)
 		}else{
 			larvae_like[sp] = 0;
 		}	
+		linear_larvae_obs_model = 1;
+		if (!doc.get("/is_larvae_obs_model_linear","flag").empty()){
+			linear_larvae_obs_model = doc.getInteger("/is_larvae_obs_model_linear", "flag");	
+		}
 		if (larvae_like[sp]){
 			if (!doc.get("/larvae_likelihood_years","first_year").empty())
 				larvae_like_firstyear = doc.getInteger("/larvae_likelihood_years","first_year");
@@ -1216,6 +1289,10 @@ bool VarParamCoupled::read(const string& parfile)
 		poisson_like_min_catch = 2.0; //default value, observed catches below 1(kg, X kg, mt, depending on the catch_units_converter) will not be used in the Poisson likelihood
 		if (!doc.get("/poisson_like_min_catch","value").empty())
 			poisson_like_min_catch = doc.getDouble("/poisson_like_min_catch","value");
+		if (poisson_like_min_catch < 0){
+			cout << "Minimal catch in poisson likelihood should be non-negative, setting: poisson_like_min_catch = 0" << endl;
+			poisson_like_min_catch = 0;
+		}
 
 		//Catch likelihood weights
 		catch_like_weight.allocate(0,nb_fishery-1);
@@ -1253,12 +1330,17 @@ bool VarParamCoupled::read(const string& parfile)
 				length_like_weight(f) = doc.getDouble("/length_like_weight",f);
 
 		//3. TAGs likelihood: further options here (see above the code for main flags)
+		//defaults:
 		tag_gauss_kernel_on = 1;
+		use_tlib_as_weight  = 1;
 		strout_tags = "./tags/";
 		for (int sp=0;sp<nb_species;sp++){
 			if (tag_like[sp]){
 				if (!doc.get("/tag_gauss_kernel_on","value").empty()){
 					tag_gauss_kernel_on = doc.getInteger("/tag_gauss_kernel_on","value");
+				}
+				if (!doc.get("/use_tags_tlib_as_weight","value").empty()){
+					use_tlib_as_weight = doc.getInteger("/use_tags_tlib_as_weight","value");
 				}
 				//TODO: make a small function to check and create unexisting folder (three times in the code now)
 				string test = strout_tags + "/test";
@@ -1269,6 +1351,7 @@ bool VarParamCoupled::read(const string& parfile)
 			        } else remove(test.c_str());	
 			}
 		}
+
 		tag_like_weight = 1.0; //default value
 		elife_like_weight = 1.0; //default value
 		if (!doc.get("/tag_like_weight").empty())		  
@@ -1311,6 +1394,10 @@ bool VarParamCoupled::read(const string& parfile)
 		if (!doc.get("/density_likelihood_weight","value").empty())
 			density_like_weight = doc.getDouble("/density_likelihood_weight","value");
 		if (!density_like_data) density_like_weight = 1.0;
+
+		penalty_like_weight = 0.0;
+		if (!doc.get("/penalty_likelihood_parameters","value").empty())
+			penalty_like_weight = doc.getDouble("/penalty_likelihood_parameters","value");
 
 		//likelihood parameters: variance, beta binomial 
 		like_param.allocate(0, nb_species-1);
@@ -1599,6 +1686,18 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(M_mean_range,M_mean_range_min,M_mean_range_max,"/M_mean_range",nni);
 	par_read_bounds(a_sst_spawning,a_sst_spawning_min,a_sst_spawning_max,"/a_sst_spawning",nni);
 	par_read_bounds(b_sst_spawning,b_sst_spawning_min,b_sst_spawning_max,"/b_sst_spawning",nni);
+	if (doc.get("/b_sst_spawning/variable", "use") == "true") {	
+		if (b_sst_spawning_min < access_temp_min + 0.5) {
+			b_sst_spawning_min = access_temp_min + 0.5;
+			doc.set("/b_sst_spawning/variable", "min", b_sst_spawning_min);
+			cout << "WARNING: b_sst_spawning minimum was reset above thermal accessibility limit to " << b_sst_spawning_min << endl; 
+		}
+		if (b_sst_spawning_max > access_temp_max - 0.5) {
+			b_sst_spawning_max = access_temp_max - 0.5;
+			doc.set("/b_sst_spawning/variable", "max", b_sst_spawning_max);
+			cout << "WARNING: b_sst_spawning maximum was reset below thermal accessibility limit to " << b_sst_spawning_max << endl; 
+		}
+	}
 	par_read_bounds(q_sp_larvae,q_sp_larvae_min,q_sp_larvae_max,"/q_sp_larvae",nni);
 	par_read_bounds(likelihood_larvae_sigma,likelihood_larvae_sigma_min,likelihood_larvae_sigma_max,"/likelihood_larvae_sigma",nni);
 	par_read_bounds(likelihood_larvae_beta,likelihood_larvae_beta_min,likelihood_larvae_beta_max,"/likelihood_larvae_beta",nni);
@@ -1618,6 +1717,18 @@ bool VarParamCoupled::read(const string& parfile)
 	par_read_bounds(beta_hsp_predator,beta_hsp_predator_min,beta_hsp_predator_max,"/beta_hsp_predator",nni);
 	par_read_bounds(a_sst_habitat,a_sst_habitat_min,a_sst_habitat_max,"/a_sst_habitat",nni);
 	par_read_bounds(b_sst_habitat,b_sst_habitat_min,b_sst_habitat_max,"/b_sst_habitat",nni);
+	if (doc.get("/b_sst_habitat/variable", "use") == "true") {	
+		if (b_sst_habitat_min < access_temp_min + 0.5) {
+			b_sst_habitat_min = access_temp_min + 0.5;
+			doc.set("/b_sst_habitat/variable", "min", b_sst_habitat_min);
+			cout << "WARNING: b_sst_habitat minimum was reset above thermal accessibility limit to " << b_sst_habitat_min << endl; 
+		}
+		if (b_sst_habitat_max > access_temp_max - 0.5) {
+			b_sst_habitat_max = access_temp_max - 0.5;
+			doc.set("/b_sst_habitat/variable", "max", b_sst_habitat_max);
+			cout << "WARNING: b_sst_habitat maximum was reset below thermal accessibility limit to " << b_sst_habitat_max << endl; 
+		}
+	}
 	par_read_bounds(T_age_size_slope,T_age_size_slope_min,T_age_size_slope_max,"/T_age_size_slope",nni);
 	thermal_func_delta_min.allocate(0,2);
 	thermal_func_delta_max.allocate(0,2);

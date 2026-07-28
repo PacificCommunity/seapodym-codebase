@@ -67,7 +67,7 @@ void CCalpop::predicted_catch_fishery_comp(const PMap& map, CParam& param, VarMa
 								fish += af(ii,jj)*uu(ii+ki,jj+kj)/(afr*mat.lat_correction[jj+kj]);	
 					}
 
-					const double F = afr*param.func_limit_one(effort*s_c/afr);
+					const double F = afr*param.smin1_c(effort*s_c/afr);
 
 					// total catch in weight (tonnes)
 					mat.dvarCatch_est(sp,k).elem_value(i,j) += F * fish * w_area ;

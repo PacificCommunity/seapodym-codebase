@@ -57,14 +57,21 @@ public:
 	double crit;
 	
 	//Flags for alternative model mechanisms:
-	ivector fsst_type;
+	ivector fsst_type;		   //type of SST function in HS
 	ivector vert_movement;		   //average currents through vertical layers accessible to fish
 	ivector scale_forage_ave_currents; //use eF scaler when computing the time spent in the layer
 	ivector seasonal_migrations;	   //activate seasonal spawning migrations
-	ivector spawning_adult_func_only;  //use stock-recruitment function only at spawning, ignoring Hs
+	ivector spawning_adult_func_only;  //use stock-recruitment function only at spawning, ignoring Hs, 0 by default
+	ivector BHsat_model;  		   //use stock-recruitment function form with half-saturation as the slope, 0 by default
+	ivector additive_diffusion;	   //diffusion model: 0 by default = multiplicative sigma*(1-c*Ha^3), 1 = additive sigma+c*(1-Ha)^2
+	int smin1_shifted_form;            // smin1 cap: 1(default)=shifted form (original), 0=centre at (1,1)
+	double cknee_A, cknee_K, cknee_x0; // precomputed smin1 coeffs: catch cap
+	double vknee_A, vknee_K, vknee_x0; // precomputed smin1 coeffs: velocity cap
+	double hknee_A, hknee_K, hknee_x0; // precomputed smin1 coeffs: habitat cap
 	ivector food_requirement_in_mortality;
 	ivector uncouple_sst_larvae;	
 	ivector gaussian_thermal_function;	
+	ivector set_access_temp;
 	ivector cannibalism;	
 	string	idformat;	//Patrick 21Oct04
 	int	idfunc ;	//Patrick 21Oct04
@@ -94,6 +101,7 @@ public:
 
 	int     density_like_data;
 	double  density_like_weight;
+	double  penalty_like_weight;
 	
 	int use_lf_regstruc;
 	int use_mask_catch;
@@ -183,6 +191,7 @@ public:
 	int q_mld_larvae;
 	double q_mld_slope, q_mld_depth;
 	ivector larvae_like; // weither to compute larvae likelihood, [sp]
+	int linear_larvae_obs_model;
 	DVECTOR q_sp_larvae;           // Larvae catchability, [sp]
 	DVECTOR likelihood_larvae_sigma;		// sigma parameter in Gaussian kernel used for larvae likelihood
 	DVECTOR likelihood_larvae_beta;		// betaf parameter in ZINB used for larvae likelihood
@@ -205,7 +214,7 @@ public:
 
 	ivector elarvae_model;        // flag to activate/desactivate early larvae model
 	dvector elarvae_age;
-	dvector elarvae_mortality_min, elarvae_mortality_inc;
+	dvector elarvae_mortality_min, elarvae_mortality_inc, elarvae_mortality_inc2;
 	dvector elarvae_slope_low, elarvae_slope_high, elarvae_sst_low, elarvae_sst_high;
 	dvector elarvae_a_sst, elarvae_b_sst;
 	ivector elarvae_hs_fsst_fixed;
@@ -245,6 +254,7 @@ public:
 	imatrix age_compute_habitat;	// ages to compute habitat index, by default it is computed for all adult cohorts
 	DVECTOR nb_recruitment;		// nb of fish recruited by cell [sp]
 	DVECTOR a_adults_spawning;	// coefficient controlling dependence of number of spawns from number of mature fish of species [sp]
+	dvector a_allee_adults;		// Allee effect parameter in the modified Beverton-Holt function
 	dvector spawning_season_peak;	// peak of the seasonal cycle in julian day (in the North Hemisphere)
 	dvector spawning_season_start;  // day/night length ratio defining the beginning of spawning migrations
 	DVECTOR a_sst_spawning;		// coefficient of curvature for spawning temperature function [sp]
@@ -278,9 +288,13 @@ public:
 	DVECTOR sigma_species;		// max diffusion coefficient for each species in nm2/mo [sp]
 	DVECTOR MSS_species;		// max ustained speed for each species in FL/mo [sp]
 	DVECTOR MSS_size_slope;		// scaling exponent of the power low to compute sustainable speed MSS*L^slope
+	DVECTOR Dinf_size_slope;	// scaling exponent of the power low to compute maximal diffusion and age Dspeed*L^slope
 	DVECTOR c_diff_fish;		// coefficient for the diffusion-Habitat function [sp]
 	dvector rmax_currents;		// maximal reduction of current velocity due to vertical migrations effect, rmax = 0.0 - no reduction
 
+	double access_temp_min, access_temp_max; // temperatures with zero accessibility, for now same for all species
+	dmatrix sigma_ha_left;		//Gaussian std in adult habitat by sp and age
+	dmatrix sigma_ha_right;		//Gaussian std in adult habitat by sp and age
 	dmatrix sigma_ha;		//Gaussian std in adult habitat by sp and age
 	dmatrix temp_age;		//optimal temperature by sp and age
 
@@ -326,6 +340,7 @@ public:
 	vector<string>  file_tag_data;
 	int nb_catch_files, nb_frq_files, nb_tag_files;
 	int tag_gauss_kernel_on;
+	int use_tlib_as_weight;
 	float dx_tags, dy_tags; 	// setup of the grid to aggregate tagging data
 	float lonmin_tags,lonmax_tags, latmin_tags, latmax_tags;
 	float tags_tlib_min, tags_tlib_max;// range of time at liberty (in days) of tags to use
@@ -377,9 +392,19 @@ public:
 	double itolon(int i);
 	int lattoj(double lat);
 	int lontoi(double lon);
-	double func_limit_one(const double m);
-	double dffunc_limit_one(const double x, const double dfy);
-	//double dffunc_limit_one(const double m);
+	void set_smin1_coeffs(const double a, const int shifted, double& A, double& K, double& x0);
+	double smin1(const double x, const double A, const double K, const double x0);
+	double dfsmin1(const double x, const double dfy, const double A, const double K, const double x0);
+	// wrappers: read the class's own precomputed coeffs (no passing from caller)
+	double smin1_v(const double x){ return smin1(x, vknee_A, vknee_K, vknee_x0); }
+	double smin1_c(const double x){ return smin1(x, cknee_A, cknee_K, cknee_x0); }
+	double smin1_h(const double x){ return smin1(x, hknee_A, hknee_K, hknee_x0); }
+	double dfsmin1_v(const double x, const double dfy){ return dfsmin1(x, dfy, vknee_A, vknee_K, vknee_x0); }
+	double dfsmin1_c(const double x, const double dfy){ return dfsmin1(x, dfy, cknee_A, cknee_K, cknee_x0); }
+	double dfsmin1_h(const double x, const double dfy){ return dfsmin1(x, dfy, hknee_A, hknee_K, hknee_x0); }
+	
+	double f1_smooth(const double x);
+	double df1_smooth(const double x);
 	void afcoef(const double lon, const double lat, dmatrix& a, int& ki, int& kj, const int reso);
 
 	double selectivity_comp(const int sp, const int age, const int f, const int k);

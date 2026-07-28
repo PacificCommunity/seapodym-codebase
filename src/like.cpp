@@ -8,6 +8,7 @@ void Normal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihoo
 void LogNormal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, const int nobs);
 void ZILogNormal(const dvector& data_obs, dvar_vector& data_est, dvariable& likelihood, dvariable& sigma, dvariable& prob, const int nobs);
 dvariable Poisson(const dvector data_obs, dvar_vector& data_est, const double min_obs_catch, const int nobs);
+dvariable Poisson0(const dvector data_obs, dvar_vector& data_est, const double min_obs_catch, const int nobs);
 dvariable TruncatedPoisson(const dvector data_obs, dvar_vector& data_est, const int nobs);
 dvariable Exponential(const dvector data_obs, dvar_vector& data_est, const int nobs);
 dvariable Weibull(const dvector data_obs, dvar_vector& data_est, const int nobs);
@@ -88,6 +89,9 @@ dvariable SeapodymCoupled::like(const int sp, const int k, const int f, const in
 				break;
 
 			case 11: likelihood = Weibull(cdata_obs,cdata_est,nobs);
+				break;
+
+			case 12: likelihood = Poisson0(cdata_obs,cdata_est,param->poisson_like_min_catch,nobs);
 				break;
 
         	}
@@ -211,6 +215,7 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 
 dvariable SeapodymCoupled::larvae_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
 	dvariable lkhd = 0.0;
+TRACE(like_type)	
 	switch (like_type){
 		case 0: // Mixed Gaussian Kernel cost function
 			lkhd = NshkwCat.mixed_gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
@@ -257,10 +262,11 @@ dvariable SeapodymCoupled::larvae_like(int like_type, int L_obs, dvariable N_pre
 }
 
 dvariable SeapodymCoupled::larvae_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
+
 	dvariable lkhd = 0.0;
 	switch (like_type){
 		case 0: // Gaussian cost function
-			lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+			lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, larvae_obs_max, 0);
 			break;
 
 		case 1:{// Poisson cost function
@@ -290,6 +296,10 @@ dvariable SeapodymCoupled::larvae_like(int like_type, double L_obs, dvariable N_
 
 		case 4: // Zero-Inflated Poisson cost function
 			lkhd = zip_comp(L_obs, N_pred, *param, 0);
+			break;
+
+		case 5: // Logit-Normal likelihood
+			lkhd = logit_normal_comp(L_obs, N_pred, *param, larvae_obs_max, 0);
 			break;
 	}
 	return(lkhd);
@@ -322,6 +332,8 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 		rec_obs_like.initialize();
 		rec_pred_like.initialize();
 	}
+
+	int use_tlib = param->use_tlib_as_weight;
 	for (int p=0; p<nb_tagpops; p++){
 //if (sum(mat.dvarDensity(p+1))>0)		
 //TTRACE(p+1,sum(mat.dvarDensity(p+1)))		
@@ -354,10 +366,13 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 				tagpop_age_solve(p,t_count).initialize();
 
 				//append to the aggregated predictions and observations
-				rec_obs_like  += elem_prod(rec_obs(p),tlib_obs(p));
-				rec_pred_like += elem_prod(rec_pred(p),tlib_obs(p));
-				//rec_obs_like  += rec_obs(p);
-				//rec_pred_like += rec_pred(p);
+				if (use_tlib){
+					rec_obs_like  += elem_prod(rec_obs(p),tlib_obs(p));
+					rec_pred_like += elem_prod(rec_pred(p),tlib_obs(p));
+				} else {
+					rec_obs_like  += rec_obs(p);
+					rec_pred_like += rec_pred(p);
+				}
 /*		
 				//1. Concentrated
 				taglike += value(norm2(rec_obs(p)-rec_pred(p)));
@@ -401,7 +416,10 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					if (wtxt){
 						wtxt << xlon << endl;
 						wtxt << ylat << endl;
-						wtxt << trans(value(rec_pred(p))) << endl;
+						if (use_tlib)
+							wtxt << trans(value(elem_prod(rec_pred(p),tlib_obs(p)))) << endl;
+						else
+							wtxt << trans(value(rec_pred(p))) << endl;
 					}
 					wtxt.close();
 			
@@ -411,7 +429,10 @@ double SeapodymCoupled::get_tag_like(dvariable& likelihood, bool writeoutputs)
 					if (wtxt){
 						wtxt << xlon << endl;
 						wtxt << ylat << endl;
-						wtxt << trans(rec_obs(p)) << endl;
+						if (use_tlib)
+							wtxt << trans(elem_prod(rec_obs(p),tlib_obs(p))) << endl;
+						else
+							wtxt << trans(rec_obs(p)) << endl;
 					}
 					wtxt.close();
 			
@@ -447,7 +468,10 @@ dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, cons
 	const double PLconst = 350.0;   // PL*PLconst should be > 1000 (= maximal sample size!)
 	int I; 				// number of bins with data contributes to the likelihood weights
 	double inv_I;
-
+//double negterm = 0;
+//double ave_ksi = 0;
+//double ave_inv_I = 0;
+//int nneg = 0;
 	dvector lf_obs(a0,nb_ages-1);
 	dvar_vector lf_est(a0,nb_ages-1);
 	lf_obs.initialize();
@@ -473,12 +497,16 @@ dvariable LFlike_robust(const d3_array LF_qtr_obs, dvar3_array& dvarLF_est, cons
 				lf_est(a) /= sum_lf_est;
 				double ksi = lf_obs(a)*(1.0-lf_obs(a));
 
+//if (0.5*log(twopi*(ksi+inv_I))<0){negterm -= 0.5*log(twopi*(ksi+inv_I)); ave_ksi += ksi; ave_inv_I += inv_I; nneg++;}
+
 				if (lf_est(a) != 0)
-					likelihood += 0.5*log(twopi*(ksi+inv_I))+
+					likelihood += 0.5*log(twopi*(ksi+inv_I)) +
 						      pow(lf_obs(a)-lf_est(a),2.0)/(2.0*tau*tau*(ksi+inv_I));
 			}
 		}
 	}	
+//if (negterm>0)		
+//	cout << negterm << " " << ave_ksi/nneg << " " << ave_inv_I/nneg << endl;		
 
 	return(likelihood);
 }
@@ -571,6 +599,34 @@ dvariable Poisson(const dvector data_obs, dvar_vector& data_est, const double mi
 		const double obs = data_obs(n);
 		if (pred>0 && obs>min_obs_catch){
 			likelihood += pred - obs*log(pred) + gammln(obs+1.0);
+		}
+	}
+	return(likelihood);
+}
+
+//Poisson cost function without the 'pred>0' guard (likelihood type 12).
+//Type 3 skips any record whose predicted catch is zero so the term -obs*log(pred) 
+//becomes unbounded as pred->0 and the objective discontinuous. 
+//Here the record is kept and log(pred+eps) bounds the penalty, which keeps the 
+//objective continuous and differentiable when a fishery's catchability
+//is driven toward zero. eps is small relative to the smallest retained observation, so
+//at any good fit types 3 and 12 agree to ~1e-7 relative; they differ only where the
+//predicted catch is at or near zero.
+//ATTENTION: objective values of types 3 and 12 are NOT comparable - type 12 includes
+//zero predictions and all have additive constant.
+//PROVISIONAL: added for testing alongside type 3, potentially 3 will be replaced by 12
+//once the two have been compared on the reference models.
+dvariable Poisson0(const dvector data_obs, dvar_vector& data_est, const double min_obs_catch, const int nobs)
+{
+	dvariable likelihood = 0;
+	//strictly positive even if min_obs_catch is set to zero
+	const double eps = 1e-6 * (min_obs_catch > 0.0 ? min_obs_catch : 1.0);
+
+	for (int n=0; n<nobs; n++){
+		dvariable pred = data_est(n);
+		const double obs = data_obs(n);
+		if (obs>min_obs_catch){
+			likelihood += pred - obs*log(pred + eps) + gammln(obs+1.0);
 		}
 	}
 	return(likelihood);

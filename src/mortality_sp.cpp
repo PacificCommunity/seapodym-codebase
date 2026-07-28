@@ -7,28 +7,43 @@ double sigmoid1(const double tau, const double delta);
 
 void VarSimtunaFunc::M_early_sp_comp(VarParamCoupled& param, const PMap& map, dvar_matrix& M,  const double a, const double b, const dmatrix& sst, const dmatrix& pp, const int sp)
 {
-	double mort_min = param.elarvae_mortality_min[sp];
+	//parameters of empirical model: all fixed here
 	double mort_inc = param.elarvae_mortality_inc[sp];
 	double sst_low  = param.elarvae_sst_low[sp];
 	double sst_high = param.elarvae_sst_high[sp];
 	double slp_low  = param.elarvae_slope_low[sp];
 	double slp_high = param.elarvae_slope_high[sp];
 
+	//parameters to calibrate: can't be estimated from 
+	//available data and highly correlated with R
+	double mort_min = param.elarvae_mortality_min[sp];
+	double mort_inc_larvae = param.elarvae_mortality_inc2[sp];
+
 	for (int i = map.imin; i <= map.imax; i++){
 		const int jmin = map.jinf[i];
 		const int jmax = map.jsup[i];
 		for (int j = jmin; j <= jmax; j++){
 			if (map.carte(i,j)){
-				//1. eggs survival function derived from observations
-				double f_sst  = sigmoid1(slp_low,sst(i,j)-sst_low) * sigmoid1(slp_high,sst_high-sst(i,j));
+				//1. temperature-dependent early survival derived from observations
+				double f_lowtemp = sigmoid1(slp_low,sst(i,j)-sst_low);
+				double f_hightemp  = sigmoid1(slp_high,sst_high-sst(i,j));;
+				double surv_early_stage = f_lowtemp * f_hightemp;
+
 				//2. early larvae mortality due to thermal factor as in Hs
-				//To be added with variable parameters if proven necessary (Nov2024)   
-				double f_sst2 = exp(-pow(sst(i,j)-b,2.0)/(2.0*a*a));
+				//Gaussian
+				//double f_sst2 = exp(-pow(sst(i,j)-b,2.0)/(2.0*a*a));
+				//Logistic
+				//double f_sst2 = sigmoid1(a,sst(i,j)-b);
+				//Logistic thresholds, if active, use the same high-temp limit 
+				//as for early stage (for eggs or hatched larvae)
+				double surv_larvae = sigmoid1(a,sst(i,j)-b) * f_hightemp;
 
 				//3. other factors influencing observed early larvae survival
 				double f_prey = 1.0;//no other factors
 
-				M.elem_value(i,j) = mort_min + mort_inc*(1-f_prey*f_sst*f_sst2);
+				surv_larvae *= f_prey;
+
+				M.elem_value(i,j) = mort_min + mort_inc*(1-surv_early_stage) + mort_inc_larvae*(1-surv_larvae);
 			}
 		}
 	}

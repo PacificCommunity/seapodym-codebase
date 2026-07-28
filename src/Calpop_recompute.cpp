@@ -1,6 +1,7 @@
 #include "calpop.h"
 
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double twosigsq, double temp_age, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
+void f_accessibility_agauss(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double sigl, double sigr, double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double temp_mean, 
 		double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr, const int nl, 
 		const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
@@ -10,6 +11,7 @@ void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage
 const double Vmax_diff = 1.25;
 const double rc = 0.0005;
 const double rho = 0.99;
+const double v_eps = 1e-20;
 
 
 ///This function recomputes all intermediate solutions of one forward ADI step, taking the solution from previous step.
@@ -91,7 +93,7 @@ void CCalpop::RecompADI_step_fwd_with_catch(const PMap& map, CParam& param, d3_a
 				if (C(i,j)==0)
 					uuint(itr,i,j) = uvec[i];
 				else 
-					uuint(itr,i,j) = uvec[i] - uvec[i] * param.func_limit_one(C(i,j)/(uvec[i]+1e-14)) / iterationNumber;
+					uuint(itr,i,j) = uvec[i] - uvec[i] * param.smin1_c(C(i,j)/(uvec[i]+1e-14)) / iterationNumber;
 
 				uuint_t(itr,i,j) = uvec[i];
 			}	
@@ -266,7 +268,8 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 	diffusion_y.initialize();
 
 	//PRECALDIA SECTION
-	const double MSS_size_slope = param.MSS_size_slope[sp];
+	const double MSS_size_slope  = param.MSS_size_slope[sp];
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 	const double length  = param.length[sp][age]*0.01;
 	const double lmax    = param.length[sp][param.sp_nb_cohorts[sp]-1]*0.01;
 	const double dx	     = param.deltaX;
@@ -276,10 +279,11 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed = Vmax_diff-0.25*length/lmax;
 	//const double Dinf   = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
 
 
-	const double Dmax    = sigma_species*Dinf;
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 	
 
@@ -319,8 +323,12 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 				}
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				double D = Dmax * diff_habitat;
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double D = Dmax * diff_habitat;
+//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+//   sigma_species = BASE diffusion fraction (D at H_a=1)
+//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -338,11 +346,9 @@ void CCalpop::Recomp_DEF_coef(const PMap& map, CParam& param, CMatrices& mat, co
 				double v_y = CHI_y * dHdy;
 
 				//limit maximal velocity my Vinf
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
-
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x*mat.lat_correction[j];// for computing derivatives in dv_caldia
 				advection_y(i,j) = c*V + v_y;
@@ -387,7 +393,8 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 
 
 	//PRECALDIA SECTION
-	const double MSS_size_slope = param.MSS_size_slope[sp];
+	const double MSS_size_slope  = param.MSS_size_slope[sp];
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 	const double length  = param.length[sp][age]*0.01;
 	const double lmax    = param.length[sp][param.sp_nb_cohorts[sp]-1]*0.01;
 	const double dx	     = param.deltaX;
@@ -397,9 +404,10 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
 
-	const double Dmax    = sigma_species*Dinf;
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
 	const double nb_layer = param.nb_layer;
@@ -438,8 +446,13 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 				}
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				double D = Dmax * diff_habitat;
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double D = Dmax * diff_habitat;
+//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+//   sigma_species = BASE diffusion fraction (D at H_a=1)
+//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
+
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -456,11 +469,9 @@ void CCalpop::Recomp_DEF_UV_coef(const PMap& map, CParam& param, CMatrices& mat,
 				double v_y = CHI_y * dHdy;
 
 				//limit maximal velocity my Vinf
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
-
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x*lat_correction[j];// for computing derivatives in dv_caldia
 				advection_y(i,j) = c*V + v_y;
@@ -508,7 +519,8 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 	advection_y.initialize();
 
 	//PRECALDIA SECTION
-	const double MSS_size_slope = param.MSS_size_slope[sp];
+	const double MSS_size_slope  = param.MSS_size_slope[sp];
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 	const double length  = param.length[sp][age]*0.01;
 	const double lmax    = param.length[sp][param.sp_nb_cohorts[sp]-1]*0.01;
 	const double dx	     = param.deltaX;
@@ -518,8 +530,9 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dmax    = sigma_species*Dinf;
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 
 	const double nb_layer = param.nb_layer;
@@ -558,8 +571,12 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 				}
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				double D = Dmax * diff_habitat;
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double D = Dmax * diff_habitat;
+//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+//   sigma_species = BASE diffusion fraction (D at H_a=1)
+//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -581,10 +598,9 @@ void CCalpop::RecompDiagCoef_adult(const PMap& map, CParam& param, CMatrices& ma
 				double v_y = CHI_y * dHdy;
 
 				//limit maximal velocity by Vinf
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x * mat.lat_correction[j];
 				advection_y(i,j) = c*V + v_y;
@@ -656,9 +672,9 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	//Parameters to recompute accessibility to layers 
 	const double oxy_teta = param.a_oxy_habitat[sp];
 	const double oxy_cr   = param.b_oxy_habitat[sp];
-	const double sigma_ha = param.sigma_ha[sp][age];
+	//const double sigma_ha = param.sigma_ha[sp][age];
+	//const double twosigsq = 2.0*sigma_ha*sigma_ha;
 	const double temp_age = param.temp_age[sp][age];
-	const double twosigsq = 2.0*sigma_ha*sigma_ha;
 	const double temp_max = param.b_sst_spawning(sp);
 	const double delta1   = param.thermal_func_delta[0][sp];
 	const double delta2   = param.thermal_func_delta[1][sp];
@@ -679,7 +695,8 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 	//end of accessiblity parameters section
 
 	//PRECALDIA SECTION
-	const double MSS_size_slope= param.MSS_size_slope[sp];
+	const double MSS_size_slope  = param.MSS_size_slope[sp];
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 	const double length  = param.length[sp][age]*0.01;
 	const double lmax    = param.length[sp][param.sp_nb_cohorts[sp]-1]*0.01;
 	const double dx	     = param.deltaX;
@@ -690,9 +707,14 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;
 	//const double Dinf    = pow(Dspeed*length*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dmax    = sigma_species*Dinf;
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
+
+	const double sigma_left  = param.sigma_ha_left[sp][age];
+	const double sigma_right = param.sigma_ha_right[sp][age];
+
 
 	CBord bord;	
 
@@ -729,8 +751,13 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 				}
 
 				//double diff_habitat = 1 - habitat(i,j)/(c_diff_fish + habitat(i,j));
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
-				double D = Dmax * diff_habitat;
+//				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+//				double D = Dmax * diff_habitat;
+//-- Additive form: D = Dinf * (sigma + c * (1-H)^2)
+//   sigma_species = BASE diffusion fraction (D at H_a=1)
+//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
+
 
 				double sfunc = mat.season_switch(sp,jday,j);
 				D = (0.9*D*sfunc + D*(1.0-sfunc));
@@ -763,8 +790,10 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 				//need to recompute average currents, attn, accessibility is computed for 
 				//ages param.age_compute_habitat[sp][age] only (passed here as age)
 				if (Tfunc_Gaussian){
-					f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
+					//f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
+					f_accessibility_agauss(l_access,lf_access,F,O2,T,sigma_left,sigma_right,temp_age,oxy_teta,oxy_cr,
 							nb_layer,nb_forage,day_layer,night_layer,DL);
+
 				} else {
 					f_accessibility(l_access,lf_access,F,O2,T,temp_age,temp_max,delta1,delta2,delta3,oxy_teta,oxy_cr,
 							nb_layer,nb_forage,day_layer,night_layer,DL);
@@ -788,10 +817,9 @@ void CCalpop::RecompDiagCoef_UV_adult(const PMap& map, CParam& param, CMatrices&
 				double v_y = CHI_y * dHdy;
 
 				//limit maximal velocity by Vinf
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
 
 				advection_x(i,j) = c*U + v_x * mat.lat_correction[j];
 				advection_y(i,j) = c*V + v_y;

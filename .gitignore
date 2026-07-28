@@ -2,8 +2,11 @@ objs
 objs/*
 bin
 bin/*
+TMP
+TMP/*
 unused
 unused/*
+.*.swp
 log-changes.txt
 DOM/unused
 DOM/unused/*

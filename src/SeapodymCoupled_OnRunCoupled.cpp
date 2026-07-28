@@ -80,7 +80,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 	lflike_fishery.initialize();
 	clike_fishery.initialize();
 	//Reset model parameters:
-	reset(x);
+	dvariable penalty = reset(x);
 
 	//----------------------------------------------//
 	// 	LOCAL MATRICES ALLOCATION SECTION       //
@@ -640,6 +640,8 @@ Mortality.initialize();
 	clike = sum(clike_fishery);
 	lflike = sum(lflike_fishery);
 	if (!param->scalc()){ // all but sensitivity analysis
+		//Penalty
+		likelihood += penalty;
 		cout << "end of forward run, likelihood: " << defaultfloat << clike << " " << 
 			lflike << " " << taglike << " " << stocklike << " " << larvaelike << endl;
 

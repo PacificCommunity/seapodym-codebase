@@ -36,23 +36,23 @@ void Hessian_comp(const char* parfile)
 	
 	cout << "Likelihood and Gradient for estimated vector: \n" << likelihood << "; " << g1 << endl;
 	
-	//two-point finite-difference approximation of the Hessian
+	//bound-aware one-sided FD Hessian with Richardson extrapolation.
+	//scaled x in [-1,1] (ADMB arcsin transform): step INWARD -- forward by default,
+	//backward when a forward step would cross the upper bound (|x|=1).
 	for (int ix=1; ix<=nvar; ix++){
 		double xs = x(ix);
+		double s  = (xs + delta > 1.0) ? -1.0 : 1.0;   //-1 => backward (near upper bound)
 
-		x(ix) = xs + delta; 
+		x(ix) = xs + s*delta;
 		likelihood = run_model(sc,x,g2,nvar);
-		
-		H1 = (g2-g1)/delta; 
-			
+		H1 = (g2-g1)/(s*delta);
 		g2.initialize();
 
-		x(ix) = xs + epsilon*delta; //1. step correction
+		x(ix) = xs + s*epsilon*delta; //1. step correction
 		likelihood = run_model(sc,x,g2,nvar);
+		H2 = (g2-g1)/(s*epsilon*delta); //1. step correction
 
-		H2 = (g2-g1)/(epsilon*delta); // 1. step correction
-
-		H(ix) = (H2-epsilon*H1)/(1-epsilon); // 1. step correction
+		H(ix) = (H2-epsilon*H1)/(1-epsilon); //1. step correction
 
 		cout << ix << ".\t"<< H(ix) << endl;
 
@@ -69,30 +69,184 @@ void Hessian_comp(const char* parfile)
 	dmatrix Cov = inv(H);
 	double determ = det(H);
 	dvector evalues = eigenvalues(H);
-	ofstream ofs;
-	const char* filename = "Hessian.out";
 
-	ofs.open(filename, ios::out);
-	ofs << nvar << "\n"; 
+	double max_abs_eig = fabs(evalues(1)), min_abs_eig = fabs(evalues(1));
+	int    n_negative  = (evalues(1) < 0.0) ? 1 : 0;
+	for (int i = 2; i <= nvar; i++){
+		double a = fabs(evalues(i));
+		if (a > max_abs_eig) max_abs_eig = a;
+		if (a < min_abs_eig) min_abs_eig = a;
+		if (evalues(i) < 0.0) n_negative++;
+	}
+	double condition_number = max_abs_eig / min_abs_eig;   // largest / smallest eigenvalue by magnitude (spectral condition number; = lambda_max/lambda_min when PD Hessian)
+
 
 	dvector pars = sc.param->get_parvals();
-	ofs << "Parameter\t" << "Est. value\t" << "Gradient" << "\n";   
+
+	//=== convergence / identifiability diagnostics ========================
+	// Convergence is NOT judged by the raw gradient norm max|g_i|: it is not
+	// invariant under reparametrisation, so a fixed threshold confounds proximity
+	// to the minimum with the scaling of the parameters and of the objective.
+
+	double gmax = 0.0;
+	for (int i=1; i<=nvar; i++){ double a = fabs(g1(i)); if (a>gmax) gmax = a; }
+
+	// Standard errors = sqrt(diag(Cov)); NaN/huge here => non-PD or unidentified.
+	dvector SE(1,nvar);
+	for (int i=1; i<=nvar; i++) SE(i) = sqrt(Cov(i,i));
+
+	// Newton decrement lambda2 = g'H^{-1}g. Half of it is the objective decrease
+	// predicted on stepping to the local quadratic minimum; 0.5*lambda2/L is the
+	// scale-invariant relative improvement still available (<<1 => at the minimum).
+	dvector Hinv_g = Cov*g1;
+	double lambda2 = g1*Hinv_g;
+	dvector nstep  = -Hinv_g;                 // Newton step
+	double maxse_step  = 0.0; int ise  = 1;
 	for (int i=1; i<=nvar; i++)
-		ofs << x_names[i] << "\t" << pars(i) << "\t" << g1(i) << "\n";
+		if (SE(i)  !=0.0){ double b = fabs(nstep(i)/SE(i));   if (b>maxse_step ){maxse_step  = b; ise  = i;}}	
+	
+	// Eigenvalues of H: all positive => positive definite => genuine local minimum.
+	// Condition number = max/min eigenvalue flags ill-conditioning (near-flat dirs).
+	double emin = min(evalues), emax = max(evalues);
+	int is_pd = (emin > 0.0);
+
+	// Correlation matrix (built once; scale-free; reused below).
+	dmatrix Corr(1,nvar,1,nvar);
+	for (int i=1; i<=nvar; i++)
+		for (int j=1; j<=nvar; j++)
+			Corr(i,j) = Cov(i,j)/(SE(i)*SE(j));
+
+	// (1) FLATTEST direction: dominant eigenvector of Cov (= smallest-eigenvalue
+	//     eigenvector of H), the direction the likelihood curves least in absolute
+	//     terms. Flags a SATURATED / individually unidentified parameter sitting in
+	//     a flat region of its functional form (small gradient AND small curvature).
+	//     var_flat = variance along it = 1/min eigenvalue of H.
+	dvector vsat(1,nvar); vsat = 1.0/sqrt((double)nvar);
+	for (int it=0; it<500; it++){ vsat = Cov*vsat; double nv = norm(vsat); if (nv>0.0) vsat /= nv; }
+	double var_flat = vsat*(Cov*vsat);
+
+	// (2) MOST-COLLINEAR direction: dominant eigenvector of the correlation matrix
+	//     (standardized, scale-free). Flags a TRADE-OFF -- standardized parameters
+	//     the data constrain only in combination, not individually. vinfl =
+	//     variance-inflation factor along it. The two directions are complementary:
+	//     (1) finds saturation, (2) finds confounding.
+	dvector vcol(1,nvar); vcol = 1.0/sqrt((double)nvar);
+	for (int it=0; it<500; it++){ vcol = Corr*vcol; double nv = norm(vcol); if (nv>0.0) vcol /= nv; }
+	double vinfl = vcol*(Corr*vcol);
+
+	cout << "\n--- convergence / identifiability diagnostics ---" << endl;
+	cout << "L = " << likelihood << " ; Gmax = " << gmax << " (scale-dependent; not used for convergence)" << endl;
+	cout << "Newton decrement^2 = " << lambda2
+	     << " ; relative remaining = " << 0.5*lambda2/likelihood << " (<<1 => at the minimum)" << endl;
+	cout << "max Newton step in SE units, max|dx/SE| = " << maxse_step << endl;
+	cout << (is_pd ? "PD (local min)" : "NOT PD -> saddle/flat")
+	     << " ; condition number = " << condition_number << endl;
+
+	ofstream ofs;
+	const char* filename = "Hessian.out";
+	ofs.open(filename, ios::out);
+	ofs << nvar << "\n\n";
+
+	ofs << "Parameter\tEstimate\tGradient\tStdErr\tCV\tNewtonStep\tNewtonStep/SE\n";
+	ofs << "# NewtonStep=(-H^-1 g)_i is the step to the local (unconstrained) quadratic min; \n";
+	ofs << "# normalized by parameter SE, it shows how far FM still wants to move within parameter uncertainty\n";
+	for (int i=1; i<=nvar; i++)
+		ofs << x_names[i] << "\t" << pars(i) << "\t" << g1(i) << "\t"
+			<< SE(i) << "\t" << SE(i)/fabs(pars(i)) << "\t"
+			<< nstep(i) << "\t" << nstep(i)/SE(i) << "\n";
+
 	ofs << "\n";
 
-	ofs << determ << "\n"; 
-	ofs << evalues << "\n\n"; 
+	ofs << "CONVERGENCE DIAGNOSTICS\n";
+	ofs << "Note, negative eigenvalues at a converged minimum may indicate FD noise (|min_eig| large, scales ~1/h)\n";
+	ofs << "Run Hessian with different FD steps and verify it's a minimum IF: \n";
+	ofs << "- Newton_decrement_sq, relative_remaining and variance_along are stable across FD steps\n";
+	ofs << "- variance_along is positive and relative_remaining is small (<<1)\n";
+	ofs << "- while min_eigenvalue itself is unstable, growing like ~1/h (the noise signature)\n";
+	ofs << "If so, the non-PD Hessian points to numerical artefact (FD-noise), not a real saddle\n";
+	ofs << "likelihood\t"           << likelihood             << "\t# objective (neg. log-likelihood) \n";
+	ofs << "Gmax\t"                 << gmax                   << "\t# max|gradient|, scale-dependent - NOT a reliable convergence test\n";
+	ofs << "Newton_decrement_sq\t"  << lambda2                << "\t# g'H^-1g; curvature-weighted distance to the minimum\n";
+	ofs << "pred_remaining_dL\t"    << 0.5*lambda2            << "\t# objective decrease predicted to reach the quadratic minimum\n";
+	ofs << "relative_remaining\t"   << 0.5*lambda2/likelihood << "\t# pred_remaining_dL / L; scale-invariant; <<1 => at the minimum\n";
+	ofs << "max_step_in_SE\t"       << maxse_step             << "\t# largest |dx/StdErr| is for " << x_names[ise] << "; <1 => remaining move is within own uncertainty\n";
+	ofs << "determinant\t"          << determ                 << "\t# det(H); >0 consistent with positive definite\n";
+	ofs << "min_eigenvalue\t"       << emin                   << "\t# smallest curvature: >0 - flattest direction, <0 - saddle or FD-noise\n";
+	ofs << "max_eigenvalue\t"       << emax                   << "\t# largest curvature (stiffest direction)\n";
+	ofs << "nb_neg_eigenvalues\t"   << n_negative             << "\t# count of negative eigenvalues; 0 => PD\n";
+	ofs << "positive_definite\t"    << (is_pd ? "yes" : "no") << "\t# yes => (local) minimum; no => saddle / not a minimum\n";
+	ofs << "condition_number\t"     << condition_number       << "\t# |max|/|min| eigenvalue magnitude (spectral); valid whether PD or not; high => ill-conditioned\n\n";
+	ofs << "variance_along\t" 	<< var_flat               << "\t# = 1 / smallest-magnitude eigenvalue = variance along the flattest direction; stable & positive => real minimum\n";
 
+	// --- strongly cross-correlated parameter pairs (|rho| > 0.8) ---
+	ofs << "Cross-correlated pairs (|correlation| > 0.8)\n";
+	ofs << "# |r|>0.8 (rho^2>0.64, >64% shared variance); * = |r|>0.9, ** = |r|>0.95 (effectively non-separable)\n";
+	for (int i=1; i<=nvar; i++)
+		for (int j=i+1; j<=nvar; j++)
+			if (fabs(Corr(i,j)) > 0.8){
+				const char* mark = (fabs(Corr(i,j)) > 0.95) ? "**" : (fabs(Corr(i,j)) > 0.9) ? "*" : "";
+				char rbuf[16];
+				snprintf(rbuf, sizeof rbuf, "%.2f", Corr(i,j));
+				ofs << x_names[i] << "\t" << x_names[j] << "\t" << rbuf << mark << "\n";
+			}
+	ofs << "\n";
+
+
+	ofs << "FLATTEST direction (dominant eigenvector of covariance = smallest-curvature direction of the likelihood)\n";
+	ofs << "# Shows a SATURATED / individually unidentified parameter: a flat region of its functional form.\n";
+	{
+		ivector idx(1,nvar);
+		for (int i=1;i<=nvar;i++) idx(i)=i;
+		for (int a=1;a<nvar;a++){ int best=a;
+			for (int b=a+1;b<=nvar;b++) if (fabs(vsat(idx(b)))>fabs(vsat(idx(best)))) best=b;
+			int tmp=idx(a); idx(a)=idx(best); idx(best)=tmp; }
+		bool marked=false;
+		for (int a=1;a<=nvar;a++){ int i=idx(a);
+			ofs << x_names[i] << "\t" << vsat(i);
+			if (!marked && fabs(vsat(i))<0.01){ ofs << "\t< 0.01 onward"; marked=true; }
+			ofs << "\n"; }
+	}
+	ofs << "\n";
+
+	ofs << "MOST-COLLINEAR direction (dominant eigenvector of correlation matrix; standardized units)\n";
+	ofs << "# Shows a TRADE-OFF: standardized parameters constrained only in combination, not individually.\n";
+	ofs << "variance_inflation\t" << vinfl << "\t# joint variance / uncorrelated-direction variance\n";
+	{
+		ivector idx(1,nvar);
+		for (int i=1;i<=nvar;i++) idx(i)=i;
+		for (int a=1;a<nvar;a++){ int best=a;
+			for (int b=a+1;b<=nvar;b++) if (fabs(vcol(idx(b)))>fabs(vcol(idx(best)))) best=b;
+			int tmp=idx(a); idx(a)=idx(best); idx(best)=tmp; }
+		bool marked=false;
+		for (int a=1;a<=nvar;a++){ int i=idx(a);
+			ofs << x_names[i] << "\t" << vcol(i);
+			if (!marked && fabs(vcol(i))<0.01){ ofs << "\t< 0.01 onward"; marked=true; }
+			ofs << "\n"; }
+	}
+	ofs << "\n";
+
+	ofs << "Eigenvalues:\n" << evalues << "\n\n";
+
+	ofs << "Hessian:\n";
 	for (int i=1; i<=nvar; i++){
 		for (int j=1; j<=nvar; j++)
 			ofs << H(i,j) << " ";
 		ofs << "\n";
 	}
 	ofs << "\n";
+
+	ofs << "Covariance (inverse Hessian):\n";
 	for (int i=1; i<=nvar; i++){
 		for (int j=1; j<=nvar; j++)
 			ofs << Cov(i,j) << " ";
+		ofs << "\n";
+	}
+	ofs << "\n";
+
+	ofs << "Correlation matrix:\n";
+	for (int i=1; i<=nvar; i++){
+		for (int j=1; j<=nvar; j++)
+			ofs << Corr(i,j) << " ";
 		ofs << "\n";
 	}
 	ofs << "\n";

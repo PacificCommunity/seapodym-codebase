@@ -568,7 +568,7 @@ void dv_calrec_with_catch_precalrec()
 				} else {
 					//recompute
 					double arg = C(i,j)/(luuint_t(itr,i,j)+1e-14);
-					double func   = param->func_limit_one(arg);
+					double func   = param->smin1_c(arg);
 
 					//C_est(i,j) += uvec(i) * func / iterationNumber;
 					dfuvec(i)     += (func / iterationNumber) * dfCest(i,j);
@@ -580,7 +580,7 @@ void dv_calrec_with_catch_precalrec()
 					dfuuint(i,j)  = 0.0;
 
 					//double func = param->func_limit_one(C(i,j)/(uvec(i)+1e-14);
-					double dfarg = param->dffunc_limit_one(arg,dffunc);
+					double dfarg = param->dfsmin1_c(arg, dffunc);
 					dfuvec(i) -= (arg/(luuint_t(itr,i,j)+1e-14)) * dfarg;
 					dfCobs(i,j) += dfarg /(luuint_t(itr,i,j)+1e-14);
 					

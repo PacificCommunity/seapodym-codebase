@@ -8,6 +8,21 @@
 const double Vmax_diff  = 1.25;
 const double rc = 0.0005;
 const double rho = 0.99;
+const double v_eps = 1e-20;
+
+//Habitat-dependent factor of the diffusion coefficient, D = Dinf * diff_habitat_comp(...).
+//Selected per species by param.additive_diffusion[sp]:
+//  0 (default) multiplicative: sigma*(1 - c*Ha^3)  -- sigma is the fraction of Dinf at Ha=0,
+//                              c the fraction of it removed in the best habitat.
+//  1           additive:       sigma + c*(1-Ha)^2  -- sigma is the base fraction at Ha=1,
+//                              c the extra 'seek' fraction added in the worst habitat.
+double CCalpop::diff_habitat_comp(const int additive, const double H, const double sigma, const double c)
+{
+	if (additive)
+		return(sigma + c*pow(1.0-H,2));
+
+	return(sigma*(1.0 - c*pow(H,3)));
+}
 
 void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, const dmatrix& habitat, const dmatrix& total_pop, double MSS, double MSS_size_slope, double sigma_species, double c_diff_fish, const int sp, const int age, const int jday)
 {
@@ -15,6 +30,8 @@ void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, con
 	mat.diffusion_y.initialize();
 	mat.advection_x.initialize();
 	mat.advection_y.initialize();
+
+	const double Dinf_size_slope = param.Dinf_size_slope[sp];
 
 	CBord bord;
 	const double length  = param.length[sp][age]*0.01; //convert to meters;
@@ -31,8 +48,9 @@ void CCalpop::precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, con
 	const double CHI_x   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dx;
 	const double CHI_y   = MSS*pow(length,MSS_size_slope)*(3600*24.0*dt/1852)*dy;
 	const double Dspeed  = Vmax_diff-0.25*length/lmax;//fixed, given in 'body length' units
-	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,0.6)*3600*24.0*dt/1852,2)/(4.0*dt);
-	const double Dmax    = sigma_species*Dinf;
+	const double Dinf    = pow(Dspeed*lmax*pow(length/lmax,Dinf_size_slope)*3600*24.0*dt/1852,2)/(4.0*dt);
+	const int dform = param.additive_diffusion[sp];
+	//const double Dmax    = sigma_species*Dinf;
 	const double rmax    = param.rmax_currents[sp];
 	double rho_x = 0.0;
 	double rho_y = 0.0;
@@ -92,9 +110,16 @@ if (habitat(i,j)==0){cout << "Zero habitat at " << age << " " << i << " "<< j <<
 						dHdy = (habitat[i][j+1] - habitat[i][j])/(dy);
 
 				}
-				double diff_habitat = 1.0 - c_diff_fish*pow(habitat(i,j),3);
+				
+				//-- Multiplicative form (default, dform = 0): D = Dinf * (1-c*H^3);
+				//   sigma_species = multiplicator of Dinf
+				//   c_diff_fish   = minimal diffusion rate in H_a=1
 
-				double D = Dmax * diff_habitat;
+				//-- Additive form (optional, dform = 1): D = Dinf * (sigma + c * (1-H)^2)
+				//   sigma_species = BASE diffusion fraction (D at H_a=1)
+				//   c_diff_fish   = SEEK fraction (additional at H_a=0)
+				double D = Dinf * diff_habitat_comp(dform, habitat(i,j), sigma_species, c_diff_fish);
+				
 				rho_x = 1.0- rho * sqrt(dHdx*dHdx) * dx;
 				rho_y = 1.0- rho * sqrt(dHdy*dHdy) * dy;
 
@@ -118,10 +143,10 @@ if (habitat(i,j)==0){cout << "Zero habitat at " << age << " " << i << " "<< j <<
 				v_y = CHI_y * dHdy;
 				//limit maximal velocity by Vinf to avoid approximation errors with 
 				//finite differences in case of strong gradients
-				if (v_x<0) v_x = -Vinf*param.func_limit_one(-v_x/Vinf);
-				if (v_x>=0) v_x = Vinf*param.func_limit_one(v_x/Vinf);
-				if (v_y<0) v_y = -Vinf*param.func_limit_one(-v_y/Vinf);
-				if (v_y>=0) v_y = Vinf*param.func_limit_one(v_y/Vinf);
+				double m = sqrt(v_x*v_x + v_y*v_y + v_eps);
+				double s = Vinf * param.smin1_v(m/Vinf) / m;
+				v_x *= s;  v_y *= s;
+				
 				advection_x[j] = c*U + v_x*mat.lat_correction[j];
 				advection_y[j] = c*V + v_y;
 

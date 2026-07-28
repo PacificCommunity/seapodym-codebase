@@ -11,12 +11,16 @@
 double f_accessibility_layer(const double O2, const double T,double twosigsq, double temp_mean, double oxy_teta, double oxy_cr);
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double twosigsq, double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
 
+double f_accessibility_layer_agauss(const double O2, const double T, double sigl, double sigr, double temp_mean, double oxy_teta, double oxy_cr);
+void f_accessibility_agauss(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double sigl, double sigr, double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
+
 double thermal_func_type2(const double T, const double temp_min, const double temp_max, const double delta1, const double delta2, const double delta3);
 
 double f_accessibility_layer(const double O2, const double T, double temp_age, double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr);
 void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double temp_mean, 
 		double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr, const int nl, 
 		const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
+double agaussian(const double x, const double mu, const double sigma_left, const double sigma_right);
 
 
 void VarSimtunaFunc::Vars_at_age_precomp(CParam& param, const int sp)
@@ -37,6 +41,9 @@ void VarSimtunaFunc::Vars_at_age_precomp(CParam& param, const int sp)
 	const double W_max = param.weight[sp][param.sp_nb_cohorts[sp]-1];
 	const double L_max = param.length[sp][param.sp_nb_cohorts[sp]-1];
 
+	const double Tmin = param.access_temp_min;
+	const double Tmax = param.access_temp_max;
+
 	for (int age=a0; age<nb_ages; age++){
 		const double W_age = param.weight[sp][age];
 		const double L_age = param.length[sp][age];
@@ -45,9 +52,13 @@ void VarSimtunaFunc::Vars_at_age_precomp(CParam& param, const int sp)
 		double temp_sp_age = R * (temp_min-temp_max) + temp_max;
 
 		double sigma_ha = (sigma_max-sigma_min)*W_age/W_max+sigma_min;
-		//double sigma_ha = (sigma_max-sigma_min)*L_age/L_max+sigma_min;
+		
+		double sigma_right = (Tmax-temp_sp_age)*param.f1_smooth(3.0*sigma_ha/(Tmax-temp_sp_age))/3.0; 
+		double sigma_left  = (temp_sp_age-Tmin)*param.f1_smooth(3.0*sigma_ha/(temp_sp_age-Tmin))/3.0;  
 
 		param.sigma_ha[sp][age] = sigma_ha;
+		param.sigma_ha_left[sp][age] = sigma_left;
+		param.sigma_ha_right[sp][age] = sigma_right;
 		param.temp_age[sp][age] = temp_sp_age;
 	}
 }
@@ -68,6 +79,9 @@ void VarSimtunaFunc::Faccessibility_comp(VarParamCoupled& param, VarMatrices& ma
 	ivector night_layer(0,nb_forage-1); night_layer = param.night_layer;
 
 	const double twosigsq = 2.0*sigma_ha*sigma_ha;
+
+	const double sigma_left = param.sigma_ha_left[sp][age];
+	const double sigma_right = param.sigma_ha_right[sp][age];
 
 	dvector lf_access(0,nb_layer-1);
 	dvector l_access(0,nb_layer-1);
@@ -99,7 +113,8 @@ void VarSimtunaFunc::Faccessibility_comp(VarParamCoupled& param, VarMatrices& ma
 				}
 
 				if (Tfunc_Gaussian){
-					f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
+					f_accessibility_agauss(l_access,lf_access,F,O2,T,sigma_left,sigma_right,temp_age,oxy_teta,oxy_cr,
+					//f_accessibility(l_access,lf_access,F,O2,T,twosigsq,temp_age,oxy_teta,oxy_cr,
 							nb_layer,nb_forage,day_layer,night_layer,DL);
 				} else {
 					f_accessibility(l_access,lf_access,F,O2,T,temp_age,temp_max,delta1,delta2,delta3,
@@ -183,6 +198,43 @@ void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage
 	for (int l=0;l<nl;l++)
 		lf_access(l) = lf_access(l)/sumL;
 }
+
+double f_accessibility_layer_agauss(const double O2, const double T,double sig_left, double sig_right, double temp_mean, double oxy_teta, double oxy_cr)
+{
+
+	double f_oxy = 1.0 / (1.0+ pow(oxy_teta,O2 - oxy_cr));
+
+	double f_temp = agaussian(T,temp_mean,sig_left,sig_right);
+
+	double f_access = f_temp*f_oxy + 1e-4;
+	//note, the constant is needed to avoid division by zero in weighted average calculation of lf_access
+	//it does not have an impact on the absolute value of f_access
+
+	return f_access;
+}
+
+void f_accessibility_agauss(dvector& l_access, dvector& lf_access, const dvector forage, const dvector O2, const dvector T, double sigl,double sigr,double temp_mean, double oxy_teta, double oxy_cr, const int nl, const int nb_forage, const ivector day_layer,const ivector night_layer, const double DL)
+{//computes accessibility functions to the vertical layer and weighted by density of forage
+
+	lf_access.initialize();
+	double sumL = 0.0;
+
+	for (int l=0; l<nl; l++){
+		l_access(l) = f_accessibility_layer_agauss(O2(l),T(l),sigl,sigr,temp_mean,oxy_teta,oxy_cr);
+		
+		// weighted by the Forage biomass
+		for (int n=0;n<nb_forage;n++){
+			if (day_layer[n]==l)   lf_access(l)+= l_access(l)* forage[n]*DL; 
+			if (night_layer[n]==l) lf_access(l)+= l_access(l)* forage[n]*(1-DL);
+		}
+
+		sumL += lf_access(l);
+	}
+
+	for (int l=0;l<nl;l++)
+		lf_access(l) = lf_access(l)/sumL;
+}
+
 
 double thermal_func_type2(const double T, const double temp_min, const double temp_max, const double delta1, const double delta2, const double delta3)
 {//Note, the condition of delta1 and delta2 parameters: delta<0.95/max(temp_diff)	

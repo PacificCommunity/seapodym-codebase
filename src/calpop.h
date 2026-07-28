@@ -25,6 +25,10 @@ public:
 	void precaldia(const CParam& param, const PMap& map, CMatrices& mat);
 	void precaldia_comp(const PMap& map, CParam& param, CMatrices& mat, const dmatrix& habitat, const dmatrix& total_pop,double MSS, double MSS_size_slope, double sigma_species, double c_diff_fish, const int sp, const int age, const int jday);
 
+	//Habitat-dependent factor of the diffusion coefficient: D = Dinf * diff_habitat_comp(...).
+	//additive=0 (default): multiplicative, sigma = fraction of Dinf at Ha=0, c = fraction removed at Ha=1
+	//additive=1          : additive, sigma = base fraction at Ha=1, c = extra 'seek' fraction at Ha=0
+	static double diff_habitat_comp(const int additive, const double H, const double sigma, const double c);
 	void Precaldia_Caldia(const PMap& map, VarParamCoupled& param, VarMatrices& mat, dvar_matrix& habitat, dvar_matrix& total_pop, const int sp, const int age, const int t_count, const int jday);
 	void caldia(const PMap& map, const CParam& param, const DMATRIX& diffusion_x,  const DMATRIX& advection_x, const DMATRIX& diffusion_y, const DMATRIX& advection_y);
 	void caldia_GO(const PMap& map, const CParam& param, const DMATRIX& diffusion_x,  const DMATRIX& advection_x, const DMATRIX& diffusion_y, const DMATRIX& advection_y);
@@ -101,7 +105,7 @@ public:
 
 	int get_iterationN(){return iterationNumber;}
 	int get_maxn(){return maxn;}
-	int get_Vinf(){return Vinf;}
+	double get_Vinf(){return Vinf;}
 	//void set_gradcalc(bool flag){_gradcalc = flag;}
 
 private:

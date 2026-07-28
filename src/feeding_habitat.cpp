@@ -86,7 +86,7 @@ void VarSimtunaFunc::Hf_comp(VarParamCoupled& param, VarMatrices& mat, const PMa
 				}
 
 				//Habitat between 0 and 1
-				func_Hf = param.func_limit_one(func_Hf);
+				func_Hf = param.smin1_h(func_Hf);
 				
 				Ha.elem_value(i,j) = topo*func_Hf;
 

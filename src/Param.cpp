@@ -197,111 +197,54 @@ int CParam::lontoi(double lon)
 //itolon<-function(i) return(lonmin + dx * (i-0.5))
 //jtolat<-function(j) return(latmax - dy * (j-0.5))
 
-
-/////////////////////////////////////////////////
-//This function is the continuous version of
-//if (x<=1) y = x; if (x>1) y = 1;
-//uses: 1) catch equation (see dv_predicted_catch) 
-//and 2) velocities (see dv_caldia)
-//It uses south-opening rotated hyperbola with center 
-//at (1,1) and 135 degree angle between asymptotes 
-
-double CParam::func_limit_one(const double x)
-{
-	//parameters of hyperbola
+//////////////////////////////////////////////////////////////////
+// smin1 function is the continuous version of y = min(x,1)
+// uses: 1) catch equation (see predicted_catch and calrec function) 
+//       2) habitats   (see feeding_habitat)
+//       3) velocities (see caldia)
+// It uses south-opening rotated hyperbola with center 
+// at (1,1) and 135 degree angle between asymptotes 
+// set_smin1_coeffs precomputes the hyperbola coefficients once, at parfile read.
+// shifted=1 -> x0 = 1 - a*b/2 (original form); shifted=0 -> x0 = 1 (centre at (1,1)).
+void CParam::set_smin1_coeffs(const double a, const int shifted, double& A, double& K, double& x0){
 	double phi = 22.5*pi/180.0;
-	double a = 0.07;
-	double e = 1.0/cos(phi);
-	double b = a*sqrt(e*e-1.0);
-
-	//coordinate center
-	//shift is to have all y>=0
-	double x0 = 1.0-0.00101482322788;
-	double y0 = 1.0;
-
-	//equation for hyperbola
+	double e   = 1.0/cos(phi);
+	double b   = a*sqrt(e*e-1.0);
 	double sinsq = sin(phi)*sin(phi);
 	double cossq = 1.0-sinsq;
 	double rasq  = 1.0/(a*a);
 	double rbsq  = 1.0/(b*b);
-	double A = sinsq*rasq - cossq*rbsq;
-	double B = -2.0*(x-x0)*cos(phi)*sin(phi)*(rasq+rbsq);
-	double C = 1.0-(x-x0)*(x-x0)*(sinsq*rbsq-cossq*rasq);
-
-	return(y0+(B+sqrt(B*B-4.0*A*C))/(2*A));
+	A  = sinsq*rasq - cossq*rbsq;
+	K  = cos(phi)*sin(phi)*(rasq+rbsq);
+	x0 = shifted ? (1.0 - 0.5*a*b) : 1.0;
 }
 
-double CParam::dffunc_limit_one(const double x, const double dfy)
-{
-	//parameters of hyperbola
-	double phi = 22.5*pi/180.0;
-	double a = 0.07;
-	double e = 1.0/cos(phi);
-	double b = a*sqrt(e*e-1.0);
-
-	//coordinate center
-	//shift is to have all y>=0
-	double x0 = 1.0-0.00101482322788;
-	//double y0 = 1.0;
-
-	//precompute 
-	double sinsq = sin(phi)*sin(phi);
-	double cossq = 1.0-sinsq;
-	double rasq  = 1.0/(a*a);
-	double rbsq  = 1.0/(b*b);
-	double A = sinsq*rasq - cossq*rbsq;
-	double B = -2.0*(x-x0)*cos(phi)*sin(phi)*(rasq+rbsq);
-	double C = 1.0-(x-x0)*(x-x0)*(sinsq*rbsq-cossq*rasq);
-	double D = sqrt(B*B-4.0*A*C);
-
-	//derivatives
-	double dfx = 0.0;
-	//double y = y0+(B+sqrt(B*B-4.0*A*C))/(2*A);
-	double dfC = -dfy/D;
-	double dfB = dfy*(1.0+B/D)/(2*A);
-
-	//double C = 1.0-(x-x0)*(x-x0)*(sinsq*rbsq-cossq*rasq);
-	dfx -= 2.0*(x-x0)*(sinsq*rbsq-cossq*rasq)*dfC;
-
-	//double B = -2.0*(x-x0)*cos(phi)*sin(phi)*(rasq+rbsq);
-	dfx -= 2.0*cos(phi)*sin(phi)*(rasq+rbsq)*dfB;
-
-	return(dfx);
+// Smoothed min(x,1) via rotated hyperbola (phi=22.5deg, conjugate form => y(0)=0, y>=0 for any a).
+// A,K,x0 precomputed by set_smin1_coeffs; this is the x-dependent tail only.
+double CParam::smin1(const double x, const double A, const double K, const double x0){
+	double B = -2.0*(x-x0)*K;
+	return(4.0*x*K/(sqrt(B*B-4.0*A)-B-2.0*A));
 }
 
-/*
-double CParam::func_limit_one(const double m)
-{
-        const double r = 0.1;
-        double phi = 135.0*pi/180.0;
-        double alpha = pi-phi;
-        double eps = r*tan(0.5*alpha);
-        double xinf = 1-eps/sqrt(2);
-        double xsup = 1+eps;
-        if (m<xinf)
-                return(m);
-        if (m>=xinf && m<=xsup)
-                return(1-r+sqrt(r*r-(m-xsup)*(m-xsup)));
-        if (m>xsup)
-                return(1);
+double CParam::dfsmin1(const double x, const double dfy, const double A, const double K, const double x0){
+	double B = -2.0*(x-x0)*K;
+	double S = sqrt(B*B-4.0*A);
+	double D = S-B-2.0*A;
+	double dfx = 4.0*K/D - 8.0*x*K*K*(1.0-B/S)/(D*D);
+	return(dfx*dfy);
 }
 
-double CParam::dffunc_limit_one(const double m)
-{
-        const double r = 0.1;
-        double phi = 135.0*pi/180.0;
-        double alpha = pi-phi;
-        double eps = r*tan(0.5*alpha);
-        double xinf = 1-eps/sqrt(2);
-        double xsup = 1+eps;
-	if (m>xsup)
-		return(0.0);
-	if (m>=xinf && m<=xsup) 
-		return(-(m-xsup)/sqrt(r*r-(m-xsup)*(m-xsup)));
-	if (m<xinf)
-		return(1.0);	
+double CParam::f1_smooth(const double x){
+
+	const double k = 8.0;
+	return(x-log(1.0+exp(k*(x-1.0)))/k);
 }
-*/
+
+double CParam::df1_smooth(const double x){
+
+	const double k = 8.0;
+	return(1.0-1.0/(1.0+exp(k*(1.0-x))));
+}
 
 void CParam::afcoef(const double lon, const double lat, dmatrix& a, int& ki, int& kj, const int f)
 {// returns matrix of coefficients for the biomass aggregation over fishing reso*reso area

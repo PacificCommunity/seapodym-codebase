@@ -15,11 +15,16 @@ void dv_accessibility_ftype2_comp(void);
 void dv_average_currents_comp(void);
 
 double f_accessibility_layer(const double O2, const double T,double twosigsq, double temp_mean, double oxy_teta, double oxy_cr);
+double f_accessibility_layer_agauss(const double O2, const double T,double sigl,double sigr, double temp_mean, double oxy_teta, double oxy_cr);
 void dff_accessibility_layer(double dff_access, double& dfmean, double& dfsigma, double& dfteta, double& dfoxy_cr, const double T, const double O, const double sigma, const double mean, const double teta, const double oxy_cr, const double sigmasq, const double sigmacb);
+void dff_accessibility_layer_agauss(double dff_access, double& dfmean, double& dfsigl, double&dfsigr, double& dfteta, double& dfoxy_cr, const double T, const double O, const double sigl, const double sigr, const double mean, const double teta, const double oxy_cr);
 double thermal_func_type2(const double T, const double temp_min, const double temp_max, const double delta1, const double delta2, const double delta3);
 void dfthermal_func_type2(const double T, const double temp_min, const double temp_max, const double delta1, const double delta2, const double delta3, double& dfT, double& dftemp_min, double& dftemp_max, double& dfdelta1, double& dfdelta2, double& dfdelta3);
 double f_accessibility_layer(const double O2, const double T, double temp_age, double temp_max, double delta1, double delta2, double delta3, double oxy_teta, double oxy_cr);
 void dff_accessibility_layer(double dff_access, double& dftemp_age, double& dftemp_max, double& dfdelta1, double& dfdelta2, double& dfdelta3, double& dfteta, double& dfoxy_cr, const double T, const double O, const double temp_age, const double temp_max, const double delta1, const double delta2, const double delta3, const double teta, const double oxy_cr);
+
+double agaussian(const double x, const double mu, const double sigma_left, const double sigma_right);
+
 
 int save_identifier_string2(char* str);
 void verify_identifier_string2(char* str);
@@ -284,6 +289,37 @@ void dff_accessibility_layer(double dff_access, double& dftemp_age, double& dfsi
 	dfO      = 0.0;
 }
 
+
+void dff_accessibility_layer_agauss(double dff_access, double& dftemp_age, double& dfsigl, double&dfsigr, double& dfteta, double& dfoxy_cr, const double T, const double O, const double sigl, const double sigr, const double temp_age, const double teta, const double oxy_cr)
+{
+	const double exprO1 = pow(teta,O-oxy_cr);
+	const double exprO2 = (1.0+exprO1)*(1.0+exprO1);
+
+	//first recompute f_temp and f_oxy
+	double f_oxy   = 1.0 / (1.0+exprO1);
+	double f_temp  = agaussian(T,temp_age,sigl,sigr); 
+
+	//f_access = f_temp*f_oxy + 1e-4;
+	double dfT = f_oxy * dff_access;
+	double dfO = f_temp * dff_access;
+	dff_access = 0.0;
+
+	//double f_temp = agaussian(T,temp_age,sigl,sigr);
+	if (T<temp_age){
+		dftemp_age += ((T-temp_age) / (sigl*sigl))* f_temp * dfT;
+		dfsigl += (pow(T-temp_age,2.0) / pow(sigl,3.0)) * f_temp * dfT;
+	} else {
+		dftemp_age += ((T-temp_age) / (sigr*sigr))* f_temp * dfT;
+		dfsigr += (pow(T-temp_age,2.0) / pow(sigr,3.0)) * f_temp * dfT;
+	}
+	dfT        = 0.0;
+
+	//double f_oxy = 1.0 / (1.0+ pow(oxy_teta,O2 - oxy_cr)); 
+	dfoxy_cr += (exprO1 * log(teta) / exprO2)  * dfO;
+	dfteta   += ((oxy_cr-O)*exprO1 / (teta*exprO2)) * dfO;		
+	dfO      = 0.0;
+}
+
 //this is the adjoint of the f_accessibility_layer with thermal function type2 
 void dff_accessibility_layer(double dff_access, double& dftemp_age, double& dftemp_max, double& dfdelta1, double& dfdelta2, double& dfdelta3, double& dfteta, double& dfoxy_cr, const double T, const double O, const double temp_age, const double temp_max, const double delta1, const double delta2, const double delta3, const double teta, const double oxy_cr)
 {
@@ -356,7 +392,6 @@ void dv_accessibility_comp(void)
 	dmatrix dfOxy_teta = restore_dvar_matrix_derivatives(Oxy_teta_pos);
 	dmatrix dfTemp_age_slope = restore_dvar_matrix_derivatives(Temp_age_slope_pos);
 
-
 	const int nbl = param->nb_layer;
 	ivector day_layer(0,nbf-1); day_layer = param->day_layer;
 	ivector night_layer(0,nbf-1); night_layer = param->night_layer;
@@ -421,9 +456,21 @@ void dv_accessibility_comp(void)
 
 	const double sigma_ha = param->sigma_ha[sp][age];
 	const double temp_age = param->temp_age[sp][age];
-	const double sigsq = sigma_ha*sigma_ha;
-	const double sigcb = sigsq*sigma_ha;
-	const double twosigsq = 2.0*sigsq;
+	//const double sigsq = sigma_ha*sigma_ha;
+	//const double sigcb = sigsq*sigma_ha;
+	//const double twosigsq = 2.0*sigsq;
+
+	const double sigl = param->sigma_ha_left[sp][age];
+	const double sigr = param->sigma_ha_right[sp][age];
+	const double Tmin = param->access_temp_min;
+	const double Tmax = param->access_temp_max;
+	const double f1l  = param->f1_smooth(3.0*sigma_ha/(temp_age-Tmin));
+	const double f1r  = param->f1_smooth(3.0*sigma_ha/(Tmax-temp_age));
+	const double df1l = param->df1_smooth(3.0*sigma_ha/(temp_age-Tmin));
+	const double df1r = param->df1_smooth(3.0*sigma_ha/(Tmax-temp_age));
+	const double dftl = f1l/3.0 - df1l*sigma_ha/(temp_age-Tmin); 
+	const double dftr = df1r*sigma_ha/(Tmax-temp_age) - f1r/3.0; 
+
 	for (int i = imax; i >= imin; i--){
 		const int jmin = map->jinf[i];
 		const int jmax = map->jsup[i];
@@ -444,7 +491,8 @@ void dv_accessibility_comp(void)
 				l_access.initialize();
 				//for (int l=0; l<nlayer; l++){
 				for (int l=0; l<nbl; l++){
-					l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,temp_age,oxy_teta,oxy_cr);
+					//l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,temp_age,oxy_teta,oxy_cr);
+					l_access(l)  = f_accessibility_layer_agauss(oxygen(l,i,j),tempn(l,i,j),sigl,sigr,temp_age,oxy_teta,oxy_cr);
 					// weighted by the Forage biomass
 					for (int n=0;n<nbf;n++){
 						if (day_layer[n]==l)   lf_access(l) += l_access(l)*forage(n,i,j)*DL; 
@@ -487,6 +535,8 @@ void dv_accessibility_comp(void)
 
 				double dfR = 0.0;
 				double dfsigma_ha = 0.0;
+				double dfsigl = 0.0;
+				double dfsigr = 0.0;
 				for (int l=nbl-1;l>=0;l--){
 
 					//sumL += lf_access[l];
@@ -506,11 +556,22 @@ void dv_accessibility_comp(void)
 					}
 
 					//l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,teta,oxy_teta,oxy_cr);
-					//dff_accessibility_layer(dfl_access(l),dftemp_age,dfSigma_ha(i,j),dfOxy_teta(i,j),dfOxy_cr(i,j),
-					dff_accessibility_layer(dfl_access(l),dftemp_age,dfsigma_ha,dfOxy_teta(i,j),dfOxy_cr(i,j),
-								tempn(l,i,j),oxygen(l,i,j),sigma_ha,temp_age,oxy_teta,oxy_cr,sigsq,sigcb);
+					//dff_accessibility_layer(dfl_access(l),dftemp_age,dfsigma_ha,dfOxy_teta(i,j),dfOxy_cr(i,j),
+					//			tempn(l,i,j),oxygen(l,i,j),sigma_ha,temp_age,oxy_teta,oxy_cr,sigsq,sigcb);
+					dff_accessibility_layer_agauss(dfl_access(l),dftemp_age,dfsigl,dfsigr,dfOxy_teta(i,j),dfOxy_cr(i,j),
+								tempn(l,i,j),oxygen(l,i,j),sigl,sigr,temp_age,oxy_teta,oxy_cr);
 								
 					dfl_access(l) = 0.0;
+
+					//double sigma_right = (Tmax-temp_sp_age)*param.f1_smooth(3.0*sigma_ha/(Tmax-temp_sp_age))/3.0;
+					dftemp_age += dftr*dfsigr;
+					dfsigma_ha += df1r*dfsigr;
+					dfsigr = 0.0;
+
+					//double sigma_left  = (temp_sp_age-Tmin)*param.f1_smooth(3.0*sigma_ha/(temp_sp_age-Tmin))/3.0;
+					dftemp_age += dftl*dfsigl;
+					dfsigma_ha += df1l*dfsigl;
+					dfsigl = 0.0;
 
 					//double sigma_ha = RW * (sigma_max-sigma_min)+sigma_min;
 					dfSigma_ha(i,j) += RW * dfsigma_ha;
@@ -661,9 +722,20 @@ void dv_accessibility_noeFcurrents_comp(void)
 
 	const double sigma_ha = param->sigma_ha[sp][age];
 	const double temp_age = param->temp_age[sp][age];
-	const double sigsq = sigma_ha*sigma_ha;
-	const double sigcb = sigsq*sigma_ha;
-	const double twosigsq = 2.0*sigsq;
+//	const double sigsq = sigma_ha*sigma_ha;
+//	const double sigcb = sigsq*sigma_ha;
+//	const double twosigsq = 2.0*sigsq;
+	const double sigl = param->sigma_ha_left[sp][age];
+	const double sigr = param->sigma_ha_right[sp][age];
+	const double Tmin = param->access_temp_min;
+	const double Tmax = param->access_temp_max;
+	const double f1l  = param->f1_smooth(3.0*sigma_ha/(temp_age-Tmin));
+	const double f1r  = param->f1_smooth(3.0*sigma_ha/(Tmax-temp_age));
+	const double df1l = param->df1_smooth(3.0*sigma_ha/(temp_age-Tmin));
+	const double df1r = param->df1_smooth(3.0*sigma_ha/(Tmax-temp_age));
+	const double dftl = f1l/3.0 - df1l*sigma_ha/(temp_age-Tmin); 
+	const double dftr = df1r*sigma_ha/(Tmax-temp_age) - f1r/3.0; 
+	
 	for (int i = imax; i >= imin; i--){
 		const int jmin = map->jinf[i];
 		const int jmax = map->jsup[i];
@@ -684,7 +756,8 @@ void dv_accessibility_noeFcurrents_comp(void)
 				l_access.initialize();
 				//for (int l=0; l<nlayer; l++){
 				for (int l=0; l<nbl; l++){
-					l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,temp_age,oxy_teta,oxy_cr);
+					//l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,temp_age,oxy_teta,oxy_cr);
+					l_access(l)  = f_accessibility_layer_agauss(oxygen(l,i,j),tempn(l,i,j),sigl,sigr,temp_age,oxy_teta,oxy_cr);
 					// weighted by the Forage biomass
 					for (int n=0;n<nbf;n++){
 						if (day_layer[n]==l)   lf_access(l) += l_access(l)*forage(n,i,j)*DL; 
@@ -727,6 +800,8 @@ void dv_accessibility_noeFcurrents_comp(void)
 
 				double dfR = 0.0;
 				double dfsigma_ha = 0.0;
+				double dfsigl = 0.0;
+				double dfsigr = 0.0;				
 				for (int l=nbl-1;l>=0;l--){
 
 					//sumL += lf_access[l];
@@ -744,11 +819,23 @@ void dv_accessibility_noeFcurrents_comp(void)
 					}
 
 					//l_access(l)  = f_accessibility_layer(oxygen(l,i,j),tempn(l,i,j),twosigsq,teta,oxy_teta,oxy_cr);
-					//dff_accessibility_layer(dfl_access(l),dftemp_age,dfSigma_ha(i,j),dfOxy_teta(i,j),dfOxy_cr(i,j),
-					dff_accessibility_layer(dfl_access(l),dftemp_age,dfsigma_ha,dfOxy_teta(i,j),dfOxy_cr(i,j),
-								tempn(l,i,j),oxygen(l,i,j),sigma_ha,temp_age,oxy_teta,oxy_cr,sigsq,sigcb);
+					//dff_accessibility_layer(dfl_access(l),dftemp_age,dfsigma_ha,dfOxy_teta(i,j),dfOxy_cr(i,j),
+					//			tempn(l,i,j),oxygen(l,i,j),sigma_ha,temp_age,oxy_teta,oxy_cr,sigsq,sigcb);
+					dff_accessibility_layer_agauss(dfl_access(l),dftemp_age,dfsigl,dfsigr,dfOxy_teta(i,j),dfOxy_cr(i,j),
+								tempn(l,i,j),oxygen(l,i,j),sigl,sigr,temp_age,oxy_teta,oxy_cr);			
 								
 					dfl_access(l) = 0.0;
+
+					//double sigma_right = (Tmax-temp_sp_age)*param.f1_smooth(3.0*sigma_ha/(Tmax-temp_sp_age))/3.0;
+					dftemp_age += dftr*dfsigr;
+					dfsigma_ha += df1r*dfsigr;
+					dfsigr = 0.0;
+
+					//double sigma_left  = (temp_sp_age-Tmin)*param.f1_smooth(3.0*sigma_ha/(temp_sp_age-Tmin))/3.0;
+					dftemp_age += dftl*dfsigl;
+					dfsigma_ha += df1l*dfsigl;
+					dfsigl = 0.0;
+
 
 					//double sigma_ha = RW * (sigma_max-sigma_min)+sigma_min;
 					dfSigma_ha(i,j) += RW * dfsigma_ha;
