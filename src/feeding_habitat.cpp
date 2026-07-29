@@ -88,7 +88,9 @@ void VarSimtunaFunc::Hf_comp(VarParamCoupled& param, VarMatrices& mat, const PMa
 				//Habitat between 0 and 1
 				func_Hf = param.smin1_h(func_Hf);
 				
-				Ha.elem_value(i,j) = topo*func_Hf;
+				//With new smin1, Ha can be 0 and precaldia_comp aborts on Ha==0.
+				//Added after the topo factor so the floor is uniform and dHa/dx is unchanged.
+				Ha.elem_value(i,j) = topo*func_Hf + 1e-16;
 
 				//3. If not optimizing, will write habitat to DYM files
 				if (!param.gcalc()){
