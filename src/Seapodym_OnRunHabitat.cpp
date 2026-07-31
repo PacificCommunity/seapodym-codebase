@@ -293,7 +293,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				}		
 			}else{
 				if (!param->larvae_input_aggregated_flag[0]){
-					larvaelike += get_larvae_like(likelihood, Habitat, mat.habitat_input[0], t_count-nbt_building);
+					larvaelike += get_early_like(likelihood, Habitat, mat.habitat_input[0], t_count-nbt_building, "larvae");
 				}
 			}
 		}
@@ -335,7 +335,7 @@ double SeapodymCoupled::OnRunHabitat(dvar_vector x, const bool writeoutputfiles)
 				Habitat_pred_at_obs(iAgg, k) /= ntime_agg[iAgg];
 			}
 		}
-		larvaelike += get_larvae_like(likelihood, Habitat_pred_at_obs);
+		larvaelike += get_early_like(likelihood, Habitat_pred_at_obs, "larvae");
 	}
 
 	param->total_like = value(likelihood);

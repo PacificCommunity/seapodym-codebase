@@ -567,7 +567,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			//II. Early-life data likelihood: only once at last time step
 			if (param->larvae_like[0] && param->larvae_input_aggregated_flag[0]){
 				get_larvae_at_obs();
-				larvaelike += get_larvae_like(likelihood, Agg_larvae_density_pred_at_obs);
+				larvaelike += get_early_like(likelihood, Agg_larvae_density_pred_at_obs, "larvae");
 			}		
 		}
 		if (param->larvae_like[0] && !param->larvae_input_aggregated_flag[0] && year>=param->larvae_like_firstyear && year<=param->larvae_like_lastyear){
@@ -575,7 +575,7 @@ double SeapodymCoupled::OnRunCoupled(dvar_vector x, const bool writeoutputfiles)
 			int nbytetoskip = (9 +(3* nlat * nlon) + (nbt_total - nbt_building-nbstoskip) + ((nlat *nlon)* (t_count-nbt_building-nbstoskip-1))) * 4;
 			rw.rbin_input2d(param->strfile_larvae, map, mat.larvae_input[tcur], nbi, nbj, nbytetoskip);
 			// Compute likelihood
-			larvaelike += get_larvae_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur);
+			larvaelike += get_early_like(likelihood, Larvae_density_pred, mat.larvae_input, tcur, "larvae");
 		}
 
 		//II. Tag data likelihood
