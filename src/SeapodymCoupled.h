@@ -52,7 +52,7 @@ friend class tag_release;
 	void prerun_model();
 	double OnRunCoupled(dvar_vector x, const bool writeoutputfiles = false);
 	void OnSimulationEnd();
-	void ReadLarvae();	
+	void ReadEarly(string what);	
 
 	double OnRunHabitat(dvar_vector x, const bool writeoutputfiles = false);
 	void ReadHabitat();
@@ -111,12 +111,19 @@ private:
 	//larvae
 	dvar_matrix Larvae_density_pred;
 	dvar_matrix Agg_larvae_density_pred_at_obs;
-	ivector kinf, ksup;
-	ivector ntime_agg;
+	ivector kinf_larvae, ksup_larvae;
+	ivector ntime_agg_larvae;
 	double elarvae_dt;
 	double larvaelike;
 	double larvae_obs_max = 0.0;
-	
+
+	//spawning
+	dvar_matrix SBHs_pred;
+	dvar_matrix Agg_SBHs_pred_at_obs;
+	ivector kinf_spawning, ksup_spawning;
+	ivector ntime_agg_spawning;
+	double spawninglike;
+
 	//catch and length
 
 	double lflike; // double value of lf_like
@@ -127,13 +134,15 @@ private:
 	void get_catch_lf_like(dvariable& likelihood);
 	double get_stock_like(dvariable total_stock, dvariable& likelihood);
 	double get_tag_like(dvariable& likelihood, bool writeoutputs);
-	double get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_larvae_density_at_obs);
-	double get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_pred, D3_ARRAY larvae_input, int t);
-	dvariable larvae_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat);
-	dvariable larvae_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat);
+	double get_early_like(dvariable& likelihood, dvar_matrix& Agg_at_obs, string what);
+	double get_early_like(dvariable& likelihood, dvar_matrix& pred, D3_ARRAY input, int t, string what);
+	dvariable early_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat);
+	dvariable early_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, string what);
 	void create_init_larvae_vars();
-	void extract_larvae(const int sp, const int tcur);
+	void create_init_spawning_vars();
+	void extract_early(const int sp, const int tcur, string what, dvar_matrix* Spawning_Habitat = nullptr, dvar_matrix* Total_pop = nullptr);
 	void get_larvae_at_obs();
+	void get_SBHs_at_obs();
 	void elarvae_model_run(dvar_matrix& M, const int sp, const int tcur, bool time_getpred, bool writeoutputfiles);
 	void write_elarvae_dym(const int sp);
 	void getDate(int& jday);
@@ -234,6 +243,13 @@ class tag_release
 	void set_release(int ii, int jj, int aa){i = ii; j = jj; a = aa;}
 };
 
-
+// Functions to compute the likelihood of a larvae density or SBHs observed on a continuous scale
+dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what);
+dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what);
+dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what);
+dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what);
+dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what);
+dvariable lognormal_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what);
+dvariable logit_normal_comp(double pp_obs, dvariable N_pred, VarParamCoupled& param, const double larvae_obs_max, int sp);
 
 #endif

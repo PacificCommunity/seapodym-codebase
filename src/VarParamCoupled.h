@@ -120,6 +120,20 @@ public:
 	double age_larvae_before_sst_mortality_max;
 	dvar_vector dvarsAge_larvae_before_sst_mortality;
 
+// For spawning likelihood
+	double q_sp_spawning_min;
+	double q_sp_spawning_max;
+	dvar_vector dvarsQ_sp_spawning;
+	double likelihood_spawning_sigma_min;
+	double likelihood_spawning_sigma_max;
+	dvar_vector dvarsLikelihood_spawning_sigma;
+	double likelihood_spawning_beta_min;
+	double likelihood_spawning_beta_max;
+	dvar_vector dvarsLikelihood_spawning_beta;
+	double likelihood_spawning_probzero_min;
+	double likelihood_spawning_probzero_max;
+	dvar_vector dvarsLikelihood_spawning_probzero;
+
 //1. dv_mortality_sp.cpp:
 	double Mp_mean_max_min;
 	double Mp_mean_max_max;

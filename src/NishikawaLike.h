@@ -38,18 +38,4 @@ void dv_categorical_truncated_poisson_comp();
 //void dv_categorical_zinb_comp();
 void dv_categorical_zip_comp();
 
-
-// Functions to compute the likelihood of a larvae density observed on a continuous scale
-dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp);
-
-dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double larvae_obs_max, int sp);
-
-dvariable logit_normal_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double larvae_obs_max, int sp);
-
-dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, int sp);
-
-dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp);
-
-dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, int sp);
-
 #endif // NISHIKAWALIKE_H

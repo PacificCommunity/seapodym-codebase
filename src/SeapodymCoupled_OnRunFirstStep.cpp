@@ -24,6 +24,8 @@ void SeapodymCoupled::OnRunFirstStep()
 	mat.createMatForage(map, nb_forage, t0, nbt, nbi, nbj);
 	if (!param->larvae_input_aggregated_flag[0])
 		mat.createMatLarvae(map, t0, nbt, nbi, nbj, deltaT);
+	if (!param->spawning_input_aggregated_flag[0])
+		mat.createMatSpawning(map, t0, nbt, nbi, nbj, deltaT);
 
 	int nb_pops = nb_species*(1+param->nb_tag_files);
 	mat.CreateMatSpecies(map,t0, nbt, nbi, nbj, nb_pops, a0_adult, param->sp_nb_cohorts);

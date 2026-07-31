@@ -1,27 +1,55 @@
 #include "SeapodymCoupled.h"
 
-void SeapodymCoupled::ReadLarvae()
+static dvariable obs_model_linear(dvariable h, dvariable y) { return h * y; }
+static dvariable obs_model_nonlinear(dvariable h, dvariable y) { return y*y / (h*h + y*y);} 
+
+double eps = 1e-6;
+
+void SeapodymCoupled::ReadEarly(string what)
 {
 	int nlevel = 0;
 	string file_input;
-	file_input = param->strfile_larvae;
-	cout << "Reading input larvae file: "<< file_input << endl;
+	int input_aggregated_flag, nb_input_agg_groups;
+	D3_ARRAY* input = nullptr;
+	std::vector<double> (*aggregated_input_vectors)[12] = nullptr;
+	std::vector<int> (*aggregated_input_vectors_i)[12] = nullptr;
+	std::vector<int> (*aggregated_input_vectors_j)[12] = nullptr;
+	if (what == "larvae"){
+		file_input = param->strfile_larvae;
+		input_aggregated_flag = param->larvae_input_aggregated_flag[0];
+		nb_input_agg_groups = param->nb_larvae_input_agg_groups;
+		input = &mat.larvae_input;
+		aggregated_input_vectors = &mat.aggregated_larvae_input_vectors;
+		aggregated_input_vectors_i = &mat.aggregated_larvae_input_vectors_i;
+		aggregated_input_vectors_j = &mat.aggregated_larvae_input_vectors_j;
+	}else if (what == "spawning"){
+		file_input = param->strfile_spawning;
+		input_aggregated_flag = param->spawning_input_aggregated_flag[0];
+		nb_input_agg_groups = param->nb_spawning_input_agg_groups;
+		input = &mat.spawning_input;
+		aggregated_input_vectors = &mat.aggregated_spawning_input_vectors;
+		aggregated_input_vectors_i = &mat.aggregated_spawning_input_vectors_i;
+		aggregated_input_vectors_j = &mat.aggregated_spawning_input_vectors_j;
+	}else{
+		cerr << "Error: in ReadEarly(), 'what' argument is not recognized" << endl;
+		std::exit(EXIT_FAILURE); 	
+	}
+	cout << "Reading input " << what << " file: "<< file_input << endl;
 	rw.rbin_headpar(file_input, nlon_input, nlat_input, nlevel);
 
-	if (param->larvae_input_aggregated_flag[0]){
-		int nb_larvae_input_agg_groups = param->nb_larvae_input_agg_groups;
-		if (nlevel != nb_larvae_input_agg_groups){
-			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <larvae_input_aggregation_imonths> in the parameter file.\"\n";
+	if (input_aggregated_flag){
+		if (nlevel != nb_input_agg_groups){
+			cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: The number of nlevels in \"" << file_input << " does not match the number of groups from <" << what << "_input_aggregation_imonths> in the parameter file.\"\n";
 			exit(1);
 		}
 
-		mat.larvae_input.allocate(0,nb_larvae_input_agg_groups-1);
-		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
-			mat.larvae_input[iAgg].allocate(1, nlon_input, 1, nlat_input);
-			mat.larvae_input[iAgg].initialize();
+		(*input).allocate(0,nb_input_agg_groups-1);
+		for (int iAgg=0; iAgg<nb_input_agg_groups; iAgg++){
+			(*input)[iAgg].allocate(1, nlon_input, 1, nlat_input);
+			(*input)[iAgg].initialize();
 		}
 
-		for (int iAgg=0; iAgg<nb_larvae_input_agg_groups; iAgg++){
+		for (int iAgg=0; iAgg<nb_input_agg_groups; iAgg++){
 			ifstream litbin(file_input.c_str(), ios::binary | ios::in);
 			const int sizeofDymInputType = sizeof(float);
 			float buf;
@@ -29,30 +57,33 @@ void SeapodymCoupled::ReadLarvae()
 				cerr << "Error[" << __FILE__ << ':' << __LINE__ << "]: Unable to read file \"" << file_input << "\"\n";
 				exit(1);
 			}
-			int nbytetoskip_aggregatedfile = (9 +(3* nlat * nlon) + nb_larvae_input_agg_groups + (nlat *nlon*iAgg)) * 4;
+			int nbytetoskip_aggregatedfile = (9 +(3* nlat * nlon) + nb_input_agg_groups + (nlat *nlon*iAgg)) * 4;
 			litbin.seekg(nbytetoskip_aggregatedfile, ios::cur);
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
 					litbin.read(( char *)&buf,sizeofDymInputType);
-					mat.larvae_input[iAgg][i+1][j+1]= buf;
+					(*input)[iAgg][i+1][j+1]= buf;
 				}
 			}
 			litbin.close();
 			
-			double iAgg_max = max(mat.larvae_input[iAgg]);
-			if (larvae_obs_max < iAgg_max) larvae_obs_max = iAgg_max;
+			if (what == "larvae"){
+				double iAgg_max = max((*input)[iAgg]);
+				if (larvae_obs_max < iAgg_max) larvae_obs_max = iAgg_max;
+			}
+
 		}
 
 		// Vector of non-NA observed density
 		int ndata=0;
-		for (int iAgg=0; iAgg<param->nb_larvae_input_agg_groups; iAgg++){
+		for (int iAgg=0; iAgg<nb_input_agg_groups; iAgg++){
 			for (int j=0;j<nlat_input;j++){
 				for (int i=0;i<nlon_input;i++){
 					if (map.carte[i+1][j+1]){
-						if (mat.larvae_input[iAgg][i+1][j+1]>=0){
-							mat.aggregated_larvae_input_vectors[iAgg].push_back(mat.larvae_input[iAgg][i+1][j+1]);
-							mat.aggregated_larvae_input_vectors_i[iAgg].push_back(i+1);
-							mat.aggregated_larvae_input_vectors_j[iAgg].push_back(j+1);
+						if ((*input)[iAgg][i+1][j+1]>=0){
+							(*aggregated_input_vectors)[iAgg].push_back((*input)[iAgg][i+1][j+1]);
+							(*aggregated_input_vectors_i)[iAgg].push_back(i+1);
+							(*aggregated_input_vectors_j)[iAgg].push_back(j+1);
 							ndata += 1;
 						}
 					}
@@ -73,21 +104,21 @@ void SeapodymCoupled::ReadLarvae()
 void SeapodymCoupled::create_init_larvae_vars()
 {
 	int nbg = param->nb_larvae_input_agg_groups;
-	ntime_agg.allocate(0,nbg-1);
-	ntime_agg.initialize();
+	ntime_agg_larvae.allocate(0,nbg-1);
+	ntime_agg_larvae.initialize();
 
 	qmld.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
 	qmld = 1.0;//.initialize();
 
 	if (param->larvae_input_aggregated_flag[0]){
 		// Aggregated larvae density over the entire period, only at obs. locations	
-		kinf.allocate(0, nbg-1);
-		ksup.allocate(0, nbg-1);
+		kinf_larvae.allocate(0, nbg-1);
+		ksup_larvae.allocate(0, nbg-1);
 		for (int k = 0; k < nbg; k++){
-			kinf[k] = 0;
-			ksup[k] = mat.aggregated_larvae_input_vectors[k].size();
+			kinf_larvae[k] = 0;
+			ksup_larvae[k] = mat.aggregated_larvae_input_vectors[k].size();
 		}
-		Agg_larvae_density_pred_at_obs.allocate(0, nbg-1, kinf, ksup);
+		Agg_larvae_density_pred_at_obs.allocate(0, nbg-1, kinf_larvae, ksup_larvae);
 		Agg_larvae_density_pred_at_obs.initialize();	
 	}else{
 		Larvae_density_pred.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
@@ -95,39 +126,103 @@ void SeapodymCoupled::create_init_larvae_vars()
 	}
 }
 
-void SeapodymCoupled::extract_larvae(const int sp, const int tcur)
+void SeapodymCoupled::create_init_spawning_vars()
+{
+	int nbg = param->nb_spawning_input_agg_groups;
+	ntime_agg_spawning.allocate(0,nbg-1);
+	ntime_agg_spawning.initialize();
+
+	qmld.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+	qmld = 1.0;//.initialize();
+
+	if (param->spawning_input_aggregated_flag[0]){
+		// Aggregated spawning index over the entire period, only at obs. locations	
+		kinf_spawning.allocate(0, nbg-1);
+		ksup_spawning.allocate(0, nbg-1);
+		for (int k = 0; k < nbg; k++){
+			kinf_spawning[k] = 0;
+			ksup_spawning[k] = mat.aggregated_spawning_input_vectors[k].size();
+		}
+		Agg_SBHs_pred_at_obs.allocate(0, nbg-1, kinf_spawning, ksup_spawning);
+		Agg_SBHs_pred_at_obs.initialize();	
+	}else{
+		SBHs_pred.allocate(map.imin1, map.imax1, map.jinf1, map.jsup1);
+		SBHs_pred.initialize();
+	}
+}
+
+void SeapodymCoupled::extract_early(const int sp, const int tcur, string what, dvar_matrix* Spawning_Habitat, dvar_matrix* Total_pop)
 {//Autodif function for the moment. Need to write adjoint!!!
+	int input_aggregated_flag;
+	std::vector<double> (*aggregated_input_vectors)[12] = nullptr;
+	std::vector<int> (*aggregated_input_vectors_i)[12] = nullptr;
+	std::vector<int> (*aggregated_input_vectors_j)[12] = nullptr;
+	ivector *ntime_agg = nullptr;
 
-	if (param->q_mld_larvae && sp == 0){ //only once as it is species independent
-		double slope = param->q_mld_slope;
-		double depth = param->q_mld_depth/1000.0; //vld units is km 
-		for (int i = map.imin; i <= map.imax; i++){	
-			const int jmin = map.jinf[i];
-			const int jmax = map.jsup[i];
-			for (int j = jmin; j <= jmax; j++){
-
-				qmld(i,j) = 1.0/(1.0+exp(slope*(mat.vld[tcur][i][j]-depth)));
+	if (what == "larvae"){
+		if (param->q_mld_larvae && sp == 0){ //only once as it is species independent
+			double slope = param->q_mld_slope;
+			double depth = param->q_mld_depth/1000.0; //vld units is km 
+			for (int i = map.imin; i <= map.imax; i++){	
+				const int jmin = map.jinf[i];
+				const int jmax = map.jsup[i];
+				for (int j = jmin; j <= jmax; j++){
+					qmld(i,j) = 1.0/(1.0+exp(slope*(mat.vld[tcur][i][j]-depth)));
+				}
 			}
 		}
+		input_aggregated_flag = param->larvae_input_aggregated_flag[0];
+		aggregated_input_vectors = &mat.aggregated_larvae_input_vectors;
+		aggregated_input_vectors_i = &mat.aggregated_larvae_input_vectors_i;
+		aggregated_input_vectors_j = &mat.aggregated_larvae_input_vectors_j;
+		ntime_agg = &ntime_agg_larvae;		
+	}else if (what == "spawning"){
+		input_aggregated_flag = param->spawning_input_aggregated_flag[0];
+		aggregated_input_vectors = &mat.aggregated_spawning_input_vectors;
+		aggregated_input_vectors_i = &mat.aggregated_spawning_input_vectors_i;
+		aggregated_input_vectors_j = &mat.aggregated_spawning_input_vectors_j;
+		ntime_agg = &ntime_agg_spawning;
+
+		// Security check
+		if ((Spawning_Habitat == nullptr) || (Total_pop == nullptr)){
+			cerr << "Error: in extract_early(), if 'what' argument is 'spawning', Spawning_Habitat and Total_pop cannot be null pointers" << endl;
+			std::exit(EXIT_FAILURE);                
+		}
+	}else{
+		cerr << "Error: in extract_early(), 'what' argument is not recognized" << endl;
+		std::exit(EXIT_FAILURE);
 	}
 
-	if (param->larvae_input_aggregated_flag[0]){
-		int iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
+	if (input_aggregated_flag){
+		int iAgg;
+		if (what == "larvae"){
+			iAgg = Utilities::iTimeOfYear(month, param->larvae_input_aggregation);
+		}else{
+			iAgg = Utilities::iTimeOfYear(month, param->spawning_input_aggregation);
+		}
 		
 		// Aggregate larvae density at larvae obs locations
-		for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
-			int iv = mat.aggregated_larvae_input_vectors_i[iAgg][k];
-			int jv = mat.aggregated_larvae_input_vectors_j[iAgg][k];
+		for (auto k=0u; k<(*aggregated_input_vectors)[iAgg].size(); k++){
+			int iv = (*aggregated_input_vectors_i)[iAgg][k];
+			int jv = (*aggregated_input_vectors_j)[iAgg][k];
 			
-			Agg_larvae_density_pred_at_obs(iAgg, k) +=  qmld(iv,jv)*mat.dvarDensity[sp][0][iv][jv];
+			if (what == "larvae"){
+				Agg_larvae_density_pred_at_obs(iAgg, k) +=  qmld(iv,jv)*mat.dvarDensity[sp][0][iv][jv];
+			}else{
+				Agg_SBHs_pred_at_obs(iAgg, k) +=  (*Spawning_Habitat)(iv,jv)*(*Total_pop)(iv,jv);
+			}
 		}
-		ntime_agg[iAgg] += 1;
+		(*ntime_agg)[iAgg] += 1;
 	}else{
 		for (int i = map.imin; i <= map.imax; i++){
 			const int jmin = map.jinf[i];
 			const int jmax = map.jsup[i];
 			for (int j = jmin; j <= jmax; j++){
-			    Larvae_density_pred[i][j] = qmld[i][j] * mat.dvarDensity[sp][0][i][j];
+				if (what == "larvae"){
+					Larvae_density_pred[i][j] = qmld[i][j] * mat.dvarDensity[sp][0][i][j];
+				}else{
+					SBHs_pred[i][j] = (*Spawning_Habitat)[i][j] * (*Total_pop)[i][j];
+				}
 			}
 		}
 	}
@@ -184,7 +279,7 @@ void SeapodymCoupled::elarvae_model_run(dvar_matrix& M, const int sp, const int 
 	
 	//2.0.2 Aggregate larvae density at larvae obs locations for the likelihood
 	if (time_getpred)
-		extract_larvae(sp,tcur);		
+		extract_early(sp,tcur,"larvae");		
 	
 	if (writeoutputfiles)
 		write_elarvae_dym(sp);
@@ -205,12 +300,22 @@ void SeapodymCoupled::get_larvae_at_obs()
 	
 	for (int iAgg = 0; iAgg < param->nb_larvae_input_agg_groups; iAgg++){
 		for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
-			Agg_larvae_density_pred_at_obs(iAgg, k) /= ntime_agg[iAgg];
+			Agg_larvae_density_pred_at_obs(iAgg, k) /= ntime_agg_larvae[iAgg];
 		}
 	}
 	
 }
 
+void SeapodymCoupled::get_SBHs_at_obs()
+{
+	// Compute the average SB x Hs over the entire period
+
+	for (int iAgg = 0; iAgg < param->nb_spawning_input_agg_groups; iAgg++){
+		for (auto k=0u; k<mat.aggregated_spawning_input_vectors[iAgg].size(); k++){
+			Agg_SBHs_pred_at_obs(iAgg, k) /= ntime_agg_spawning[iAgg];
+		}
+	}
+}
 
 void SeapodymCoupled::write_elarvae_dym(const int sp)
 {
@@ -226,3 +331,179 @@ void SeapodymCoupled::write_elarvae_dym(const int sp)
 	WriteAVariableDym(mat.larvae(sp),param->sp_name[sp] + "_early_larvae.dym",false);
 }
 
+
+// Functions to compute the likelihood of a larvae density observed on a continuous scale
+dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what){
+
+	dvariable h;
+	dvariable sigma;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		sigma = param.dvarsLikelihood_larvae_sigma[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		sigma = param.dvarsLikelihood_spawning_sigma[sp];
+		obsmodel_type = 0;
+	}
+		
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = obs_max * obs_model_nonlinear(h, N_pred);
+	}
+	dvariable lkhd = 0.0;
+
+	if (N_obs==0.0)
+		lkhd = weight_Lobszero*L_pred*L_pred/(2.0*pow(sigma, 2.0)) ;
+	else
+		lkhd = pow(N_obs-L_pred, 2.0)/(2.0 * pow(sigma, 2.0));
+	
+	return 1000.0*lkhd;
+}
+
+dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what){
+	dvariable h;
+	dvariable sigma;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		sigma = param.dvarsLikelihood_larvae_sigma[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		sigma = param.dvarsLikelihood_spawning_sigma[sp];
+		obsmodel_type = 0;
+	}
+
+	const double twopi = 2.0*3.141592654;
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = obs_max * obs_model_nonlinear(h, N_pred);
+	}
+    dvariable lkhd = 0.0;
+    if (L_obs==0){
+        lkhd = weight_Lobszero * (pow(L_pred,2) / (2*pow(sigma, 2)) + log(sigma) + log(twopi)/2);
+    }else{
+        lkhd = L_pred - L_obs * log(L_pred) + gammln(L_obs+1);
+    }
+    return lkhd;
+}
+
+dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what){
+	dvariable h;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		obsmodel_type = 0;
+	}
+
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = 1 + obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = 1 + obs_max * obs_model_nonlinear(h, N_pred);
+	}
+    dvariable lkhd = 0.0;
+    L_obs += 1;
+    lkhd = L_pred - L_obs * log(L_pred) + gammln(L_obs+1) + log(1-exp(-L_pred));
+    if (L_obs==1.0){
+        lkhd *= weight_Lobszero;
+    }
+    return lkhd;
+}
+
+dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what){
+	dvariable h;
+	dvariable beta;
+	dvariable p;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		beta = param.dvarsLikelihood_larvae_beta[sp];
+		p = param.dvarsLikelihood_larvae_probzero[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		beta = param.dvarsLikelihood_spawning_beta[sp];
+		p = param.dvarsLikelihood_spawning_probzero[sp];
+		obsmodel_type = 0;
+	}
+
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = obs_max * obs_model_nonlinear(h, N_pred);
+	}
+    dvariable lkhd = 0.0;
+    if (L_obs==0.0){
+        dvariable pwr = beta*L_pred/(1-p);
+        lkhd -= log(p+(1-p)*pow(beta/(1.0+beta),pwr));
+    }else{
+        dvariable mu = L_pred/(1-p);
+        lkhd -= log(1-p) + gammln(beta*mu+L_obs) - gammln(beta*mu) -gammln(L_obs+1.0) + beta*mu*log(beta)-log(beta+1.0)*(beta*mu+L_obs);
+    }
+    return lkhd;
+}
+
+dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what){
+	dvariable h;
+	dvariable p;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		p = param.dvarsLikelihood_larvae_probzero[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		p = param.dvarsLikelihood_spawning_probzero[sp];
+		obsmodel_type = 0;
+	}
+
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = obs_max * obs_model_nonlinear(h, N_pred);
+	}
+    dvariable lkhd = 0.0;
+    if (L_obs==0.0){
+        lkhd -= log(p + (1-p) * exp(-L_pred));
+    }else{
+        lkhd -= log(1-p) + L_obs * log(L_pred) - L_pred - gammln(L_obs+1.0);
+    }
+    return lkhd;
+}
+
+//This likelihood function is only when having probability of presence as observed quantity
+dvariable logit_normal_comp(double pp_obs, dvariable N_pred, VarParamCoupled& param, const double larvae_obs_max, int sp){
+
+	dvariable like = 0.0;
+
+	dvariable h = param.dvarsQ_sp_larvae[sp];
+	dvariable y = 0.0001*N_pred;
+	y = larvae_obs_max * obs_model_nonlinear(h,y);
+	//y = obs_model_nonlinear(h,y);
+	dvariable ys = y - 2.0*y*eps + eps; 			  //to avoid [0,1] values
+	dvariable pred = log(ys/(1.0 - ys));
+
+	double xs  = pp_obs - 2.0*pp_obs*eps + eps; //to avoid [0,1] values 
+	double obs = log(xs/(1.0 - xs));
+	// sigma fixed: drop log(sigma); w = 0.5/(sigma*sigma) will be the larval-data WEIGHT (outside of this function)
+	if (pp_obs>0) //in BRTM outputs zero corresponds to NO observations
+		like = pow(obs - pred,2);   // + an irrelevant constant
+	return like;
+}

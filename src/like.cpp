@@ -136,56 +136,82 @@ double SeapodymCoupled::get_stock_like(dvariable total_stock, dvariable& likelih
 	return stocklike;
 }
 
-double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Agg_larvae_density_pred_at_obs)
-{//returns double value of larvae likelihood.
+double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& Agg_pred_at_obs, string what)
+{//returns double value of larvae or spawning likelihood.
 
 	NishikawaCategories NshkwCat(*param);
 	double likelihood_penalty = 50.0;
 	double weight_Lobszero = 0.0;
-	if (param->fit_null_larvae[0]==1){
-		weight_Lobszero = param->weight_null_larvae[0];
+	double like_weight = 1.0;
+	double like = 0.0;
+	int input_categorical_flag, nb_input_agg_groups, like_type;
+	std::vector<double> (*aggregated_input_vectors)[12] = nullptr;
+
+	if (what == "larvae"){
+		if (param->fit_null_larvae[0]==1){
+			weight_Lobszero = param->weight_null_larvae[0];
+		}
+		like_weight = param->elife_like_weight;
+		like_type = param->larvae_likelihood_type[0];
+		input_categorical_flag = param->larvae_input_categorical_flag[0];
+		nb_input_agg_groups = param->nb_larvae_input_agg_groups;
+		aggregated_input_vectors = &mat.aggregated_larvae_input_vectors;
+	}else{
+		weight_Lobszero = 1.0;
+		like_weight = param->spawning_like_weight;
+		like_type = param->spawning_likelihood_type[0];
+		input_categorical_flag = 0; // categorical spawning input not implemented
+		nb_input_agg_groups = param->nb_spawning_input_agg_groups;
+		aggregated_input_vectors = &mat.aggregated_spawning_input_vectors;
 	}
 
-	double larvaelike  = 0.0;
-	double elike_weight = param->elife_like_weight;
 	for (int sp=0; sp < nb_species; sp++){
-		int like_type = param->larvae_likelihood_type[sp];
-		for (int iAgg=0; iAgg<param->nb_larvae_input_agg_groups; iAgg++){
-			for (auto k=0u; k<mat.aggregated_larvae_input_vectors[iAgg].size(); k++){
+		for (int iAgg=0; iAgg<nb_input_agg_groups; iAgg++){
+			for (auto k=0u; k<(*aggregated_input_vectors)[iAgg].size(); k++){
 				// Compute likelihood
 				dvariable N_pred = 0.0;
-				N_pred = Agg_larvae_density_pred_at_obs(iAgg, k);
+				N_pred = Agg_pred_at_obs(iAgg, k);
 				dvariable lkhd;
-				if (param->larvae_input_categorical_flag[sp]){
-					int L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
-					lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
-
+				if (input_categorical_flag){
+					int L_obs  = (*aggregated_input_vectors)[iAgg][k];
+					lkhd = early_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
 				}else{
-					double L_obs  = mat.aggregated_larvae_input_vectors[iAgg][k];
-					lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
+					double L_obs  = (*aggregated_input_vectors)[iAgg][k];
+					lkhd = early_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, what);
 				}
-				likelihood += elike_weight*lkhd;
-				larvaelike += elike_weight*value(lkhd);
+				likelihood += like_weight*lkhd;
+				larvaelike += like_weight*value(lkhd);
 			}
 		}
 	}
-	return larvaelike;
+	return like;
 }
 
-double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larvae_density_pred, D3_ARRAY larvae_input, int t)
-{//returns double value of larvae likelihood.
+double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& pred, D3_ARRAY input, int t, string what)
+{//returns double value of larvae or spawning likelihood.
 
 	NishikawaCategories NshkwCat(*param);
 	double likelihood_penalty = 50.0;
 	double weight_Lobszero = 0.0;
-	if (param->fit_null_larvae[0]==1){
-		weight_Lobszero = param->weight_null_larvae[0];
+	double like  = 0.0;
+	double like_weight = 1.0;
+	int input_categorical_flag, like_type;
+
+	if (what == "larvae"){
+		if (param->fit_null_larvae[0]==1){
+			weight_Lobszero = param->weight_null_larvae[0];
+		}
+		like_weight = param->elife_like_weight;
+		like_type = param->larvae_likelihood_type[0];
+		input_categorical_flag = param->larvae_input_categorical_flag[0];
+	}else{
+		weight_Lobszero = 1.0;
+		like_weight = param->spawning_like_weight;
+		like_type = param->spawning_likelihood_type[0];
+		input_categorical_flag = 0; // categorical spawning input not implemented
 	}
 
-	double larvaelike  = 0.0;
-	double elike_weight = param->elife_like_weight;
 	for (int sp=0; sp < nb_species; sp++){
-		int like_type = param->larvae_likelihood_type[sp];
 		const int imin = map.imin;
 		const int imax = map.imax;
 		for (int i = imin; i <= imax; i++){
@@ -194,28 +220,27 @@ double SeapodymCoupled::get_larvae_like(dvariable& likelihood, dvar_matrix& Larv
 			for (int j = jmin ; j <= jmax; j++){
 				if (map.carte[i][j]){
 					// Compute likelihood
-					dvariable N_pred = Larvae_density_pred(i,j);
+					dvariable N_pred = pred(i,j);
 					dvariable lkhd;
-					if (param->larvae_input_categorical_flag[sp]){
-						int L_obs  = larvae_input(t,i,j);
-						lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
+					if (input_categorical_flag){
+						int L_obs  = input(t,i,j);
+						lkhd = early_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
 					}else{
-						double L_obs  = larvae_input(t,i,j);
-						lkhd = larvae_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, NshkwCat);
+						double L_obs  = input(t,i,j);
+						lkhd = early_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, what);
 					}
-					likelihood += elike_weight*lkhd;
-					larvaelike += elike_weight*value(lkhd);
+					likelihood += like_weight*lkhd;
+					larvaelike += like_weight*value(lkhd);
 				}
 			}
 		}
 	}
-	return larvaelike;
+	return like;
 }
 
-
-dvariable SeapodymCoupled::larvae_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
+dvariable SeapodymCoupled::early_like(int like_type, int L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
+	// Not implemented for spawning likelihood (this is why there is no 'what' argument, as in the other early_like function)
 	dvariable lkhd = 0.0;
-TRACE(like_type)	
 	switch (like_type){
 		case 0: // Mixed Gaussian Kernel cost function
 			lkhd = NshkwCat.mixed_gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
@@ -261,12 +286,16 @@ TRACE(like_type)
 	return(lkhd);
 }
 
-dvariable SeapodymCoupled::larvae_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, NishikawaCategories NshkwCat){
+dvariable SeapodymCoupled::early_like(int like_type, double L_obs, dvariable N_pred, double weight_Lobszero, double likelihood_penalty, string what){
+	double obs_max = 1.0;
+	if (what == "larvae"){
+		obs_max = larvae_obs_max;
+	}
 
 	dvariable lkhd = 0.0;
 	switch (like_type){
 		case 0: // Gaussian cost function
-			lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, larvae_obs_max, 0);
+			lkhd = gaussian_comp(L_obs, N_pred, weight_Lobszero, *param, obs_max, 0, what);
 			break;
 
 		case 1:{// Poisson cost function
@@ -275,7 +304,7 @@ dvariable SeapodymCoupled::larvae_like(int like_type, double L_obs, dvariable N_
 					lkhd = likelihood_penalty;
 				}
 			}else{
-				lkhd = poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+				lkhd = poisson_comp(L_obs, N_pred, weight_Lobszero, *param, obs_max, 0, what);
 			}
 			break;
 		}
@@ -286,20 +315,25 @@ dvariable SeapodymCoupled::larvae_like(int like_type, double L_obs, dvariable N_
 					lkhd = likelihood_penalty;
 				}
 			}else{
-				lkhd = truncated_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, 0);
+				lkhd = truncated_poisson_comp(L_obs, N_pred, weight_Lobszero, *param, obs_max, 0, what);
 			}
 			break;
 
 		case 3: // Zero-Inflated Negative Binomial cost function
-			lkhd = zinb_comp(L_obs, N_pred, *param, 0);
+			lkhd = zinb_comp(L_obs, N_pred, *param, obs_max, 0, what);
 			break;
 
 		case 4: // Zero-Inflated Poisson cost function
-			lkhd = zip_comp(L_obs, N_pred, *param, 0);
+			lkhd = zip_comp(L_obs, N_pred, *param, obs_max, 0, what);
 			break;
 
 		case 5: // Logit-Normal likelihood
-			lkhd = logit_normal_comp(L_obs, N_pred, *param, larvae_obs_max, 0);
+			if (what == "spawning"){
+				cerr << "Logit-Normal likelihood should not be used for spawning like as observations are not probabilities." << endl;
+				std::exit(EXIT_FAILURE); 	
+
+			}
+			lkhd = logit_normal_comp(L_obs, N_pred, *param, obs_max, 0);
 			break;
 	}
 	return(lkhd);

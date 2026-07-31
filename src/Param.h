@@ -95,6 +95,7 @@ public:
 	dvector length_like_weight;
 	double tag_like_weight;
 	double elife_like_weight;
+	double spawning_like_weight;
 	double poisson_like_min_catch;
 	double  total_like;
 	int fdata_rm;
@@ -134,6 +135,8 @@ public:
 	double	save_last_yr;
 	int larvae_like_firstyear;
 	int larvae_like_lastyear;
+	int spawning_like_firstyear;
+	int spawning_like_lastyear;
 	int first_recruitment_date;
 	int	nb_yr_forecast;
 	int 	nbsteptoskip;
@@ -186,6 +189,8 @@ public:
 	int write_all_fisheries_dym;
 	vector<vector<int>> larvae_input_aggregation;
 	int nb_larvae_input_agg_groups;
+	vector<vector<int>> spawning_input_aggregation;
+	int nb_spawning_input_agg_groups;
 
 	// Larvae likelihood parameters
 	int q_mld_larvae;
@@ -218,6 +223,17 @@ public:
 	dvector elarvae_slope_low, elarvae_slope_high, elarvae_sst_low, elarvae_sst_high;
 	dvector elarvae_a_sst, elarvae_b_sst;
 	ivector elarvae_hs_fsst_fixed;
+
+	// Spawning likelihood parameters
+	ivector spawning_like; // weither to compute spawning likelihood, [sp]
+	ivector spawning_input_aggregated_flag;//if file_spawning_data data is aggregated data
+	ivector spawning_likelihood_type; // Likelihood function for spawning index
+	DVECTOR q_sp_spawning;           // Spawning index scaling factor, [sp]
+	DVECTOR likelihood_spawning_sigma;      // sigma parameter in Gaussian kernel used for spawning likelihood
+	DVECTOR likelihood_spawning_beta;       // betaf parameter in ZINB used for spawning likelihood
+	DVECTOR likelihood_spawning_probzero;       // pf parameter in ZINB used for spawning likelihood
+	string strdir_spawning;
+	string strfile_spawning;
 	
 	vector<string> life_stage;
 	ivector sp_nb_cohort_life_stage;
