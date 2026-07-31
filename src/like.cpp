@@ -743,3 +743,181 @@ dvariable ZINegBinomial(const dvector data_obs, dvar_vector& data_est, dvariable
 	return(likelihood);
 }	
 
+// Functions to compute the likelihood of a larvae density observed on a continuous scale
+static dvariable obs_model_linear(dvariable h, dvariable y) { return h * y; }
+static dvariable obs_model_nonlinear(dvariable h, dvariable y) { return y*y / (h*h + y*y);} 
+double eps = 1e-6;
+dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what){
+
+	dvariable h;
+	dvariable sigma;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		sigma = param.dvarsLikelihood_larvae_sigma[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		sigma = param.dvarsLikelihood_spawning_sigma[sp];
+		obsmodel_type = 0;
+	}
+		
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = obs_max * obs_model_nonlinear(h, N_pred);
+	}
+	dvariable lkhd = 0.0;
+
+	if (N_obs==0.0)
+		lkhd = weight_Lobszero*L_pred*L_pred/(2.0*pow(sigma, 2.0)) ;
+	else
+		lkhd = pow(N_obs-L_pred, 2.0)/(2.0 * pow(sigma, 2.0));
+	
+	return 1000.0*lkhd;
+}
+
+dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what){
+	dvariable h;
+	dvariable sigma;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		sigma = param.dvarsLikelihood_larvae_sigma[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		sigma = param.dvarsLikelihood_spawning_sigma[sp];
+		obsmodel_type = 0;
+	}
+
+	const double twopi = 2.0*3.141592654;
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = obs_max * obs_model_nonlinear(h, N_pred);
+	}
+    dvariable lkhd = 0.0;
+    if (L_obs==0){
+        lkhd = weight_Lobszero * (pow(L_pred,2) / (2*pow(sigma, 2)) + log(sigma) + log(twopi)/2);
+    }else{
+        lkhd = L_pred - L_obs * log(L_pred) + gammln(L_obs+1);
+    }
+    return lkhd;
+}
+
+dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what){
+	dvariable h;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		obsmodel_type = 0;
+	}
+
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = 1 + obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = 1 + obs_max * obs_model_nonlinear(h, N_pred);
+	}
+    dvariable lkhd = 0.0;
+    L_obs += 1;
+    lkhd = L_pred - L_obs * log(L_pred) + gammln(L_obs+1) + log(1-exp(-L_pred));
+    if (L_obs==1.0){
+        lkhd *= weight_Lobszero;
+    }
+    return lkhd;
+}
+
+dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what){
+	dvariable h;
+	dvariable beta;
+	dvariable p;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		beta = param.dvarsLikelihood_larvae_beta[sp];
+		p = param.dvarsLikelihood_larvae_probzero[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		beta = param.dvarsLikelihood_spawning_beta[sp];
+		p = param.dvarsLikelihood_spawning_probzero[sp];
+		obsmodel_type = 0;
+	}
+
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = obs_max * obs_model_nonlinear(h, N_pred);
+	}
+    dvariable lkhd = 0.0;
+    if (L_obs==0.0){
+        dvariable pwr = beta*L_pred/(1-p);
+        lkhd -= log(p+(1-p)*pow(beta/(1.0+beta),pwr));
+    }else{
+        dvariable mu = L_pred/(1-p);
+        lkhd -= log(1-p) + gammln(beta*mu+L_obs) - gammln(beta*mu) -gammln(L_obs+1.0) + beta*mu*log(beta)-log(beta+1.0)*(beta*mu+L_obs);
+    }
+    return lkhd;
+}
+
+dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what){
+	dvariable h;
+	dvariable p;
+	int obsmodel_type;
+	if (what == "larvae"){
+		h = param.dvarsQ_sp_larvae[sp];
+		p = param.dvarsLikelihood_larvae_probzero[sp];
+		obsmodel_type = param.linear_larvae_obs_model;
+	}else{
+		h = param.dvarsQ_sp_spawning[sp];
+		p = param.dvarsLikelihood_spawning_probzero[sp];
+		obsmodel_type = 0;
+	}
+
+	dvariable L_pred;
+	if (obsmodel_type)
+		L_pred = obs_model_linear(h, N_pred);
+	else{
+		N_pred = 1e-4*N_pred;
+		L_pred = obs_max * obs_model_nonlinear(h, N_pred);
+	}
+    dvariable lkhd = 0.0;
+    if (L_obs==0.0){
+        lkhd -= log(p + (1-p) * exp(-L_pred));
+    }else{
+        lkhd -= log(1-p) + L_obs * log(L_pred) - L_pred - gammln(L_obs+1.0);
+    }
+    return lkhd;
+}
+
+//This likelihood function is only when having probability of presence as observed quantity
+dvariable logit_normal_comp(double pp_obs, dvariable N_pred, VarParamCoupled& param, const double larvae_obs_max, int sp){
+
+	dvariable like = 0.0;
+
+	dvariable h = param.dvarsQ_sp_larvae[sp];
+	dvariable y = 0.0001*N_pred;
+	y = larvae_obs_max * obs_model_nonlinear(h,y);
+	//y = obs_model_nonlinear(h,y);
+	dvariable ys = y - 2.0*y*eps + eps; 			  //to avoid [0,1] values
+	dvariable pred = log(ys/(1.0 - ys));
+
+	double xs  = pp_obs - 2.0*pp_obs*eps + eps; //to avoid [0,1] values 
+	double obs = log(xs/(1.0 - xs));
+	// sigma fixed: drop log(sigma); w = 0.5/(sigma*sigma) will be the larval-data WEIGHT (outside of this function)
+	if (pp_obs>0) //in BRTM outputs zero corresponds to NO observations
+		like = pow(obs - pred,2);   // + an irrelevant constant
+	return like;
+}
