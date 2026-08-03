@@ -494,7 +494,7 @@ void Sensitivity_analysis(const char* parfile, Cmdopt* cmdopt)
 		for (int i=1; i<=nvar; i++){
 			cout << "\t" << x_names[i];
 		}
-		cout << "\tlike\tclike\tlflike\tstocklike\ttaglike\tearlylike" << endl;
+		cout << "\tlike\tclike\tlflike\tstocklike\ttaglike\tlarvaelike\tspawninglike" << endl;
 		//cout << left;
 		//cout << setw(6) << "like" << setw(25) << "clike" << setw(25) << "lflike" << setw(25) << "stocklike" << setw(25) << "taglike" << setw(25) << "earlylike" << endl;
 
@@ -514,9 +514,10 @@ void Sensitivity_analysis(const char* parfile, Cmdopt* cmdopt)
 			double stocklike = sc.get_stocklike();
 			double taglike = sc.get_taglike();
 			double larvaelike = sc.get_larvaelike();
+			double spawninglike = sc.get_spawninglike();
 
 			// Likelihood breakdown
-			cout << "\t" << like << "\t" << clike << "\t" << lflike << "\t" << stocklike << "\t" << taglike << "\t" << larvaelike << endl;
+			cout << "\t" << like << "\t" << clike << "\t" << lflike << "\t" << stocklike << "\t" << taglike << "\t" << larvaelike << "\t" << spawninglike << endl;
 			//cout << setw(6) << like << setw(25) << clike << setw(25) << lflike << setw(25) << stocklike << setw(25) << taglike << setw(25) << larvaelike << endl;
 		}
 	}	

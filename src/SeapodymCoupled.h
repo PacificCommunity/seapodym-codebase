@@ -26,6 +26,7 @@ public:
 	double get_lflike() { return lflike; }
 	double get_stocklike() { return stocklike; }
 	double get_larvaelike() { return larvaelike; }
+	double get_spawninglike() { return spawninglike; }
 	double get_taglike() { return taglike; }
 
 friend class tag_release;
