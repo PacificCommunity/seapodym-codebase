@@ -1069,10 +1069,6 @@ bool VarParamCoupled::read(const string& parfile)
 		// Spawning index scaling factor
 		if (!doc.get("/q_sp_spawning",sp_name[sp]).empty()){
 			q_sp_spawning[sp] = doc.getDouble("/q_sp_spawning", sp_name[sp]);
-		}else{
-			if (!fit_spawning_habitat_raw && habitat_run_type==0 && spawning_like[sp]){
-				cerr << "Setting <fit_spawning_habitat_raw> flag to 0 requires filling <q_sp_spawning> fields." << endl; exit(1);
-			}
 		}
 
 		// sigma parameter in Gaussian kernel used for spawning likelihood
