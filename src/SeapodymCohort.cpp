@@ -91,7 +91,7 @@ double t_c = MPI_Wtime();
 t_copy_acc += MPI_Wtime() - t_c;
 		}
 
-		if (aPlusEnabled){
+		if (aPlusEnabled && aPlusFeedsSpawning){
 			// Plus group's density as of the end of t-1. SpawningBiomass_comp's
 			// own loop (a < param->sp_nb_cohorts[sp]) always included the
 			// oldest age class, A+ or not; nb_age_class here IS exactly that
@@ -129,6 +129,16 @@ double t_c2 = MPI_Wtime();
 				}
 			}
 t_copy_acc += MPI_Wtime() - t_c2;
+		} else if (aPlusEnabled){
+			// A+ is tracked (its own accumulator chain still runs), but must
+			// not feed spawning: no chunk is read at all here (so this cohort
+			// no longer depends on A+'s task - see SeapodymCohortDependencyAnalyzer's
+			// aPlusFeedsSpawning), and this bin is explicitly zeroed rather than
+			// left with whatever stale value it held from a previous cohort's
+			// init, since mat is reused across cohorts on this worker and
+			// SpawningBiomass_comp's loop bound (a < sp_nb_cohorts[sp]) still
+			// reaches index nb_age_class regardless of this flag.
+			mat.dvarDensity(0,nb_age_class).initialize();
 		}
 
 		dataCollector.endEpoch(); // should be as late as possible

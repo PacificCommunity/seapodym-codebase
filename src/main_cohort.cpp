@@ -29,11 +29,11 @@ void buffers_set(long int &mv, long int &mc, long int &mg);
 
 double time_worker_init = 0.0, time_cohort_init = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
 
-SeapodymCohort xinit_prerun_wrapper(const char* parfile, bool useAPlus) {
+SeapodymCohort xinit_prerun_wrapper(const char* parfile, bool useAPlus, bool aPlusFeedsSpawning) {
 
 	double tik = MPI_Wtime();
 
-	SeapodymCohort cohort((char*)parfile, 0, useAPlus);
+	SeapodymCohort cohort((char*)parfile, 0, useAPlus, aPlusFeedsSpawning);
 
 	//initialize variables of optimization
 	const int nvar = cohort.nvarcalc();
@@ -198,11 +198,17 @@ int main(int argc, char** argv) {
 	cmdLine.set("-s", std::string("initparfile.xml"), "Input parameter file");
 	cmdLine.set("-no-aplus", false, "Disable the A+ (plus group) accumulator and reproduce "
 		"pre-A+ behavior/checksum, for regression comparison.");
+	cmdLine.set("-no-aplus-spawn", false, "Keep tracking the A+ (plus group) accumulator, but "
+		"exclude it from a newborn cohort's spawning biomass - i.e. old-fish recruitment is "
+		"turned off without disabling A+ itself. Also drops the dependency of newborn cohorts "
+		"on the A+ task, letting births proceed without waiting on it. No effect if -no-aplus "
+		"is also given (there is no separate A+ bin to exclude in that case).");
 
 	// Parse the command line arguments
 	bool success = cmdLine.parse(argc, argv);
 	bool help = cmdLine.get<bool>("-help") || cmdLine.get<bool>("-h");
 	bool useAPlus = !cmdLine.get<bool>("-no-aplus");
+	bool aPlusFeedsSpawning = !cmdLine.get<bool>("-no-aplus-spawn");
 	if (!success) {
 		std::cerr << "Error parsing command line arguments." << std::endl;
 		cmdLine.help();
@@ -258,16 +264,18 @@ int main(int argc, char** argv) {
 	MPI_Comm_split(MPI_COMM_WORLD, color, workerId, &workerComm);
 
 	if (workerId == 0) {
-		printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d aPlus = %s\n", \
-			workerId, numData, numAgeGroups, numTimeSteps, numChunks, useAPlus ? "on" : "off");
+		printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d aPlus = %s aPlusFeedsSpawning = %s\n", \
+			workerId, numData, numAgeGroups, numTimeSteps, numChunks, useAPlus ? "on" : "off", aPlusFeedsSpawning ? "on" : "off");
 	}
 
 	DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
 
 	// analyze the cohort Id task dependencies (aPlusCohort adds the A+ chain;
 	// with -no-aplus this is false, and no A+ task ids are ever generated,
-	// so main()'s A+ branch below simply never triggers)
-	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0], /*aPlusCohort=*/useAPlus);
+	// so main()'s A+ branch below simply never triggers). aPlusFeedsSpawning
+	// controls only whether living cohorts depend on the matching A+ task -
+	// the A+ chain runs either way when useAPlus is true.
+	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0], /*aPlusCohort=*/useAPlus, /*aPlusFeedsSpawning=*/aPlusFeedsSpawning);
 	int firstAPlusId = taskDeps.getFirstAPlusCohortId();
 	int numCohorts = taskDeps.getNumberOfCohorts();
 	std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
@@ -333,7 +341,7 @@ int main(int argc, char** argv) {
 		{
 			DataProvider dp(workerComm, nameSizePairs);
 
-			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str(), useAPlus);
+			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str(), useAPlus, aPlusFeedsSpawning);
 
 			// Initialize optimization variables once; x is stable for all tasks
 			// (xinit fills x from fixed model parameters that don't change between tasks).

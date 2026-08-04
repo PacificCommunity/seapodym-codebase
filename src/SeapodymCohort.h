@@ -32,8 +32,16 @@ public:
 	// to what restart() computes, so delegate to it instead of duplicating
 	// it here - every worker's initial cohortId=0 is throwaway anyway (it
 	// gets restart()-ed to the real task id before any real work happens).
-	SeapodymCohort(const char* parfile, int cohortId, bool aPlusOn = true) : SeapodymCoupled(parfile) {
+	// aPlusFeedsSpawningOn selects whether a newborn cohort's spawning biomass
+	// (SpawningBiomass_comp, in InitializeCohort's spawning branch) includes
+	// the A+ pool's density. Independent of aPlusOn: A+ can still be tracked
+	// as its own accumulator chain (aPlusEnabled) while being excluded from
+	// recruitment (main_cohort.cpp's -no-aplus-spawn flag). Has no effect when
+	// aPlusOn is false (A+ isn't its own bin then, so there is nothing to
+	// exclude).
+	SeapodymCohort(const char* parfile, int cohortId, bool aPlusOn = true, bool aPlusFeedsSpawningOn = true) : SeapodymCoupled(parfile) {
 		aPlusEnabled = aPlusOn;
+		aPlusFeedsSpawning = aPlusFeedsSpawningOn;
 		restart(cohortId);
 	};
 	virtual ~SeapodymCohort() {/*DoNothing*/};
@@ -136,6 +144,7 @@ private:
 	int tstart_cohort;
 	int nb_age_class;
 	bool aPlusEnabled;
+	bool aPlusFeedsSpawning;
 
 	DataProvider* dp_ = nullptr;
 
