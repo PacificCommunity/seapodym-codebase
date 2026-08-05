@@ -3,17 +3,14 @@ import csv
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# snakemake --jobs 10 --cluster "sbatch -p genoa --mem=20g --nodes=1 --ntasks-per-node={threads} --cpus-per-task=1 --time=01:30:00 --extra-node-info=1:*:1 --distribution=*:block:* --mem-bind=local"
+# snakemake --jobs 10 --cluster "sbatch -p genoa --mem=30g --nodes=1 --ntasks-per-node={threads} --cpus-per-task=1 --time=01:30:00 --extra-node-info=1:*:1 --distribution=*:block:* --mem-bind=local"
 # 
 
 # MPI benchmarking configurations
-#N_VALUES = [2,3,4,5,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,28,29,30,31,32]
-#N_VALUES = [2,3,4,5,6,7,8,10,12,14,16,20,24,28,32,36,40,50]
-N_VALUES = [2,3,4,5,6,7,8,9,10,11,12,14,16,17,18,20,22,24,26,28,32,36,40,44,51]
-#N_VALUES = [10, 20, ]
-REPEATS = range(0,6)
-#HOSTS = ["milan", "genoa"]
+PROCS = [2, 3, 5, 11, 21, 31, 41, 51, 61, 71, 81, 91, 101]
+REPEATS = range(0,3)
 HOSTS = ["genoa",]
+CASES = ["-no-aplus", "-no-aplus-spawn", "default"]
 
 # -----------------------------
 # Top-level workflow
@@ -27,43 +24,39 @@ rule all:
 # -----------------------------
 rule run_mpi:
     output:
-        main="results/run_{n}_{r}_{h}-main.out",
-        best="results/run_{n}_{r}_{h}-best.out"
+        exp="results/run_{n}_{r}_{h}_{c}.out",
     params:
-        exe_main="../../bin/seapodym_cohort-main",
-        exe_best="../../bin/seapodym_cohort-best",
-        parfile="skj_fat.xml"
+        parfile="../density_skj_fat/skj_Fat.xml"
     threads:
         lambda wc: int(wc.n)
     shell:
         r"""
+        set -e
         set -x
-        cd ~/nesi99999/seapodym-codebase-test_shm/
+        cd ~/nesi99999/seapodym-codebase-exp/
         
-        source sourceme-main.sh
+        source sourceme-exp.sh
 
         cd example-configs/density_skj_fat
         mkdir -p results
         # create a tmp directory to run at the same level
         cd ..
-        hash=$(echo "$RANDOM" | sha256sum | cut -d' ' -f1)
-        rundir="tmp-$hash"
+        rundir="tmp-$SLURM_JOB_ID"
         rm -rf $rundir
         mkdir $rundir
         cd $rundir
-        # copy the input file
-        cp ../density_skj_fat/{params.parfile} .
+        
+        # create directories
+        mkdir -p output/output_F0/
 
-
-        # run main
-        echo "jobid=$SLURM_JOB_ID" > ../density_skj_fat/{output.main}
-        srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
-             {params.exe_main} -s {params.parfile} >> ../density_skj_fat/{output.main} 2>&1
-
-        # run best
-        echo "jobid=$SLURM_JOB_ID" > ../density_skj_fat/{output.best}
-        srun --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
-             {params.exe_best} -s {params.parfile} >> ../density_skj_fat/{output.best} 2>&1
+        # run 
+        echo "jobid=$SLURM_JOB_ID" > ../density_skj_fat/{output.exp}
+        arg={wildcards.c}
+        if [ "$arg" == "default" ]; then 
+            arg=""
+        fi
+        srun --ntasks={threads} --distribution=block:block --cpu-bind=cores --cpus-per-task=1 \
+             ../../bin/seapodym_cohort_aplus -s {params.parfile} $arg >> ../density_skj_fat/{output.exp} 2>&1
 
         cd ../
         # clean up
@@ -77,13 +70,12 @@ rule run_mpi:
 # -----------------------------
 rule collect_results:
     input:
-        expand("results/run_{n}_{r}_{h}-main.out", n=N_VALUES, r=REPEATS, h=HOSTS),
-        expand("results/run_{n}_{r}_{h}-best.out", n=N_VALUES, r=REPEATS, h=HOSTS)
+        expand("results/run_{n}_{r}_{h}_{c}.out", n=PROCS, r=REPEATS, h=HOSTS, c=CASES),
     output:
         "results/timings.csv"
     shell:
         r"""
         module load Python
-        python assemble_timings.py -d results -o results/timings.csv
+        python assemble_timings2.py -d results -o results/timings.csv
         """
 
