@@ -17,7 +17,6 @@
 #include "Tags.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include "admodel.h"
 
 double time_ic_comm = 0.0, time_ic_flush = 0.0, time_ic_copy = 0.0, time_spawning = 0.0, time_getdata = 0.0, time_xreset = 0.0, time_init_cohort_spawning = 0.0, time_init_cohort_restart = 0.0, time_io_forcing = 0.0;
 long   n_ic = 0;   // count of spawning-path inits, for per-init averages
@@ -30,11 +29,11 @@ void buffers_set(long int &mv, long int &mc, long int &mg);
 
 double time_worker_init = 0.0, time_cohort_init = 0.0, time_calc = 0.0, time_mpi = 0.0, time_step = 0.0, time_overhead = 0.0;
 
-SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
+SeapodymCohort xinit_prerun_wrapper(const char* parfile, bool useAPlus, bool aPlusFeedsSpawning) {
 
 	double tik = MPI_Wtime();
 
-	SeapodymCohort cohort((char*)parfile, 0);
+	SeapodymCohort cohort((char*)parfile, 0, useAPlus, aPlusFeedsSpawning);
 
 	//initialize variables of optimization
 	const int nvar = cohort.nvarcalc();
@@ -53,28 +52,91 @@ SeapodymCohort xinit_prerun_wrapper(const char* parfile) {
 	return cohort;
 }
 
+// Tell the manager task_id's given step is done. The third slot of the
+// message used to be a separate "success" value that was always just a copy
+// of task_id - collapsed here since it never carried any other information.
+void notifyManagerDone(MPI_Comm comm, int task_id, int step) {
+	int output[3] = {task_id, step, task_id};
+	MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
+}
 
 void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		const std::shared_ptr<spdlog::logger>& logger,
 		DistDataCollector* dataCollector,
 		SeapodymCohort* cohort,
+		int firstAPlusId, int numAgeGroups, int numTimeSteps,
 		const independent_variables& x){
 
 	static double last_task_end = -1.0;        // per-worker process, persists across calls
 	double t_in = MPI_Wtime();
 	if (last_task_end >= 0.0)
-		time_idle += t_in - last_task_end;     // <-- time spent in worker.run() waiting for dispatch	
-	
+		time_idle += t_in - last_task_end;     // <-- time spent in worker.run() waiting for dispatch
+
 	double tik = MPI_Wtime();
+
+	if (task_id >= firstAPlusId) {
+		// A+ (plus group) accumulator task. Behaves like a normal cohort
+		// task from here on - initialize, then stepForward() runs the same
+		// mortality/movement/feeding-habitat dynamics any adult age gets -
+		// except its input density comes from merging two sources each step
+		// instead of a single spawning event, and its age is pinned rather
+		// than advancing (see SeapodymCohort::restartAPlus). stepBeg/stepEnd
+		// are always 0/1 for these tasks (see SeapodymCohortDependencyAnalyzer),
+		// so there is exactly one stepForward() call, not a loop.
+		int t = task_id - firstAPlusId;
+		logger->info("> A+ task id {} (t={})", task_id, t);
+
+		cohort->restartAPlus(t);
+
+		if (t == 0) {
+			// t=0: no upstream dependency; the plus group's opening balance
+			// is just the initial condition for its age bin, read from file
+			// like any other initial cohort.
+			cohort->init_cohort_aplus(x, std::vector<double>(), /*seedFromFile=*/true);
+		} else {
+			int prevAPlusChunk  = SeapodymCohort::computeAPlusChunkId(task_id - 1, firstAPlusId, numAgeGroups, numTimeSteps);
+			int graduatingChunk = SeapodymCohort::computeChunkId(t - 1, numAgeGroups - 1, numAgeGroups);
+			// Fetch the previous A+ pool directly into `merged`, then add the
+			// graduating cohort's density in place - avoids allocating a
+			// separate prevAPlus buffer just to sum it into a third one.
+			std::vector<double> merged(dataCollector->getNumSize());
+			std::vector<double> graduating(merged.size());
+			dataCollector->get(prevAPlusChunk, merged.data());
+			dataCollector->get(graduatingChunk, graduating.data());
+			for (std::size_t k = 0; k < merged.size(); ++k)
+				merged[k] += graduating[k];
+			cohort->init_cohort_aplus(x, merged, /*seedFromFile=*/false);
+		}
+
+		double tak_aplus = MPI_Wtime();
+		time_cohort_init += tak_aplus - tik;
+
+		// run this time step's real adult dynamics on the seeded/merged density
+		cohort->stepForward(false);
+		logger->info("End of A+ task id {} (t={}). Checksum = {}", task_id, t, cohort->Checksum());
+
+		std::vector<double> out = cohort->GetCohortDensity();
+		int myChunk = SeapodymCohort::computeAPlusChunkId(task_id, firstAPlusId, numAgeGroups, numTimeSteps);
+
+		double t_p = MPI_Wtime();
+		dataCollector->put(myChunk, out.data());
+		time_mpi_put += MPI_Wtime() - t_p;
+
+		notifyManagerDone(comm, task_id, stepBeg);
+
+		time_calc += MPI_Wtime() - tak_aplus;
+		last_task_end = MPI_Wtime();
+		logger->info("< A+ task id {} (t={})", task_id, t);
+		return;
+	}
 
 	logger->info("> task id {} for steps {} to {}", task_id, stepBeg, stepEnd);
 
 	logger->info("    >> initialization of task id {}", task_id);
-
 	int cohort_id = task_id;
 	cohort->restart(cohort_id);
 	//initialize cohort either from restart or from spawning
-	cohort->init_cohort(x,*dataCollector);
+	cohort->init_cohort(x,*dataCollector,numTimeSteps);
 	logger->info("    << initialization of task id {}", task_id);
 
 	// advance the cohort
@@ -100,11 +162,9 @@ void taskFunction(int task_id, int stepBeg, int stepEnd, MPI_Comm comm,
 		time_mpi_put += MPI_Wtime() - t_p;
 		logger->info("        <<< send data for step {} of task id {}", step, task_id);
 
-		int success = task_id;
-		int output[3] = {task_id, step, success};
 		logger->info("        >>> notify manager after step {} of task id {}", step, task_id);
 		double tik_mpi = MPI_Wtime();
-		MPI_Send(output, 3, MPI_INT, 0, END_TASK_TAG, comm);
+		notifyManagerDone(comm, task_id, step);
 		time_mpi += MPI_Wtime() - tik_mpi;
 		logger->info("        <<< notify manager after step {} of task id {}", step, task_id);
 	}
@@ -136,10 +196,19 @@ int main(int argc, char** argv) {
 
 	CmdLineArgParser cmdLine;
 	cmdLine.set("-s", std::string("initparfile.xml"), "Input parameter file");
+	cmdLine.set("-no-aplus", false, "Disable the A+ (plus group) accumulator and reproduce "
+		"pre-A+ behavior/checksum, for regression comparison.");
+	cmdLine.set("-no-aplus-spawn", false, "Keep tracking the A+ (plus group) accumulator, but "
+		"exclude it from a newborn cohort's spawning biomass - i.e. old-fish recruitment is "
+		"turned off without disabling A+ itself. Also drops the dependency of newborn cohorts "
+		"on the A+ task, letting births proceed without waiting on it. No effect if -no-aplus "
+		"is also given (there is no separate A+ bin to exclude in that case).");
 
 	// Parse the command line arguments
 	bool success = cmdLine.parse(argc, argv);
 	bool help = cmdLine.get<bool>("-help") || cmdLine.get<bool>("-h");
+	bool useAPlus = !cmdLine.get<bool>("-no-aplus");
+	bool aPlusFeedsSpawning = !cmdLine.get<bool>("-no-aplus-spawn");
 	if (!success) {
 		std::cerr << "Error parsing command line arguments." << std::endl;
 		cmdLine.help();
@@ -164,8 +233,14 @@ int main(int argc, char** argv) {
 	param.init_param();
 	param.read(parfile);
 
-	// Get number of time steps and number of cohorts from param
-	int numAgeGroups = param.sp_nb_cohorts[0];
+	// Get number of time steps and number of cohorts from param.
+	// numAgeGroups excludes the A+ (plus group) bin: the diagonal cohort-task
+	// scheme ages "normal" cohorts through numAgeGroups steps, and the A+ bin
+	// (age index sp_nb_cohorts[0]-1) is modelled separately as its own chain
+	// of one-step accumulator tasks (see SeapodymCohortDependencyAnalyzer).
+	// With -no-aplus, numAgeGroups reverts to sp_nb_cohorts[0] and A+ is just
+	// the last ordinary aging cohort, reproducing pre-A+ behavior.
+	int numAgeGroups = param.sp_nb_cohorts[0] - (useAPlus ? 1 : 0);
 	int Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps;
 	Date::init_time_variables(param, Tr_step, nbt_spinup_tuna, jday_run, jday_spinup, numTimeSteps, 0,0);
 	//int numTasks = numAgeGroups + numTimeSteps - 1;
@@ -177,22 +252,31 @@ int main(int argc, char** argv) {
 	//Set-up the size for the shared arrays for forcing data
 	std::vector<std::pair<std::string, std::size_t>> nameSizePairs = param.getDpNameSizePairs(numTimeSteps, map.get_array_size());
 
-	// set up the data collector
-	int numChunks = numAgeGroups * numTimeSteps;
+	// set up the data collector. When A+ is enabled, one extra chunk per time
+	// step is reserved for the A+ (plus group) accumulator series, appended
+	// after the normal (task, step) chunk range - see
+	// SeapodymCohort::computeAPlusChunkId(). With -no-aplus this is 0, and the
+	// buffer is exactly the pre-A+ size.
+	int numChunks = numAgeGroups * numTimeSteps + (useAPlus ? numTimeSteps : 0);
 
 	int color = (workerId == 0) ? 0 : 1;
 	MPI_Comm workerComm;
 	MPI_Comm_split(MPI_COMM_WORLD, color, workerId, &workerComm);
 
 	if (workerId == 0) {
-		printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d\n", \
-			workerId, numData, numAgeGroups, numTimeSteps, numChunks);
+		printf("[%d] Amount of data to be sent from workers to manager numData = %d numAgeGroups = %d numTimeSteps = %d numChunks = %d aPlus = %s aPlusFeedsSpawning = %s\n", \
+			workerId, numData, numAgeGroups, numTimeSteps, numChunks, useAPlus ? "on" : "off", aPlusFeedsSpawning ? "on" : "off");
 	}
 
 	DistDataCollector dataCollect(MPI_COMM_WORLD, numChunks, numData);
 
-	// analyze the cohort Id task dependencies
-	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0]);
+	// analyze the cohort Id task dependencies (aPlusCohort adds the A+ chain;
+	// with -no-aplus this is false, and no A+ task ids are ever generated,
+	// so main()'s A+ branch below simply never triggers). aPlusFeedsSpawning
+	// controls only whether living cohorts depend on the matching A+ task -
+	// the A+ chain runs either way when useAPlus is true.
+	SeapodymCohortDependencyAnalyzer taskDeps(numAgeGroups, numTimeSteps, param.age_mature[0], /*aPlusCohort=*/useAPlus, /*aPlusFeedsSpawning=*/aPlusFeedsSpawning);
+	int firstAPlusId = taskDeps.getFirstAPlusCohortId();
 	int numCohorts = taskDeps.getNumberOfCohorts();
 	std::map<int, int> stepBegMap = taskDeps.getStepBegMap();
 	std::map<int, int> stepEndMap = taskDeps.getStepEndMap();
@@ -214,9 +298,18 @@ int main(int argc, char** argv) {
 		// Make sure the data are ready for the final checksum
 		MPI_Barrier(MPI_COMM_WORLD);
 		double* data = dataCollect.getCollectedDataPtr();
-		// print check sum
-		double checksum = std::accumulate(data, data + numChunks * numData, 0.0);
-		printf("[%d] Checksum = %15.5lf time manager = %10.5f sec\n", workerId, checksum, time_manager);
+		// Split the checksum into the "normal" cohort chunk range and the A+
+		// chunk range (see SeapodymCohort::computeAPlusChunkId): normal chunks
+		// come first, A+ chunks are appended after. Keeping them separate lets
+		// us confirm a future change to A+'s dynamics doesn't perturb normal
+		// cohort results, and vice versa, instead of relying on one aggregate
+		// number that could mask a regression in either half.
+		int numNormalChunks = numAgeGroups * numTimeSteps;
+		double checksumNormal = std::accumulate(data, data + numNormalChunks * numData, 0.0);
+		double checksumAPlus  = std::accumulate(data + numNormalChunks * numData, data + numChunks * numData, 0.0);
+		double checksum = checksumNormal + checksumAPlus;
+		printf("[%d] Checksum = %15.5lf (normal = %15.5lf, A+ = %15.8le) time manager = %10.5f sec\n",
+			workerId, checksum, checksumNormal, checksumAPlus, time_manager);
 
 		//free manager's singleton 'color'
 		MPI_Comm_free(&workerComm);
@@ -248,7 +341,7 @@ int main(int argc, char** argv) {
 		{
 			DataProvider dp(workerComm, nameSizePairs);
 
-			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str());
+			SeapodymCohort cohort= xinit_prerun_wrapper(parfile.c_str(), useAPlus, aPlusFeedsSpawning);
 
 			// Initialize optimization variables once; x is stable for all tasks
 			// (xinit fills x from fixed model parameters that don't change between tasks).
@@ -258,6 +351,11 @@ int main(int argc, char** argv) {
 			adstring_array x_names(1, nvar);
 			cohort.xinit(x, x_names);
 
+			// Reset model parameters (applies boundp() transforms from optimisation space to
+			// physical parameter space) — done once here rather than per-task in InitializeCohort/
+			// InitializeAPlus, both of which share this same x across normal and A+ tasks.
+			cohort.reset(dvar_vector(x));
+
 			cohort.setDataProvider(&dp);
 
 			//MPI_Win_fence(0, dp.win());
@@ -266,11 +364,6 @@ int main(int argc, char** argv) {
 			//MPI_Win_fence(0, dp.win());
 			double t_shm = MPI_Wtime();
 			cohort.setShmForcing();          // every node-local worker reads its timestep slice
-
-			// Reset model parameters (applies boundp() transforms from optimisation space to
-			// physical parameter space) — done once here rather than per-task in InitializeCohort.
-			cohort.reset(dvar_vector(x));
-
 			MPI_Barrier(dp.getShmComm());    // per-node publish-sync: all slabs visible before any read
 
 			time_io_forcing += MPI_Wtime()-t_shm;
@@ -283,7 +376,8 @@ int main(int argc, char** argv) {
 				logger,
 				&dataCollect,
 				&cohort,
-				std::cref(x));        // x lives in this block, outlives taskFunc and worker.run()
+				firstAPlusId, numAgeGroups, numTimeSteps,
+				std::cref(x)); // x lives in this block, outlives taskFunc and worker.run()
 
 			TaskStepWorker worker(MPI_COMM_WORLD, taskFunc, stepBegMap, stepEndMap);
 
