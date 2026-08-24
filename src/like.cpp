@@ -180,7 +180,7 @@ double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& Agg_p
 					lkhd = early_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, what);
 				}
 				likelihood += like_weight*lkhd;
-				larvaelike += like_weight*value(lkhd);
+				like += like_weight*value(lkhd);
 			}
 		}
 	}
@@ -230,7 +230,7 @@ double SeapodymCoupled::get_early_like(dvariable& likelihood, dvar_matrix& pred,
 						lkhd = early_like(like_type, L_obs, N_pred, weight_Lobszero, likelihood_penalty, what);
 					}
 					likelihood += like_weight*lkhd;
-					larvaelike += like_weight*value(lkhd);
+					like += like_weight*value(lkhd);
 				}
 			}
 		}
