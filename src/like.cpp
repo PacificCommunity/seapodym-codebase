@@ -759,7 +759,7 @@ dvariable gaussian_comp(double N_obs, dvariable N_pred, double weight_Lobszero, 
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
-		obsmodel_type = 0;
+		obsmodel_type = 1;
 	}
 		
 	dvariable L_pred;
@@ -790,7 +790,7 @@ dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, V
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
-		obsmodel_type = 0;
+		obsmodel_type = 1;
 	}
 
 	const double twopi = 2.0*3.141592654;
@@ -818,7 +818,7 @@ dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_L
 		obsmodel_type = param.linear_larvae_obs_model;
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
-		obsmodel_type = 0;
+		obsmodel_type = 1;
 	}
 
 	dvariable L_pred;
@@ -851,7 +851,7 @@ dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, cons
 		h = param.dvarsQ_sp_spawning[sp];
 		beta = param.dvarsLikelihood_spawning_beta[sp];
 		p = param.dvarsLikelihood_spawning_probzero[sp];
-		obsmodel_type = 0;
+		obsmodel_type = 1;
 	}
 
 	dvariable L_pred;
@@ -883,7 +883,7 @@ dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const
 	}else{
 		h = param.dvarsQ_sp_spawning[sp];
 		p = param.dvarsLikelihood_spawning_probzero[sp];
-		obsmodel_type = 0;
+		obsmodel_type = 1;
 	}
 
 	dvariable L_pred;
