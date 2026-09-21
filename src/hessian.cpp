@@ -501,12 +501,18 @@ void Sensitivity_analysis(const char* parfile, Cmdopt* cmdopt)
 		// Run the AAT experiments
 		cout << right;
 		for (int k=0; k<cmdopt->nb_aat; k++){
-			cout << k+1;
+
 			for (int i=1; i<=nvar; i++){
 				x(i) = sc.param->par_init_step(i,xr[i][k]);
+			}
+			
+			//cerr << "AAT_BEGIN exp_id=" << k+1 << endl;
+			double like = run_sim(sc,x);//sc.run_coupled((dvar_vector)x);
+			
+			cout << k+1;
+			for (int i=1; i<=nvar; i++){
 				cout << "\t" << sc.param->get_parval(i);
 			}
-			double like = run_sim(sc,x);//sc.run_coupled((dvar_vector)x);
 
 			// Get likelihood components
 			double clike = sc.get_clike();
