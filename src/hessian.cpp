@@ -506,7 +506,6 @@ void Sensitivity_analysis(const char* parfile, Cmdopt* cmdopt)
 				x(i) = sc.param->par_init_step(i,xr[i][k]);
 			}
 			
-			//cerr << "AAT_BEGIN exp_id=" << k+1 << endl;
 			double like = run_sim(sc,x);//sc.run_coupled((dvar_vector)x);
 			
 			cout << k+1;
