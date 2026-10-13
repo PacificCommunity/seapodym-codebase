@@ -97,6 +97,7 @@ Calpop_tridag.cpp \
 Calpop_recompute.cpp \
 hessian.cpp \
 like.cpp \
+early_like.cpp \
 NishikawaLike.cpp 
 
 SRCPATH=DOM/src:src

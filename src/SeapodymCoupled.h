@@ -245,12 +245,7 @@ class tag_release
 };
 
 // Functions to compute the likelihood of a larvae density or SBHs observed on a continuous scale
-dvariable poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what);
 dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what);
-dvariable truncated_poisson_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what);
-dvariable zinb_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what);
-dvariable zip_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what);
-dvariable lognormal_comp(double L_obs, dvariable N_pred, VarParamCoupled& param, const double obs_max, int sp, string what);
-dvariable logit_normal_comp(double pp_obs, dvariable N_pred, VarParamCoupled& param, const double larvae_obs_max, int sp);
+
 
 #endif

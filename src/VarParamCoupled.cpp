@@ -967,6 +967,11 @@ bool VarParamCoupled::read(const string& parfile)
 					cerr << "Error: larvae_density_bins[0] can't be zero for Truncated Poisson cost function. Change <larvae_density_bins/> in the parameter file (Add 1 to the native categories)." << endl;
 					std::exit(EXIT_FAILURE);
 				}
+
+				if (!linear_larvae_obs_model){
+					cerr << "Error: Non-linear observation model is not implemented for categorical larvae data input." << endl;
+					std::exit(EXIT_FAILURE);					
+				}
 			}
 			larvae_likelihood_type[sp] = doc.getInteger("/larvae_likelihood_type", sp_name[sp]);
 			if (nb_species>1){
