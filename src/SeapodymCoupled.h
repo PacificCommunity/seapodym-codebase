@@ -244,8 +244,4 @@ class tag_release
 	void set_release(int ii, int jj, int aa){i = ii; j = jj; a = aa;}
 };
 
-// Functions to compute the likelihood of a larvae density or SBHs observed on a continuous scale
-dvariable gaussian_comp(double L_obs, dvariable N_pred, double weight_Lobszero, VarParamCoupled& param, const double obs_max, int sp, string what);
-
-
 #endif
