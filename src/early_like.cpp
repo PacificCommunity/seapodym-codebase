@@ -261,9 +261,9 @@ void flatten(dvector& data_obs, dvar_vector& data_pred, int nb_input_agg_groups,
 }
 
 
-static dvar_vector obs_model_linear(dvariable h, dvar_vector y) { return h * y; }
-static dvar_vector obs_model_nonlinear(dvariable h, dvar_vector y) {
-    dvar_vector out(y.indexmin(), y.indexmax());
+static dvector obs_model_linear(double h, dvector y) { return h * y; }
+static dvector obs_model_nonlinear(double h, dvector y) {
+    dvector out(y.indexmin(), y.indexmax());
     for (int n=y.indexmin(); n<=y.indexmax(); n++){
         out(n) = y(n)*y(n) / (h*h + y(n)*y(n));
     }    
@@ -284,26 +284,26 @@ dvariable gaussian_comp(const dvector& data_obs, dvar_vector& data_pred, double 
 		sigma = param.dvarsLikelihood_spawning_sigma[sp];
 		obsmodel_type = 1;
 	}
-    dvar_vector data_pred_transf;
+    dvector data_pred_transf;
     data_pred_transf.allocate(data_pred.indexmin(), data_pred.indexmax());
     data_pred_transf.initialize();
     
 	if (obsmodel_type)
-		data_pred_transf = obs_model_linear(h, data_pred);
+		data_pred_transf = obs_model_linear(value(h), value(data_pred));
 	else{
-		data_pred_transf = obs_max * obs_model_nonlinear(h, 1e-4*data_pred);
+		data_pred_transf = obs_max * obs_model_nonlinear(value(h), 1e-4*value(data_pred));
 	}
 
 	dvariable lkhd = 0.0;
 	for (int n = data_pred_transf.indexmin(); n <= data_pred_transf.indexmax(); n++){
 		const double obs = data_obs(n);
-		dvariable pred = data_pred_transf(n);
+		double pred = data_pred_transf(n);
 		if (obs==0)
-			lkhd += weight_Lobszero*pred*pred/(2.0*pow(sigma, 2.0));
+			value(lkhd) += weight_Lobszero*pred*pred/(2.0*pow(value(sigma), 2.0));
 		else
-            lkhd += pow(obs-pred, 2.0)/(2.0 * pow(sigma, 2.0));
+            value(lkhd) += pow(obs-pred, 2.0)/(2.0 * pow(value(sigma), 2.0));
 	}
-    lkhd *= 1000;
+    value(lkhd) *= 1000;
 	
     save_identifier_string2((char*)"gaussian_begin");
     save_double_value(obs_max);

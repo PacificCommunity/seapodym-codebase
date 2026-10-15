@@ -28,14 +28,14 @@ dvariable NishikawaCategories::mixed_gaussian_comp(dvector& data_obs, dvar_vecto
     dvariable lkhd = 0.0;
     for (int n=data_pred.indexmin(); n<data_pred.indexmax(); n++){
         const int L_obs = data_obs_i(n);
-		const dvariable L_pred = h*data_pred(n);
+		const double L_pred = value(h)*value(data_pred(n));
         if (L_obs==0){
-            lkhd += weight_Lobszero*L_pred*L_pred/(2*pow(sigma, 2)) ;
+            value(lkhd) += weight_Lobszero*L_pred*L_pred/(2*pow(value(sigma), 2)) ;
         }else if (L_obs>0){
             if (L_pred<Lobs_cat[L_obs-1]){
-                lkhd += pow(L_pred - Lobs_cat[L_obs-1], 2)/(2*pow(sigma, 2));
+                value(lkhd) += pow(L_pred - Lobs_cat[L_obs-1], 2)/(2*pow(value(sigma), 2));
             }else if (L_obs!=nb_cat && L_pred>Lobs_cat[L_obs]){
-                lkhd += pow(L_pred - Lobs_cat[L_obs], 2)/(2*pow(sigma, 2));
+                value(lkhd) += pow(L_pred - Lobs_cat[L_obs], 2)/(2*pow(value(sigma), 2));
             }
         }
     }
