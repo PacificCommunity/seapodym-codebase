@@ -16,6 +16,7 @@ public:
     NishikawaCategories(VarParamCoupled& param);
 
     dvariable mixed_gaussian_comp(dvector& data_obs, dvar_vector& data_pred, double weight_Lobszero, VarParamCoupled& param, int sp);
+    dvariable categorical_poisson_comp(dvector& data_obs, dvar_vector& data_pred, double weight_Lobszero, VarParamCoupled& param, int sp);
 
 private:
     static const int nb_cat = 4;
@@ -26,6 +27,7 @@ private:
 
 // gradient_structure::GRAD_STACK1->set_gradient_stack can't get a non-static member function as an argument. I would have wanted to make dv_categorical_poisson_comp() a function specific to the NishikawaCategories instance (so depending on its specific Lobs_cat, Lobs_diff, etc.), but it is not possible so I have to get this values using save_double_value and restore_double_value -> loss of memory but only solution I found 
 void dv_mixed_gaussian_comp();
+void dv_categorical_poisson_comp();
 
 
 #endif // NISHIKAWALIKE_H

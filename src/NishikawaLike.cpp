@@ -26,7 +26,7 @@ dvariable NishikawaCategories::mixed_gaussian_comp(dvector& data_obs, dvar_vecto
         data_obs_i(i) = (int)data_obs(i);
     }
     dvariable lkhd = 0.0;
-    for (int n=data_pred.indexmin(); n<data_pred.indexmax(); n++){
+    for (int n=data_pred.indexmin(); n<=data_pred.indexmax(); n++){
         const int L_obs = data_obs_i(n);
 		const double L_pred = value(h)*value(data_pred(n));
         if (L_obs==0){
@@ -115,3 +115,145 @@ void dv_mixed_gaussian_comp(){
     save_double_derivative(dflkhd, lkhd_pos);
 }
 
+dvariable NishikawaCategories::categorical_poisson_comp(dvector& data_obs, dvar_vector& data_pred, double weight_Lobszero, VarParamCoupled& param, int sp){
+    // 1 - Compute L_pred from N_pred and q_sp_larvae
+    // 2 - Computes the numerical integral of a Poisson distribution function between the two L_obs bounds
+    // 3 - applies -log
+
+    dvariable sigma = param.dvarsLikelihood_larvae_sigma[sp];
+    dvariable h = param.dvarsQ_sp_larvae[sp];
+	const double twopi = 2.0*3.141592654;
+    double likelihood_penalty = 50.0;
+
+    ivector data_obs_i(data_obs.indexmin(), data_obs.indexmax());
+    dvector lkhd_before_log(data_obs.indexmin(), data_obs.indexmax());
+    lkhd_before_log.initialize();
+    for (int i=data_obs.indexmin(); i<=data_obs.indexmax(); i++){
+        data_obs_i(i) = (int)data_obs(i);
+    }
+    dvariable lkhd = 0.0;
+    for (int n=data_pred.indexmin(); n<=data_pred.indexmax(); n++){
+        const int L_obs = data_obs_i(n);
+		const double L_pred = value(h)*value(data_pred)(n);
+        double lkhdn = 0.0;
+        if (L_pred == 0){
+            if (L_obs>0)
+                lkhdn += likelihood_penalty;
+        }else{
+            if (L_obs==0){
+                lkhdn += weight_Lobszero * (pow(L_pred,2) / (2*pow(value(sigma), 2)) + log(value(sigma)) + log(twopi)/2);
+            }else if (L_obs>0){
+                // Numerical integral
+                int nbl;
+                nbl =  (int)(Lobs_diff[L_obs-1] / dl);
+                for (int il = 1; il <= nbl; il++){
+                    double l = Lobs_cat[L_obs-1] + dl * il - dl/2;
+                    lkhdn += pow(L_pred, l) * exp(-L_pred) / std::tgamma(l+1);
+                }
+                lkhdn *= dl;
+                lkhd_before_log(n) = lkhdn;
+                lkhdn = -log(lkhdn);
+            }
+        }
+        value(lkhd) += lkhdn;
+    }
+
+    save_identifier_string2((char*)"categorical_poisson_begin");
+    save_double_value(value(sigma));
+    save_double_value(value(h));
+    sigma.save_prevariable_position();
+    h.save_prevariable_position();
+    data_pred.save_dvar_vector_value();
+    data_pred.save_dvar_vector_position();
+    lkhd.save_prevariable_position();
+    save_double_value(weight_Lobszero);
+    lkhd_before_log.save_dvector_value();
+    lkhd_before_log.save_dvector_position();
+    data_obs_i.save_ivector_value();
+    data_obs_i.save_ivector_position();
+    for (int i = nb_cat - 1; i >= 0; i--) {
+        save_double_value(Lobs_cat[i]);
+        save_double_value(Lobs_diff[i]);
+    }    
+    save_int_value(nb_cat);
+    save_double_value(dl);
+    save_identifier_string2((char*)"categorical_poisson_end");
+    
+    gradient_structure::GRAD_STACK1->set_gradient_stack(dv_categorical_poisson_comp);
+
+    return lkhd;
+}
+
+void dv_categorical_poisson_comp(){
+    verify_identifier_string2((char*)"categorical_poisson_end");
+    double dl = restore_double_value();
+    int nb_cat = restore_int_value();
+    double Lobs_cat[nb_cat];
+    double Lobs_diff[nb_cat];
+    for (int i=0; i<nb_cat; i++){
+        Lobs_diff[i] = restore_double_value();
+        Lobs_cat[i] = restore_double_value();
+    }
+    ivector_position data_obs_pos = restore_ivector_position();
+    ivector data_obs = restore_ivector_value(data_obs_pos);
+    dvector_position lkhd_before_log_pos = restore_dvector_position();
+    dvector lkhd_before_log = restore_dvector_value(lkhd_before_log_pos);
+    const double weight_Lobszero = restore_double_value();
+    const prevariable_position lkhd_pos = restore_prevariable_position();
+    double dflkhd = restore_prevariable_derivative(lkhd_pos);
+    dvar_vector_position data_pred_pos = restore_dvar_vector_position();
+    dvector data_pred = restore_dvar_vector_value(data_pred_pos);
+    dvector dfdata_pred = restore_dvar_vector_derivatives(data_pred_pos);
+    prevariable_position h_pos = restore_prevariable_position();
+    double dfh = restore_prevariable_derivative(h_pos);
+    prevariable_position sigma_pos = restore_prevariable_position();
+    double dfsigma = restore_prevariable_derivative(sigma_pos);
+    double h = restore_double_value();
+    double sigma = restore_double_value();
+    verify_identifier_string2((char*)"categorical_poisson_begin");
+
+    for (int n = data_pred.indexmin(); n <= data_pred.indexmax(); n++) {
+        const int L_obs = data_obs(n);
+        const double L_pred = h*data_pred(n);
+        double dfL_pred = 0.0;
+
+        if (L_pred > 0){
+            if (L_obs==0){
+                dfL_pred += weight_Lobszero * dflkhd * L_pred / pow(sigma, 2);
+                dfsigma += weight_Lobszero * dflkhd * ((1/sigma) - pow(L_pred, 2) / pow(sigma, 3));
+            }else if (L_obs>0){
+                double dflkhdn = dflkhd;
+
+                // lkhdn = -log(lkhdn)
+                dflkhdn = -dflkhdn/lkhd_before_log(n);
+
+                // lkhdn *= dl
+                dflkhdn *= dl;
+
+                int nbl;
+                nbl =  (int)(Lobs_diff[L_obs-1] / dl);
+                for (int il = 1; il <= nbl; il++){
+                    double l = Lobs_cat[L_obs-1] + dl * il - dl/2;
+
+                    // w1 = pow(L_pred, l)/std::tgamma(l+1)
+                    double dfw1 = dflkhdn * exp(-L_pred);
+
+                    // w2 = exp(-L_pred)
+                    double dfw2 = dflkhdn * pow(L_pred, l) / std::tgamma(l+1);
+
+                    // w = w1*w2
+                    dfL_pred += dfw1 * l * pow(L_pred, l-1) / std::tgamma(l+1);
+                    dfL_pred += -dfw2 * exp(-L_pred);
+                }
+            }
+        }
+        dfh += dfL_pred * data_pred(n);
+        dfdata_pred(n) += dfL_pred * h;
+    }
+    dflkhd = 0.0;
+
+    save_double_derivative(dfsigma, sigma_pos);
+    save_double_derivative(dfh, h_pos);
+    dfdata_pred.save_dvector_derivatives(data_pred_pos);
+    save_double_derivative(dflkhd, lkhd_pos);
+}
