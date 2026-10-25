@@ -1542,6 +1542,8 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 	const int a0	     = param.sp_a0_adult[sp];
 	const int nb_ages    = param.sp_nb_cohorts[sp];
 	int nbsd = 0; //count the number of size distributions to be used
+	int nbsum = 0; //records added to a quarter that already had data
+	int nbqm = 0;  //records whose month is not in their quarter
 
 	ifstream littxt(filename.c_str());
 	if (littxt){
@@ -1583,7 +1585,10 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 		string fishery;
 		for (int n=0; n<nb_records; n++){
 			littxt >> year >> qtr >> month >> fishery >> reg ;
-			if (month==0) month = qtr*3-1;
+			if (month<1 || month>12){
+				cerr << "WARNING : LF record " << year << " " << qtr << " " << month << " " << fishery << " " << reg << ": month outside quarter!" << endl;
+				month = qtr*3-1;
+			}
 
 			float frequency;
 			lf.initialize();
@@ -1605,12 +1610,15 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 			}
 			if (fishery_to_throw) continue;
 			float date = param.fdate(year, month);			
+			if (qtr>0 && (month-1)/3 != qtr-1) nbqm++;
 			if ((date >= startdate) && (date <=enddate) && qtr != 0){
 				nbsd++;
 
 				//double L_pr = param.length(sp,a0-1);
 				int y=year-(int)startdate;
-				frq(f,reg-1,y,qtr-1).initialize();
+				//records of different months (and files) within one quarter are summed:
+				dvector lf_add(a0,nb_ages-1);
+				lf_add.initialize();
 
 				//interpolate observed LF on modeled length intervals
 				//taking into account the bin sizes
@@ -1648,38 +1656,27 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 								deltal = dl;
 							if (part_in) 
 								deltal = param.length_bins(sp,a+1)-param.length_bins(sp,a);
-							frq(f,reg-1,y,qtr-1,a) += lf[l] * deltal/dl;
+							lf_add(a) += lf[l] * deltal/dl;
 						}
 					}
 				    }
 				    else if (bin_bound[l]<param.length_bins(sp,a0)) 
-					frq(f,reg-1,y,qtr-1,a0) += lf[l];
+					lf_add(a0) += lf[l];
 				    else if (bin_bound[l+1]>param.length_bins(sp,nb_ages)) 
-					frq(f,reg-1,y,qtr-1,nb_ages-1) += lf[l];
+					lf_add(nb_ages-1) += lf[l];
 
 				}
 
-				//control check						
-				if (sqrt(pow(sum(lf) - sum(frq(f,reg-1,y,qtr-1)),2))>0.001) {
-					cout << f << " "<< reg<< " "<<y << " " << qtr << " " << 
-					sum(lf)<< " " << sum(frq(f,reg-1,y,qtr-1)) << endl;
-					cout << lf << " " <<  endl << frq(f,reg-1,y,qtr-1) << endl << endl;
+				//control check: this record's sample is conserved
+				if (fabs(sum(lf) - sum(lf_add))>0.001) {
+					cout << f << " "<< reg<< " "<<y << " " << qtr << " " << month << " " <<
+					sum(lf)<< " " << sum(lf_add) << endl;
+					cout << lf << " " <<  endl << lf_add << endl << endl;
 					exit(1);
 				}
-
-				//Constrain the sample size by smax (see robust LF likelihood)
-				//Should be done in pre-processing. Issue warning if found here
-				double smax = 1000.0; 
-				double sumQ = sum(frq(f,reg-1,y,qtr-1));
-				if (sumQ>smax+1e-3){
-					cerr << "Large sample in the LF data! Sample size is "<< sumQ <<
-						" in fishery " << fishery << ", region " << 
-						reg << ", year " << year << " and quarter " << qtr <<
-						", LF sample size will be reduced to " << smax << endl;
-					cout << "Amend data to avoid these messages..." << endl;
-					for (int a=a0; a<nb_ages; a++)
-						frq(f,reg-1,y,qtr-1,a) *= smax/sumQ;
-				}
+				if (sum(frq(f,reg-1,y,qtr-1))>0) nbsum++;
+				for (int a=a0; a<nb_ages; a++)
+					frq(f,reg-1,y,qtr-1,a) += lf_add(a);
 			}
 		}
 		littxt.close();
@@ -1687,6 +1684,9 @@ void CReadWrite::read_lf_fine(CParam& param, string filename, const float startd
 		cout << endl << "WARNING : Cannot read file " << filename.c_str() << endl;
 	}
 	cout << "Number of fine-resolution size distributions used from LF data: " << nbsd << endl;
+	if (nbsum) cerr << "WARNING : LF input is not quarterly: " << nbsum << " records were summed with other records "
+		<< "of the same fishery, region, year and quarter. Aggregate the LF data by quarter in pre-processing." << endl;
+	if (nbqm) cerr << "WARNING : " << nbqm << " LF records have a month outside their quarter; the quarter column was used" << endl;
 	cout << endl;
 }
 
@@ -1716,6 +1716,28 @@ void CReadWrite::read_frq_data(CParam& param, PMap& map, const float startdate, 
 		} else {
 			for (int f=0; f<param.nb_frq_files; f++)
 				read_lf_fine(param,param.file_frq_data[f],startdate,enddate,sp);
+
+			//Constrain the quarterly sample size by smax (see robust LF likelihood)
+			//after the records of all months and files are summed.
+			//Should be done in pre-processing. Issue warning if found here
+			const double smax = 1000.0;
+			int nbcap = 0;
+			for (int f=0; f<nb_fishery; f++)
+			for (int r=0; r<nb_region; r++)
+			for (int y=0; y<nby; y++)
+			for (int q=0; q<nbq; q++){
+				double sumQ = sum(frq(f,r,y,q));
+				if (sumQ>smax+1e-3){
+					cerr << "Large sample in the LF data! Sample size is "<< sumQ <<
+						" in fishery " << param.list_fishery_name[f] << ", region " <<
+						r+1 << ", year " << (int)startdate+y << " and quarter " << q+1 <<
+						", LF sample size will be reduced to " << smax << endl;
+					for (int a=a0; a<nb_ages; a++)
+						frq(f,r,y,q,a) *= smax/sumQ;
+					nbcap++;
+				}
+			}
+			if (nbcap) cout << nbcap << " quarterly LF samples reduced to " << smax << ". Amend data to avoid these messages..." << endl;
 			}
 	}
 	//after reading the data do the check: 
