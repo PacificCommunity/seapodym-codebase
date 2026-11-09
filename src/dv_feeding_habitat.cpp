@@ -32,9 +32,6 @@ void VarSimtunaFunc::Feeding_Habitat_Index(VarParamCoupled& param, VarMatrices& 
 	Hf.initialize();
 	const int nb_forage = param.get_nbforage();
 
-	for (int n=0; n<nb_forage; n++)
-	    dvfmat[n] = param.dvarsEF_habitat[n][sp];
-
 	Hf_comp(param,mat,map,Hf,sp,age,jday,t_count);
 
 	save_identifier_string2((char*)"Hf_comp_begin");
@@ -62,10 +59,7 @@ void VarSimtunaFunc::Forage_Scaling(VarParamCoupled& param, VarMatrices& mat, co
 	
 	mat.dvarForage.initialize();
 	const int nb_forage = param.get_nbforage();
-//	for (int n=0; n<nb_forage; n++)
-//		mat.dvarForage[n] = mat.forage[t_count][n];
 
-//	if (!param.scale_forage_ave_currents[sp]) return;
 	for (int n=0; n<nb_forage; n++)
 	    dvfmat[n] = param.dvarsEF_habitat[n][sp];
 
