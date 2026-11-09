@@ -4,7 +4,7 @@ int seapodym_densities(const char* parfile, Cmdopt* cmdopt);
 
 int main(int argc, char** argv) {
 
-	Cmdopt cmdopt(argc, argv);
+	Cmdopt cmdopt(argc, argv, BIN_DENSITIES);
 
 	return seapodym_densities(argv[argc-1], &cmdopt);
 }

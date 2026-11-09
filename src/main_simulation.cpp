@@ -4,7 +4,7 @@ int seapodym_coupled(const char* parfile, Cmdopt* cmdopt);
 
 int main(int argc, char** argv) {
 
-	Cmdopt cmdopt(argc, argv);
+	Cmdopt cmdopt(argc, argv, BIN_SIMULATION);
 
 	return seapodym_coupled(argv[argc-1], &cmdopt);
 }

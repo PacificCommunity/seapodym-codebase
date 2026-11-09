@@ -3,8 +3,7 @@
 #include <cstdlib>
 #include <algorithm>
 
-char* getCmdOption(char ** begin, char ** end, const std::string & option);
-bool cmdOptionExists(char** begin, char** end, const std::string & option);
+#include "Cmdopt.h"   // getCmdOption / cmdOptionExists (single shared definition)
 void buffers_get(const long int mv, const long int mg, const long int mc);
 void buffers_init(long int &mv, long int &mc, long int &mg, const bool grad_calc);
 
@@ -71,19 +70,3 @@ void buffers_set(long int &mv, long int &mg, long int &mc)
 	mg = gradstack_size_set;
 	mc = cmpdiff_size_set;
 }
-
-char* getCmdOption(char ** begin, char ** end, const std::string& option)
-{
-    char ** itr = std::find(begin, end, option);
-    if (itr != end && ++itr != end){
-        return *itr;
-    }
-    return 0;
-}
-
-bool cmdOptionExists(char** begin, char** end, const std::string& option)
-{
-    return std::find(begin, end, option) != end;
-}
-
-

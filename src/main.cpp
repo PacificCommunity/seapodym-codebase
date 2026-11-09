@@ -5,7 +5,7 @@ int seapodym_phases(const char* parfile);
 
 int main(int argc, char** argv) {
 
-	Cmdopt cmdopt(argc, argv);
+	Cmdopt cmdopt(argc, argv, BIN_OPTIMIZATION);
 
 	if (cmdopt.cmp_regime!=-11)
 		return seapodym_coupled(argv[argc-1], &cmdopt);
