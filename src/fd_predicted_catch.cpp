@@ -30,6 +30,8 @@ void CCalpop::Predicted_Catch_Fishery(const PMap& map, VarParamCoupled& param, V
 		if (param.s_func_type[f]==3)
 			Sasympt = param.dvarsSasympt_sp_fishery[sp][k];
 	}
+	//fishing areas of the effort cells on the grid, once for all age classes
+	fishing_area_comp(map, param, mat.effort(f), mat.efflon(f), mat.efflat(f), f, fa);
 	for (int age=a0; age<nb_ages; age++){
 
 		predicted_catch_fishery_comp(map, param, mat, f, k, sp, age, value(mat.dvarDensity(sp,age)),step_count);

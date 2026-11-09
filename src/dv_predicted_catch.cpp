@@ -44,6 +44,8 @@ void CCalpop::Predicted_Catch_Fishery(const PMap& map, VarParamCoupled& param, V
 		if (param.s_func_type[f]==3)
 			Sasympt = param.dvarsSasympt_sp_fishery[sp][k];
 	}
+	//fishing areas of the effort cells on the grid, once for all age classes
+	fishing_area_comp(map, param, mat.effort(f), mat.efflon(f), mat.efflat(f), f, fa);
 	for (int age=a0; age<nb_ages; age++){
 
 		mat.dvarCatch_est[sp][k].save_dvar_matrix_position();
@@ -133,17 +135,19 @@ void dv_predicted_catch_fishery()
 	dvector lat_correction(jmin,jmax); 
 	lat_correction.initialize();
 
-	dmatrix effort(imin,imax,map->jinf,map->jsup); 
-	dmatrix efflon(imin,imax,map->jinf,map->jsup); 
-	dmatrix efflat(imin,imax,map->jinf,map->jsup); 
-	//effort.initialize();
-	rw->get_effort_lonlat(*param, effort, efflon, efflat, f, year, month);	
-
-	const float reso = param->fishery_reso(f);
-	int m = reso*60.0/param->deltaX+2; 
-	int n = reso*60.0/param->deltaY+2;  
-	dmatrix af(0,m-1,0,n-1);
-	af.initialize();
+	//fishing areas of the effort cells on the grid: they depend only on the fishery and the month,
+	//so they are computed once for the age classes of a fishery-step, which the reverse sweep
+	//visits in a row (same values as in the forward code, see fishing_area_comp)
+	static std::vector<fishing_area> fa;
+	static int fa_f = -1, fa_year = -1, fa_month = -1;
+	if ((int)f != fa_f || (int)year != fa_year || (int)month != fa_month){
+		dmatrix effort(imin,imax,map->jinf,map->jsup);
+		dmatrix efflon(imin,imax,map->jinf,map->jsup);
+		dmatrix efflat(imin,imax,map->jinf,map->jsup);
+		rw->get_effort_lonlat(*param, effort, efflon, efflat, f, year, month);
+		pop->fishing_area_comp(*map, *param, effort, efflon, efflat, f, fa);
+		fa_f = f; fa_year = year; fa_month = month;
+	}
 
 	dmatrix uu(map->imin1,map->imax1,map->jinf1,map->jsup1);
 	uu = mat->density_before(sp,t_count,age);
@@ -181,95 +185,78 @@ void dv_predicted_catch_fishery()
 	param->dfselectivity(dfslope,dflength,dfasympt,sp,age,f,k);
 	const double cell_area_deg = param->deltaX*param->deltaY/(60.0*60.0);
 
-	for (int i = imax; i >= imin; i--){
-		const int jmin = map->jinf[i];
-		const int jmax = map->jsup[i];
-		for (int j = jmax; j >= jmin; j--){
-			if (map->carte(i,j)){
-				//const double eff = effort(i,j);
-				double eff = effort(i,j);
-				if (eff){
-					//precompute biomass of fish aggregated to the resolution of fishing data
-					double fish  = 0;
-					double dffish = 0;
-					int ki = 0; int kj = 0;
-					param->afcoef(efflon(i,j),efflat(i,j), af, ki, kj, f);
+	//effort cells in the reverse of the forward order (i, then j, descending)
+	for (int nc = (int)fa.size()-1; nc >= 0; nc--){
+		const fishing_area& e = fa[nc];
+		const int i = e.i; const int j = e.j;
+		const double eff = e.effort;
+		const double afr = e.afr;
+		//precompute biomass of fish aggregated to the resolution of fishing data
+		double fish  = 0;
+		double dffish = 0;
+		for (size_t p = 0; p < e.af.size(); p++)
+			fish += e.af[p]*uu(e.ii[p],e.jj[p])/(afr*lat_correction[e.jj[p]]);
 
-					double afr = 0.0;
-					for (int ii=0; ii<m; ii++)
-						for (int jj=0; jj<n; jj++)
-							if (af(ii,jj) && map->carte(ii+ki,jj+kj)) afr += af(ii,jj)/cell_area_deg;
+		//const double F_pr = s_c*eff/(reso*reso);
+		//const double F = reso*reso*param->smin1(F_pr);
+		const double F_pr = s_c*eff/afr;
+		const double F = afr*param->smin1_c(F_pr);
+		//end of recomputation section
 
-					for (int ii=0; ii<m; ii++)
-						for (int jj=0; jj<n; jj++)
-							if (af(ii,jj) &&  map->carte(ii+ki,jj+kj))
-								fish += af(ii,jj)*uu(ii+ki,jj+kj)/(afr*lat_correction[jj+kj]);
-
-					//const double F_pr = s_c*eff/(reso*reso);
-					//const double F = reso*reso*param->smin1(F_pr);
-					const double F_pr = s_c*eff/afr;
-					const double F = afr*param->smin1_c(F_pr);
-					//end of recomputation section
-
-					double dfF = 0;
-					double dfLF_pr_reg = 0;
-					for (int a=nb_region-1; a>=0; a--){	
-						int r = param->area_sp_B[sp][a]-1;
-						if (param->nb_region){ 
-							if ((i>=map->regimin[a]) && (i<map->regimax[a]) &&(j>=map->regjmin[a]) && (j<map->regjmax[a])){
-								//mat.C_N_sp_age_fishery[sp][age][k][r] = LF_pr_reg + F * fish * sq_degree;
-								dffish 	     += F*sq_degree*dfLF(r);
-								dfF          += fish*sq_degree*dfLF(r);
-								dfLF_pr_reg  += dfLF(r);
-								dfLF(r)       = 0;
-							}
-						} else {
-						
-							//mat.C_N_sp_age_fishery[sp][age][k][0] += F * fish * sq_degree;
-							dffish       += F*sq_degree*dfLF(0);
-							dfF          += fish*sq_degree*dfLF(r);
-							dfLF_pr_reg  += dfLF(0);
-							dfLF(0)       = 0;
-						}
-						//LF_pr_reg = LF(r);
-						dfLF(r) += dfLF_pr_reg;
-						dfLF_pr_reg = 0;
-					}
-
-					//mat.dvarCatch_est[sp][k][i][j] = C_pr_age + F*fish*w_area;
-					dffish    	+= F*w_area*dfC_pred(i,j);
-					dfF             += fish*w_area*dfC_pred(i,j);
-					dfC_pr_age(i,j)	+= dfC_pred(i,j);
-					dfC_pred(i,j)    = 0.0;	
-			
-					//double dfs_c = eff*param->dfsmin1(F_pr,reso*reso*dfF)/(reso*reso);
-					double dfs_c = eff*param->dfsmin1_c(F_pr, afr*dfF)/afr;
-					dfF = 0.0;
-
-					/*
-					dfF = 0.0;
-					*/
-
-					//const double s_c = selectivity*catchability;
-					dfQslope(i,j)  += nstep*selectivity*dfs_c;
-					dfQ(i,j)     += selectivity*dfs_c;
-					dfSslope(i,j)+= dfslope*catchability*dfs_c;
-					if (s_func_type>1)
-						dfSlength(i,j) += dflength*catchability*dfs_c;
-					if (s_func_type==3)
-						dfSasympt(i,j) += dfasympt*catchability*dfs_c;
-					dfs_c = 0.0;
-
-					for (int jj=n-1; jj>=0; jj--)
-						for (int ii=m-1; ii>=0; ii--)
-							if (af(ii,jj) &&  map->carte(ii+ki,jj+kj))
-								//fish += af(ii,jj)*uu(ii+ki,jj+kj)/lat_correction[jj+kj];
-								dfuu(ii+ki,jj+kj) += af(ii,jj)*dffish/(afr*lat_correction(jj+kj));
-	
-					dffish = 0;	
+		double dfF = 0;
+		double dfLF_pr_reg = 0;
+		for (int a=nb_region-1; a>=0; a--){	
+			int r = param->area_sp_B[sp][a]-1;
+			if (param->nb_region){ 
+				if ((i>=map->regimin[a]) && (i<map->regimax[a]) &&(j>=map->regjmin[a]) && (j<map->regjmax[a])){
+					//mat.C_N_sp_age_fishery[sp][age][k][r] = LF_pr_reg + F * fish * sq_degree;
+					dffish 	     += F*sq_degree*dfLF(r);
+					dfF          += fish*sq_degree*dfLF(r);
+					dfLF_pr_reg  += dfLF(r);
+					dfLF(r)       = 0;
 				}
+			} else {
+			
+				//mat.C_N_sp_age_fishery[sp][age][k][0] += F * fish * sq_degree;
+				dffish       += F*sq_degree*dfLF(0);
+				dfF          += fish*sq_degree*dfLF(r);
+				dfLF_pr_reg  += dfLF(0);
+				dfLF(0)       = 0;
 			}
+			//LF_pr_reg = LF(r);
+			dfLF(r) += dfLF_pr_reg;
+			dfLF_pr_reg = 0;
 		}
+
+		//mat.dvarCatch_est[sp][k][i][j] = C_pr_age + F*fish*w_area;
+		dffish    	+= F*w_area*dfC_pred(i,j);
+		dfF             += fish*w_area*dfC_pred(i,j);
+		dfC_pr_age(i,j)	+= dfC_pred(i,j);
+		dfC_pred(i,j)    = 0.0;	
+
+		//double dfs_c = eff*param->dfsmin1(F_pr,reso*reso*dfF)/(reso*reso);
+		double dfs_c = eff*param->dfsmin1_c(F_pr, afr*dfF)/afr;
+		dfF = 0.0;
+
+		/*
+		dfF = 0.0;
+		*/
+
+		//const double s_c = selectivity*catchability;
+		dfQslope(i,j)  += nstep*selectivity*dfs_c;
+		dfQ(i,j)     += selectivity*dfs_c;
+		dfSslope(i,j)+= dfslope*catchability*dfs_c;
+		if (s_func_type>1)
+			dfSlength(i,j) += dflength*catchability*dfs_c;
+		if (s_func_type==3)
+			dfSasympt(i,j) += dfasympt*catchability*dfs_c;
+		dfs_c = 0.0;
+
+		for (int p = (int)e.af.size()-1; p >= 0; p--)
+			//fish += af(ii,jj)*uu(ii+ki,jj+kj)/lat_correction[jj+kj];
+			dfuu(e.ii[p],e.jj[p]) += e.af[p]*dffish/(afr*lat_correction(e.jj[p]));
+
+		dffish = 0;
 	}
 	if (catchability == 0){
 		dfQslope.initialize();

@@ -7,6 +7,18 @@
 #include "VarMatrices.h"
 #include "VarSimtunaFunc.h"
 #include "ReadWrite.h"
+#include <vector>
+
+///Fishing area of an effort record on the model grid: for each model cell, the area of the 
+/// fishing-data cell (fishery resolution) that falls in it (af), and their sum over ocean cells (afr)
+/// computed once per fishery and month and reused for all age classes in predicted catch
+struct fishing_area {
+	int i, j;			//model cell of the effort
+	double effort;			//fishing effort in the cell
+	double afr;			//sum of the af coefficients on the ocean mask / cell area
+	std::vector<int> ii, jj;	//effort cells with af>0 on the ocean mask, in the order of the afcoef loops
+	std::vector<double> af;		//their coefficients
+};
 
 /*!
 \brief This is main computational class: all functions and variables to solve ADR equations are here.
@@ -68,6 +80,8 @@ public:
 
 	void Predicted_Catch_Fishery(const PMap& map, VarParamCoupled& param, VarMatrices& mat, CReadWrite& rw, const int sp, const int f, const int k, const int year, const int month, const int t_count, const int step_count);
 	void predicted_catch_fishery_comp(const PMap& map, CParam& param, VarMatrices& mat, const int f, const int k, const int sp, const int age, const dmatrix& uu, const int step_count);
+	void fishing_area_comp(const PMap& map, CParam& param, const dmatrix& effort, const dmatrix& efflon, const dmatrix& efflat, const int f, std::vector<fishing_area>& fa);
+	std::vector<fishing_area> fa;	//effort cells of the current fishery and month, see fishing_area_comp
 
 	void Total_obs_catch_age_comp(const PMap& map, VarParamCoupled& param, VarMatrices& mat, CReadWrite& rw, const int age, const int sp, const int year, const int month, const int t_count);
 	void Ctot_proportion_fishery_comp(const PMap& map, CParam& param, CMatrices& mat, CReadWrite& rw, const int year, const int month, const int sp);
