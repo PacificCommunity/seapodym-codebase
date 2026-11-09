@@ -166,28 +166,19 @@ void dv_total_obs_catch_age_comp(void)
 
 				double dfCa_est = 0.0;
 				double dfLF_est = 0.0;
-				double dfLF_pr_reg = 0.0;
-				for (int a=nb_region_sp-1; a>=0; a--){	
-					int r = param->area_sp_B[sp][a]-1;
-					if (nb_region){ 
-						if ((i>=map->regimin[a]) && (i<map->regimax[a]) &&(j>=map->regjmin[a]) && (j<map->regjmax[a])){
-							//mat.C_N_sp_age_fishery[sp][age][k][r] = LF_pr_reg + LF_est; ;
-							//dfLF_est   += dfLF(r);
-							dfCa_est   += dfLF(r);
-							dfLF_pr_reg+= dfLF(r);
-							dfLF(r)     = 0;
-						}
-					} else {
-						//mat.C_N_sp_age_fishery[sp][age][k][0] += LF_est ;
-							//dfLF_est   += dfLF(0);
-							dfCa_est   += dfLF(0);
-							dfLF_pr_reg+= dfLF(0);
-							dfLF(0)     = 0;
-						}
-					//LF_pr_reg = LF(r);
-					dfLF(r) += dfLF_pr_reg;
-					dfLF_pr_reg = 0;
-				}
+				if (nb_region){
+					//regions containing the cell, in the reverse of the forward order
+					const std::vector<int>& regs = map->regions_of_cell(i,j);
+					for (int n=(int)regs.size()-1; n>=0; n--){
+						const int a = regs[n];
+						if (a >= nb_region_sp) continue;
+						int r = param->area_sp_B[sp][a]-1;
+						//mat.C_N_sp_age_fishery[sp][age][k][r] += LF_est;
+						dfCa_est   += dfLF(r);
+					}
+				} else if (nb_region_sp)
+					//mat.C_N_sp_age_fishery[sp][age][k][0] += LF_est;
+					dfCa_est   += dfLF(0);
 
 				//Ctot_age_obs.elem_value(i,j) = Ctot_pr(i,j) + LF_est * Cobs(i,j) * C2Dunits;
 				dfLF_est      += catch_obs(i,j)*C2Dunits*mat->lat_correction(j)*dfCtot(i,j);

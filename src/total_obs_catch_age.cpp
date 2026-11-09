@@ -19,19 +19,20 @@ void CCalpop::total_obs_catch_age_comp(const PMap& map, const CParam& param, CMa
 				//1. compute total observed catch by age
 				Ctot_age_obs.elem_value(i,j) += LF_est * Cobs(i,j) * C2Dunits * mat.lat_correction(j);
 
-				//2. compute predicted LF by species, fleet and region
-				for (int a=0; a<nb_region_sp; a++){	
-					//attention: area_sp_B should not contain zero IDs!
-					int r = param.area_sp_B[sp][a]-1; 
-					if (nb_region){ 			
-						if ((i>=map.regimin[a]) && (i<map.regimax[a]) && 
-						    (j>=map.regjmin[a]) && (j<map.regjmax[a]))
-							//mat.C_N_sp_age_fishery[sp][age][k][r] += LF_est;
-							mat.C_N_sp_age_fishery[sp][age][k][r] += exploited_age_class*Cobs(i,j);
-					} else 
-						//mat.C_N_sp_age_fishery[sp][age][k][0] += LF_est;
-						mat.C_N_sp_age_fishery[sp][age][k][0] += exploited_age_class*Cobs(i,j);
-				}
+				//2. compute predicted LF by species, fleet and region (the regions containing the cell)
+				if (nb_region){
+					const std::vector<int>& regs = map.regions_of_cell(i,j);
+					for (size_t n=0; n<regs.size(); n++){
+						const int a = regs[n];
+						if (a >= nb_region_sp) continue;
+						//attention: area_sp_B should not contain zero IDs!
+						int r = param.area_sp_B[sp][a]-1;
+						//mat.C_N_sp_age_fishery[sp][age][k][r] += LF_est;
+						mat.C_N_sp_age_fishery[sp][age][k][r] += exploited_age_class*Cobs(i,j);
+					}
+				} else if (nb_region_sp)
+					//mat.C_N_sp_age_fishery[sp][age][k][0] += LF_est;
+					mat.C_N_sp_age_fishery[sp][age][k][0] += exploited_age_class*Cobs(i,j);
 			}
 		}
 	}

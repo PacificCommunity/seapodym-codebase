@@ -86,16 +86,17 @@ void CCalpop::predicted_catch_fishery_comp(const PMap& map, CParam& param, VarMa
 		mat.dvarCatch_est(sp,k).elem_value(i,j) += F * fish * w_area ;
 		mat.catch_est[sp][k][i][j] += F * fish * w_area;
 
-		//Predicted Catch-at-age by species, fleet and region
-		for (int a=0; a<nb_region_sp; a++){
-			//attention: area_sp_B should not contain zero IDs!
-			int r = param.area_sp_B[sp][a]-1;
-			if (nb_region){
-				if ((i>=map.regimin[a]) && (i<map.regimax[a]) &&
-				    (j>=map.regjmin[a]) && (j<map.regjmax[a]))
-					mat.C_N_sp_age_fishery[sp][age][k][r] += F * fish * sq_degree;
-			} else
-				mat.C_N_sp_age_fishery[sp][age][k][0] += F * fish * sq_degree;
-		}
+		//Predicted Catch-at-age by species, fleet and region (the regions containing the cell)
+		if (nb_region){
+			const std::vector<int>& regs = map.regions_of_cell(i,j);
+			for (size_t n=0; n<regs.size(); n++){
+				const int a = regs[n];
+				if (a >= nb_region_sp) continue;
+				//attention: area_sp_B should not contain zero IDs!
+				int r = param.area_sp_B[sp][a]-1;
+				mat.C_N_sp_age_fishery[sp][age][k][r] += F * fish * sq_degree;
+			}
+		} else if (nb_region_sp)
+			mat.C_N_sp_age_fishery[sp][age][k][0] += F * fish * sq_degree;
 	}
 }

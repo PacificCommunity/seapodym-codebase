@@ -188,28 +188,21 @@ void dv_predicted_catch_fishery()
 		//end of recomputation section
 
 		double dfF = 0;
-		double dfLF_pr_reg = 0;
-		for (int a=nb_region-1; a>=0; a--){	
-			int r = param->area_sp_B[sp][a]-1;
-			if (param->nb_region){ 
-				if ((i>=map->regimin[a]) && (i<map->regimax[a]) &&(j>=map->regjmin[a]) && (j<map->regjmax[a])){
-					//mat.C_N_sp_age_fishery[sp][age][k][r] = LF_pr_reg + F * fish * sq_degree;
-					dffish 	     += F*sq_degree*dfLF(r);
-					dfF          += fish*sq_degree*dfLF(r);
-					dfLF_pr_reg  += dfLF(r);
-					dfLF(r)       = 0;
-				}
-			} else {
-			
-				//mat.C_N_sp_age_fishery[sp][age][k][0] += F * fish * sq_degree;
-				dffish       += F*sq_degree*dfLF(0);
+		if (param->nb_region){
+			//regions containing the cell, in the reverse of the forward order
+			const std::vector<int>& regs = map->regions_of_cell(i,j);
+			for (int n=(int)regs.size()-1; n>=0; n--){
+				const int a = regs[n];
+				if (a >= (int)nb_region) continue;
+				int r = param->area_sp_B[sp][a]-1;
+				//mat.C_N_sp_age_fishery[sp][age][k][r] += F * fish * sq_degree;
+				dffish       += F*sq_degree*dfLF(r);
 				dfF          += fish*sq_degree*dfLF(r);
-				dfLF_pr_reg  += dfLF(0);
-				dfLF(0)       = 0;
 			}
-			//LF_pr_reg = LF(r);
-			dfLF(r) += dfLF_pr_reg;
-			dfLF_pr_reg = 0;
+		} else if (nb_region){
+			//mat.C_N_sp_age_fishery[sp][age][k][0] += F * fish * sq_degree;
+			dffish       += F*sq_degree*dfLF(0);
+			dfF          += fish*sq_degree*dfLF(0);
 		}
 
 		//mat.dvarCatch_est[sp][k][i][j] = C_pr_age + F*fish*w_area;

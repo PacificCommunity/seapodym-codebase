@@ -2,6 +2,7 @@
 #define __MAP_H__
 
 #include "Param.h"
+#include <vector>
 
 enum type_de_bords
 {
@@ -60,6 +61,11 @@ public:
 	ivector regimax;
 	ivector regjmin;
 	ivector regjmax;
+	//regions (indices a of regimin/regimax/regjmin/regjmax) whose box contains each grid cell,
+	//in ascending order; set by reg_indices
+	std::vector<std::vector<int> > cell_regs;
+	int cell_regs_nj;
+	const std::vector<int>& regions_of_cell(const int i, const int j) const { return cell_regs[i*cell_regs_nj+j]; }
 
 private:
 	void definit_cell_bords(const int nti, const int ntj);	// définition des bords des cellules

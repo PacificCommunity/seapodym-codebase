@@ -122,6 +122,17 @@ void PMap::reg_indices(CParam& param)
 //cout << a+1 << "\t" << param.area[a]->lgmin << "\t" << param.area[a]->lgmax << "\t" << param.area[a]->ltmin << "\t" << param.area[a]->ltmax << endl;
 //cout << a+1 << "\t" << regimin[a] << "\t" << regimax[a] << "\t" << regjmin[a] << "\t" << regjmax[a] << endl;
 	}
+
+	//regions containing each grid cell, so that the regional sums do not test every region
+	const int nti = param.get_nbi();
+	const int ntj = param.get_nbj();
+	cell_regs_nj = ntj;
+	cell_regs.assign(nti*ntj, std::vector<int>());
+	for (int i=0; i<nti; i++)
+		for (int j=0; j<ntj; j++)
+			for (int a=0; a<nb_regs; a++)
+				if ((i>=regimin[a]) && (i<regimax[a]) && (j>=regjmin[a]) && (j<regjmax[a]))
+					cell_regs[i*ntj+j].push_back(a);
 }
 /*
 char PMap::get_bord_layer_x(const int i, const int j){
