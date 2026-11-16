@@ -120,6 +120,7 @@ public:
 	int get_iterationN(){return iterationNumber;}
 	int get_maxn(){return maxn;}
 	double get_Vinf(){return Vinf;}
+	double get_upwind_smoothing_width() const { return upwind_smoothing_width; }
 	//void set_gradcalc(bool flag){_gradcalc = flag;}
 
 private:
@@ -173,6 +174,7 @@ public:
 	void time_reading_init(){elapsed_time_reading = 0; }
 
 private:
+	double upwind_smoothing_width = 0.0;
 	void xbet_comp(const PMap& map);
 	void ybet_comp(const PMap& map);
 

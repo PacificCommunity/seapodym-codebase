@@ -249,6 +249,15 @@ string get(const string& xpath) const {
 	return value;
 }
 
+bool has_element(const string& xpath) const {
+	const string xpathfull = "/par" + xpath;
+	xmlXPathObjectPtr result = xmlXPathEvalExpression(BAD_CAST xpathfull.c_str(), context);
+	if (!result) return false;
+	const bool found = result->type == XPATH_NODESET && !xmlXPathNodeSetIsEmpty(result->nodesetval);
+	xmlXPathFreeObject(result);
+	return found;
+}
+
 /**
  * @param xpath absolute element xpath
  * @param attribute name of attribute

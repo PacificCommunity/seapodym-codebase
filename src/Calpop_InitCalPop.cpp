@@ -54,6 +54,7 @@ void CCalpop::InitCalPop(CParam& param, const PMap& map)
 	iterationNumber = param.iterationNumber; 	
 	deltax = param.deltaX;
 	deltay = param.deltaY;
+	upwind_smoothing_width = param.upwind_smoothing_epsilon;
 	sigma_fcte = param.sigma_fcte;
 
 

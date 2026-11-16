@@ -125,6 +125,7 @@ public:
 	double	deltaX;		// dx (constant)
 	double	deltaY;		// dy (constant)
 	int	deltaT;		// dt (constant)
+	double upwind_smoothing_epsilon = 0.0; // transport solver units
 	int	nlevel;
 	double	startdate, enddate;
 	int	ndatini, ndatfin;
