@@ -20,6 +20,16 @@ struct fishing_area {
 	std::vector<double> af;		//their coefficients
 };
 
+///|u| in the upwind split of the advection terms. With eps > 0 it is replaced by the
+///parabola (u*u+eps*eps)/(2*eps) for |u| < eps (C1 at |u| = eps), removing the kink of the
+///split at u = 0; eps = 0 gives |u| exactly. dabs returns the derivative.
+inline double upwind_abs(const double u, const double eps, double& dabs)
+{
+	if (fabs(u) >= eps){ dabs = (u > 0) ? 1.0 : -1.0; return fabs(u); }
+	dabs = u/eps;
+	return (u*u + eps*eps)/(2*eps);
+}
+
 /*!
 \brief This is main computational class: all functions and variables to solve ADR equations are here.
 */
@@ -120,13 +130,12 @@ public:
 	int get_iterationN(){return iterationNumber;}
 	int get_maxn(){return maxn;}
 	double get_Vinf(){return Vinf;}
-	double get_upwind_smoothing_width() const { return upwind_smoothing_width; }
 	//void set_gradcalc(bool flag){_gradcalc = flag;}
 
 private:
 	int maxn;
 	int iterationNumber;
-	double sigma_fcte, deltax, deltay;
+	double sigma_fcte, deltax, deltay, upwind_smoothing_epsilon;
 	double Vinf;
 	//bool _gradcalc;
 
@@ -174,7 +183,6 @@ public:
 	void time_reading_init(){elapsed_time_reading = 0; }
 
 private:
-	double upwind_smoothing_width = 0.0;
 	void xbet_comp(const PMap& map);
 	void ybet_comp(const PMap& map);
 

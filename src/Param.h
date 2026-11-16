@@ -126,7 +126,7 @@ public:
 	double	deltaX;		// dx (constant)
 	double	deltaY;		// dy (constant)
 	int	deltaT;		// dt (constant)
-	double upwind_smoothing_epsilon = 0.0; // transport solver units
+	double	upwind_smoothing_epsilon;	// |u| of the upwind split is smoothed for |u| < eps (0 = off)
 	int	nlevel;
 	double	startdate, enddate;
 	int	ndatini, ndatfin;

@@ -1,5 +1,4 @@
 #include "calpop.h"
-#include "UpwindSplit.h"
 
 ///Main function with memory control and adjoint functions for: 
 ///precaldia and caldia functions, which perform discrete approximation
@@ -16,9 +15,9 @@ void f_accessibility(dvector& l_access, dvector& lf_access, const dvector forage
 		const int nb_forage, const ivector day_layer, const ivector night_layer, const double DL);
 
 void dfybet_comp(dmatrix& dfybet, dmatrix& dfd, dmatrix& dfe, dmatrix& dff, const dmatrix d, const dmatrix e, const dmatrix f, unsigned long int pos_map, const int maxn, const int dt);
-void dfd1_comp(const char pos, double& dfd1, double& dfsigmam, double& dfsigma, double& dfuinf, const double uinf, const double twodd, const double d, double width);
-void dfd2_comp(const char pos, double& dfd2, double& dfsigmam, double& dfsigma, double& dfsigmap, double& dfu, const double u, const double twodd, const double d, double width);
-void dfd3_comp(const char pos, double& dfd3, double& dfsigma, double& dfsigmap, double& dfusup, const double usup, const double twodd, const double d, double width);
+void dfd1_comp(const char pos, double& dfd1, double& dfsigmam, double& dfsigma, double& dfuinf, const double uinf, const double twodd, const double d, const double eps);
+void dfd2_comp(const char pos, double& dfd2, double& dfsigmam, double& dfsigma, double& dfsigmap, double& dfu, const double u, const double twodd, const double d, const double eps);
+void dfd3_comp(const char pos, double& dfd3, double& dfsigma, double& dfsigmap, double& dfusup, const double usup, const double twodd, const double d, const double eps);
 void dfdh_comp(const char pos, double& dfHinf, double& dfH, double& dfHsup, double dfdh, const double d);
 void dfdhx_comp(const char pos, double& dfHinf, double& dfH, double& dfHsup, double dfdh, const double habitat, const double habitat_sup, const double habitat_inf, const double d);
 void dfdhy_comp(const char pos, double& dfHinf, double& dfH, double& dfHsup, double dfdh, const double habitat, const double habitat_sup, const double habitat_inf, const double d);
@@ -178,7 +177,7 @@ void dv_caldia()
 	const int dt   = 2*pop->get_iterationN();
 	const int maxn = pop->get_maxn();
 	const double Vinf = pop->get_Vinf();
-	const double width = pop->get_upwind_smoothing_width();
+	const double eps = param->upwind_smoothing_epsilon;
 	double dx      = param->deltaX;
 	double twodxdx = 2*dx*dx;
 	double dy      = param->deltaY;
@@ -217,13 +216,13 @@ void dv_caldia()
 			char pos  = bord.cotey();
 
 			//f[i][j] = d3(pos, sigma, sigmap, vsup, twodydy, dydy, dy);
-			dfd3_comp(pos, dff(i,j), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j+1), adv_y(i,j+1), twodydy, dy, width);
+			dfd3_comp(pos, dff(i,j), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j+1), adv_y(i,j+1), twodydy, dy, eps);
 
 			//e[i][j] = d2(pos, sigmam, sigma, sigmap, v, twodydy, dydy, dy, dt);
-			dfd2_comp(pos, dfe(i,j), dfDiff_y(i,j-1), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j), adv_y(i,j), twodydy, dy, width);
+			dfd2_comp(pos, dfe(i,j), dfDiff_y(i,j-1), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j), adv_y(i,j), twodydy, dy, eps);
 
 			//d[i][j] = d1(pos, sigmam, sigma, vinf, twodydy, dydy, dy);
-			dfd1_comp(pos, dfd(i,j), dfDiff_y(i,j-1), dfDiff_y(i,j), dfAdv_y(i,j-1), adv_y(i,j-1), twodydy, dy, width);
+			dfd1_comp(pos, dfd(i,j), dfDiff_y(i,j-1), dfDiff_y(i,j), dfAdv_y(i,j-1), adv_y(i,j-1), twodydy, dy, eps);
 		}
 	}
 
@@ -233,13 +232,13 @@ void dv_caldia()
 			char pos  = bord.cotex();
 
 			//c[j][i] = d3(pos, sigma, sigmap, usup, twodxdx, dxdx, dx);
-			dfd3_comp(pos, dfc(j,i), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i+1,j), adv_x(i+1,j), twodxdx, dx, width);
+			dfd3_comp(pos, dfc(j,i), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i+1,j), adv_x(i+1,j), twodxdx, dx, eps);
 
 			//b[j][i] = d2(pos, sigmam, sigma, sigmap, u, twodxdx, dxdx, dx);
-			dfd2_comp(pos, dfb(j,i), dfDiff_x(i-1,j), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i,j), adv_x(i,j), twodxdx, dx, width);
+			dfd2_comp(pos, dfb(j,i), dfDiff_x(i-1,j), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i,j), adv_x(i,j), twodxdx, dx, eps);
 
 			//a[j][i] = d1(pos, sigmam, sigma, uinf, twodxdx, dx);
-			dfd1_comp(pos, dfa(j,i), dfDiff_x(i-1,j), dfDiff_x(i,j), dfAdv_x(i-1,j), adv_x(i-1,j), twodxdx, dx, width);
+			dfd1_comp(pos, dfa(j,i), dfDiff_x(i-1,j), dfDiff_x(i,j), dfAdv_x(i-1,j), adv_x(i-1,j), twodxdx, dx, eps);
 		}
 	}
 
@@ -538,7 +537,7 @@ void dv_caldia_UV()
 	const int dt   = 2*pop->get_iterationN();
 	const int maxn = pop->get_maxn();
 	const double Vinf = pop->get_Vinf();
-	const double width = pop->get_upwind_smoothing_width();
+	const double eps = param->upwind_smoothing_epsilon;
 	double dx      = param->deltaX;
 	double twodxdx = 2*dx*dx;
 	double dy      = param->deltaY;
@@ -649,13 +648,13 @@ void dv_caldia_UV()
 			char pos  = bord.cotey();
 
 			//f[i][j] = d3(pos, sigma, sigmap, vsup, twodydy, dydy, dy);
-			dfd3_comp(pos, dff(i,j), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j+1), adv_y(i,j+1), twodydy, dy, width);
+			dfd3_comp(pos, dff(i,j), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j+1), adv_y(i,j+1), twodydy, dy, eps);
 
 			//e[i][j] = d2(pos, sigmam, sigma, sigmap, v, twodydy, dydy, dy, dt);
-			dfd2_comp(pos, dfe(i,j), dfDiff_y(i,j-1), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j), adv_y(i,j), twodydy, dy, width);
+			dfd2_comp(pos, dfe(i,j), dfDiff_y(i,j-1), dfDiff_y(i,j), dfDiff_y(i,j+1), dfAdv_y(i,j), adv_y(i,j), twodydy, dy, eps);
 
 			//d[i][j] = d1(pos, sigmam, sigma, vinf, twodydy, dydy, dy);
-			dfd1_comp(pos, dfd(i,j), dfDiff_y(i,j-1), dfDiff_y(i,j), dfAdv_y(i,j-1), adv_y(i,j-1), twodydy, dy, width);
+			dfd1_comp(pos, dfd(i,j), dfDiff_y(i,j-1), dfDiff_y(i,j), dfAdv_y(i,j-1), adv_y(i,j-1), twodydy, dy, eps);
 		}
 	}
 
@@ -665,13 +664,13 @@ void dv_caldia_UV()
 			char pos  = bord.cotex();
 
 			//c[j][i] = d3(pos, sigma, sigmap, usup, twodxdx, dxdx, dx);
-			dfd3_comp(pos, dfc(j,i), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i+1,j), adv_x(i+1,j), twodxdx, dx, width);
+			dfd3_comp(pos, dfc(j,i), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i+1,j), adv_x(i+1,j), twodxdx, dx, eps);
 
 			//b[j][i] = d2(pos, sigmam, sigma, sigmap, u, twodxdx, dxdx, dx);
-			dfd2_comp(pos, dfb(j,i), dfDiff_x(i-1,j), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i,j), adv_x(i,j), twodxdx, dx, width);
+			dfd2_comp(pos, dfb(j,i), dfDiff_x(i-1,j), dfDiff_x(i,j), dfDiff_x(i+1,j), dfAdv_x(i,j), adv_x(i,j), twodxdx, dx, eps);
 
 			//a[j][i] = d1(pos, sigmam, sigma, uinf, twodxdx, dx);
-			dfd1_comp(pos, dfa(j,i), dfDiff_x(i-1,j), dfDiff_x(i,j), dfAdv_x(i-1,j), adv_x(i-1,j), twodxdx, dx, width);
+			dfd1_comp(pos, dfa(j,i), dfDiff_x(i-1,j), dfDiff_x(i,j), dfAdv_x(i-1,j), adv_x(i-1,j), twodxdx, dx, eps);
 		}
 	}
 
@@ -1011,130 +1010,68 @@ void dfybet_comp(dmatrix& dfybet, dmatrix& dfd, dmatrix& dfe, dmatrix& dff, cons
 	}
 }
 
-void dfd1_comp(const char pos, double& dfd1, double& dfsigmam, double& dfsigma, double& dfuinf, const double uinf, const double twodd, const double d, double width)
+void dfd1_comp(const char pos, double& dfd1, double& dfsigmam, double& dfsigma, double& dfuinf, const double uinf, const double twodd, const double d, const double eps)
 {
+	double dabs;
 	switch (pos){
         case SANS:		
 		case D_FERME:
-			if (seapodym_upwind::in_band(uinf, width)) {
-				const auto split = seapodym_upwind::inside_split(uinf, width);
-				dfsigmam -= (1/twodd) * dfd1;
-				dfsigma  -= (1/twodd) * dfd1;
-				dfuinf   -= (split.d_positive/d) * dfd1;
-				dfd1      = 0.0;
-			} else if (uinf > 0){
-	                    	//d1 = -((sigmam+sigma)/twodd)-uinf/d;
-				dfsigmam -= (1/twodd) * dfd1;
-				dfsigma  -= (1/twodd) * dfd1;
-				dfuinf   -= (1/d) * dfd1;
-				dfd1      = 0.0;
-			} else {
-				//d1 = -((sigmam+sigma)/twodd);
-				dfsigmam -= (1/twodd) * dfd1;
-				dfsigma  -= (1/twodd) * dfd1;
-				dfd1      = 0.0;
-
-			}
+			//d1 = -((sigmam+sigma)/twodd)-0.5*(uinf+|uinf|)/d;
+			upwind_abs(uinf, eps, dabs);
+			dfsigmam -= (1/twodd) * dfd1;
+			dfsigma  -= (1/twodd) * dfd1;
+			dfuinf   -= (0.5*(1+dabs)/d) * dfd1;
+			dfd1      = 0.0;
 		break;
 	}
 }
 
-void dfd2_comp(const char pos, double& dfd2, double& dfsigmam, double& dfsigma, double& dfsigmap, double& dfu, const double u, const double twodd, const double d, double width)
+void dfd2_comp(const char pos, double& dfd2, double& dfsigmam, double& dfsigma, double& dfsigmap, double& dfu, const double u, const double twodd, const double d, const double eps)
 {
+	double dabs;
 	switch (pos){
 	        case SANS:
-			if (seapodym_upwind::in_band(u, width)) {
-				const auto split = seapodym_upwind::inside_split(u, width);
-				dfsigmam += (1/twodd) * dfd2;
-				dfsigma  += (2/twodd) * dfd2;
-				dfsigmap += (1/twodd) * dfd2;
-				dfu      += ((split.d_positive-split.d_negative)/d) * dfd2;
-				dfd2      = 0.0;
-			} else if (u > 0){
-				//d2 = ((sigmam+2*sigma+sigmap)/twodd)+u/d;
-				dfsigmam += (1/twodd) * dfd2;
-				dfsigma  += (2/twodd) * dfd2;
-				dfsigmap += (1/twodd) * dfd2;
-				dfu      += (1/d) * dfd2;
-				dfd2      = 0.0;			
-			} else {
-				//d2 = ((sigmam+2*sigma+sigmap)/twodd)-u/d;
-				dfsigmam += (1/twodd) * dfd2;
-				dfsigma  += (2/twodd) * dfd2;
-				dfsigmap += (1/twodd) * dfd2;
-				dfu      -= (1/d) * dfd2;
-				dfd2      = 0.0;			
-			}
+			//d2 = ((sigmam+2*sigma+sigmap)/twodd)+|u|/d;
+			upwind_abs(u, eps, dabs);
+			dfsigmam += (1/twodd) * dfd2;
+			dfsigma  += (2/twodd) * dfd2;
+			dfsigmap += (1/twodd) * dfd2;
+			dfu      += (dabs/d) * dfd2;
+			dfd2      = 0.0;
 		break;
 
 		case G_FERME:
-			if (seapodym_upwind::in_band(u, width)) {
-				const auto split = seapodym_upwind::inside_split(u, width);
-				dfsigma  += (1/twodd) * dfd2;
-				dfsigmap += (1/twodd) * dfd2;
-				dfu      += (split.d_positive/d) * dfd2;
-				dfd2      = 0.0;
-			} else if (u > 0){
-				//d2 = ((sigma+sigmap)/twodd)+u/d;
-				dfsigma  += (1/twodd) * dfd2;
-				dfsigmap += (1/twodd) * dfd2;
-				dfu      += (1/d) * dfd2;
-				dfd2      = 0.0;
-			} else {
-				//d2 = ((sigma+sigmap)/twodd);
-				dfsigma  += (1/twodd) * dfd2;
-				dfsigmap += (1/twodd) * dfd2;
-				dfd2      = 0.0;
-			}				
+			//d2 = ((sigma+sigmap)/twodd)+0.5*(u+|u|)/d;
+			upwind_abs(u, eps, dabs);
+			dfsigma  += (1/twodd) * dfd2;
+			dfsigmap += (1/twodd) * dfd2;
+			dfu      += (0.5*(1+dabs)/d) * dfd2;
+			dfd2      = 0.0;
 		break;
 
 		case D_FERME:
-			if (seapodym_upwind::in_band(u, width)) {
-				const auto split = seapodym_upwind::inside_split(u, width);
-				dfsigmam += (1/twodd) * dfd2;
-				dfsigma  += (1/twodd) * dfd2;
-				dfu      -= (split.d_negative/d) * dfd2;
-				dfd2      = 0.0;
-			} else if (u > 0){
-				//d2 = ((sigmam+sigma)/twodd);
-				dfsigmam += (1/twodd) * dfd2;
-				dfsigma  += (1/twodd) * dfd2;
-				dfd2      = 0.0;
-			} else {			
-				//d2 = ((sigmam+sigma)/twodd)-u/d;
-				dfsigmam += (1/twodd) * dfd2;
-				dfsigma  += (1/twodd) * dfd2;
-				dfu      -= (1/d) * dfd2;
-				dfd2      = 0.0;
-			}
+			//d2 = ((sigmam+sigma)/twodd)-0.5*(u-|u|)/d;
+			upwind_abs(u, eps, dabs);
+			dfsigmam += (1/twodd) * dfd2;
+			dfsigma  += (1/twodd) * dfd2;
+			dfu      -= (0.5*(1-dabs)/d) * dfd2;
+			dfd2      = 0.0;
 		break;	
 	}
 }
 
-void dfd3_comp(const char pos, double& dfd3, double& dfsigma, double& dfsigmap, double& dfusup, const double usup, const double twodd, const double d, double width)
+void dfd3_comp(const char pos, double& dfd3, double& dfsigma, double& dfsigmap, double& dfusup, const double usup, const double twodd, const double d, const double eps)
 {
+	double dabs;
 	switch (pos){
         	case SANS:
 			case G_FERME:
-			if (seapodym_upwind::in_band(usup, width)) {
-				const auto split = seapodym_upwind::inside_split(usup, width);
-				dfsigma  -= (1/twodd) * dfd3;
-				dfsigmap -= (1/twodd) * dfd3;
-				dfusup   += (split.d_negative/d) * dfd3;
-				dfd3      = 0.0;
-			} else if (usup > 0){
-	                    	//d3 = -((sigma+sigmap)/twodd);
-				dfsigma  -= (1/twodd) * dfd3;
-				dfsigmap -= (1/twodd) * dfd3;
-				dfd3      = 0.0;
-			} else {
-	                    	//d3 = -((sigma+sigmap)/twodd)+usup/d;
-				dfsigma  -= (1/twodd) * dfd3;
-				dfsigmap -= (1/twodd) * dfd3;
-				dfusup   += (1/d) * dfd3;
-				dfd3      = 0.0;
-
-			}
+			//d3 = -((sigma+sigmap)/twodd)+0.5*(usup-|usup|)/d;
+			upwind_abs(usup, eps, dabs);
+			dfsigma  -= (1/twodd) * dfd3;
+			dfsigmap -= (1/twodd) * dfd3;
+			dfusup   += (0.5*(1-dabs)/d) * dfd3;
+			dfd3      = 0.0;
 		break;
 	}
 }

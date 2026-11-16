@@ -1,5 +1,4 @@
 #include "calpop.h"
-#include "UpwindSplit.h"
 
 /////////////////////////////////////////////////////////////////////////////////
 //   -------------------------------------------------------------
@@ -153,19 +152,13 @@ void CCalpop::caldia_GO(const PMap& map, const CParam& param, const DMATRIX& dif
 double CCalpop::d1(const char pos, const double sigmam, const double sigma, const double uinf, 
 					const double twodd, const double dd, const double d)
 {
-	double value = 0;
-	const double width = upwind_smoothing_width;
+	double value = 0, dabs;
 	switch (pos){
         case SANS:			// si frontieres ouvertes
 		case D_FERME:			// ou fermee a droite seulement
-			if (seapodym_upwind::in_band(uinf, width)) {
-				const auto split = seapodym_upwind::inside_split(uinf, width);
-				value = -((sigmam+sigma)/twodd) - (split.positive/d);
-			} else if (uinf > 0)
-                    value =	-((sigmam+sigma)/twodd)
-				-(uinf/d);
-		else
-			value =	-((sigmam+sigma)/twodd);
+			//-(positive part of uinf)/d
+			value =	-((sigmam+sigma)/twodd)
+				-(0.5*(uinf + upwind_abs(uinf, upwind_smoothing_epsilon, dabs))/d);
 		break;
 	}
 	return value;
@@ -174,43 +167,21 @@ double CCalpop::d1(const char pos, const double sigmam, const double sigma, cons
 double CCalpop::d2(const char pos, const double sigmam, const double sigma, const double sigmap, 
 					const double u, const double twodd, const double dd, const double d, const int dt)
 {
-	double value = 0;
-	const double width = upwind_smoothing_width;
+	double value = 0, dabs;
 	switch (pos){
 	        case SANS:
-			if (seapodym_upwind::in_band(u, width)) {
-				const auto split = seapodym_upwind::inside_split(u, width);
-				value = ((sigmam+2*sigma+sigmap)/twodd) + ((split.positive-split.negative)/d) + dt;
-			} else if (u > 0)
-				value = ((sigmam+2*sigma+sigmap)/twodd)
-					+(u/d) + dt;
-			else
-				value = ((sigmam+2*sigma+sigmap)/twodd)
-					-(u/d) + dt;
+			value = ((sigmam+2*sigma+sigmap)/twodd)
+				+(upwind_abs(u, upwind_smoothing_epsilon, dabs)/d) + dt;
 			break;
 
 		case G_FERME:
-			if (seapodym_upwind::in_band(u, width)) {
-				const auto split = seapodym_upwind::inside_split(u, width);
-				value = ((sigma+sigmap)/twodd) + (split.positive/d) + dt;
-			} else if (u > 0)
-				value = ((sigma+sigmap)/twodd)
-					+(u/d) + dt;
-			else
-				value = ((sigma+sigmap)/twodd)
-					+ dt;
+			value = ((sigma+sigmap)/twodd)
+				+(0.5*(u + upwind_abs(u, upwind_smoothing_epsilon, dabs))/d) + dt;
 			break;
 
 		case D_FERME:
-			if (seapodym_upwind::in_band(u, width)) {
-				const auto split = seapodym_upwind::inside_split(u, width);
-				value = ((sigmam+sigma)/twodd) - (split.negative/d) + dt;
-			} else if (u > 0)
-				value = ((sigmam+sigma)/twodd)
-					+ dt;
-			else
-				value = ((sigmam+sigma)/twodd)
-					-(u/d) + dt;
+			value = ((sigmam+sigma)/twodd)
+				-(0.5*(u - upwind_abs(u, upwind_smoothing_epsilon, dabs))/d) + dt;
 			break;
 
 		case TERRE:
@@ -222,19 +193,13 @@ double CCalpop::d2(const char pos, const double sigmam, const double sigma, cons
 
 double CCalpop::d3(const char pos, const double sigma, const double sigmap, const double usup,
 					const double twodd, const double dd, const double d){
-	double value = 0;
-	const double width = upwind_smoothing_width;
+	double value = 0, dabs;
     	switch (pos) {
         	case SANS:
 			case G_FERME:
-			if (seapodym_upwind::in_band(usup, width)) {
-				const auto split = seapodym_upwind::inside_split(usup, width);
-				value = -((sigma+sigmap)/twodd) + (split.negative/d);
-			} else if (usup > 0)
-					value = -((sigma+sigmap)/twodd);
-				else
-					value = -((sigma+sigmap)/twodd)
-							+(usup/d);
+			//+(negative part of usup)/d
+			value = -((sigma+sigmap)/twodd)
+				+(0.5*(usup - upwind_abs(usup, upwind_smoothing_epsilon, dabs))/d);
 			break;
 	}
 	return value;

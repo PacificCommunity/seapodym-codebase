@@ -2,7 +2,6 @@ HEADERS= \
 Cmdopt.h \
 XMLDocument2.h \
 calpop.h \
-UpwindSplit.h \
 Map.h \
 Matrices.h \
 Numfunc.h \

@@ -1,9 +1,4 @@
 #include "VarParamCoupled.h"
-#include "UpwindSplit.h"
-#include <cmath>
-#include <cstdlib>
-#include <locale>
-#include <sstream>
 #include "Utilities.h"
 //#include "Dimensions.h"
 #include "Date.h"
@@ -40,21 +35,11 @@ bool VarParamCoupled::read(const string& parfile)
         deltaY = doc.getInteger("/deltaY", "value");
         deltaT = doc.getInteger("/deltaT", "value");
 
-	const char* epsilon_source = "default";
-	upwind_smoothing_epsilon = 0.0;
-	try {
-		if (doc.has_element("/upwind_smoothing_epsilon")) {
-			const string width = doc.get("/upwind_smoothing_epsilon", "value");
-			upwind_smoothing_epsilon = seapodym_upwind::parse_epsilon(
-				width.c_str(), "upwind_smoothing_epsilon/@value");
-			epsilon_source = "parfile";
-		}
-	} catch (const std::invalid_argument& error) {
-		cerr << error.what() << '\n';
-		std::exit(EXIT_FAILURE);
+	upwind_smoothing_epsilon = 0;
+	if (!doc.get("/upwind_smoothing_epsilon","value").empty()){
+		upwind_smoothing_epsilon = doc.getDouble("/upwind_smoothing_epsilon","value");
+		cout << "Upwind smoothing epsilon: " << upwind_smoothing_epsilon << endl;
 	}
-	cout << "Upwind smoothing epsilon: " << upwind_smoothing_epsilon
-	     << " (" << epsilon_source << ")" << endl;
 
 
 	//smin1 cap parameters (global). Defaults reproduce existing configs: sharp knee a=0.07, shifted form.
@@ -1484,20 +1469,10 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 		
 			if (stock_like[sp]){
-                const string stock_path = "/mean_stock_obs/" + sp_name[sp];
-                const string weight = doc.get(stock_path, "weight");
-                if (!weight.empty()) {
-                    std::istringstream input(weight);
-                    input.imbue(std::locale::classic());
-                    double value;
-                    if (!(input >> value) || !(input >> std::ws).eof()
-                        || !std::isfinite(value) || value < 0.0) {
-                        cerr << stock_path << "/@weight must be finite and nonnegative\n";
-                        std::exit(EXIT_FAILURE);
-                    }
-                    stock_like_weight[sp] = value;
-                    cout << "Stock likelihood weight for " << sp_name[sp] << ": " << value << endl;
-                }
+				if (!doc.get("/mean_stock_obs/"+sp_name[sp],"weight").empty()){
+					stock_like_weight[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"weight");
+					cout << "Stock likelihood weight for " << sp_name[sp] << ": " << stock_like_weight[sp] << endl;
+				}
 				mean_stock_obs[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"value"); 
 				stock_lonmin[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"lgmin"); 
 				stock_lonmax[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"lgmax"); 

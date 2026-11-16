@@ -8,19 +8,19 @@ The coupled model accepts an optional parameter:
 
 The default is **zero**, which retains the original transport stencil and its
 adjoint branches. No change to an existing parameter file is required.
-For a positive width, the direct and manually coded adjoint use the same split.
-The width is a fixed numerical setting, not an estimated biological parameter.
+For a positive epsilon, the direct and manually coded adjoint use the same split.
+The epsilon is a fixed numerical setting, not an estimated biological parameter.
 
 ## Configuration
 
-Configuration is read only from the XML parameter file. If the element is
-absent, the width is zero. An explicit XML value of zero disables smoothing.
-The startup log records the width and whether it came from the parameter file
+Configuration is read only from the XML parameter file. If epsilon is not set,
+the smoothing is not done. An explicit XML value of zero disables smoothing.
+The startup log records epsilon and whether it came from the parameter file
 or the default. The value must be finite and nonnegative; invalid values stop
 initialization. Include the XML setting explicitly when recording a run.
 
-The width has the units of the velocity passed to the transport stencil.
-There is no universal recommended positive value. Assess the width against
+The epsilon has the units of the velocity passed to the transport stencil.
+There is no universal recommended positive value. Assess epsilon against
 the chosen grid, timestep, forcings and scientific application.
 
 ## Definition
@@ -36,6 +36,9 @@ phi(v, epsilon) = |v|                         if |v| >= epsilon
 v_positive = (v + phi)/2
 v_negative = (v - phi)/2
 ```
+
+The smoothing band is |v| < epsilon, where phi has its minimum epsilon/2 at
+v = 0. The added numerical diffusion is at most epsilon*dx/4, at v = 0.
 
 Inside the band, the derivatives with respect to v are
 `(1 + v/epsilon)/2` and `(1 - v/epsilon)/2`, respectively. The value and first
