@@ -127,7 +127,7 @@ double SeapodymCoupled::get_stock_like(dvariable total_stock, dvariable& likelih
 			if (!param->scalc()) cout << "stock size: " << total_stock << endl;
 			double mean_total_stock_obs = param->mean_stock_obs[sp];  
 			if (total_stock > mean_total_stock_obs){
-				dvariable slike = 0.5*pow(total_stock-mean_total_stock_obs,2);
+				dvariable slike = (0.5 * param->stock_like_weight[sp]) * pow(total_stock-mean_total_stock_obs,2);
 				likelihood += slike;
 				stocklike  += value(slike);
 			}

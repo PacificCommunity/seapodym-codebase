@@ -82,6 +82,7 @@ public:
 	ivector tag_like;
 	ivector stock_like;
 	dvector mean_stock_obs;
+	dvector stock_like_weight;
 	dvector stock_lonmin;
 	dvector stock_lonmax;
 	dvector stock_latmin;

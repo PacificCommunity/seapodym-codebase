@@ -1,6 +1,9 @@
 #include "VarParamCoupled.h"
 #include "UpwindSplit.h"
+#include <cmath>
 #include <cstdlib>
+#include <locale>
+#include <sstream>
 #include "Utilities.h"
 //#include "Dimensions.h"
 #include "Date.h"
@@ -1462,12 +1465,14 @@ bool VarParamCoupled::read(const string& parfile)
 		//4. STOCK likelihood
 		stock_like.allocate(0,nb_species-1);
 		mean_stock_obs.allocate(0,nb_species-1);
+		stock_like_weight.allocate(0,nb_species-1);
 		stock_lonmin.allocate(0,nb_species-1);
 		stock_lonmax.allocate(0,nb_species-1);
 		stock_latmin.allocate(0,nb_species-1);
 		stock_latmax.allocate(0,nb_species-1);
 		stock_like.initialize();
 		mean_stock_obs.initialize();
+		stock_like_weight = 1.0;
 		stock_lonmin.initialize();
 		stock_lonmax.initialize();
 		stock_latmin.initialize();
@@ -1479,6 +1484,20 @@ bool VarParamCoupled::read(const string& parfile)
 			}
 		
 			if (stock_like[sp]){
+                const string stock_path = "/mean_stock_obs/" + sp_name[sp];
+                const string weight = doc.get(stock_path, "weight");
+                if (!weight.empty()) {
+                    std::istringstream input(weight);
+                    input.imbue(std::locale::classic());
+                    double value;
+                    if (!(input >> value) || !(input >> std::ws).eof()
+                        || !std::isfinite(value) || value < 0.0) {
+                        cerr << stock_path << "/@weight must be finite and nonnegative\n";
+                        std::exit(EXIT_FAILURE);
+                    }
+                    stock_like_weight[sp] = value;
+                    cout << "Stock likelihood weight for " << sp_name[sp] << ": " << value << endl;
+                }
 				mean_stock_obs[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"value"); 
 				stock_lonmin[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"lgmin"); 
 				stock_lonmax[sp] = doc.getDouble("/mean_stock_obs/"+sp_name[sp],"lgmax"); 
